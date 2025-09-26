@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import heroImg from '../../../assets/images/img3.jpg';
-import logo from '@/assets/images/logo.png';
-import logo1 from '@/assets/images/logo1.png';
+import logo from '/logo.png';
+import logo1 from '/logo1.png';
 import '@/index.css'
 import ReviewsSection  from '@/components/layout/ReviewsSection.jsx';
 
@@ -18,11 +18,11 @@ function Home() {
 
     // About section images - you can add more
     const aboutImages = [
-        { src: "src/assets/images/furniture-998265_1280.jpg", alt: "Beautiful Homes" },
-        { src: "src/assets/images/Replacement-Window-Cost-A-Comprehensive-Guide-to-Pricing.jpeg", alt: "Professional Team" },
-        { src: "src/assets/images/pexels-erin-d-8578847.jpg", alt: "Quality Service" },
-        { src: "src/assets/images/photo-1635424709845-3a85ad5e1f5e.jpeg", alt: "Roofing Experts" },
-        { src: "src/assets/images/roofing-contractor.jpg", alt: "Window Installation" },
+        { src: "/furniture-998265_1280.jpg", alt: "Beautiful Homes" },
+        { src: "/Replacement-Window-Cost-A-Comprehensive-Guide-to-Pricing.jpeg", alt: "Professional Team" },
+        { src: "/pexels-erin-d-8578847.jpg", alt: "Quality Service" },
+        { src: "/photo-1635424709845-3a85ad5e1f5e.jpeg", alt: "Roofing Experts" },
+        { src: "/roofing-contractor.jpg", alt: "Window Installation" },
     ];
 
     // Fake reviews data
@@ -396,7 +396,7 @@ function Home() {
             {/* Service Cards */}
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="src/assets/images/Solar.jpg" alt="Solar" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src="/Solar.jpg" alt="Solar" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Solar Installation</h3>
                     <p className="text-gray-200 mb-4">Save up to 70% on energy bills with premium solar solutions</p>
@@ -408,7 +408,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-100">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="src/assets/images/roofing_services.jpg" alt="Roofing" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src="/roofing_services.jpg" alt="Roofing" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Roofing Services</h3>
                     <p className="text-gray-200 mb-4">Complete roofing solutions with lifetime warranty</p>
@@ -420,7 +420,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-200">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="src/assets/images/window_services.jpg" alt="Windows" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src="/window_services.jpg" alt="Windows" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Window Replacement</h3>
                     <p className="text-gray-200 mb-4">Energy-efficient windows that beautify your home</p>
@@ -432,7 +432,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-300">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="src/assets/images/gutter_services.jpg" alt="Gutters" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src="/gutter_services.jpg" alt="Gutters" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Gutter Systems</h3>
                     <p className="text-gray-200 mb-4">Protect your home with seamless gutter solutions</p>
@@ -444,7 +444,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-400">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="src/assets/images/walkin_shower_services.png" alt="Walk-in Shower" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src="/walkin_shower_services.png" alt="Walk-in Shower" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Walk-In Showers</h3>
                     <p className="text-gray-200 mb-4">Luxurious, accessible bathroom transformations</p>
@@ -456,7 +456,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-500">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="src/assets/images/walkin_tub_services.png" alt="Walk-in Tub" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src="/walkin_tub_services.png" alt="Walk-in Tub" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Walk-In Tubs</h3>
                     <p className="text-gray-200 mb-4">Safe, therapeutic bathing solutions for all ages</p>
