@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ export function AddressSteps() {
   const [addressDetected, setAddressDetected] = useState(false);
   const [errors, setErrors] = useState({});
   const [zipTouched, setZipTouched] = useState(false);
+
+  const tfLoadedRef = useRef(false);
   
   // Validation function for zipcode
   const validateZipcode = (zip) => {
@@ -29,9 +31,7 @@ export function AddressSteps() {
 
   // Simulate auto-filling address from email (when component mounts)
   useEffect(() => {
-    // Only attempt to fill if we have an email and don't already have an address
     if (formData.email && (!formData.address || !formData.city)) {
-      // In a real implementation, you would call an API to get address from email
       setTimeout(() => {
         if (!formData.address) {
           updateFormData("address", "");  // Removed dummy data
@@ -61,148 +61,203 @@ export function AddressSteps() {
     updateFormData("zipcode", value);
     setZipTouched(true);
   };
-  
-  // Handle the form submission
-  const handleSubmit = () => {
-    // Set all fields as touched for validation
+
+  useEffect(() => {
+    if (tfLoadedRef.current) return;
+    tfLoadedRef.current = true;
+
+    const tf = document.createElement("script");
+    tf.type = "text/javascript";
+    tf.async = true;
+    // NOTE: keep the field name exactly as shown so the SDK fills the hidden input.
+    tf.src =
+        (document.location.protocol === "https:" ? "https" : "http") +
+        "://api.trustedform.com/trustedform.js?field=xxTrustedFormCertUrl" +
+        "&use_tagged_consent=true&l=" +
+        (new Date().getTime() + Math.random());
+
+    const firstScript = document.getElementsByTagName("script")[0];
+    firstScript.parentNode.insertBefore(tf, firstScript);
+
+    // Optional: basic debug so you can confirm it loaded
+    tf.addEventListener("load", () => {
+      // console.log("TrustedForm script loaded");
+    });
+
+  }, []);
+
+  const handleSubmit = (e) => {
+    e?.preventDefault?.();
+
     setZipTouched(true);
-    
-    // Check zipcode validity
+
     if (formData.zipcode && !validateZipcode(formData.zipcode)) {
-      setErrors({...errors, zipcode: "Please enter a valid 5-digit zipcode"});
+      setErrors({ ...errors, zipcode: "Please enter a valid 5-digit zipcode" });
       return;
     }
-    
-    if (isFormValid) {
-      nextStep();
-    }
+
+    // (Optional) For testing: read the hidden field so you can verify it
+    const certEl = document.querySelector('input[name="xxTrustedFormCertUrl"]');
+    const certUrl = certEl?.value || "";
+
+    if (isFormValid) nextStep();
   };
 
   return (
-    <>
-      <Card className="mx-auto max-w-3xl shadow-sm border border-gray-200">
-        <CardContent className="p-8 md:p-12">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold mb-2">Enter Property Address</h2>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Please provide the address of the property where service is needed
-            </p>
-          </div>
-          
-          <div className="max-w-2xl mx-auto">
-            {/* Address Card Section */}
-            <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Property Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <Input
-                      id="address"
-                      placeholder="Street address"
-                      value={formData.address || ""}
-                      onChange={(e) => updateFormData("address", e.target.value)}
-                      className="w-full pl-10 bg-white"
-                      required
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          document.getElementById("city").focus();
-                        }
-                      }}
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      id="city"
-                      placeholder="City"
-                      value={formData.city || ""}
-                      onChange={(e) => updateFormData("city", e.target.value)}
-                      className="w-full bg-white"
-                      required
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          document.getElementById("state").focus();
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      State <span className="text-red-500">*</span>
-                    </label>
-                    <Input 
-                      id="state"
-                      placeholder="State"
-                      value={formData.state || ""} 
-                      onChange={(e) => updateFormData("state", e.target.value)}
-                      className="w-full bg-white" 
-                      required
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          document.getElementById("zipcode").focus();
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Zipcode <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="zipcode"
-                    placeholder="5-digit zipcode"
-                    value={formData.zipcode || ""}
-                    onChange={handleZipcodeChange}
-                    className={`w-full bg-white ${errors.zipcode ? "border-red-300" : ""}`}
-                    required
-                    maxLength={5}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && isFormValid) {
-                        handleSubmit();
-                      }
-                    }}
-                  />
-                  {errors.zipcode && (
-                    <p className="text-red-500 text-xs mt-1">{errors.zipcode}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Navigation button - Get Free Quote */}
-            <div className="grid grid-cols-1 gap-2">
-              <div className="col-span-1">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!isFormValid}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  Get Free Quote
-                </Button>
+      <>
+        {/* data-tf-element-role="offer" groups the consent context on the page */}
+        <form data-tf-element-role="offer" onSubmit={handleSubmit}>
+          <Card className="mx-auto max-w-3xl shadow-sm border border-gray-200">
+            <CardContent className="p-8 md:p-12">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-semibold mb-2">Enter Property Address</h2>
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                  Please provide the address of the property where service is needed
+                </p>
               </div>
-            </div>  
-            
-            <div className="text-center text-xs text-gray-500 mt-6">
-              <p className="mt-1">Your information is secure and confidential</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <TrustBadge />
-    </>
+
+              <div className="max-w-2xl mx-auto">
+                {/* Address Card Section */}
+                <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
+                  <CardContent className="p-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Property Address <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <MapPin className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <Input
+                            id="address"
+                            placeholder="Street address"
+                            value={formData.address || ""}
+                            onChange={(e) => updateFormData("address", e.target.value)}
+                            className="w-full pl-10 bg-white"
+                            required
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                document.getElementById("city").focus();
+                              }
+                            }}
+                            autoFocus
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          City <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                            id="city"
+                            placeholder="City"
+                            value={formData.city || ""}
+                            onChange={(e) => updateFormData("city", e.target.value)}
+                            className="w-full bg-white"
+                            required
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                document.getElementById("state").focus();
+                              }
+                            }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          State <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                            id="state"
+                            placeholder="State"
+                            value={formData.state || ""}
+                            onChange={(e) => updateFormData("state", e.target.value)}
+                            className="w-full bg-white"
+                            required
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                document.getElementById("zipcode").focus();
+                              }
+                            }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Zipcode <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                          id="zipcode"
+                          placeholder="5-digit zipcode"
+                          value={formData.zipcode || ""}
+                          onChange={handleZipcodeChange}
+                          className={`w-full bg-white ${errors.zipcode ? "border-red-300" : ""}`}
+                          required
+                          maxLength={5}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && isFormValid) {
+                              e.preventDefault();
+                              handleSubmit(e);
+                            }
+                          }}
+                      />
+                      {errors.zipcode && (
+                          <p className="text-red-500 text-xs mt-1">{errors.zipcode}</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* CONSENT (tagged for TrustedForm) */}
+                <div className="mb-6 text-xs text-gray-600 space-y-2">
+                  <label className="inline-flex items-start gap-2" data-tf-element-role="consent-language">
+                    <input
+                        type="checkbox"
+                        required
+                        data-tf-element-role="consent-opt-in"
+                        className="mt-0.5"
+                    />
+                    <span>
+                    By clicking <span data-tf-element-role="submit-text">Get Free Quote</span>, I agree
+                    to be contacted about insurance offers at the number and email I provide.
+                    This may include calls, texts, or emails from our partners. I understand
+                    consent isn’t required to make a purchase.
+                  </span>
+                  </label>
+                </div>
+
+                {/* Hidden field that TrustedForm will populate */}
+                <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" />
+
+                {/* Navigation button - Get Free Quote */}
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="col-span-1">
+                    <Button
+                        type="submit"
+                        disabled={!isFormValid}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        size="sm"
+                        data-tf-element-role="submit"
+                    >
+                      Get Free Quote
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="text-center text-xs text-gray-500 mt-6">
+                  <p>Your information is secure and confidential</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </form>
+
+        <TrustBadge />
+      </>
   );
 }
