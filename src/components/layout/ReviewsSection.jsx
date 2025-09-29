@@ -122,7 +122,7 @@ const ReviewsSection = () => {
     };
 
     return (
-        <section id="reviews" className="py-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+        <section id="reviews" className="py-20 md:py-28 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
             <div className="container mx-auto px-4">
                 {/* Section Header with Animation */}
                 <div className="text-center mb-16">
@@ -161,10 +161,10 @@ const ReviewsSection = () => {
                                         slidesPerView === 3 ? 'lg:w-1/3' : 
                                         slidesPerView === 2 ? 'md:w-1/2' : 
                                         'w-full'
-                                    } flex-shrink-0 px-4`}
+                                    } flex-shrink-0 px-4 pb-8`} // Added pb-8 to create bottom spacing
                                 >
                                     <div 
-                                        className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 h-full transform hover:-translate-y-2 border border-gray-100"
+                                        className="bg-white rounded-3xl p-8 pb-12 shadow-lg hover:shadow-xl transition-all duration-500 h-full transform hover:-translate-y-2 border border-gray-50 mb-6" // Added mb-6 for bottom margin
                                         data-aos="fade-up"
                                         data-aos-delay={`${(index % slidesPerView) * 100}`}
                                     >
@@ -191,7 +191,7 @@ const ReviewsSection = () => {
                                         <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent mx-auto mb-6"></div>
                                         
                                         {/* Reviewer Info */}
-                                        <div className="flex items-center justify-center">
+                                        <div className="flex items-center justify-center mt-8">
                                             <img 
                                                 src={review.avatar} 
                                                 alt={review.name} 
@@ -220,7 +220,7 @@ const ReviewsSection = () => {
                     {/* Navigation Arrows */}
                     <button 
                         onClick={prevSlide}
-                        className="absolute -left-4 md:left-0 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-white transition-all duration-300 z-10 group"
+                        className="absolute -left-4 md:left-0 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-white transition-all duration-300 z-10 group focus:outline-none focus:ring-2 focus:ring-blue-500"
                         aria-label="Previous review"
                     >
                         <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,7 +229,7 @@ const ReviewsSection = () => {
                     </button>
                     <button 
                         onClick={nextSlide}
-                        className="absolute -right-4 md:right-0 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-white transition-all duration-300 z-10 group"
+                        className="absolute -right-4 md:right-0 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-white transition-all duration-300 z-10 group focus:outline-none focus:ring-2 focus:ring-blue-500"
                         aria-label="Next review"
                     >
                         <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,7 +239,7 @@ const ReviewsSection = () => {
                 </div>
 
                 {/* Carousel Indicators */}
-                <div className="flex justify-center mt-10 space-x-2">
+                <div className="flex justify-center mt-10 mb-8 space-x-2"> {/* Added mb-8 for bottom margin */}
                     {originalReviews.map((_, index) => (
                         <button
                             key={index}
@@ -248,14 +248,14 @@ const ReviewsSection = () => {
                                 (currentSlide % originalReviews.length) === index 
                                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 w-10' 
                                     : 'bg-gray-300 w-2 hover:bg-gray-400'
-                            }`}
+                            } focus:outline-none focus:ring-2 focus:ring-blue-300`}
                             aria-label={`Go to slide ${index + 1}`}
                         />
                     ))}
                 </div>
-
-                {/* Trust Metrics */}
-            
+                
+                {/* Added extra spacing div */}
+                <div className="h-12"></div>
             </div>
         </section>
     );

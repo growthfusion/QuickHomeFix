@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 function RoofCountStep() {
-  const { formData, updateFormData, nextStep, prevStep } = useFormStore();
+  const { formData, updateFormData, nextStep } = useFormStore();
+  const [selectedCount, setSelectedCount] = useState(formData.roofCount || null);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   
   // Animation on load
@@ -16,73 +16,75 @@ function RoofCountStep() {
   }, []);
 
   const handleCountSelect = (count) => {
+    setSelectedCount(count);
     updateFormData("roofCount", count);
+    
+    // Start navigation process with visual feedback
+    setIsNavigating(true);
   };
+  
+  // Effect for automatic navigation after selection
+  useEffect(() => {
+    let timer;
+    if (isNavigating && selectedCount) {
+      timer = setTimeout(() => {
+        nextStep();
+      }, 800); // Delay navigation to show selection feedback
+    }
+    
+    return () => clearTimeout(timer);
+  }, [isNavigating, selectedCount, nextStep]);
 
   return (
-    <div style={{ background: '#f8fbfe', padding: '20px' }}>
+    <div style={{ background: '#f8fbfe', padding: '20px' }} className="min-h-screen">
       <Card className="mx-auto max-w-2xl bg-white shadow-sm border-gray-100 overflow-hidden">
-        <CardContent className="p-8">
+        <CardContent className="p-8 pb-10">
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-             
-            </div>
             <h2 className="text-2xl font-semibold mb-2">How many roofs need service?</h2>
           </div>
           
           {/* Original button sizing and layout, with animation */}
           <div className={`grid grid-cols-4 gap-4 mb-6 ${isLoaded ? 'animate-fadeIn' : 'opacity-0'}`}>
             {[1, 2, 3, 4].map((num) => (
-              <Button
+              <button
                 key={num}
-                variant={formData.roofCount === num.toString() ? "default" : "outline"}
-                className={`h-12 text-lg ${
-                  formData.roofCount === num.toString() 
+                className={`h-12 text-lg rounded-md transition-all duration-300 ${
+                  selectedCount === num.toString() 
                     ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-white hover:bg-blue-50 text-gray-700 border-gray-200 hover:text-blue-600"
+                    : "bg-white hover:bg-blue-50 text-gray-700 border border-gray-200 hover:text-blue-600"
                 }`}
                 onClick={() => handleCountSelect(num.toString())}
               >
                 {num}
-              </Button>
+              </button>
             ))}
           </div>
           
           <div className={`transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
             style={{ transitionDelay: '150ms' }}>
-            <Button
-              variant={formData.roofCount === "more" ? "default" : "outline"}
-              className={`w-full h-10 ${
-                formData.roofCount === "more" 
+            <button
+              className={`w-full h-10 rounded-md transition-all duration-300 ${
+                selectedCount === "more" 
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-white hover:bg-blue-50 text-gray-700 border-gray-200 hover:text-blue-600"
+                  : "bg-white hover:bg-blue-50 text-gray-700 border border-gray-200 hover:text-blue-600"
               }`}
               onClick={() => handleCountSelect("more")}
             >
               More than 4
-            </Button>
+            </button>
           </div>
+          
+          {/* Navigation status indicator */}
+          {isNavigating && (
+            <div className="text-center text-blue-600 mt-8 animate-fade-in">
+              <div className="inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span className="text-sm">Processing your selection...</span>
+            </div>
+          )}
         </CardContent>
-        
-        <CardFooter className="flex justify-between p-6 border-t bg-gray-50">
-          <Button 
-            variant="outline" 
-            onClick={prevStep}
-            className="bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
-          >
-            Back
-          </Button>
-          <Button 
-            onClick={nextStep}
-            disabled={!formData.roofCount}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Next
-          </Button>
-        </CardFooter>
       </Card>
       
-      {/* Simple animation */}
+      {/* Animations */}
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -91,6 +93,25 @@ function RoofCountStep() {
         
         .animate-fadeIn {
           animation: fadeIn 0.4s forwards;
+        }
+        
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out forwards;
+        }
+        
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        
+        .animate-spin {
+          animation: spin 0.8s linear infinite;
         }
       `}</style>
     </div>

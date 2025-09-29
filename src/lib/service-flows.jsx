@@ -14,37 +14,37 @@ const serviceFlows = {
   roof: {
     id: "roof",
     name: "Roofing Service",
-    steps: ["email", "roofing-type", "roof-count", "material", "address", "name", "phone", "complete"],
+    steps: [ "roofing-type", "roof-count", "material","email",  "name", "phone","address", "complete"],
     totalSteps: 8,
   },
   windows: {
     id: "windows",
     name: "Windows Service",
-    steps: ["email", "window-type", "window-style", "window-count", "dfaddress", "name", "phone", "complete"],
+    steps: [ "window-type", "window-style", "window-count", "email", "name", "phone","dfaddress", "complete"],
     totalSteps: 8,
   },
   solar: {
     id: "solar",
     name: "Solar Energy",
-    steps: ["email", "solar-type", "roof-size", "dfaddress", "name", "phone", "complete"],
+    steps: [ "solar-type", "roof-size", "email", "name", "phone","dfaddress", "complete"],
     totalSteps: 8,
   },
   bath: {
     id: "bath",
     name: "Bath Remodeling",
-    steps: ["email","bathroom-wall","bathroom-shower","dfaddress", "name", "phone", "complete"],
+    steps: ["bathroom-wall","bathroom-shower","email", "name", "phone","dfaddress", "complete"],
     totalSteps: 7,
   },
   gutter: {
     id: "gutter",
     name: "Gutter Services",
-    steps: ["email","gutter-type","gutter-material","dfaddress", "name", "phone", "complete"],
+    steps: ["gutter-type","gutter-material","email", "name", "phone","dfaddress", "complete"],
     totalSteps: 7,
   },
   "walk-in": {
     id: "walk-in",
     name: "Walk-in-Tub/Shower",
-    steps: ["email","walkin-step","walkin-type", "dfaddress", "name", "phone", "complete"],
+    steps: ["walkin-step","walkin-type","email",  "name", "phone","dfaddress", "complete"],
     totalSteps: 7,
   },
 };
@@ -55,7 +55,6 @@ const serviceFlows = {
  * @returns {ServiceFlow} The service flow configuration (defaults to roof if not found)
  */
 function getServiceFlow(serviceId) {
-  // Added additional validation
   if (!serviceId || serviceId.trim() === "") {
     console.warn("Empty serviceId provided to getServiceFlow");
     return serviceFlows.roof; // Default to roof

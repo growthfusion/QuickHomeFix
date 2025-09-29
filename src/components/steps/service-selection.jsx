@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useFormStore } from "@/lib/store";
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
 
 import bath from '@/assets/images/bath-tub.png';
 import roof from '@/assets/images/roof.png';
@@ -10,7 +9,7 @@ import windows from '@/assets/images/window.png';
 import shower from '@/assets/images/showerr.png';
 import gutter from '@/assets/images/round.png';
 
-// Service Card Component with images
+// Service Card Component with enhanced original-style popular indicator
 const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
   return (
     <div 
@@ -40,9 +39,10 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
           {title}
         </h3>
         
+        {/* Enhanced original style popular indicator */}
         {isPopular && (
-          <div className="overflow-hidden h-[14px] flex items-center justify-center mt-1">
-            <span className="animate-shimmer text-[9px] font-medium tracking-tight text-blue-500 px-1 inline-block">
+          <div className="overflow-hidden h-[18px] flex items-center justify-center mt-1">
+            <span className="animate-shimmer text-[10px] font-bold tracking-tight text-blue-600 dark:text-blue-400 px-2 py-0.5 bg-blue-100/60 dark:bg-blue-900/40 rounded-full border border-blue-200 dark:border-blue-700 inline-block">
               most popular
             </span>
           </div>
@@ -63,9 +63,12 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
 };
 
 function ServiceSelection() {
-  const { formData, updateFormData, nextStep, prevStep } = useFormStore();
+  const { formData, updateFormData, nextStep } = useFormStore();
   const [selectedService, setSelectedService] = useState(formData.service || null);
-  const navigate = useNavigate(); // Add useNavigate hook
+  const navigate = useNavigate();
+  
+  // Add automatic navigation delay
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const services = [
     { id: "roof", name: "Roof Services", image: roof },
@@ -79,13 +82,22 @@ function ServiceSelection() {
   const handleServiceSelect = (serviceId) => {
     setSelectedService(serviceId);
     updateFormData("service", serviceId);
+    
+    // Start navigation process with visual feedback
+    setIsNavigating(true);
   };
-
-  const handleNext = () => {
-    if (selectedService) {
-      nextStep();
+  
+  // Effect for automatic navigation after selection
+  useEffect(() => {
+    let timer;
+    if (isNavigating && selectedService) {
+      timer = setTimeout(() => {
+        nextStep();
+      }, 800); // Delay navigation to show selection feedback
     }
-  };
+    
+    return () => clearTimeout(timer);
+  }, [isNavigating, selectedService, nextStep]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
@@ -120,33 +132,13 @@ function ServiceSelection() {
             ))}
           </div>
           
-          {/* Navigation buttons */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="col-span-1">
-              <Button
-                onClick={() => navigate('/')} // Changed to navigate to home
-                variant="outline"
-                className="w-full bg-white hover:bg-gray-50 text-gray-700 border-gray-300 group relative overflow-hidden"
-              >
-                <span className="relative z-10">Back</span>
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out">
-                  <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-gray-200/50 to-transparent skew-x-12" />
-                </div>
-              </Button>
+          {/* Navigation status indicator */}
+          {isNavigating && (
+            <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
+              <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span>Proceeding to next step...</span>
             </div>
-            <div className="col-span-1">
-              <Button
-                onClick={handleNext}
-                disabled={!selectedService}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white group relative overflow-hidden"
-              >
-                <span className="relative z-10">Next</span>
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out">
-                  <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12" />
-                </div>
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
       
@@ -193,8 +185,18 @@ function ServiceSelection() {
         
         .animate-shimmer {
           animation: shimmer 3s ease-in-out infinite;
-          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
           background-size: 200% 100%;
+        }
+        
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
       `}</style>
     </div>

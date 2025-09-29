@@ -281,26 +281,35 @@ function Home() {
             }}>
                 <div className="container mx-auto px-4">
                     <div className="max-w-3xl">
-                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 pt-[100px]">
+                        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 pt-[5px]">
                             Transform Your Home
                             <span className="block text-blue-400">With Expert Care</span>
                         </h1>
                         <p className="text-xl md:text-2xl text-gray-200 mb-8">
                             America's trusted home improvement professionals. Quality work, guaranteed satisfaction, and unbeatable prices.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                         <button 
+                      <div className="flex flex-col sm:flex-row gap-4">
+  <button
     onClick={goToRoofingEstimate}
-    className="cta-button text-white px-8 py-4 rounded-full text-lg font-bold flex items-center justify-center group"
->
+    className="cta-button text-white px-2 py-3 sm:px-8 sm:py-4 rounded-full text-md sm:text-lg font-bold flex items-center justify-center group"
+  >
     Get Free Quote
-    <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+    <svg
+      className="w-4 h-4 sm:w-5 sm:h-5 ml-2 transition-transform duration-300 group-hover:translate-x-2"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 7l5 5m0 0l-5 5m5-5H6"
+      />
     </svg>
-</button>
+  </button>
+</div>
 
-                          
-                        </div>
                         <div className="mt-8 flex items-center space-x-8">
                             <div className="flex items-center">
                                 <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -538,12 +547,12 @@ function Home() {
                         <div>
                             <h3 className="text-lg font-bold mb-4">Our Services</h3>
                             <ul className="space-y-2">
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Emergency Repairs</a></li>
+                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
+                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
+                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
+                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
+                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
+                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Emergency Repairs</a></li>
                             </ul>
                         </div>
 
@@ -551,8 +560,10 @@ function Home() {
                         <div>
                             <h3 className="text-lg font-bold mb-4">Company</h3>
                             <ul className="space-y-2">
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Customer Reviews</a></li>
+                                <li><a href="#about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                                <li><a href="#services" className="text-gray-400 hover:text-white transition-colors">Services</a></li>
+                                <li><a href="#reviews" className="text-gray-400 hover:text-white transition-colors">Customer Reviews</a></li>
+                               
                             </ul>
                         </div>
 
