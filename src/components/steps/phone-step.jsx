@@ -65,7 +65,9 @@ function PhoneStep() {
   const isPhoneValid = formData.phone && !phoneError;
   
   // Handle form submission
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    
     const error = validatePhone(formData.phone || "");
     setPhoneError(error);
     
@@ -87,59 +89,57 @@ function PhoneStep() {
           </div>
           
           <div className="max-w-2xl mx-auto">
-            {/* Phone Card Section */}
-            <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
-              <CardContent className="p-6">
-                <label className="block text-sm font-medium mb-2">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone className="h-4 w-4 text-gray-400" />
+            <form onSubmit={handleSubmit}>
+              {/* Phone Card Section */}
+              <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
+                <CardContent className="p-6">
+                  <label htmlFor="phone" className="block text-sm font-medium mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="(123) 456-7890"
+                      value={formData.phone || ""}
+                      onChange={handlePhoneChange}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      className={`w-full pl-10 bg-white ${
+                        isFocused ? "ring-2 ring-blue-100 border-blue-300" : ""
+                      } ${phoneError && formData.phone ? "border-red-300" : ""}`}
+                      maxLength={14}
+                      required
+                      autoFocus // Automatically focus this field on load
+                    />
                   </div>
-                  <Input
-                    type="tel"
-                    placeholder="(123) 456-7890"
-                    value={formData.phone || ""}
-                    onChange={handlePhoneChange}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    className={`w-full pl-10 bg-white ${
-                      isFocused ? "ring-2 ring-blue-100 border-blue-300" : ""
-                    } ${phoneError && formData.phone ? "border-red-300" : ""}`}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && isPhoneValid) {
-                        handleSubmit();
-                      }
-                    }}
-                    maxLength={14}
-                    required
-                    autoFocus // Automatically focus this field on load
-                  />
+                  {phoneError && formData.phone && (
+                    <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Next button */}
+              <div className="grid grid-cols-1 gap-2">
+                <div className="col-span-1">
+                  <Button
+                    type="submit"
+                    disabled={!isPhoneValid}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    Next
+                  </Button>
                 </div>
-                {phoneError && formData.phone && (
-                  <p className="text-red-500 text-xs mt-1">{phoneError}</p>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Next button */}
-            <div className="grid grid-cols-1 gap-2">
-              <div className="col-span-1">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!isPhoneValid}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  Next
-                </Button>
               </div>
-            </div>
-            
-            <div className="text-center text-xs text-gray-500 mt-6">
-              <p className="mt-1">Your information is secure and confidential</p>
-            </div>
+              
+              <div className="text-center text-xs text-gray-500 mt-6">
+                <p className="mt-1">Your information is secure and confidential</p>
+              </div>
+            </form>
           </div>
         </CardContent>
       </Card>

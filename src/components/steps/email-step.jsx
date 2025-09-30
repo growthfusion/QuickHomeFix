@@ -20,7 +20,8 @@ function EmailStep() {
   const isEmailValid = formData.email && isValidEmail(formData.email);
   
   // Handle form submission
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
     if (isEmailValid) {
       nextStep();
     }
@@ -37,7 +38,7 @@ function EmailStep() {
             </p>
           </div>
           
-          <div className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="relative">
               <label className="block text-sm font-medium mb-2">Email Address</label>
               <div className="relative rounded-md">
@@ -52,11 +53,6 @@ function EmailStep() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   className={`w-full pl-10 ${isFocused ? 'ring-2 ring-blue-200 border-blue-300' : ''}`}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && isEmailValid) {
-                      handleSubmit();
-                    }
-                  }}
                   autoFocus // Automatically focus on this input when the component loads
                 />
               </div>
@@ -68,7 +64,7 @@ function EmailStep() {
             {/* Just the Next button, full width */}
             <div className="pt-2">
               <Button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={!isEmailValid}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               >
@@ -79,7 +75,7 @@ function EmailStep() {
             <div className="text-center text-xs text-gray-500 pt-2">
               Your information is secure and confidential
             </div>
-          </div>
+          </form>
         </CardContent>
       </Card>
       <TrustBadge />

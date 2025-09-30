@@ -72,6 +72,7 @@ function RoofCountStep() {
                   }`}
                   style={{ animationDelay: `${index * 0.05}s` }}
                   onClick={() => handleCountSelect(num.toString())}
+                  aria-pressed={selectedCount === num.toString()}
                 >
                   {num}
                 </button>
@@ -88,6 +89,7 @@ function RoofCountStep() {
                     : "bg-white hover:bg-blue-50 text-gray-700 border border-gray-200 hover:text-blue-600"
                 }`}
                 onClick={() => handleCountSelect("more")}
+                aria-pressed={selectedCount === "more"}
               >
                 More than 4
               </button>
@@ -99,6 +101,7 @@ function RoofCountStep() {
                 <button
                   type="submit"
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  aria-label="Continue to next step"
                 >
                   Continue
                 </button>
@@ -107,7 +110,7 @@ function RoofCountStep() {
             
             {/* Navigation status indicator */}
             {isNavigating && (
-              <div className="text-center text-blue-600 mt-8 animate-fade-in">
+              <div className="text-center text-blue-600 mt-8 animate-fade-in" aria-live="polite" role="status">
                 <div className="inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
                 <span className="text-sm">Processing your selection...</span>
               </div>

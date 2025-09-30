@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +12,8 @@ function NameStep() {
   const isFormValid = formData.firstName && formData.lastName;
   
   // Handle form submission
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
     if (isFormValid) {
       nextStep();
     }
@@ -31,72 +31,63 @@ function NameStep() {
           </div>
           
           <div className="max-w-2xl mx-auto">
-            {/* Name Card Section */}
-            <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
-              <CardContent className="p-6 space-y-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="Enter your first name"
-                    value={formData.firstName || ""}
-                    onChange={(e) => updateFormData("firstName", e.target.value)}
-                    onFocus={() => setFocusedField("firstName")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white ${
-                      focusedField === "firstName" ? "ring-2 ring-blue-100 border-blue-300" : ""
-                    }`}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        document.getElementById("lastName").focus();
-                      }
-                    }}
-                    required
-                    autoFocus // Automatically focus this field on load
-                  />
+            <form onSubmit={handleSubmit}>
+              {/* Name Card Section */}
+              <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
+                <CardContent className="p-6 space-y-5">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      id="firstName"
+                      placeholder="Enter your first name"
+                      value={formData.firstName || ""}
+                      onChange={(e) => updateFormData("firstName", e.target.value)}
+                      onFocus={() => setFocusedField("firstName")}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full bg-white ${
+                        focusedField === "firstName" ? "ring-2 ring-blue-100 border-blue-300" : ""
+                      }`}
+                      required
+                      autoFocus // Automatically focus this field on load
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium mb-2">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      id="lastName"
+                      placeholder="Enter your last name"
+                      value={formData.lastName || ""}
+                      onChange={(e) => updateFormData("lastName", e.target.value)}
+                      onFocus={() => setFocusedField("lastName")}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full bg-white ${
+                        focusedField === "lastName" ? "ring-2 ring-blue-100 border-blue-300" : ""
+                      }`}
+                      required
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Next button only */}
+              <div className="grid grid-cols-1 gap-2">
+                <div className="col-span-1">
+                  <Button
+                    type="submit"
+                    disabled={!isFormValid}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    size="sm"
+                  >
+                    Next
+                  </Button>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="lastName"
-                    placeholder="Enter your last name"
-                    value={formData.lastName || ""}
-                    onChange={(e) => updateFormData("lastName", e.target.value)}
-                    onFocus={() => setFocusedField("lastName")}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-white ${
-                      focusedField === "lastName" ? "ring-2 ring-blue-100 border-blue-300" : ""
-                    }`}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && isFormValid) {
-                        handleSubmit();
-                      }
-                    }}
-                    required
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Next button only */}
-            <div className="grid grid-cols-1 gap-2">
-              <div className="col-span-1">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!isFormValid}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  size="sm"
-                >
-                  Next
-                </Button>
               </div>
-            </div>
-            
-           
+            </form>
           </div>
         </CardContent>
       </Card>
