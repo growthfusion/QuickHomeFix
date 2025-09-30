@@ -1,4 +1,3 @@
-"use client"
 
 import React, { useEffect, useState } from "react";
 import { useFormStore } from "@/lib/store";
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { TrustBadge } from '@/components/steps/trust-badge ';
 import { MapPin } from "lucide-react";
 
-export function AddressSteps() {
+export function AddressStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [addressDetected, setAddressDetected] = useState(false);
   const [errors, setErrors] = useState({});

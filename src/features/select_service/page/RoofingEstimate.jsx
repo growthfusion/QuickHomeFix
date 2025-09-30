@@ -30,7 +30,7 @@ import GutterMaterialStep from "@/components/steps/gutter-material";
 import WalkinTypeStep from "@/components/steps/Walkin-step";
 import WalkTypeStep from "@/components/steps/walk-type-step";
 // Common steps
-import { AddressStep } from "@/components/steps/address-step";
+import {AddressStep } from "@/components/steps/address-step";
 import { AddressSteps } from "@/components/steps/address-steps";
 
 import NameStep from "@/components/steps/name-step";

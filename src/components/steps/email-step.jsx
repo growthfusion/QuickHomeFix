@@ -29,7 +29,7 @@ function EmailStep() {
 
   return (
     <>
-      <Card className="mx-auto max-w-2xl shadow-sm">
+      <Card className="mx-auto max-w-3xl shadow-sm">
         <CardContent className="p-6 md:p-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-semibold mb-2">Please Enter Your Email</h2>
