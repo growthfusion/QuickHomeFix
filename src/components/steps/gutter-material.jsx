@@ -56,13 +56,13 @@ const GutterMaterialCard = ({ id, image, title, isSelected, onSelect }) => {
 const materials = [
   { id: "aluminum", name: "Aluminum", img: Aluminum },
   { id: "steel", name: "Steel", img: steel },
-  { id: "copper", name: "Copper", img: copper},
-  { id: "Vinyl", name: "Vinyl", img: vinyl },
+  { id: "copper", name: "Copper", img: copper },
+  { id: "vinyl", name: "Vinyl", img: vinyl }, // Fixed capitalization to match ID
 ];
 
 function GutterMaterialStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
-  const [selectedMaterial, setSelectedMaterial] = useState(formData.material || null);
+  const [selectedMaterial, setSelectedMaterial] = useState(formData.gutterMaterial || null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -72,7 +72,7 @@ function GutterMaterialStep() {
 
   const handleMaterialSelect = (materialId) => {
     setSelectedMaterial(materialId);
-    updateFormData("material", materialId);
+    updateFormData("gutterMaterial", materialId); // Fixed to use a specific property for gutter material
     
     // Start navigation process with visual feedback
     setIsNavigating(true);
@@ -90,42 +90,65 @@ function GutterMaterialStep() {
     return () => clearTimeout(timer);
   }, [isNavigating, selectedMaterial, nextStep]);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (selectedMaterial) {
+      setIsNavigating(true);
+      // Navigation is handled by the useEffect
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Select Gutter Material</h2>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            {materials.map((material, index) => (
-              <div
-                key={material.id}
-                className="animate-fade-in-up"
-                style={{
-                  animationDelay: `${index * 0.15}s`,
-                  animationFillMode: 'both'
-                }}
-              >
-                <GutterMaterialCard
-                  id={material.id}
-                  image={material.img}
-                  title={material.name}
-                  isSelected={selectedMaterial === material.id}
-                  onSelect={handleMaterialSelect}
-                />
-              </div>
-            ))}
-          </div>
-          
-          {/* Navigation status indicator */}
-          {isNavigating && (
-            <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
-              <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-              <span>Processing your selection...</span>
+          <form onSubmit={handleSubmit}>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Select Gutter Material</h2>
             </div>
-          )}
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+              {materials.map((material, index) => (
+                <div
+                  key={material.id}
+                  className="animate-fade-in-up"
+                  style={{
+                    animationDelay: `${index * 0.15}s`,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  <GutterMaterialCard
+                    id={material.id}
+                    image={material.img}
+                    title={material.name}
+                    isSelected={selectedMaterial === material.id}
+                    onSelect={handleMaterialSelect}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Continue button */}
+            <div className="flex justify-center mt-8">
+              {selectedMaterial && !isNavigating && (
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+            
+            {/* Navigation status indicator */}
+            {isNavigating && (
+              <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
+                <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span>Processing your selection...</span>
+              </div>
+            )}
+          </form>
         </CardContent>
       </Card>
       

@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 
-import add from "@/assets/images/brick-wall.png"
-import minus from "@/assets/images/wall.png"
-import block from "@/assets/images/prohibition.png"
+// Import images with explicit paths (adjust if needed)
+import add from "@/assets/images/brick-wall.png";
+import minus from "@/assets/images/wall.png";
+import block from "@/assets/images/prohibition.png";
 
 // BathwallType Card Component
 const WallOptionCard = ({ id, image, title, isSelected, onSelect }) => {
@@ -27,6 +28,11 @@ const WallOptionCard = ({ id, image, title, isSelected, onSelect }) => {
             src={image} 
             alt={title}
             className="w-16 h-16 object-contain filter group-hover:brightness-110 group-hover:saturate-150 transition-all duration-500"
+            onError={(e) => {
+              console.error(`Failed to load image for ${title}`);
+              e.target.onerror = null;
+              e.target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iMTIiIHk9IjEyIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBhbGlnbm1lbnQtYmFzZWxpbmU9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmaWxsPSIjYWFhYWFhIj4/PC90ZXh0Pjwvc3ZnPg==";
+            }}
           />
         </div>
         
@@ -58,6 +64,7 @@ const bathwallTypes = [
   { id: "nochange", name: "No Change", img: block },
 ];
 
+// Main component - export with correct name to match import
 function BathwallTypeStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [selectedType, setSelectedType] = useState(formData.bathwallType || null);
@@ -89,42 +96,65 @@ function BathwallTypeStep() {
     return () => clearTimeout(timer);
   }, [isNavigating, selectedType, nextStep]);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (selectedType) {
+      setIsNavigating(true);
+      // Navigation is handled by the useEffect
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Do you want to add or remove Bathroom Walls?</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {bathwallTypes.map((type, index) => (
-              <div 
-                key={type.id}
-                className="animate-fade-in-up"
-                style={{
-                  animationDelay: `${index * 0.15}s`,
-                  animationFillMode: 'both'
-                }}
-              >
-                <WallOptionCard
-                  id={type.id}
-                  image={type.img}
-                  title={type.name}
-                  isSelected={selectedType === type.id}
-                  onSelect={handleTypeSelect}
-                />
-              </div>
-            ))}
-          </div>
-          
-          {/* Navigation status indicator */}
-          {isNavigating && (
-            <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
-              <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-              <span>Processing your selection...</span>
+          <form onSubmit={handleSubmit}>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Do you want to add or remove Bathroom Walls?</h2>
             </div>
-          )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {bathwallTypes.map((type, index) => (
+                <div 
+                  key={type.id}
+                  className="animate-fade-in-up"
+                  style={{
+                    animationDelay: `${index * 0.15}s`,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  <WallOptionCard
+                    id={type.id}
+                    image={type.img}
+                    title={type.name}
+                    isSelected={selectedType === type.id}
+                    onSelect={handleTypeSelect}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Continue button */}
+            <div className="flex justify-center mt-8">
+              {selectedType && !isNavigating && (
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+            
+            {/* Navigation status indicator */}
+            {isNavigating && (
+              <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
+                <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span>Processing your selection...</span>
+              </div>
+            )}
+          </form>
         </CardContent>
       </Card>
       

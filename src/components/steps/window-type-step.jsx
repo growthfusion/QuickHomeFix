@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,6 +56,12 @@ function WindowServiceStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [selectedType, setSelectedType] = useState(formData.windowType || null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Animation on load
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   const windowTypes = [
     { id: "replace", name: "Windows Install", image: roof },
@@ -81,42 +89,65 @@ function WindowServiceStep() {
     return () => clearTimeout(timer);
   }, [isNavigating, selectedType, nextStep]);
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (selectedType) {
+      setIsNavigating(true);
+      // Navigation is handled by the useEffect
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">What type of windows service do you need?</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {windowTypes.map((type, index) => (
-              <div 
-                key={type.id}
-                className="animate-fade-in-up"
-                style={{
-                  animationDelay: `${index * 0.15}s`,
-                  animationFillMode: 'both'
-                }}
-              >
-                <WindowServiceCard
-                  id={type.id}
-                  image={type.image}
-                  title={type.name}
-                  isSelected={selectedType === type.id}
-                  onSelect={handleTypeSelect}
-                />
-              </div>
-            ))}
-          </div>
-          
-          {/* Navigation status indicator */}
-          {isNavigating && (
-            <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
-              <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-              <span>Proceeding to next step...</span>
+          <form onSubmit={handleSubmit}>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">What type of windows service do you need?</h2>
             </div>
-          )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {windowTypes.map((type, index) => (
+                <div 
+                  key={type.id}
+                  className="animate-fade-in-up"
+                  style={{
+                    animationDelay: `${index * 0.15}s`,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  <WindowServiceCard
+                    id={type.id}
+                    image={type.image}
+                    title={type.name}
+                    isSelected={selectedType === type.id}
+                    onSelect={handleTypeSelect}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Continue button */}
+            <div className="flex justify-center mt-8">
+              {selectedType && !isNavigating && (
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+            
+            {/* Navigation status indicator */}
+            {isNavigating && (
+              <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
+                <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                <span>Proceeding to next step...</span>
+              </div>
+            )}
+          </form>
         </CardContent>
       </Card>
       

@@ -16,6 +16,7 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
       onClick={() => onSelect(id)}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer h-full"
     >
+      {/* Card content unchanged */}
       <div className={`absolute inset-0 ${
         isSelected
           ? "opacity-100 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-pink-500/15 dark:from-blue-500/25 dark:via-purple-500/25 dark:to-pink-500/25"
@@ -39,7 +40,6 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
           {title}
         </h3>
         
-        {/* Enhanced original style popular indicator */}
         {isPopular && (
           <div className="overflow-hidden h-[18px] flex items-center justify-center mt-1">
             <span className="animate-shimmer text-[10px] font-bold tracking-tight text-blue-600 dark:text-blue-400 px-2 py-0.5 bg-blue-100/60 dark:bg-blue-900/40 rounded-full border border-blue-200 dark:border-blue-700 inline-block">
@@ -63,7 +63,7 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
 };
 
 function ServiceSelection() {
-  const { formData, updateFormData, nextStep } = useFormStore();
+  const { formData, updateFormData, resetForm } = useFormStore();
   const [selectedService, setSelectedService] = useState(formData.service || null);
   const navigate = useNavigate();
   
@@ -71,13 +71,18 @@ function ServiceSelection() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   const services = [
-    { id: "roof", name: "Roof Services", image: roof },
-    { id: "windows", name: "Windows", image: windows, isPopular: true },
-    { id: "bath", name: "Bath Remodeling", image: bath },
-    { id: "solar", name: "Solar Energy", image: solar },
-    { id: "gutter", name: "Gutter Services", image: gutter },
-    { id: "walk-in", name: "Walk-In-Tub/Shower", image: shower },
+    { id: "roof", name: "Roof Services", image: roof, path: "/roofing-type" },
+    { id: "windows", name: "Windows", image: windows, isPopular: true, path: "/window-type" },
+    { id: "bath", name: "Bath Remodeling", image: bath, path: "/wall-option" }, // Update this path when you have a bath component
+    { id: "solar", name: "Solar Energy", image: solar, path: "/solar-type" },
+    { id: "gutter", name: "Gutter Services", image: gutter, path: "/gutter-type" },
+    { id: "walk-in", name: "Walk-In-Tub/Shower", image: shower, path: "/walkin-type" },
   ];
+
+  // Reset form when component mounts to ensure clean state
+  useEffect(() => {
+    resetForm();
+  }, []);
 
   const handleServiceSelect = (serviceId) => {
     setSelectedService(serviceId);
@@ -91,18 +96,32 @@ function ServiceSelection() {
   useEffect(() => {
     let timer;
     if (isNavigating && selectedService) {
+      const selectedServiceData = services.find(service => service.id === selectedService);
+      
       timer = setTimeout(() => {
-        nextStep();
+        // Navigate to the appropriate page based on service selection
+        if (selectedServiceData && selectedServiceData.path) {
+          navigate(selectedServiceData.path);
+        }
       }, 800); // Delay navigation to show selection feedback
     }
     
     return () => clearTimeout(timer);
-  }, [isNavigating, selectedService, nextStep]);
+  }, [isNavigating, selectedService, navigate, services]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (selectedService) {
+      setIsNavigating(true);
+      // Form submission is handled by useEffect above
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <div className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
-        <div className="p-8">
+        <form onSubmit={handleSubmit} className="p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Select Your Service</h2>
             <p className="text-base text-gray-600 dark:text-gray-400">
@@ -132,6 +151,18 @@ function ServiceSelection() {
             ))}
           </div>
           
+          {/* Navigation buttons */}
+          <div className="flex justify-center mt-8">
+            {selectedService && !isNavigating && (
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              >
+                Continue
+              </button>
+            )}
+          </div>
+          
           {/* Navigation status indicator */}
           {isNavigating && (
             <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
@@ -139,7 +170,7 @@ function ServiceSelection() {
               <span>Proceeding to next step...</span>
             </div>
           )}
-        </div>
+        </form>
       </div>
       
       {/* CSS for animations */}

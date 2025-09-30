@@ -8,6 +8,7 @@ export default {
     theme: {
         screens: {
             'xs': '360px',   
+            'mm':'425px',  // Extra small phones
             'sm': '480px',   // Small phones
             'md': '600px',   // Regular phones
             'tab': '768px',  // Tablets
