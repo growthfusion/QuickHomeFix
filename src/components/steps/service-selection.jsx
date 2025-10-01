@@ -9,14 +9,24 @@ import windows from '@/assets/images/window.png';
 import shower from '@/assets/images/showerr.png';
 import gutter from '@/assets/images/round.png';
 
-// Service Card Component with enhanced original-style popular indicator
+// Service Card Component with enhanced ribbon-style popular indicator
+// Service Card Component with a working, robust ribbon
 const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
   return (
     <div 
       onClick={() => onSelect(id)}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer h-full"
     >
-      {/* Card content unchanged */}
+      {/* Popular Ribbon - CORRECTED IMPLEMENTATION */}
+      {isPopular && (
+        <div className="absolute top-0 right-0 h-24 w-24 overflow-hidden z-20">
+          <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center font-semibold uppercase text-[11px] tracking-wider py-1 right-[-35px] top-[25px] w-[150px] shadow-md border-t border-b border-blue-400/30">
+            Popular
+          </div>
+        </div>
+      )}
+      
+      {/* Card content */}
       <div className={`absolute inset-0 ${
         isSelected
           ? "opacity-100 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-pink-500/15 dark:from-blue-500/25 dark:via-purple-500/25 dark:to-pink-500/25"
@@ -40,14 +50,6 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
           {title}
         </h3>
         
-        {isPopular && (
-          <div className="overflow-hidden h-[18px] flex items-center justify-center mt-1">
-            <span className="animate-shimmer text-[10px] font-bold tracking-tight text-blue-600 dark:text-blue-400 px-2 py-0.5 bg-blue-100/60 dark:bg-blue-900/40 rounded-full border border-blue-200 dark:border-blue-700 inline-block">
-              most popular
-            </span>
-          </div>
-        )}
-        
         {isSelected && (
           <div className="absolute right-3 bottom-3 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs animate-fade-in">
             ✓
@@ -55,6 +57,7 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
         )}
       </div>
       
+      {/* Shimmer on hover */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out">
         <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent skew-x-12" />
       </div>
@@ -63,26 +66,27 @@ const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
 };
 
 function ServiceSelection() {
-  const { formData, updateFormData, resetForm } = useFormStore();
+  const { formData, updateFormData, resetForm, setStep } = useFormStore();
   const [selectedService, setSelectedService] = useState(formData.service || null);
   const navigate = useNavigate();
   
   // Add automatic navigation delay
   const [isNavigating, setIsNavigating] = useState(false);
 
+  // Services array with paths
   const services = [
-    { id: "roof", name: "Roof Services", image: roof, path: "/roofing-type" },
-    { id: "windows", name: "Windows", image: windows, isPopular: true, path: "/window-type" },
-    { id: "bath", name: "Bath Remodeling", image: bath, path: "/wall-option" }, // Update this path when you have a bath component
-    { id: "solar", name: "Solar Energy", image: solar, path: "/solar-type" },
-    { id: "gutter", name: "Gutter Services", image: gutter, path: "/gutter-type" },
-    { id: "walk-in", name: "Walk-In-Tub/Shower", image: shower, path: "/walkin-type" },
+    { id: "roof", name: "Roof Services", image: roof, path: "/quote/roof" },
+    { id: "windows", name: "Windows", image: windows, isPopular: true, path: "/quote/windows" },
+    { id: "bath", name: "Bath Remodeling", image: bath, path: "/quote/bath" },
+    { id: "solar", name: "Solar Energy", image: solar, path: "/quote/solar" },
+    { id: "gutter", name: "Gutter Services", image: gutter, path: "/quote/gutter" },
+    { id: "walk-in", name: "Walk-In-Tub/Shower", image: shower, path: "/quote/walk-in" },
   ];
 
   // Reset form when component mounts to ensure clean state
   useEffect(() => {
     resetForm();
-  }, []);
+  }, [resetForm]);
 
   const handleServiceSelect = (serviceId) => {
     setSelectedService(serviceId);
@@ -101,13 +105,17 @@ function ServiceSelection() {
       timer = setTimeout(() => {
         // Navigate to the appropriate page based on service selection
         if (selectedServiceData && selectedServiceData.path) {
-          navigate(selectedServiceData.path);
+          // Set the appropriate step for the service flow
+          setStep(1); // Move to first step after service selection
+          
+          // Navigate to new path
+          navigate(selectedServiceData.path, { replace: true });
         }
       }, 800); // Delay navigation to show selection feedback
     }
     
     return () => clearTimeout(timer);
-  }, [isNavigating, selectedService, navigate, services]);
+  }, [isNavigating, selectedService, navigate, services, setStep]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -149,18 +157,6 @@ function ServiceSelection() {
                 />
               </div>
             ))}
-          </div>
-          
-          {/* Navigation buttons */}
-          <div className="flex justify-center mt-8">
-            {selectedService && !isNavigating && (
-              <button
-                type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-              >
-                Continue
-              </button>
-            )}
           </div>
           
           {/* Navigation status indicator */}
@@ -228,6 +224,19 @@ function ServiceSelection() {
         
         .animate-spin {
           animation: spin 1s linear infinite;
+        }
+        
+        @keyframes shine {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        
+        .animate-shine {
+          animation: shine 2s infinite;
         }
       `}</style>
     </div>

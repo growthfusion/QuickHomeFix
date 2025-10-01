@@ -95,18 +95,7 @@ function RoofCountStep() {
               </button>
             </div>
             
-            {/* Continue button */}
-            <div className="flex justify-center mt-8">
-              {selectedCount && !isNavigating && (
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                  aria-label="Continue to next step"
-                >
-                  Continue
-                </button>
-              )}
-            </div>
+         
             
             {/* Navigation status indicator */}
             {isNavigating && (

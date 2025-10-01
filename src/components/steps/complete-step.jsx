@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, ThumbsUp } from "lucide-react";
 
-function CompleteStep() {
+export default function CompleteStep() {
   const { formData } = useFormStore();
-  const navigate = useNavigate(); // ✅ Initialize navigation
+  const navigate = useNavigate();
   const [animationComplete, setAnimationComplete] = useState(false);
   const [showUpsells, setShowUpsells] = useState(false);
 
@@ -72,82 +72,68 @@ function CompleteStep() {
         name: "Roofing",
         image: "/roofing_services.jpg",
         description: "Premium roofing solutions for any home",
-        benefit: "50-year warranty available",
-        path: "/roofing-type",
+        benefit: "50-year warranty",
+        path: "/quote/roof",
       },
       solar: {
         name: "Solar Energy",
         image: "/Solar.jpg",
         description: "Save on energy costs with clean solar power",
-        benefit: "Up to 30% energy savings",
-        path: "/solar-type",
+        benefit: "Up to 30% savings",
+        path: "/quote/solar",
       },
       windows: {
         name: "Windows",
         image: "/window_services.jpg",
         description: "Energy-efficient windows for comfort and savings",
-        benefit: "Reduces energy costs by 15%",
-        path: "/window-type",
+        benefit: "Reduces costs by 15%",
+        path: "/quote/windows",
       },
       gutter: {
         name: "Gutters",
         image: "/gutter_services.jpg",
         description: "Quality gutter systems to protect your home",
-        benefit: "Prevents foundation damage",
-        path: "/gutter-type",
+        benefit: "Prevents damage",
+        path: "/quote/gutter",
       },
       bath: {
         name: "Bath Remodeling",
         image: "/walkin_tub_services.png",
-        description: "Modern bathroom renovations for enhanced comfort",
+        description: "Modern bathroom renovations for comfort",
         benefit: "Increases home value",
-        path: "/bathroom-wall",
+        path: "/quote/bath",
       },
       shower: {
         name: "Walk-in Shower",
         image: "/walkin_shower_services.png",
         description: "Modern, accessible shower solutions",
         benefit: "Quick 1-day installation",
-        path: "/walkin-type",
-      },
-      tub: {
-        name: "Walk-in Tub",
-        image: "/walkin_tub_services.png",
-        description: "Safe, comfortable bathing experience",
-        benefit: "Enhanced safety features",
-        path: "/walkin-type",
+        path: "/quote/walk-in",
       },
     };
 
-    const currentService = formData.service;
-    let servicesToShow = [];
+    const allServiceKeys = Object.keys(serviceDetails);
 
-    if (!currentService || !serviceDetails[currentService]) {
-      servicesToShow = ["windows", "solar", "gutter", "bath", "roofing"];
-    } else {
-      const serviceSets = {
-        roofing: ["solar", "windows", "gutter", "bath", "shower"],
-        solar: ["roofing", "windows", "gutter", "bath", "shower"],
-        windows: ["roofing", "solar", "gutter", "bath", "shower"],
-        gutter: ["roofing", "solar", "windows", "bath", "shower"],
-        bath: ["roofing", "solar", "windows", "gutter", "shower"],
-        shower: ["roofing", "solar", "windows", "gutter", "bath"],
-        tub: ["roofing", "solar", "windows", "gutter", "bath"],
-        "walk-in": ["roofing", "solar", "windows", "gutter", "bath"],
-      };
-      servicesToShow = serviceSets[currentService] || ["windows", "solar", "gutter", "bath", "roofing"];
-    }
+    // ✅ FIX: Normalize the service name to handle the 'roof' vs 'roofing' mismatch.
+    // If the service from the form is not an exact match to a key (e.g., 'solar', 'windows'),
+    // we assume it's the default service, which is 'roofing'.
+    const canonicalService = allServiceKeys.includes(formData.service)
+      ? formData.service
+      : "roofing";
+
+    // Now, filter using the corrected, canonical service name.
+    const servicesToShow = allServiceKeys.filter(key => key !== canonicalService);
 
     return servicesToShow
-      .map((id) => (serviceDetails[id] ? { id, ...serviceDetails[id] } : null))
-      .filter(Boolean);
+      .slice(0, 5) // We only have 5 slots in the grid
+      .map((id) => ({ id, ...serviceDetails[id] }));
   };
 
   const { title, message } = getServiceMessage();
   const serviceCards = getServiceCards();
 
   const navigateTo = (path) => {
-    navigate(path); // ✅ use react-router-dom navigation
+    navigate(path);
   };
 
   return (
@@ -287,5 +273,3 @@ function CompleteStep() {
     </div>
   );
 }
-
-export default CompleteStep;

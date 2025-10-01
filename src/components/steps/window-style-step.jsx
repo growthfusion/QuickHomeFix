@@ -138,18 +138,7 @@ function WindowStyleStep() {
               ))}
             </div>
             
-            {/* Continue button */}
-            <div className="flex justify-center mt-8">
-              {selectedMaterial && !isNavigating && (
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                >
-                  Continue
-                </button>
-              )}
-            </div>
-            
+           
             {/* Navigation status indicator */}
             {isNavigating && (
               <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">

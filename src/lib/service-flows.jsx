@@ -27,7 +27,7 @@ const serviceFlows = {
     id: "solar",
     name: "Solar Energy",
     steps: [ "solar-type", "roof-size", "email", "name", "phone","dfaddress", "complete"],
-    totalSteps: 8,
+    totalSteps: 7,
   },
   bath: {
     id: "bath",

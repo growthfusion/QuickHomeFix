@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import logo from '/logo.png';
-import logo1 from '/logo1.png';
+import logo from '@/assets/images/logo.png';
+import logo1 from '@/assets/images/logo1.png';
 import '@/index.css'
 import ReviewsSection  from '@/components/layout/ReviewsSection.jsx';
 import HeroSection from "@/components/layout/heroSection";
 import { useFormStore } from "@/lib/store";
 
+import walkin_shower_services from '@/assets/images/walkin_shower_services.png';
+import walkin_tub_services from '@/assets/images/walkin_tub_services.png';
 function Home() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const goToRoofingEstimate = () => {
-        navigate("/roofing");
+        navigate("/quote");
     };
  const initForm = useFormStore((state) => state.initForm);
 
@@ -408,7 +410,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-400">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="/walkin_shower_services.png" alt="Walk-in Shower" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={walkin_shower_services} alt="Walk-in Shower" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Walk-In Showers</h3>
                     <p className="text-gray-200 mb-4">Luxurious, accessible bathroom transformations</p>
@@ -420,7 +422,7 @@ function Home() {
 
             <div data-aos className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 delay-500">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                <img src="/walkin_tub_services.png" alt="Walk-in Tub" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
+                <img src={walkin_tub_services} alt="Walk-in Tub" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Walk-In Tubs</h3>
                     <p className="text-gray-200 mb-4">Safe, therapeutic bathing solutions for all ages</p>
@@ -502,12 +504,12 @@ function Home() {
                         <div>
                             <h3 className="text-lg font-bold mb-4">Our Services</h3>
                             <ul className="space-y-2">
-                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
-                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
-                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
-                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
-                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
-                                <li><a href="/roofing" className="text-gray-400 hover:text-white transition-colors">Emergency Repairs</a></li>
+                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
+                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
+                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
+                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
+                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
+                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Emergency Repairs</a></li>
                             </ul>
                         </div>
 
