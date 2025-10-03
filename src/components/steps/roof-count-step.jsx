@@ -49,7 +49,7 @@ function RoofCountStep() {
     <div style={{ background: '#f8fbfe', padding: '20px' }} className="min-h-screen">
       <Card className="mx-auto max-w-2xl bg-white shadow-sm border-gray-100 overflow-hidden">
         <CardContent className="p-8 pb-10">
-          <form onSubmit={handleSubmit}>
+          <form data-tf-element-role="offer" onSubmit={handleSubmit}>
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
                 <div className="p-2 bg-blue-50 rounded-full">
@@ -58,6 +58,11 @@ function RoofCountStep() {
               </div>
               <h2 className="text-2xl font-semibold mb-2">How many windows need service?</h2>
             </div>
+
+            {/* Hidden TrustedForm field */}
+            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
+                   value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+            />
             
             {/* Original button sizing and layout, with animation */}
             <div className={`grid grid-cols-4 gap-4 mb-6 ${isLoaded ? 'animate-fadeIn' : 'opacity-0'}`}>

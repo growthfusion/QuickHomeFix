@@ -102,10 +102,15 @@ function BathshowerTypeStep() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
-          <form onSubmit={handleSubmit}>
+          <form data-tf-element-role="offer" onSubmit={handleSubmit}>
             <div className="text-center mb-8">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Do you need a shower installation or upgrade?</h2>
             </div>
+
+            {/* Hidden TrustedForm field */}
+            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
+                   value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+            />
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {bathshowerTypes.map((type, index) => (

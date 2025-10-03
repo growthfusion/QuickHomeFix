@@ -129,13 +129,18 @@ function ServiceSelection() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <div className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
-        <form onSubmit={handleSubmit} className="p-8">
+        <form data-tf-element-role="offer" onSubmit={handleSubmit} className="p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Select Your Service</h2>
             <p className="text-base text-gray-600 dark:text-gray-400">
               Choose the home service you need to get started with your free quote!
             </p>
           </div>
+
+          {/* Hidden TrustedForm field */}
+          <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
+                 value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+          />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {services.map((service, index) => (

@@ -38,7 +38,7 @@ function EmailStep() {
             </p>
           </div>
           
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form data-tf-element-role="offer" onSubmit={handleSubmit} className="space-y-5">
             <div className="relative">
               <label className="block text-sm font-medium mb-2">Email Address</label>
               <div className="relative rounded-md">
@@ -60,6 +60,11 @@ function EmailStep() {
                 <p className="mt-1 text-sm text-red-500">Please enter a valid email</p>
               )}
             </div>
+
+            {/* Hidden TrustedForm field */}
+            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
+                   value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+            />
             
             {/* Just the Next button, full width */}
             <div className="pt-2">
@@ -67,6 +72,7 @@ function EmailStep() {
                 type="submit"
                 disabled={!isEmailValid}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                data-tf-element-role="submit"
               >
                 Next
               </Button>

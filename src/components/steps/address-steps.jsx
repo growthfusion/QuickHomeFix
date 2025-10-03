@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { TrustBadge } from "@/components/steps/trust-badge";
 import { MapPin } from "lucide-react";
 import axios from "axios";
+import TFConsent from "@/components/TF/TFConsent";
 
 // Debounce helper
 const debounce = (fn, delay) => {
@@ -119,7 +120,7 @@ export function AddressSteps() {
           </div>
 
           <div className="max-w-2xl mx-auto relative">
-            <form onSubmit={handleSubmit}>
+            <form data-tf-element-role="offer" onSubmit={handleSubmit}>
               <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
                 <CardContent className="p-6 space-y-4">
                   {/* Address Input */}
@@ -211,6 +212,13 @@ export function AddressSteps() {
                 </CardContent>
               </Card>
 
+              {/* Hidden TrustedForm field */}
+              <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
+                     value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+              />
+              {/* Consent block */}
+              <TFConsent submitText="Get Free Quote" />
+
               {/* Submit button */}
               <div className="grid grid-cols-1 gap-2 mt-2">
                 <Button
@@ -218,6 +226,7 @@ export function AddressSteps() {
                   disabled={!isFormValid}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   size="sm"
+                  data-tf-element-role="submit"
                 >
                   Get Free Quote
                 </Button>
