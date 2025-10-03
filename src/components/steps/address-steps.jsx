@@ -1,83 +1,110 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TrustBadge } from '@/components/steps/trust-badge ';
+import { TrustBadge } from "@/components/steps/trust-badge";
 import { MapPin } from "lucide-react";
+import axios from "axios";
+
+// Debounce helper
+const debounce = (fn, delay) => {
+  let timeoutId;
+  return (...args) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+};
 
 export function AddressSteps() {
   const { formData, updateFormData, nextStep } = useFormStore();
-  const [addressDetected, setAddressDetected] = useState(false);
   const [errors, setErrors] = useState({});
   const [zipTouched, setZipTouched] = useState(false);
-  
-  // Validation function for zipcode
-  const validateZipcode = (zip) => {
-    const zipRegex = /^\d{5}(-\d{4})?$/;
-    return zipRegex.test(zip);
-  };
-  
-  // Check if form is valid
-  const isFormValid = formData.address && 
-                     formData.city && 
-                     formData.state && 
-                     formData.zipcode && 
-                     validateZipcode(formData.zipcode);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Simulate auto-filling address from email (when component mounts)
-  useEffect(() => {
-    // Only attempt to fill if we have an email and don't already have an address
-    if (formData.email && (!formData.address || !formData.city)) {
-      // In a real implementation, you would call an API to get address from email
-      setTimeout(() => {
-        if (!formData.address) {
-          updateFormData("address", "");  // Removed dummy data
-          updateFormData("city", "");     // Removed dummy data
-          updateFormData("state", "");    // Removed dummy data
-          updateFormData("zipcode", "");  // Removed dummy data
-          setAddressDetected(true);
+  const validateZipcode = (zip) => /^\d{5}(-\d{4})?$/.test(zip);
+  const isFormValid =
+    formData.address &&
+    formData.city &&
+    formData.state &&
+    formData.zipcode &&
+    validateZipcode(formData.zipcode);
+
+  // API call to get suggestions
+  const fetchSuggestions = async (address, city, state, zipcode) => {
+    if (!address && !city && !state && !zipcode) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        "https://api.addressverify.io/service/lookup/address",
+        { address, city, state, zipcode },
+        {
+          headers: {
+            "x-api-key": "5526148f-13e7-462f-9a4e-691ea3cc8eb8",
+            "Content-Type": "application/json",
+          },
         }
-      }, 500);
-    }
-  }, [formData.email]);
+      );
+      setLoading(false);
 
-  // Validate zipcode when it changes
-  useEffect(() => {
-    if (formData.zipcode && zipTouched) {
-      if (!validateZipcode(formData.zipcode)) {
-        setErrors({...errors, zipcode: "Please enter a valid 5-digit zipcode"});
+      if (response.data.suggestions && response.data.suggestions.length > 0) {
+        // Directly show API suggestions
+        setSuggestions(response.data.suggestions);
       } else {
-        setErrors({...errors, zipcode: null});
+        setSuggestions([]);
       }
+    } catch (err) {
+      console.error("Address suggestion error:", err);
+      setLoading(false);
+      setSuggestions([]);
     }
-  }, [formData.zipcode, zipTouched]);
-  
-  // Format zipcode as user types
-  const handleZipcodeChange = (e) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 5);
-    updateFormData("zipcode", value);
-    setZipTouched(true);
   };
-  
-  // Handle the form submission
+
+  const debouncedFetch = useCallback(debounce(fetchSuggestions, 500), []);
+
+  const handleChange = (field) => (e) => {
+    const value =
+      field === "zipcode"
+        ? e.target.value.replace(/\D/g, "").substring(0, 5)
+        : e.target.value;
+
+    updateFormData(field, value);
+    if (field === "zipcode") setZipTouched(true);
+
+    // Fetch live suggestions from API
+    debouncedFetch(
+      field === "address" ? value : formData.address,
+      field === "city" ? value : formData.city,
+      field === "state" ? value : formData.state,
+      field === "zipcode" ? value : formData.zipcode
+    );
+  };
+
+  const applySuggestion = (s) => {
+    updateFormData("address", s.address);
+    updateFormData("city", s.city);
+    updateFormData("state", s.state);
+    updateFormData("zipcode", s.zipcode);
+    setSuggestions([]);
+  };
+
   const handleSubmit = (e) => {
-    if (e) e.preventDefault();
-    
-    // Set all fields as touched for validation
+    e.preventDefault();
     setZipTouched(true);
-    
-    // Check zipcode validity
-    if (formData.zipcode && !validateZipcode(formData.zipcode)) {
-      setErrors({...errors, zipcode: "Please enter a valid 5-digit zipcode"});
+
+    if (!validateZipcode(formData.zipcode)) {
+      setErrors({
+        ...errors,
+        zipcode: "Please enter a valid 5-digit zipcode",
+      });
       return;
     }
-    
-    if (isFormValid) {
-      nextStep();
-    }
+
+    if (isFormValid) nextStep();
   };
 
   return (
@@ -90,13 +117,13 @@ export function AddressSteps() {
               Please provide the address of the property where service is needed
             </p>
           </div>
-          
-          <div className="max-w-2xl mx-auto">
+
+          <div className="max-w-2xl mx-auto relative">
             <form onSubmit={handleSubmit}>
-              {/* Address Card Section */}
               <Card className="mb-8 border border-gray-200 bg-gray-50 dark:bg-gray-800">
                 <CardContent className="p-6 space-y-4">
-                  <div>
+                  {/* Address Input */}
+                  <div className="relative">
                     <label htmlFor="address" className="block text-sm font-medium mb-2">
                       Property Address <span className="text-red-500">*</span>
                     </label>
@@ -108,15 +135,33 @@ export function AddressSteps() {
                         id="address"
                         placeholder="Street address"
                         value={formData.address || ""}
-                        onChange={(e) => updateFormData("address", e.target.value)}
+                        onChange={handleChange("address")}
                         className="w-full pl-10 bg-white"
                         required
                         autoFocus
                       />
                     </div>
+
+                    {/* Suggestions dropdown */}
+                    {loading && <p className="text-sm text-gray-500 mt-1">Loading suggestions...</p>}
+                    {suggestions.length > 0 && (
+                      <div className="absolute z-50 w-full bg-white border border-gray-200 rounded shadow-md mt-1">
+                        {suggestions.map((s, idx) => (
+                          <button
+                            type="button"
+                            key={idx}
+                            className="block w-full text-left px-3 py-2 hover:bg-gray-100 text-sm"
+                            onClick={() => applySuggestion(s)}
+                          >
+                            {s.address}, {s.city}, {s.state} {s.zipcode}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
+                  {/* City & State */}
+                  <div className="grid grid-cols-2 gap-4 mt-4">
                     <div>
                       <label htmlFor="city" className="block text-sm font-medium mb-2">
                         City <span className="text-red-500">*</span>
@@ -125,7 +170,7 @@ export function AddressSteps() {
                         id="city"
                         placeholder="City"
                         value={formData.city || ""}
-                        onChange={(e) => updateFormData("city", e.target.value)}
+                        onChange={handleChange("city")}
                         className="w-full bg-white"
                         required
                       />
@@ -134,18 +179,19 @@ export function AddressSteps() {
                       <label htmlFor="state" className="block text-sm font-medium mb-2">
                         State <span className="text-red-500">*</span>
                       </label>
-                      <Input 
+                      <Input
                         id="state"
                         placeholder="State"
-                        value={formData.state || ""} 
-                        onChange={(e) => updateFormData("state", e.target.value)}
-                        className="w-full bg-white" 
+                        value={formData.state || ""}
+                        onChange={handleChange("state")}
+                        className="w-full bg-white"
                         required
                       />
                     </div>
                   </div>
-                  
-                  <div>
+
+                  {/* Zipcode */}
+                  <div className="mt-4">
                     <label htmlFor="zipcode" className="block text-sm font-medium mb-2">
                       Zipcode <span className="text-red-500">*</span>
                     </label>
@@ -153,7 +199,7 @@ export function AddressSteps() {
                       id="zipcode"
                       placeholder="5-digit zipcode"
                       value={formData.zipcode || ""}
-                      onChange={handleZipcodeChange}
+                      onChange={handleChange("zipcode")}
                       className={`w-full bg-white ${errors.zipcode ? "border-red-300" : ""}`}
                       required
                       maxLength={5}
@@ -164,23 +210,17 @@ export function AddressSteps() {
                   </div>
                 </CardContent>
               </Card>
-              
-              {/* Navigation button - Get Free Quote */}
-              <div className="grid grid-cols-1 gap-2">
-                <div className="col-span-1">
-                  <Button
-                    type="submit"
-                    disabled={!isFormValid}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    size="sm"
-                  >
-                    Get Free Quote
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="text-center text-xs text-gray-500 mt-6">
-                <p className="mt-1">Your information is secure and confidential</p>
+
+              {/* Submit button */}
+              <div className="grid grid-cols-1 gap-2 mt-2">
+                <Button
+                  type="submit"
+                  disabled={!isFormValid}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  Get Free Quote
+                </Button>
               </div>
             </form>
           </div>

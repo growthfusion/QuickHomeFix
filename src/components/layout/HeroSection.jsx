@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 
-// ✅ Use public folder path for fast preload
-const heroImg = './img3.png';
+const heroImg = './img.webp'; 
 
 // Custom hook to detect window size
 const useWindowSize = () => {
@@ -31,7 +30,6 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen overflow-hidden">
-      {/* ✅ Hero background image as <img> with high fetch priority */}
       <img
         src={heroImg}
        
@@ -39,12 +37,9 @@ const HeroSection = () => {
         decoding="async"
         className="absolute inset-0 w-full h-full object-cover"
       />
-      {/* ✅ Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
 
-      {/* ✅ Hero Content */}
       {width < breakpoint ? (
-        // 📱 Mobile layout
         <div className="relative z-10 pt-[120px] px-4 xs:px-6 sm:px-8 pb-[110px]">
           <h1 className="text-4xl xs:text-5xl font-bold text-white leading-[1.1] tracking-tight mb-[3px]">
             Transform Your <br className="hidden xs:block" />Home
@@ -71,7 +66,6 @@ const HeroSection = () => {
           </button>
         </div>
       ) : (
-        // 🖥️ Desktop layout
         <div className="relative z-10 container mx-auto px-6 lg:px-8 py-32">
           <div className="max-w-3xl">
             <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">

@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail } from "lucide-react";
-import { TrustBadge } from '@/components/steps/trust-badge ';
+import { TrustBadge } from '@/components/steps/trust-badge';
 
 function EmailStep() {
   const { formData, updateFormData, nextStep } = useFormStore();

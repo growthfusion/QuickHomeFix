@@ -70,28 +70,28 @@ export default function CompleteStep() {
     const serviceDetails = {
       roofing: {
         name: "Roofing",
-        image: "/roofing_services.jpg",
+        image: "/roofing_services.webp",
         description: "Premium roofing solutions for any home",
         benefit: "50-year warranty",
         path: "/quote/roof",
       },
       solar: {
         name: "Solar Energy",
-        image: "/Solar.jpg",
+        image: "/Solar.webp",
         description: "Save on energy costs with clean solar power",
         benefit: "Up to 30% savings",
         path: "/quote/solar",
       },
       windows: {
         name: "Windows",
-        image: "/window_services.jpg",
+        image: "/window_services.webp",
         description: "Energy-efficient windows for comfort and savings",
         benefit: "Reduces costs by 15%",
         path: "/quote/windows",
       },
       gutter: {
         name: "Gutters",
-        image: "/gutter_services.jpg",
+        image: "/gutter_services.webp",
         description: "Quality gutter systems to protect your home",
         benefit: "Prevents damage",
         path: "/quote/gutter",
