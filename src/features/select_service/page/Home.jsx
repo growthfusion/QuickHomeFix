@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import logo from '@/assets/images/logo.png';
 import logo1 from '@/assets/images/logo1.png';
 import '@/index.css'
-import ReviewsSection  from '@/components/layout/ReviewsSection.jsx';
 import HeroSection from "@/components/layout/heroSection";
 import { useFormStore } from "@/lib/store";
 
@@ -438,7 +437,6 @@ From roof to foundation, we connect you with trusted professionals for every hom
 
 
             {/* Reviews Section - Mobile Responsive Carousel */}
-       <ReviewsSection/>
 
             {/* CTA Section - American Style */}
             <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 relative overflow-hidden">

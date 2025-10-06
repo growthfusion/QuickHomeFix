@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail } from "lucide-react";
 import { TrustBadge } from '@/components/steps/trust-badge';
+import FooterSteps from '@/components/layout/footerSteps'
 
 function EmailStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -85,6 +86,7 @@ function EmailStep() {
         </CardContent>
       </Card>
       <TrustBadge />
+      <FooterSteps />
     </>
   );
 }
