@@ -291,7 +291,7 @@ function Home() {
                             Why Choose QuickHomeFix?
                         </h2>
                         <p data-aos className="text-xl text-gray-600 max-w-3xl mx-auto delay-100">
-                            We're not just contractors – we're your neighbors, committed to making every American home better, one project at a time.
+                           We’re not just a platform — we’re your neighbors, helping connect every American home with trusted local professionals
                         </p>
                     </div>
 
@@ -355,7 +355,7 @@ function Home() {
                 Our Premium Services
             </h2>
             <p data-aos className="text-xl text-gray-600 max-w-3xl mx-auto delay-100">
-                From roof to foundation, we've got your home covered with <br />industry-leading solutions
+From roof to foundation, we connect you with trusted professionals for every home improvement project
             </p>
         </div>
 
@@ -449,7 +449,7 @@ function Home() {
                             Ready to Transform Your Home?
                         </h2>
                         <p data-aos className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto delay-100">
-                            Get your free estimate today and save up to 30% on your next home improvement project!
+                           Your trusted platform to find, compare, and connect with skilled local contractors
                         </p>
                         <div data-aos className="flex flex-col sm:flex-row gap-4 justify-center delay-200">
                             <button 
@@ -505,12 +505,11 @@ function Home() {
                         <div>
                             <h3 className="text-lg font-bold mb-4">Our Services</h3>
                             <ul className="space-y-2">
-                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
-                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
-                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
-                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
-                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
-                                <li><a href="/quote" className="text-gray-400 hover:text-white transition-colors">Emergency Repairs</a></li>
+                                <li><a href="/quote/roof" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
+                                <li><a href="/quote/solar" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
+                                <li><a href="/quote/windows" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
+                                <li><a href="/quote/gutter" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
+                                <li><a href="/quote/bath" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
                             </ul>
                         </div>
 

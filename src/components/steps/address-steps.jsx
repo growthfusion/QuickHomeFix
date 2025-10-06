@@ -27,7 +27,7 @@ export function AddressSteps() {
   const [zipTouched, setZipTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const validateZipcode = (zip) => /^\d{1}$/.test(zip);
+  const validateZipcode = (zip) => /^\d+$/.test(zip);
   
   // Check form validity whenever fields change
   useEffect(() => {
@@ -198,7 +198,6 @@ export function AddressSteps() {
                       <p className="text-red-500 text-xs mt-1">{errors.address}</p>
                     )}
 
-                    {/* Suggestions dropdown */}
                     {loading && <p className="text-sm text-gray-500 mt-1">Loading suggestions...</p>}
                     {suggestions.length > 0 && !loading && (
                       <div className="absolute z-50 w-full bg-white border border-gray-200 rounded shadow-md mt-1 max-h-60 overflow-auto">

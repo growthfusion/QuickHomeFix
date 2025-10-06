@@ -48,7 +48,7 @@ const HeroSection = () => {
             With Expert Care
           </h2>
           <p className="text-lg xs:text-xl text-gray-200 leading-[1.5] mb-[35px] max-w-lg">
-            America's trusted home improvement professionals. Quality work, guaranteed satisfaction, and unbeatable prices.
+America’s trusted home improvement experts. Exceptional quality, guaranteed satisfaction, and fair pricing
           </p>
           <button
             onClick={handleNavigate}
@@ -75,7 +75,7 @@ const HeroSection = () => {
               </span>
             </h1>
             <p className="text-xl text-gray-200 mt-8 mb-10 max-w-2xl">
-              America's trusted home improvement professionals. Quality work, guaranteed satisfaction, and unbeatable prices.
+             Helping you find reliable local experts to handle all your home improvement needs with ease
             </p>
             <button
               onClick={handleNavigate}
