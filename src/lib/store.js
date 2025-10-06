@@ -17,7 +17,7 @@ const initialFormData = {
   energyBill: "",
   address: "",
   city: "",
-  state: "California",
+  state: "",
   zipcode: "",
   isOwner: null,
   canMakeChanges: null,
