@@ -89,6 +89,7 @@ export function AddressSteps() {
     try {
      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/places/details?place_id=${s.place_id}`);
 
+     
       const data = await res.json();
 
       // Auto-fill all address components
