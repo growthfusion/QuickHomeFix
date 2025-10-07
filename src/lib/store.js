@@ -49,12 +49,12 @@ const useFormStore = create(
     (set, get) => ({
       formData: initialFormData,
       currentStep: 0,
-      // Add any other state you have on home page
       homePageState: {},
 
       updateFormData: (field, value) =>
         set((state) => ({
           formData: { ...state.formData, [field]: value },
+          isFormStarted: field === 'service' && value ? true : state.isFormStarted,
         })),
 
       nextStep: () =>
@@ -63,7 +63,10 @@ const useFormStore = create(
           if (!state.formData.service) return state;
           const maxSteps = serviceFlow.totalSteps;
           const nextStepValue = Math.min(state.currentStep + 1, maxSteps);
-          return { currentStep: nextStepValue };
+          return { 
+            currentStep: nextStepValue,
+            isFormStarted: true 
+          };
         }),
 
       prevStep: () =>
@@ -77,7 +80,11 @@ const useFormStore = create(
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("roofing-form-storage");
         }
-        set({ formData: initialFormData, currentStep: 0 });
+        set({ 
+          formData: initialFormData, 
+          currentStep: 0,
+          isFormStarted: false,
+        });
       },
 
       resetHomePageState: () =>
@@ -85,7 +92,6 @@ const useFormStore = create(
           homePageState: {},
         }),
 
-      // Full reset for home page
       resetAll: () => {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("roofing-form-storage");
@@ -94,13 +100,34 @@ const useFormStore = create(
           formData: initialFormData,
           currentStep: 0,
           homePageState: {},
+          isFormStarted: false,
         });
       },
 
       initForm: () => {
-        if (typeof window !== "undefined" && window.location.pathname === "/") {
+        const state = get();
+        if (typeof window !== "undefined" && 
+            window.location.pathname === "/" && 
+            !state.isFormStarted) {
           get().resetAll();
         }
+      },
+
+      canContinueFlow: () => {
+        const state = get();
+        return state.isFormStarted && state.formData.service;
+      },
+
+      getProgress: () => {
+        const state = get();
+        if (!state.formData.service) return { current: 0, total: 0 };
+        
+        const serviceFlow = getServiceFlow(state.formData.service);
+        return {
+          current: state.currentStep,
+          total: serviceFlow.totalSteps,
+          service: state.formData.service
+        };
       },
     }),
     {

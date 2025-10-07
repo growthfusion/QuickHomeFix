@@ -25,7 +25,7 @@ export const TrustBadge = () => {
   ];
   
   return (
-    <div className="relative bg-white rounded-lg p-4 shadow-md overflow-hidden max-w-3xl mx-auto mt-6 border border-gray-100">
+    <div className="relative bg-white rounded-lg p-4 shadow-sm overflow-hidden max-w-3xl mx-auto mt-6 border border-gray-100">
       {/* Ribbon - repositioned for better visibility */}
       <div className="absolute top-3 -right-14 bg-green-500 text-white px-12 py-1 rotate-45 text-xs font-medium shadow-sm z-10">
         VERIFIED
@@ -40,19 +40,18 @@ export const TrustBadge = () => {
         
         {/* Date element moved to the left */}
         <div className="flex items-center bg-gray-100 px-2 py-1 rounded-md ml-2">
-         
           <span className="text-xs font-medium text-gray-600">{formattedDate}</span>
         </div>
         
         <div className="ml-auto"></div> {/* This pushes everything else to the left */}
       </div>
 
-      {/* Trust badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+      {/* Trust badges - mobile shows 2, desktop shows 4 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
         {trustItems.map((item, index) => (
           <div 
             key={index} 
-            className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
+            className={`flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer ${index > 1 ? "hidden md:flex" : ""}`}
           >
             <div className="w-10 h-10 flex items-center justify-center mb-2 bg-white rounded-full p-1 shadow-sm">
               <img
@@ -62,13 +61,10 @@ export const TrustBadge = () => {
               />
             </div>
             <p className="text-xs font-bold text-gray-800 mb-1">{item.label}</p>
-            <p className="text-xs text-gray-500 hidden sm:block">{item.description}</p>
+            <p className="text-xs text-gray-500">{item.description}</p>
           </div>
         ))}
       </div>
-      
-      {/* Verification status card */}
-     
     </div>
   );
 };

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
+import FooterSteps from '@/components/layout/footerSteps'
+
 
 function WindowCountStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -45,7 +47,8 @@ function WindowCountStep() {
   };
 
   return (
-    <div style={{ background: '#f8fbfe', padding: '20px' }} className="min-h-screen">
+    <>
+    <div style={{ background: '#f8fbfe', padding: '20px' }} className="">
       <Card className="mx-auto max-w-2xl bg-white shadow-sm border-gray-100 overflow-hidden">
         <CardContent className="p-8 pb-10">
           <form data-tf-element-role="offer" onSubmit={handleSubmit} aria-labelledby="window-count-heading">
@@ -141,8 +144,11 @@ function WindowCountStep() {
         }
       `}</style>
     </div>
+    
+        <FooterSteps />
+
+    </>
   );
 }
 
-// Renamed to better reflect what the component does
 export default WindowCountStep;

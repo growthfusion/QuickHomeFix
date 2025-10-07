@@ -1,99 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React from "react";
 import { useNavigate } from "react-router-dom";
-
-const heroImg = './img.webp'; 
-
-// Custom hook to detect window size
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({ width: undefined, height: undefined });
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    }
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return windowSize;
-};
+import man from "@/assets/images/man.webp";
 
 const HeroSection = () => {
-  const { width } = useWindowSize();
   const navigate = useNavigate();
-  const breakpoint = 1024;
-
-  const handleNavigate = () => navigate('/quote');
-
-  if (width === undefined) return null;
+  const handleNavigate = () => navigate("/quote");
 
   return (
-    <section className="relative min-h-screen overflow-hidden">
-      <img
-        src={heroImg}
-       
-        fetchpriority="high"
-        decoding="async"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30"></div>
-
-      {width < breakpoint ? (
-        <div className="relative z-10 pt-[120px] px-4 xs:px-6 sm:px-8 pb-[110px]">
-          <h1 className="text-4xl xs:text-5xl font-bold text-white leading-[1.1] tracking-tight mb-[3px]">
-            Transform Your <br className="hidden xs:block" />Home
-          </h1>
-          <h2 className="text-3xl xs:text-4xl font-bold text-blue-400 leading-[1.2] mt-1 mb-[31px]">
+    <section className="relative min-h-screen bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 flex flex-col justify-between lg:flex-row lg:items-center overflow-hidden">
+      
+      {/* 🔹 Decorative Background Shape */}
+      <div className="absolute top-0 right-0 w-96 h-96 lg:w-[40rem] lg:h-[40rem] bg-white/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-3xl opacity-70 z-0"></div>
+      
+      {/* 🔹 Content Area (Left side on Desktop) - NO CHANGES HERE */}
+      <div className="relative z-10 w-full lg:w-2/5 pt-28 pb-8 lg:py-0 px-6 sm:px-12 lg:pl-16 xl:pl-24 text-center lg:text-left">
+        <h1 className="text-4xl xs:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+          Transform Your <br className="hidden xs:block" /> Home
+          <span className="block text-yellow-300 mt-2 text-3xl xs:text-4xl lg:text-5xl">
             With Expert Care
-          </h2>
-          <p className="text-lg xs:text-xl text-gray-200 leading-[1.5] mb-[35px] max-w-lg">
-America’s trusted home improvement experts. Exceptional quality, guaranteed satisfaction, and fair pricing
-          </p>
-          <button
-            onClick={handleNavigate}
-            className="bg-blue-600 hover:bg-blue-700 transition-colors duration-300 text-white text-base font-semibold rounded-full py-3 px-8 flex items-center justify-center group w-full xs:w-auto shadow-lg"
+          </span>
+        </h1>
+
+        <p className="mt-6 mb-10 text-white/90 text-lg lg:text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed">
+          Helping you find reliable local experts to handle all your home improvement needs with ease.
+        </p>
+
+        <button
+          onClick={handleNavigate}
+          className="bg-yellow-400 hover:bg-yellow-500 transition-all duration-300 ease-in-out text-blue-900 font-bold rounded-full py-4 px-8 flex items-center justify-center mx-auto lg:mx-0 shadow-lg group w-fit text-lg transform hover:scale-105"
+        >
+          Get Your Free Quote
+          <svg
+            className="w-6 h-6 ml-2 group-hover:translate-x-1 transition-transform"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Get Free Quote
-            <svg
-              className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
-        </div>
-      ) : (
-        <div className="relative z-10 container mx-auto px-6 lg:px-8 py-32">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
-              Transform Your Home
-              <span className="block text-blue-400 text-4xl lg:text-5xl mt-2">
-                With Expert Care
-              </span>
-            </h1>
-            <p className="text-xl text-gray-200 mt-8 mb-10 max-w-2xl">
-             Helping you find reliable local experts to handle all your home improvement needs with ease
-            </p>
-            <button
-              onClick={handleNavigate}
-              className="bg-blue-600 hover:bg-blue-700 transition-colors duration-300 text-white px-8 py-4 rounded-full text-lg font-semibold flex items-center justify-center group w-auto shadow-lg"
-            >
-              Get Free Quote
-              <svg
-                className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 🔹 Image Area (Right side on Desktop) */}
+      {/* ✅ THE ONLY CHANGE IS ON THIS LINE */}
+      <div className="relative w-full lg:w-3/5 h-[40vh] lg:h-screen flex items-end justify-center lg:justify-end">
+        <img
+          src={man}
+          alt="Friendly home improvement expert holding tools"
+          className="h-full lg:h-[75%] object-contain drop-shadow-2xl select-none z-10"
+        />
+      </div>
     </section>
   );
 };

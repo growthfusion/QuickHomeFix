@@ -8,10 +8,10 @@ import { useFormStore } from "@/lib/store";
 
 import walkin_shower_services from '@/assets/images/walkin_shower_services.png';
 import walkin_tub_services from '@/assets/images/walkin_tub_services.png';
+import StatsSection from "@/components/layout/StatsSection";
 function Home() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const goToRoofingEstimate = () => {
         navigate("/quote");
@@ -31,7 +31,6 @@ function Home() {
             { src: "/window_services.webp", alt: "Window Installation" },
     ];
 
-    // Fake reviews data
   
 
     useEffect(() => {
@@ -66,103 +65,7 @@ function Home() {
 
     return (
         <div className="font-sans text-gray-800 overflow-x-hidden">
-            <style jsx>{`
-                @keyframes infiniteScroll {
-                    0% {
-                        transform: translateX(0);
-                    }
-                    100% {
-                        transform: translateX(-100%);
-                    }
-                }
-                
-                .infinite-scroll-container {
-                    display: flex;
-                    animation: infiniteScroll 40s linear infinite;
-                }
-                
-                .infinite-scroll-container:hover {
-                    animation-play-state: paused;
-                }
-
-                .aos-animate {
-                    opacity: 1 !important;
-                    transform: translateY(0) !important;
-                }
-
-                [data-aos] {
-                    opacity: 0;
-                    transform: translateY(30px);
-                    transition: all 0.8s ease-out;
-                }
-
-                [data-aos].delay-100 {
-                    transition-delay: 0.1s;
-                }
-
-                [data-aos].delay-200 {
-                    transition-delay: 0.2s;
-                }
-
-                [data-aos].delay-300 {
-                    transition-delay: 0.3s;
-                }
-
-                /* Mobile carousel styles */
-                @media (max-width: 768px) {
-                    .reviews-carousel {
-                        display: flex;
-                        overflow-x: auto;
-                        scroll-snap-type: x mandatory;
-                        -webkit-overflow-scrolling: touch;
-                        scrollbar-width: none;
-                        -ms-overflow-style: none;
-                    }
-                    
-                    .reviews-carousel::-webkit-scrollbar {
-                        display: none;
-                    }
-                    
-                    .review-card {
-                        scroll-snap-align: center;
-                        flex: 0 0 90%;
-                        margin-right: 1rem;
-                    }
-                }
-
-                /* American style button */
-                .cta-button {
-                    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-                    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-                    transition: all 0.3s ease;
-                }
-
-                .cta-button:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-                }
-
-                /* Header styles */
-                .header-blur {
-                    backdrop-filter: blur(10px);
-                    background-color: rgba(255, 255, 255, 0.95);
-                }
-
-                /* Mobile menu animation */
-                .mobile-menu-enter {
-                    animation: slideIn 0.3s ease-out;
-                }
-
-                @keyframes slideIn {
-                    from {
-                        transform: translateX(100%);
-                    }
-                    to {
-                        transform: translateX(0);
-                    }
-                }
-            `}</style>
-
+        
    <header className={`fixed w-full transition-all duration-300 z-50 ${
     isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
 }`}>
@@ -180,7 +83,7 @@ function Home() {
   text-2xl md:text-3xl font-bold 
   transition-all duration-300 
   ${isScrolled 
-    ? 'text-blue-600 drop-shadow-[0_2px_4px_rgba(59,130,246,0.3)]' 
+    ? 'text-gray-800 drop-shadow-[0_2px_4px_rgba(59,130,246,0.3)]' 
     : 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]'
   }
   hover:scale-105 
@@ -204,82 +107,20 @@ function Home() {
                 <a href="#services" className={`font-medium transition-colors duration-300 ${
                     isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-blue-300'
                 }`}>Services</a>
-                <a href="#reviews" className={`font-medium transition-colors duration-300 ${
-                    isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-blue-300'
-                }`}>Reviews</a>
+               
                 <a href="#contact" className={`font-medium transition-colors duration-300 ${
                     isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-blue-300'
                 }`}>Contact</a>
             </nav>
 
-            {/* Mobile Menu Button */}
-            <button 
-                className="lg:hidden p-2 rounded-lg transition-all duration-200 hover:opacity-70 active:opacity-50"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-                <svg className={`w-6 h-6 transition-colors duration-300 ${
-                    isScrolled ? 'text-gray-900' : 'text-white'
-                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {isMobileMenuOpen ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    )}
-                </svg>
-            </button>
+
         </div>
     </div>
 
-    {/* Mobile Menu */}
-    <div className={`lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md shadow-2xl transition-all duration-300 ease-in-out ${
-        isMobileMenuOpen 
-            ? 'opacity-100 translate-y-0' 
-            : 'opacity-0 -translate-y-4 pointer-events-none'
-    }`}>
-        <nav className="container mx-auto px-4 py-6">
-            <div className="flex flex-col space-y-2">
-                <Link 
-                    to="/" 
-                    className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:translate-x-1"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                >
-                    Home
-                </Link>
-                <a 
-                    href="#about" 
-                    className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:translate-x-1"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                >
-                    About
-                </a>
-                <a 
-                    href="#services" 
-                    className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:translate-x-1"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                >
-                    Services
-                </a>
-                <a 
-                    href="#reviews" 
-                    className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:translate-x-1"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                >
-                    Reviews
-                </a>
-                <a 
-                    href="#contact" 
-                    className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 font-medium py-3 px-4 rounded-lg transition-all duration-200 hover:translate-x-1"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                >
-                    Contact
-                </a>
-            </div>
-        </nav>
-    </div>
+ 
 </header>
 
 
-            {/* Hero Section - American Style */}
          <HeroSection/>
 
             {/* About Section with Proper Infinite Scroll */}
@@ -325,24 +166,7 @@ function Home() {
 </div>
 
                     {/* Stats Section */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-                        <div data-aos className="text-center">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600">15+</div>
-                            <div className="text-gray-600 mt-2">Years Experience</div>
-                        </div>
-                        <div data-aos className="text-center delay-100">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600">10K+</div>
-                            <div className="text-gray-600 mt-2">Happy Customers</div>
-                        </div>
-                        <div data-aos className="text-center delay-200">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600">100%</div>
-                            <div className="text-gray-600 mt-2">Satisfaction</div>
-                        </div>
-                        <div data-aos className="text-center delay-300">
-                            <div className="text-4xl md:text-5xl font-bold text-blue-600">24/7</div>
-                            <div className="text-gray-600 mt-2">Support</div>
-                        </div>
-                    </div>
+                  <StatsSection />
                 </div>
             </section>
 
@@ -436,7 +260,6 @@ From roof to foundation, we connect you with trusted professionals for every hom
 </section>
 
 
-            {/* Reviews Section - Mobile Responsive Carousel */}
 
             {/* CTA Section - American Style */}
             <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 relative overflow-hidden">
@@ -517,7 +340,6 @@ From roof to foundation, we connect you with trusted professionals for every hom
                             <ul className="space-y-2">
                                 <li><a href="#about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
                                 <li><a href="#services" className="text-gray-400 hover:text-white transition-colors">Services</a></li>
-                                <li><a href="#reviews" className="text-gray-400 hover:text-white transition-colors">Customer Reviews</a></li>
                                
                             </ul>
                         </div>

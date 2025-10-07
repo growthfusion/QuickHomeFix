@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TrustBadge } from "@/components/steps/trust-badge";
 import { MapPin, Check, Loader2 } from "lucide-react";
+import FooterSteps from '@/components/layout/footerSteps'
 import TFConsent from "@/components/TF/TFConsent";
 
 // Debounce helper
@@ -323,6 +324,7 @@ export function AddressSteps() {
         </CardContent>
       </Card>
       <TrustBadge />
+        <FooterSteps />
     </>
   );
 }

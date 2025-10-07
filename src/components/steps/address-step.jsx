@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { TrustBadge } from "@/components/steps/trust-badge";
 import { MapPin } from "lucide-react";
 import TFConsent from "@/components/TF/TFConsent";
+import FooterSteps from '@/components/layout/footerSteps'
 
 export function AddressStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -195,6 +196,7 @@ export function AddressStep() {
         </CardContent>
       </Card>
       <TrustBadge />
+        <FooterSteps />
     </>
   );
 }

@@ -8,6 +8,7 @@ import vinyl from "@/assets/images/vinyl.jpg"
 import Aluminum from "@/assets/images/Aluminum.jpg"
 import steel from "@/assets/images/steel.jpg"
 import copper from "@/assets/images/OIP.webp"
+import FooterSteps from '@/components/layout/footerSteps'
 
 // Gutter Material Card Component
 const GutterMaterialCard = ({ id, image, title, isSelected, onSelect }) => {
@@ -100,8 +101,9 @@ function GutterMaterialStep() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
-      <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
+      <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
           <form data-tf-element-role="offer" onSubmit={handleSubmit}>
             <div className="text-center mb-8">
@@ -113,7 +115,7 @@ function GutterMaterialStep() {
                    value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
             />
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {materials.map((material, index) => (
                 <div
                   key={material.id}
@@ -184,6 +186,9 @@ function GutterMaterialStep() {
         }
       `}</style>
     </div>
+        <FooterSteps />
+
+    </>
   );
 }
 

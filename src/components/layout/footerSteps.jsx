@@ -2,15 +2,27 @@ import React from 'react'
 
 function FooterSteps() {
   return (
-    <footer className="w-full max-w-4xl mx-auto mb-8">
-      <div className="bg-white rounded-lg shadow-sm p-6 flex justify-center items-center space-x-6">
-        <a href="/privacy-policy" className="text-gray-600 hover:text-gray-800 text-sm transition-colors">
-          Privacy Policy
-        </a>
-        <span className="text-gray-300">|</span>
-        <a href="/terms-of-service" className="text-gray-600 hover:text-gray-800 text-sm transition-colors">
-          Terms of Service
-        </a>
+    <footer className="w-screen -mx-[50vw] relative left-[50%] right-[50%] bg-white mt-6 border-t border-gray-200">
+      {/* Footer content */}
+      <div className="py-4">
+        <div className="flex justify-center">
+          {/* Links with improved styling */}
+          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-8">
+            <a 
+              href="/privacy-policy" 
+              className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors duration-200"
+            >
+              Privacy Policy
+            </a>
+            <div className="hidden sm:block h-4 border-r border-gray-200"></div>
+            <a 
+              href="/terms-of-service" 
+              className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors duration-200"
+            >
+              Terms of Service
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   )

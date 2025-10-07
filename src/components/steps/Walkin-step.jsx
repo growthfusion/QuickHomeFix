@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import tub from "@/assets/images/bath-tub.png"
 import shower from "@/assets/images/showerr.png"
+import FooterSteps from '@/components/layout/footerSteps'
+
 
 // Walk-in Option Card Component
 const WalkinOptionCard = ({ id, image, title, isSelected, onSelect }) => {
@@ -96,8 +98,9 @@ function WalkinTypeStep() {
   }, [isNavigating, selectedType, nextStep]);
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
-      <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
+      <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg  border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Do you need Walk-in Tub or Walk-in Shower?</h2>
@@ -171,6 +174,9 @@ function WalkinTypeStep() {
         }
       `}</style>
     </div>
+        <FooterSteps />
+
+    </>
   );
 }
 

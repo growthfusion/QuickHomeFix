@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TrustBadge } from '@/components/steps/trust-badge';
+import FooterSteps from '@/components/layout/footerSteps'
+
 
 function NameStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -98,6 +100,7 @@ function NameStep() {
         </CardContent>
       </Card>
       <TrustBadge />
+        <FooterSteps />
     </>
   );
 }

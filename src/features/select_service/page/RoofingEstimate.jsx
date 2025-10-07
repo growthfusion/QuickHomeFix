@@ -8,7 +8,7 @@ import ProgressBar from "@/components/layout/progress-bar";
 
 // Import all step components
 import ServiceSelection from "@/components/steps/service-selection";
-import EmailStep from "@/components/steps/email-step";
+import EmailStep from "@/components/steps/email-step"
 // Roofing steps
 import RoofingTypeStep from "@/components/steps/roofing-type-step";
 import RoofCountStep from "@/components/steps/roof-count-step";

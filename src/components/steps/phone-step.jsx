@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone } from "lucide-react";
 import { TrustBadge } from '@/components/steps/trust-badge';
+import FooterSteps from '@/components/layout/footerSteps'
+
 
 function PhoneStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -150,6 +152,7 @@ function PhoneStep() {
         </CardContent>
       </Card>
       <TrustBadge />
+        <FooterSteps />
     </>
   );
 }

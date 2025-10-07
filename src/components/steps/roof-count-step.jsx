@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home } from "lucide-react";
+import FooterSteps from '@/components/layout/footerSteps'
+
 
 function RoofCountStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -46,7 +48,8 @@ function RoofCountStep() {
   };
 
   return (
-    <div style={{ background: '#f8fbfe', padding: '20px' }} className="min-h-screen">
+    <>
+    <div style={{ background: '#f8fbfe', padding: '20px' }} className="">
       <Card className="mx-auto max-w-2xl bg-white shadow-sm border-gray-100 overflow-hidden">
         <CardContent className="p-8 pb-10">
           <form data-tf-element-role="offer" onSubmit={handleSubmit}>
@@ -143,7 +146,11 @@ function RoofCountStep() {
           animation: spin 0.8s linear infinite;
         }
       `}</style>
+
     </div>
+        <FooterSteps />
+
+    </>
   );
 }
 

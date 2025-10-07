@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
+import FooterSteps from '@/components/layout/footerSteps'
+
 
 // Gutter Option Card Component
 const GutterOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
@@ -92,8 +94,9 @@ function GutterTypeStep() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
-      <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-xl border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
+      <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg  border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
           <form data-tf-element-role="offer" onSubmit={handleSubmit}>
             <div className="text-center mb-8">
@@ -176,6 +179,9 @@ function GutterTypeStep() {
         }
       `}</style>
     </div>
+        <FooterSteps />
+
+    </>
   );
 }
 
