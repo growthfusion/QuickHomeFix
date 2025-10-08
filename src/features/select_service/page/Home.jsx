@@ -166,7 +166,6 @@ function Home() {
 </div>
 
                     {/* Stats Section */}
-                  <StatsSection />
                 </div>
             </section>
 
@@ -189,7 +188,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
                 <img src="/Solar.webp" alt="Solar" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Solar Installation</h3>
-                    <p className="text-gray-200 mb-4">Save up to 70% on energy bills with premium solar solutions</p>
+                    <p className="text-gray-200 mb-4">We make it easy to find and connect with local solar experts, so you can save smarter</p>
                     <button onClick={goToRoofingEstimate} className="group/btn text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors inline-flex items-center">
                         Learn More <span className="ml-1 transform transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                     </button>
@@ -201,7 +200,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
                 <img src="/roofing_services.webp" alt="Roofing" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Roofing Services</h3>
-                    <p className="text-gray-200 mb-4">Complete roofing solutions with lifetime warranty</p>
+                    <p className="text-gray-200 mb-4">Connecting you with trusted local roofing pros — complete solutions</p>
                     <button onClick={goToRoofingEstimate} className="group/btn text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors inline-flex items-center">
                         Learn More <span className="ml-1 transform transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                     </button>
@@ -213,7 +212,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
                 <img src="/window_services.webp" alt="Windows" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Window Replacement</h3>
-                    <p className="text-gray-200 mb-4">Energy-efficient windows that beautify your home</p>
+                    <p className="text-gray-200 mb-4">Our platform links you to reliable local experts. Discover energy-efficient windows that enhance your home’s beauty.</p>
                     <button onClick={goToRoofingEstimate} className="group/btn text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors inline-flex items-center">
                         Learn More <span className="ml-1 transform transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                     </button>
@@ -225,7 +224,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
                 <img src="/gutter_services.webp" alt="Gutters" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Gutter Systems</h3>
-                    <p className="text-gray-200 mb-4">Protect your home with seamless gutter solutions</p>
+                    <p className="text-gray-200 mb-4">Think of us as your guide to trusted experts. Protect your home with seamless gutter solutions</p>
                     <button onClick={goToRoofingEstimate} className="group/btn text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors inline-flex items-center">
                         Learn More <span className="ml-1 transform transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                     </button>
@@ -237,7 +236,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
                 <img src={walkin_shower_services} alt="Walk-in Shower" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Walk-In Showers</h3>
-                    <p className="text-gray-200 mb-4">Luxurious, accessible bathroom transformations</p>
+                    <p className="text-gray-200 mb-4">Make your bathroom both beautiful and easy to use with our expert transformations</p>
                     <button onClick={goToRoofingEstimate} className="group/btn text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors inline-flex items-center">
                         Learn More <span className="ml-1 transform transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                     </button>
@@ -249,7 +248,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
                 <img src={walkin_tub_services} alt="Walk-in Tub" className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                     <h3 className="text-2xl font-bold text-white mb-2">Walk-In Tubs</h3>
-                    <p className="text-gray-200 mb-4">Safe, therapeutic bathing solutions for all ages</p>
+                    <p className="text-gray-200 mb-4">Connecting you to trusted local pros safe, therapeutic bathing solutions for every home</p>
                     <button onClick={goToRoofingEstimate} className="group/btn text-white bg-blue-600 px-4 py-2 rounded-full hover:bg-blue-700 transition-colors inline-flex items-center">
                         Learn More <span className="ml-1 transform transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                     </button>

@@ -90,37 +90,38 @@ export default function CompleteStep() {
       roofing: {
         name: "Roofing",
         image: "/roofing_services.webp",
-        description: "Premium roofing solutions for any home",
+     description: "We connect you to trusted local pros for premium roofing solutions for any home",
         path: "/quote/roof",
       },
       solar: {
         name: "Solar Energy",
         image: "/Solar.webp",
-        description: "Save on energy costs with clean solar power",
+   description: "Find verified local experts and save on energy costs with clean solar power",
         path: "/quote/solar",
       },
       windows: {
         name: "Windows",
         image: "/window_services.webp",
-        description: "Energy-efficient windows for comfort and savings",
+     description: "Connect with local pros for modern windows that improve comfort and reduce costs",
         path: "/quote/windows",
       },
       gutter: {
         name: "Gutters",
         image: "/gutter_services.webp",
-        description: "Quality gutter systems to protect your home",
+      description: "Get quality gutter systems to protect your home through reliable local experts",
         path: "/quote/gutter",
       },
       bath: {
         name: "Bath Remodeling",
         image: "/walkin_tub_services.png",
-        description: "Modern bathroom renovations for comfort",
+      description: "Partner with local pros for modern bathroom renovations designed for comfort",
         path: "/quote/bath",
       },
       shower: {
         name: "Walk-in Shower",
         image: "/walkin_shower_services.png",
-        description: "Modern, accessible shower solutions",
+      description: "Work with trusted local experts for modern, accessible shower solutions",
+
         path: "/quote/walk-in",
       },
     };

@@ -74,10 +74,8 @@ function ServiceSelection() {
   const [selectedService, setSelectedService] = useState(formData.service || null);
   const navigate = useNavigate();
   
-  // Add automatic navigation delay
   const [isNavigating, setIsNavigating] = useState(false);
 
-  // Services array with paths
   const services = [
     { id: "roof", name: "Roof Services", image: roof, path: "/quote/roof" },
     { id: "windows", name: "Windows", image: windows, isPopular: true, path: "/quote/windows" },
@@ -86,6 +84,7 @@ function ServiceSelection() {
     { id: "gutter", name: "Gutter Services", image: gutter, path: "/quote/gutter" },
     { id: "walk-in tub", name: "Walk-In-Tub", image: buket, path: "/quote/tub" },
      { id: "walk-in Shower", name: "Walk-In-Shower", image: shower, path: "/quote/shower" },
+
   ];
 
   // Reset form when component mounts to ensure clean state
@@ -108,12 +107,9 @@ function ServiceSelection() {
       const selectedServiceData = services.find(service => service.id === selectedService);
       
       timer = setTimeout(() => {
-        // Navigate to the appropriate page based on service selection
         if (selectedServiceData && selectedServiceData.path) {
-          // Set the appropriate step for the service flow
           setStep(1); // Move to first step after service selection
           
-          // Navigate to new path
           navigate(selectedServiceData.path, { replace: true });
         }
       }, 800); // Delay navigation to show selection feedback
@@ -127,7 +123,6 @@ function ServiceSelection() {
     
     if (selectedService) {
       setIsNavigating(true);
-      // Form submission is handled by useEffect above
     }
   };
 

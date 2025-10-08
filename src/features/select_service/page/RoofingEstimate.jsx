@@ -91,8 +91,12 @@ const serviceRoutes = {
     path: "/quote/bath",
     initialStep: "bathroom-wall"
   },
-  "walk-in": {
-    path: "/quote/walk-in",
+  "tub": {
+    path: "/quote/tub",
+    initialStep: "walkin-step"
+  },
+  "shower": {
+    path: "/quote/shower",
     initialStep: "walkin-step"
   }
 };
