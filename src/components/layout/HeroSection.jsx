@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import man from "@/assets/images/man.webp";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -45,8 +44,8 @@ const HeroSection = () => {
       {/* ✅ THE ONLY CHANGE IS ON THIS LINE */}
       <div className="relative w-full lg:w-3/5 h-[40vh] lg:h-screen flex items-end justify-center lg:justify-end">
         <img
-          src={man}
-          alt="Friendly home improvement expert holding tools"
+          src=""
+        
           className="h-full lg:h-[75%] object-contain drop-shadow-2xl select-none z-10"
         />
       </div>
