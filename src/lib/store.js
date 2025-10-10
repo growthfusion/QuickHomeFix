@@ -18,6 +18,7 @@ const initialFormData = {
   bathshowerType:"",
   bathwallType:"",
   gutterMaterial:"",
+  sunExposure:"",
   gutterType:"",
   walkinType:"",
   address: "",

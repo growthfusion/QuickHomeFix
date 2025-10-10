@@ -53,17 +53,38 @@ function Filter() {
   };
 
   const filterConfig = [
-    { name: 'form', options: [{ value: 'all', label: 'All' }, { value: 'roof', label: 'Roof' }, { value: 'windows', label: 'Windows' }] },
-    { name: 'source', options: [{ value: 'all', label: 'All' }, { value: 'google', label: 'Google' }] },
+    { name: 'form', options:
+       [{ value: 'all', label: 'All' }, { value: 'roof', label: 'Roof' }, { value: 'windows', label: 'Windows' } , { value: 'windows', label: 'Windows' }] },
+
+
+    { name: 'source', options:
+      [{ value: 'all', label: 'All' }, { value: 'google', label: 'Google' }] },
     { name: 'buyer', options: [{ value: 'all', label: 'All' }, { value: 'buyer_a', label: 'Buyer A' }] },
-    { name: 'landing', options: [{ value: 'all', label: 'All' }, { value: 'page_1', label: 'Page 1' }] },
+
+
+    { name: 'landing', options:
+       [{ value: 'all', label: 'All' }, { value: 'page_1', label: 'Page 1' }] },
     { name: 'widget_id', options: [{ value: 'all', label: 'All' }, { value: 'w_101', label: 'W-101' }] },
-    { name: 'teaser_id', options: [{ value: 'all', label: 'All' }, { value: 't_201', label: 'T-201' }] },
+
+
+    { name: 'teaser_id', options: 
+      [{ value: 'all', label: 'All' }, { value: 't_201', label: 'T-201' }] },
     { name: 'campaign_id', options: [{ value: 'all', label: 'All' }, { value: 'c_301', label: 'C-301' }] },
-    { name: 'title', options: [{ value: 'all', label: 'All' }, { value: 'title_x', label: 'Title X' }] },
+
+
+    { name: 'title', options: 
+      [{ value: 'all', label: 'All' }, { value: 'title_x', label: 'Title X' }] },
     { name: 'placement', options: [{ value: 'all', label: 'All' }, { value: 'top', label: 'Top' }] },
-    { name: 'state', options: [{ value: 'all', label: 'All' }, { value: 'ca', label: 'CA' }] },
-    { name: 'device', options: [{ value: 'all', label: 'All' }, { value: 'desktop', label: 'Desktop' }] },
+
+
+    { name: 'state', options: 
+      [{ value: 'all', label: 'All' }, { value: 'ca', label: 'CA' }] },
+
+
+    { name: 'device', options: 
+      [{ value: 'all', label: 'All' }, { value: 'desktop', label: 'Desktop' }] },
+
+
     { name: 'os', options: [{ value: 'all', label: 'All' }, { value: 'windows', label: 'Windows' }] },
   ];
 

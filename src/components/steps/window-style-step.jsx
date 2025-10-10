@@ -57,12 +57,12 @@ const MaterialCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const materials = [
-  { id: "asphalt", name: "Single Hung", image: asphalt },
-  { id: "metal", name: "Double Hung", image: metal },
-  { id: "tile", name: "Casement", image: tile },
-  { id: "slate", name: "Bay/Bow", image: slate },
-  { id: "wood", name: "Other", image: q },
-  { id: "wod", name: "Sliding", image: t },
+  { id: "Single Hung", name: "Single Hung", image: asphalt },
+  { id: "Double Hung", name: "Double Hung", image: metal },
+  { id: "Casement", name: "Casement", image: tile },
+  { id: "Bay/Bow", name: "Bay/Bow", image: slate },
+  { id: "Other", name: "Other", image: q },
+  { id: "Sliding", name: "Sliding", image: t },
 ];
 
 function WindowStyleStep() {

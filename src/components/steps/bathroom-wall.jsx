@@ -60,8 +60,8 @@ const WallOptionCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const bathwallTypes = [
-  { id: "add", name: "Add Walls", img: add },
-  { id: "remove", name: "Remove Walls", img: minus },
+  { id: "Add Walls", name: "Add Walls", img: add },
+  { id: "Remove Walls", name: "Remove Walls", img: minus },
   { id: "nochange", name: "No Change", img: block },
 ];
 
