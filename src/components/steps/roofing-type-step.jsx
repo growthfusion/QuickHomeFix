@@ -75,17 +75,16 @@ function RoofingTypeStep() {
     setSelectedType(typeId);
     updateFormData("roofingType", typeId);
     
-    // Start navigation process with visual feedback
+  
     setIsNavigating(true);
   };
   
-  // Effect for automatic navigation after selection
   useEffect(() => {
     let timer;
     if (isNavigating && selectedType) {
       timer = setTimeout(() => {
         nextStep();
-      }, 800); // Delay navigation to show selection feedback
+      }, 800); 
     }
     
     return () => clearTimeout(timer);
