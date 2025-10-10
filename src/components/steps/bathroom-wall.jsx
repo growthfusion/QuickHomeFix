@@ -72,7 +72,7 @@ function BathwallTypeStep() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Animation on load
+ 
   useEffect(() => {
     setIsLoaded(true);
   }, []);

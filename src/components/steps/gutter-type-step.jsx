@@ -47,10 +47,10 @@ const GutterOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
 };
 
 const gutterTypes = [
-  { id: "replace", name: "Gutter Replace", icon: "🔄" },
-  { id: "repair", name: "Gutter Repair", icon: "🪛" },
-  { id: "install", name: "Gutter Install", icon: "⬇️" },
-  { id: "guard", name: "Gutter Guard", icon: "🔰" },
+  { id: "Gutter Replace", name: "Gutter Replace", icon: "🔄" },
+  { id: "Gutter Repair", name: "Gutter Repair", icon: "🪛" },
+  { id: "Gutter Install", name: "Gutter Install", icon: "⬇️" },
+  { id: "Gutter Guard", name: "Gutter Guard", icon: "🔰" },
 ];
 
 function GutterTypeStep() {
@@ -68,11 +68,9 @@ function GutterTypeStep() {
     setSelectedType(typeId);
     updateFormData("gutterType", typeId);
     
-    // Start navigation process with visual feedback
     setIsNavigating(true);
   };
   
-  // Effect for automatic navigation after selection
   useEffect(() => {
     let timer;
     if (isNavigating && selectedType) {

@@ -66,9 +66,9 @@ function WindowServiceStep() {
   }, []);
 
   const windowTypes = [
-    { id: "replace", name: "Windows Install", image: roof },
-    { id: "install", name: "Windows Repair", image: install },
-    { id: "repair", name: "Windows Replace", image: repair },
+    { id: "Windows Install", name: "Windows Install", image: roof },
+    { id: "Windows Repair", name: "Windows Repair", image: install },
+    { id: "Windows Replace", name: "Windows Replace", image: repair },
   ];
 
   const handleTypeSelect = (typeId) => {

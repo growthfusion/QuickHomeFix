@@ -54,8 +54,8 @@ const ShowerOptionCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const bathshowerTypes = [
-  { id: "shower", name: "Install New Shower", img: shower },
-  { id: "upgrade", name: "Upgrade Shower", img: upgrade },
+  { id: "newShower", name: "Install New Shower", img: shower },
+  { id: "upgradeShower", name: "Upgrade Shower", img: upgrade },
   { id: "nochange", name: "No Change",  img: block },
 ];
 

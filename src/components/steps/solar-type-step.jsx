@@ -55,9 +55,9 @@ const SolarOptionCard = ({ id, image, title, isSelected, onSelect }) => {
 
 // Solar types with images
 const solarTypes = [
-  { id: "panels", name: "Solar Install", img: replace},
-  { id: "tiles", name: "Solar Repair", img: repair },
-  { id: "battery", name: "Solar Upgrade", img: install},
+  { id: "solarInstall", name: "Solar Install", img: replace},
+  { id: "solarRepair", name: "Solar Repair", img: repair },
+  { id: "solarUpgrade", name: "Solar Upgrade", img: install},
 ];
 
 function SolarTypeStep() {

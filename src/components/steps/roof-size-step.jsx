@@ -55,9 +55,9 @@ const SunExposureCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const sunExposureOptions = [
-  { id: "full", name: "Full Sun", image: repair },
-  { id: "partial", name: "Partial Shade", image: install },
-  { id: "shaded", name: "Mostly Shaded", image: roof },
+  { id: "Full Sun", name: "Full Sun", image: repair },
+  { id: "Partial Shade", name: "Partial Shade", image: install },
+  { id: "Mostly Shaded", name: "Mostly Shaded", image: roof },
 ];
 
 function SunExposureStep() {

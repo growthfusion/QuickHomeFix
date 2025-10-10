@@ -55,9 +55,9 @@ const RoofingServiceCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const roofingTypes = [
-  { id: "replace", name: "Roof Replace", image: roof },
-  { id: "install", name: "Roof Install", image: install },
-  { id: "repair", name: "Roof Repair", image: repair },
+  { id: "roof Replace", name: "Roof Replace", image: roof },
+  { id: "Roof Install", name: "Roof Install", image: install },
+  { id: "Roof Repair", name: "Roof Repair", image: repair },
 ];
 
 function RoofingTypeStep() {
