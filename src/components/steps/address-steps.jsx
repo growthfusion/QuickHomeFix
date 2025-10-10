@@ -39,7 +39,7 @@ export function AddressSteps() {
       formData.zipcode && 
       validateZipcode(formData.zipcode);
     
-    setAddressValid(valid);
+    setAddressValid();
   }, [formData.address, formData.city, formData.state, formData.zipcode]);
 
   // Fetch suggestions from backend
@@ -290,6 +290,76 @@ export function AddressSteps() {
                   </div>
                 </CardContent>
               </Card>
+                  <div className="space-y-6 mb-8">
+              <Card className="border border-gray-200">
+                <CardContent className="p-5">
+                  <p className="text-sm font-medium mb-4">
+                    Are you the owner of the house? <span className="text-red-500">*</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => updateFormData("isOwner", true)}
+                      className={`flex-1 ${
+                        formData.isOwner === true 
+                          ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                          : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                      }`}
+                      variant={formData.isOwner === true ? "default" : "outline"}
+                      type="button"
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      onClick={() => updateFormData("isOwner", false)}
+                      className={`flex-1 ${
+                        formData.isOwner === false 
+                          ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                          : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                      }`}
+                      variant={formData.isOwner === false ? "default" : "outline"}
+                      type="button"
+                    >
+                      No
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="border border-gray-200">
+                <CardContent className="p-5">
+                  <p className="text-sm font-medium mb-4">
+                    Are you entitled to make changes to the house? <span className="text-red-500">*</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => updateFormData("canMakeChanges", true)}
+                      className={`flex-1 ${
+                        formData.canMakeChanges === true 
+                          ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                          : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                      }`}
+                      variant={formData.canMakeChanges === true ? "default" : "outline"}
+                      type="button"
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      onClick={() => updateFormData("canMakeChanges", false)}
+                      className={`flex-1 ${
+                        formData.canMakeChanges === false 
+                          ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                          : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                      }`}
+                      variant={formData.canMakeChanges === false ? "default" : "outline"}
+                      type="button"
+                    >
+                      No
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
 
               {/* Hidden TrustedForm field */}
               <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
@@ -323,6 +393,7 @@ export function AddressSteps() {
           </div>
         </CardContent>
       </Card>
+      
       <TrustBadge />
         <FooterSteps />
     </>

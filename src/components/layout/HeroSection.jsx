@@ -1,12 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-
+import img from "@/assets/images/image.png"
 const HeroSection = () => {
   const navigate = useNavigate();
   const handleNavigate = () => navigate("/quote");
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-blue-700 via-blue-800 to-blue-900 flex flex-col justify-between lg:flex-row lg:items-center overflow-hidden">
+    <section className="relative min-h-screen bg-blue-950 flex flex-col justify-between lg:flex-row lg:items-center overflow-hidden">
       
       {/* 🔹 Decorative Background Shape */}
       <div className="absolute top-0 right-0 w-96 h-96 lg:w-[40rem] lg:h-[40rem] bg-white/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-3xl opacity-70 z-0"></div>
@@ -40,11 +40,10 @@ const HeroSection = () => {
         </button>
       </div>
 
-      {/* 🔹 Image Area (Right side on Desktop) */}
-      {/* ✅ THE ONLY CHANGE IS ON THIS LINE */}
-      <div className="relative w-full lg:w-3/5 h-[40vh] lg:h-screen flex items-end justify-center lg:justify-end">
+     
+      <div className="relative w-full lg:w-3/5 h-[40vh] lg:h-screen  flex item-center justify-center lg:justify-end sm:w-[80%]">
         <img
-          src=""
+          src={img}
         
           className="h-full lg:h-[75%] object-contain drop-shadow-2xl select-none z-10"
         />

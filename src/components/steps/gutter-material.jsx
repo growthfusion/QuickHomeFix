@@ -73,7 +73,7 @@ function GutterMaterialStep() {
 
   const handleMaterialSelect = (materialId) => {
     setSelectedMaterial(materialId);
-    updateFormData("gutterMaterial", materialId); // Fixed to use a specific property for gutter material
+    updateFormData("gutterMaterial", materialId); // 
     
     // Start navigation process with visual feedback
     setIsNavigating(true);

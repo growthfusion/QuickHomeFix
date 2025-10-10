@@ -33,35 +33,33 @@ function Home() {
 
   
 
-    useEffect(() => {
-        // Handle scroll effects
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
+   useEffect(() => {
+    const handleScroll = () => {
+        setIsScrolled(window.scrollY > 50);
+        animateOnScroll(); // call animation logic on every scroll
+    };
 
-        // Animate on scroll
-        const animateOnScroll = () => {
-            const elements = document.querySelectorAll("[data-aos]");
-            elements.forEach(element => {
-                const elementPosition = element.getBoundingClientRect().top;
-                const screenPosition = window.innerHeight / 1.2;
+    const animateOnScroll = () => {
+        const elements = document.querySelectorAll("[data-aos]");
+        elements.forEach(element => {
+            const rect = element.getBoundingClientRect();
+            const triggerPoint = window.innerHeight * 0.8;
 
-                if (elementPosition < screenPosition) {
-                    element.classList.add("aos-animate");
-                }
-            });
-        };
+            if (rect.top < triggerPoint) {
+                element.classList.add("aos-animate");
+            }
+        });
+    };
 
-        window.addEventListener("scroll", handleScroll);
-        window.addEventListener("scroll", animateOnScroll);
-        window.addEventListener("load", animateOnScroll);
+    // Run once on mount in case elements are already visible
+    animateOnScroll();
 
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-            window.removeEventListener("scroll", animateOnScroll);
-            window.removeEventListener("load", animateOnScroll);
-        };
-    }, []);
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+        window.removeEventListener("scroll", handleScroll);
+    };
+}, []);
 
     return (
         <div className="font-sans text-gray-800 overflow-x-hidden">

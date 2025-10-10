@@ -8,7 +8,7 @@ import metal from '@/assets/images/two.png'
 import tile from '@/assets/images/three.png'
 import slate from '@/assets/images/four.png'
 import q from '@/assets/images/question.png'
-import t from '@/assets/images/transfer.png'
+import t from '@/assets/images/t.png'
 import FooterSteps from '@/components/layout/footerSteps'
 
 

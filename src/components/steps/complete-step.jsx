@@ -122,7 +122,7 @@ export default function CompleteStep() {
         image: "/walkin_shower_services.png",
       description: "Work with trusted local experts for modern, accessible shower solutions",
 
-        path: "/quote/walk-in",
+        path: "/quote/tub",
       },
     };
 
