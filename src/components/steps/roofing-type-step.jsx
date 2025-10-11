@@ -8,6 +8,8 @@ import roof from '@/assets/images/roof (2).png';
 import install from '@/assets/images/maintenance.png';
 import repair from '@/assets/images/roof_repair.png';
 import FooterSteps from '@/components/layout/footerSteps'
+import { TrustBadge } from "@/components/steps/trust-badge";
+
 
 
 // Roofing Service Card Component
@@ -101,7 +103,7 @@ function RoofingTypeStep() {
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
+    <div className="bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <Card className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <CardContent className="p-8">
           <form data-tf-element-role="offer" onSubmit={handleSubmit}>
@@ -146,6 +148,8 @@ function RoofingTypeStep() {
             )}
           </form>
         </CardContent>
+<TrustBadge />
+
       </Card>
 
       {/* CSS for animations */}
@@ -184,9 +188,10 @@ function RoofingTypeStep() {
           animation: spin 1s linear infinite;
         }
       `}</style>
-    </div>
-              <FooterSteps />
 
+    </div>
+
+              <FooterSteps />
     </>
   );
 }

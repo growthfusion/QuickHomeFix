@@ -25,7 +25,7 @@ export const TrustBadge = () => {
   ];
   
   return (
-    <div className="relative bg-white rounded-lg p-4 shadow-sm overflow-hidden max-w-3xl mx-auto mt-6 border border-gray-100">
+    <div className="relative bg-white rounded-lg p-4 shadow-sm overflow-hidden max-w-3xl mx-auto mt-6 border border-gray-100 mm:mb-8 md:mb-10">
       {/* Ribbon - repositioned for better visibility */}
       <div className="absolute top-3 -right-14 bg-green-500 text-white px-12 py-1 rotate-45 text-xs font-medium shadow-sm z-10">
         VERIFIED

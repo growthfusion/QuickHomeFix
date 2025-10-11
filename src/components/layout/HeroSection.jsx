@@ -4,7 +4,7 @@ import img from "@/assets/images/image.png"
 
 const HeroSection = () => {
   const navigate = useNavigate();
-  const handleNavigate = () => navigate("/quote");
+  const handleNavigate = () => navigate("/get-quotes");
 
   return (
     <section className="relative min-h-screen bg-blue-950 flex flex-col justify-between lg:flex-row lg:items-center overflow-hidden">

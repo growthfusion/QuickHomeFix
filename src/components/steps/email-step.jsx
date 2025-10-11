@@ -84,8 +84,9 @@ function EmailStep() {
             </div>
           </form>
         </CardContent>
-      </Card>
       <TrustBadge />
+
+      </Card>
       <FooterSteps />
     </>
   );

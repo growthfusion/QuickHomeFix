@@ -70,31 +70,31 @@ const stepComponents = {
 // Service routes configuration
 const serviceRoutes = {
   "roof": {
-    path: "/quote/roof",
+    path: "/get-quotes/roof",
     initialStep: "roofing-type"
   },
   "windows": {
-    path: "/quote/windows",
+    path: "/get-quotes/windows",
     initialStep: "window-type"
   },
   "solar": {
-    path: "/quote/solar",
+    path: "/get-quotes/solar",
     initialStep: "solar-type"
   },
   "gutter": {
-    path: "/quote/gutter",
+    path: "/get-quotes/gutter",
     initialStep: "gutter-type"
   },
   "bath": {
-    path: "/quote/bath",
+    path: "/get-quotes/bath",
     initialStep: "bathroom-wall"
   },
   "tub": {
-    path: "/quote/tub",
+    path: "/get-quotes/tub",
     initialStep: "walkin-step"
   },
   "shower": {
-    path: "/quote/shower",
+    path: "/get-quotes/shower",
     initialStep: "walkin-step"
   }
 };
@@ -108,7 +108,7 @@ function RoofingEstimate() {
 
   // Handle direct navigation to complete page
   useEffect(() => {
-    if (location.pathname === "/quote/complete") {
+    if (location.pathname === "/get-quotes/complete") {
       // Find the complete step in the service flow
       if (!formData.service) {
         // If no service is selected, set a default one
@@ -136,7 +136,7 @@ function RoofingEstimate() {
       const serviceFlow = getServiceFlow(service);
       
       // If we're on the complete path, set to complete step
-      if (location.pathname === "/quote/complete") {
+      if (location.pathname === "/get-quotes/complete") {
         const completeStepIndex = serviceFlow.steps.indexOf("complete");
         if (completeStepIndex !== -1) {
           setStep(completeStepIndex + 1);
@@ -156,11 +156,11 @@ function RoofingEstimate() {
   // Handle direct URL navigation to service pages
   useEffect(() => {
     // Special handling for complete page
-    if (location.pathname === "/quote/complete") {
+    if (location.pathname === "/get-quotes/complete") {
       return; // This is handled by the first useEffect
     }
     
-    if (location.pathname.startsWith('/quote/') && location.pathname !== "/quote") {
+    if (location.pathname.startsWith('/get-quotes/') && location.pathname !== "/get-quotes") {
       const routeService = location.pathname.split('/')[2];
       
       if (routeService && serviceRoutes[routeService] && formData.service !== routeService) {
@@ -180,7 +180,7 @@ function RoofingEstimate() {
   // The rest of your component (getCurrentStepComponent, rendering, etc.)
   const getCurrentStepComponent = () => {
     // Special case for complete page
-    if (location.pathname === "/quote/complete") {
+    if (location.pathname === "/get-quotes/complete") {
       return CompleteStep;
     }
     
@@ -228,7 +228,7 @@ function RoofingEstimate() {
       <Header />
       
       {/* Only show ProgressBar if not on complete page */}
-      {location.pathname !== "/quote/complete" && <ProgressBar />}
+      {location.pathname !== "/get-quotes/complete" && <ProgressBar />}
 
       <main className="">
         <StepComponent />

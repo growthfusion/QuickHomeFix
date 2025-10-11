@@ -5,6 +5,8 @@ import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import FooterSteps from '@/components/layout/footerSteps'
 
+import { TrustBadge } from "@/components/steps/trust-badge";
+
 
 function WindowCountStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -111,6 +113,7 @@ function WindowCountStep() {
             )}
           </form>
         </CardContent>
+        <TrustBadge />
       </Card>
       
       {/* Animations */}

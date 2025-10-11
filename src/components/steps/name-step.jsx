@@ -98,8 +98,9 @@ function NameStep() {
             </form>
           </div>
         </CardContent>
-      </Card>
       <TrustBadge />
+
+      </Card>
         <FooterSteps />
     </>
   );

@@ -8,9 +8,10 @@ import roof from '@/assets/images/window-f.png';
 import install from '@/assets/images/window.png';
 import repair from '@/assets/images/r-windows.png';
 import FooterSteps from '@/components/layout/footerSteps'
+import { TrustBadge } from "@/components/steps/trust-badge";
 
 
-// Window Service Card Component
+
 const WindowServiceCard = ({ id, image, title, isSelected, onSelect }) => {
   return (
     <div 
@@ -147,6 +148,8 @@ function WindowServiceStep() {
             )}
           </form>
         </CardContent>
+        <TrustBadge />
+        
       </Card>
       
       {/* CSS for animations */}

@@ -10,6 +10,8 @@ import slate from '@/assets/images/four.png'
 import q from '@/assets/images/question.png'
 import t from '@/assets/images/t.png'
 import FooterSteps from '@/components/layout/footerSteps'
+import { TrustBadge } from "@/components/steps/trust-badge";
+
 
 
 // Material Card Component
@@ -156,6 +158,8 @@ function WindowStyleStep() {
             )}
           </form>
         </CardContent>
+        <TrustBadge />
+        
       </Card>
       
       {/* CSS for animations */}

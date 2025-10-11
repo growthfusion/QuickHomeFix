@@ -150,8 +150,9 @@ function PhoneStep() {
             </form>
           </div>
         </CardContent>
-      </Card>
       <TrustBadge />
+
+      </Card>
         <FooterSteps />
     </>
   );

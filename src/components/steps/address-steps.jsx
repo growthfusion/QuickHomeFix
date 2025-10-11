@@ -41,7 +41,7 @@ export function AddressSteps() {
       formData.zipcode && 
       validateZipcode(formData.zipcode);
     
-    setAddressValid(valid);
+    setAddressValid();
   }, [formData.address, formData.city, formData.state, formData.zipcode]);
 
   // Fetch suggestions from backend
@@ -419,9 +419,10 @@ export function AddressSteps() {
             </form>
           </div>
         </CardContent>
+          <TrustBadge />
       </Card>
 
-      <TrustBadge />
+
         <FooterSteps />
     </>
   );

@@ -12,15 +12,15 @@ function App() {
 
       <Route path='/' element={<Home />} />
       
-      <Route path='/quote' element={<RoofingEstimate />} />
-      <Route path='/quote/roof' element={<RoofingEstimate />} />
-      <Route path='/quote/gutter' element={<RoofingEstimate />} />
-      <Route path='/quote/solar' element={<RoofingEstimate />} />
-      <Route path='/quote/windows' element={<RoofingEstimate />} />
-      <Route path='/quote/bath' element={<RoofingEstimate />} />
-      <Route path='/quote/tub' element={<RoofingEstimate />} />
-      <Route path='/quote/shower' element={<RoofingEstimate />} />
-      <Route path='/quote/complete' element={<RoofingEstimate />} />
+      <Route path='/get-quotes' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/roof' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/gutter' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/solar' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/windows' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/bath' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/tub' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/shower' element={<RoofingEstimate />} />
+      <Route path='/get-quotes/complete' element={<RoofingEstimate />} />
 
 
 

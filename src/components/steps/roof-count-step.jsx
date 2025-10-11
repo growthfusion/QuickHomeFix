@@ -5,6 +5,7 @@ import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home } from "lucide-react";
 import FooterSteps from '@/components/layout/footerSteps'
+import { TrustBadge } from "@/components/steps/trust-badge";
 
 
 function RoofCountStep() {
@@ -114,6 +115,7 @@ function RoofCountStep() {
             )}
           </form>
         </CardContent>
+        <TrustBadge />
       </Card>
       
       {/* Animations */}

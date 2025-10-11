@@ -77,13 +77,13 @@ function ServiceSelection() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   const services = [
-    { id: "roof", name: "Roof Services", image: roof, path: "/quote/roof" },
-    { id: "windows", name: "Windows", image: windows, isPopular: true, path: "/quote/windows" },
-    { id: "bath", name: "Bath Remodeling", image: bath, path: "/quote/bath" },
-    { id: "solar", name: "Solar Energy", image: solar, path: "/quote/solar" },
-    { id: "gutter", name: "Gutter Services", image: gutter, path: "/quote/gutter" },
-    { id: "walk-in tub", name: "Walk-In-Tub", image: buket, path: "/quote/tub" },
-     { id: "walk-in Shower", name: "Walk-In-Shower", image: shower, path: "/quote/shower" },
+    { id: "roof", name: "Roof Services", image: roof, path: "/get-quotes/roof" },
+    { id: "windows", name: "Windows", image: windows, isPopular: true, path: "/get-quotes/windows" },
+    { id: "bath", name: "Bath Remodeling", image: bath, path: "/get-quotes/bath" },
+    { id: "solar", name: "Solar Energy", image: solar, path: "/get-quotes/solar" },
+    { id: "gutter", name: "Gutter Services", image: gutter, path: "/get-quotes/gutter" },
+    { id: "walk-in tub", name: "Walk-In-Tub", image: buket, path: "/get-quotes/tub" },
+     { id: "walk-in Shower", name: "Walk-In-Shower", image: shower, path: "/get-quotes/shower" },
 
   ];
 
@@ -128,13 +128,13 @@ function ServiceSelection() {
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
+    <div className="bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
       <div className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg  border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
         <form data-tf-element-role="offer" onSubmit={handleSubmit} className="p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Select Your Service</h2>
             <p className="text-base text-gray-600 dark:text-gray-400">
-              Choose the home service you need to get started with your free quote!
+              Choose the home service you need to get started with your free get-quotes!
             </p>
           </div>
 

@@ -14,7 +14,7 @@ function Home() {
     const [isScrolled, setIsScrolled] = useState(false);
 
     const goToRoofingEstimate = () => {
-        navigate("/quote");
+        navigate("/get-quotes");
     };
  const initForm = useFormStore((state) => state.initForm);
 
@@ -323,11 +323,11 @@ From roof to foundation, we connect you with trusted professionals for every hom
                         <div>
                             <h3 className="text-lg font-bold mb-4">Our Services</h3>
                             <ul className="space-y-2">
-                                <li><a href="/quote/roof" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
-                                <li><a href="/quote/solar" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
-                                <li><a href="/quote/windows" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
-                                <li><a href="/quote/gutter" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
-                                <li><a href="/quote/bath" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
+                                <li><a href="/get-quotes/roof" className="text-gray-400 hover:text-white transition-colors">Roofing Installation</a></li>
+                                <li><a href="/get-quotes/solar" className="text-gray-400 hover:text-white transition-colors">Solar Panel Systems</a></li>
+                                <li><a href="/get-quotes/windows" className="text-gray-400 hover:text-white transition-colors">Window Replacement</a></li>
+                                <li><a href="/get-quotes/gutter" className="text-gray-400 hover:text-white transition-colors">Gutter Services</a></li>
+                                <li><a href="/get-quotes/bath" className="text-gray-400 hover:text-white transition-colors">Bathroom Remodeling</a></li>
                             </ul>
                         </div>
 
