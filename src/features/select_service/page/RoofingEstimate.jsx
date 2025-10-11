@@ -29,7 +29,6 @@ import GutterMaterialStep from "@/components/steps/gutter-material";
 import WalkinOptionCard from "@/components/steps/Walkin-step";
 import WalkTypeStep from "@/components/steps/walk-type-step";
 // Common steps
-import {AddressStep } from "@/components/steps/address-step";
 import { AddressSteps } from "@/components/steps/address-steps";
 
 import NameStep from "@/components/steps/name-step";
@@ -63,7 +62,6 @@ const stepComponents = {
   "walkin-type": WalkTypeStep,
   // Common steps
   dfaddress: AddressSteps,
-  address: AddressStep,
   name: NameStep,
   phone: PhoneStep,
   complete: CompleteStep,

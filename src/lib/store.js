@@ -1,4 +1,3 @@
-// stores/formStore.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { getServiceFlow } from "@/lib/service-flows";
@@ -14,7 +13,6 @@ const initialFormData = {
   windowStyle: "",
   solarType: "",
   roofSize: "",
-  energyBill: "",
   bathshowerType:"",
   bathwallType:"",
   gutterMaterial:"",

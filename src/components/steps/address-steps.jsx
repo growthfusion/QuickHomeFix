@@ -9,6 +9,7 @@ import { TrustBadge } from "@/components/steps/trust-badge";
 import { MapPin, Check, Loader2 } from "lucide-react";
 import FooterSteps from '@/components/layout/footerSteps'
 import TFConsent from "@/components/TF/TFConsent";
+import { submitLead } from "@/lib/api";
 
 // Debounce helper
 const debounce = (fn, delay) => {
@@ -20,13 +21,14 @@ const debounce = (fn, delay) => {
 };
 
 export function AddressSteps() {
-  const { formData, updateFormData, nextStep } = useFormStore();
+  const { formData, updateFormData, nextStep, resetForm } = useFormStore();
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [addressValid, setAddressValid] = useState(false);
   const [errors, setErrors] = useState({});
   const [zipTouched, setZipTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitMsg, setSubmitMsg] = useState("");
 
   const validateZipcode = (zip) => /^\d+$/.test(zip);
   
@@ -39,7 +41,7 @@ export function AddressSteps() {
       formData.zipcode && 
       validateZipcode(formData.zipcode);
     
-    setAddressValid();
+    setAddressValid(valid);
   }, [formData.address, formData.city, formData.state, formData.zipcode]);
 
   // Fetch suggestions from backend
@@ -94,7 +96,7 @@ export function AddressSteps() {
       // Auto-fill all address components
       if (data.street) updateFormData("address", data.street);
       if (data.city) updateFormData("city", data.city);
-      if (data.state) updateFormData("state", data.state);
+      if (data.state) updateFormData("state", data.state.toUpperCase());
       if (data.zipcode) updateFormData("zipcode", data.zipcode);
     } catch (err) {
       console.error("Details fetch error:", err);
@@ -103,15 +105,17 @@ export function AddressSteps() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setZipTouched(true);
     setSubmitting(true);
-    
+    setSubmitting(true);
+    setSubmitMsg("");
+
     // Validate all fields explicitly
     let hasErrors = false;
     const newErrors = {};
-    
+
     if (!formData.address) {
       hasErrors = true;
       newErrors.address = "Address is required";
@@ -142,11 +146,29 @@ export function AddressSteps() {
       setSubmitting(false);
       return;
     }
-    
+
+    try {
+      // 🔽 Call your backend to save the full form (or partial—up to you)
+      const result =  await submitLead({
+        ...formData,
+        state: (formData.state || "").toUpperCase(), // normalize
+      });
+      setSubmitMsg(`Saved! Lead ID: ${result.id}`);
+      // Move to Thank-You or next step as per your flow:
+      nextStep();
+      // Optionally clear local form after success:
+      // resetForm();
+    } catch (err) {
+      console.error(err);
+      setSubmitMsg(`Error: ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+
     // If we get here, the form is valid - proceed to next step
-    console.log("Form is valid, proceeding to next step");
-    nextStep();
-    setSubmitting(false);
+    // console.log("Form is valid, proceeding to next step");
+    // nextStep();
+    // setSubmitting(false);
   };
 
   return (
@@ -324,7 +346,7 @@ export function AddressSteps() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card className="border border-gray-200">
                 <CardContent className="p-5">
                   <p className="text-sm font-medium mb-4">
@@ -359,13 +381,13 @@ export function AddressSteps() {
                 </CardContent>
               </Card>
             </div>
-            
+
 
               {/* Hidden TrustedForm field */}
               <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
                      value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
               />
-              
+
               {/* Consent block */}
               <TFConsent submitText="Get Free Quote" />
 
@@ -388,12 +410,17 @@ export function AddressSteps() {
                     "Get Free Quote"
                   )}
                 </Button>
+                {submitMsg && (
+                    <p className={`text-sm ${submitMsg.startsWith("Error") ? "text-red-600" : "text-green-600"}`}>
+                      {submitMsg}
+                    </p>
+                )}
               </div>
             </form>
           </div>
         </CardContent>
       </Card>
-      
+
       <TrustBadge />
         <FooterSteps />
     </>
