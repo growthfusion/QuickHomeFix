@@ -259,7 +259,7 @@ From roof to foundation, we connect you with trusted professionals for every hom
 
 
             {/* CTA Section - American Style */}
-            <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 relative overflow-hidden">
+            <section className="py-20 bg-gradient-to-r from-blue-800 to-blue-950 relative overflow-hidden">
                 <div className="absolute inset-0 bg-black opacity-10"></div>
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="text-center text-white">
