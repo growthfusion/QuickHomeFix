@@ -53,7 +53,7 @@ const walkinTypes = [
   { id: "repair", name: "Repair", icon: "🔧" },
 ];
 
-function WalkTypeStep() {
+function WalkTypeStepShower() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [selectedType, setSelectedType] = useState(formData.walkinType || null);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -100,7 +100,7 @@ function WalkTypeStep() {
         <CardContent className="p-8">
           <form data-tf-element-role="offer" onSubmit={handleSubmit}>
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">What type of Walk-In Tub/Shower service do you need?</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">What type of Walk-In tub </h2>
             </div>
 
             {/* Hidden TrustedForm field */}
@@ -187,4 +187,4 @@ function WalkTypeStep() {
   );
 }
 
-export default WalkTypeStep;
+export default WalkTypeStepShower;

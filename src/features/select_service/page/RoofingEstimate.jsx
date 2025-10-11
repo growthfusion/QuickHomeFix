@@ -28,6 +28,7 @@ import GutterMaterialStep from "@/components/steps/gutter-material";
 //Walkin steps
 import WalkinOptionCard from "@/components/steps/Walkin-step";
 import WalkTypeStep from "@/components/steps/walk-type-step";
+import WalkinType from "@/components/steps/Walkin-step"
 // Common steps
 import { AddressSteps } from "@/components/steps/address-steps";
 
@@ -59,6 +60,7 @@ const stepComponents = {
   "gutter-material": GutterMaterialStep,
   // walkin steps
   "walkin-step": WalkinOptionCard,
+  "walk" : WalkinType,
   "walkin-type": WalkTypeStep,
   // Common steps
   dfaddress: AddressSteps,
@@ -95,7 +97,7 @@ const serviceRoutes = {
   },
   "shower": {
     path: "/get-quotes/shower",
-    initialStep: "walkin-step"
+    initialStep: "walk"
   }
 };
 

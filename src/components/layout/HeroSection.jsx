@@ -7,7 +7,7 @@ const HeroSection = () => {
   const handleNavigate = () => navigate("/get-quotes");
 
   return (
-    <section className="relative min-h-screen bg-blue-950 flex flex-col justify-between lg:flex-row lg:items-center overflow-hidden">
+    <section className="relative min-h-screen bg-blue-800 flex flex-col justify-between lg:flex-row lg:items-center overflow-hidden">
       
       {/* Decorative Background Shape */}
       <div className="absolute top-0 right-0 w-72 h-72 sm:w-80 sm:h-80 md:w-88 md:h-88 lg:w-[40rem] lg:h-[40rem] bg-white/10 rounded-full -translate-y-1/3 translate-x-1/4 blur-3xl opacity-70 z-0"></div>

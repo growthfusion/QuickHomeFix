@@ -50,7 +50,7 @@ const serviceFlows = {
   "shower": {
     id: "walk-in",
     name: "Walk-in-Tub/Shower",
-    steps: ["walkin-type","email",  "name", "phone","dfaddress", "complete"],
+    steps: ["walk","email",  "name", "phone","dfaddress", "complete"],
     totalSteps: 6,
   },
 };

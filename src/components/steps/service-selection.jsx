@@ -176,75 +176,7 @@ function ServiceSelection() {
       </div>
       
       {/* CSS for animations */}
-      <style jsx global>{`
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out forwards;
-        }
-        
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
-        
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-            opacity: 0.7;
-          }
-          50% {
-            transform: translateX(0);
-            opacity: 1;
-          }
-          100% {
-            transform: translateX(100%);
-            opacity: 0.7;
-          }
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 3s ease-in-out infinite;
-          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
-          background-size: 200% 100%;
-        }
-        
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes shine {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-        
-        .animate-shine {
-          animation: shine 2s infinite;
-        }
-      `}</style>
+    
     </div>
         <FooterSteps />
 

@@ -156,8 +156,7 @@ export function AddressSteps() {
       setSubmitMsg(`Saved! Lead ID: ${result.id}`);
       // Move to Thank-You or next step as per your flow:
       nextStep();
-      // Optionally clear local form after success:
-      // resetForm();
+      
     } catch (err) {
       console.error(err);
       setSubmitMsg(`Error: ${err.message}`);
@@ -165,10 +164,7 @@ export function AddressSteps() {
       setSubmitting(false);
     }
 
-    // If we get here, the form is valid - proceed to next step
-    // console.log("Form is valid, proceeding to next step");
-    // nextStep();
-    // setSubmitting(false);
+   
   };
 
   return (

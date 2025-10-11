@@ -121,8 +121,7 @@ export default function CompleteStep() {
         name: "Walk-in Shower",
         image: "/walkin_shower_services.png",
       description: "Work with trusted local experts for modern, accessible shower solutions",
-
-        path: "/get-quotes/tub",
+        path: "/get-quotes/shower",
       },
     };
 
