@@ -5,14 +5,28 @@ const navLinks = [
     { name: "Dash", path: "/dash" },
     { name: "Leads", path: "/dash/form_leads" },
     { name: "Leads(Full)", path: "/dash/form_leads_full" },
-    { name: "Forms", path: "/dash/forms",
+    { name: "Forms", path: "#",
         subLinks: [
             { name: "Form Steps / Pre-Sales", path: "/dash/forms/pre_sales" },
             { name: "Form Steps", path: "/dash/forms/form_steps" }
         ]
     },
-    { name: "Bucket Affiliate", path: "/dash/ba" },
-    { name: "Reports", path: "/dash/reports" },
+    { name: "Bucket Affiliate", path: "#" ,
+         subLinks: [
+            { name: "statistics", path: "/dash/bucket_affiliate_statistics" },
+            { name: "settings", path: "/dash/bucket_affiliate_settings" }
+        ]
+    },
+
+    { name: "Reports", path: "#",
+         subLinks: [
+            { name: "custom report", path: "/dash/form_report" },
+            { name: "upsells", path: "/dash/form_upsells" },
+            { name: "settings", path: "/dash/form_reports" },
+            { name: "transactions (LP)", path: "/dash/lp_transactions" },
+
+        ]
+     },
     { name: "Buyers", path: "/dash/buyers" },
     { name: "Tools", path: "/dash/tools" },
      { name: "Settings", path: "/dash/tools" }, 

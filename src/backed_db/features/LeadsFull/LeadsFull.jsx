@@ -1,4 +1,7 @@
 import React from 'react';
+import Header from '@/backed_db/components/header/Header';
+import DatePickerToggle from "@/backed_db/components/date/DatePicker"
+import FilterSelect from "@/backed_db/components/filters/Filter"
 
 
 const tableHeaders = [
@@ -14,8 +17,12 @@ const tableData = [
   { form: 'siding', visits: 55, ctr: '72.73', clicks: 40, cr: '43.64', emails: 31, leads: 24, sold: 10, soldPct: '41.67%', appts: 0, apptsPct: '0%', upsells: 8, upsellsSold: 4, upsellsSoldPct: '50%', upsellRate: '33.33%', ppc: 0, ppcSold: 0, ppcSoldPct: '0%', ppcRate: '0%', totalRevenue: '255.67', leadsValue: '243.89', fbFormValue: '0', upsellsValue: '37.41', ppcValue: '0', repostsValue: '0', adjustment: '-25.63', avgPerLead: '10.65', avgPerSold: '25.57', epc: '6.39', epv: '4.65' },
 ];
 
-function Form() {
+function LeadFull() {
   return (
+    <>
+    <Header/>
+    <DatePickerToggle/>
+    <FilterSelect />
     <div className="p-4 sm:p-6">
       <div className="max-w-auto mx-auto">
         {/* Container for the table with horizontal scrolling */}
@@ -80,7 +87,8 @@ function Form() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
-export default Form;
+export default LeadFull;

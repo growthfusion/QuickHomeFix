@@ -54,12 +54,12 @@ function Filter() {
 
   const filterConfig = [
     { name: 'form', options:
-       [{ value: 'all', label: 'All' }, { value: 'roof', label: 'Roof' }, { value: 'windows', label: 'Windows' } , { value: 'windows', label: 'Windows' }] },
+       [{ value: 'all', label: 'All' }, { value: 'roof', label: 'Roof' }, { value: 'windows', label: 'Windows' } , { value: 'sindows', label: 'Solar' } , { value: 'Gutter', label: 'Gutter' } ,  { value: 'Bath', label: 'Bath' } ,  { value: 'Tub', label: 'Tub' } ,  { value: 'Shower', label: 'Shower' }  ] },
 
 
     { name: 'source', options:
-      [{ value: 'all', label: 'All' }, { value: 'google', label: 'Google' }] },
-    { name: 'buyer', options: [{ value: 'all', label: 'All' }, { value: 'buyer_a', label: 'Buyer A' }] },
+      [{ value: 'all', label: 'All' }, { value: 'google', label: 'Google' } , { value: 'snap', label: 'Snap' } , { value: 'tiktok', label: 'TikTok' }, { value: 'meta', label: 'Meta' } , { value: 'newBreak', label: 'NewsBreak' } ] },
+    { name: 'buyer', options: [{ value: 'all', label: 'All' }, { value: 'Ashwin sv', label: 'Ashwin sv' } ,  { value: 'Dinesh Baskaren', label: 'Dinesh Baskaren' } ,  { value: 'Gokulraj', label: 'Gokulraj' } ,  { value: 'Karigouda', label: 'Karigouda' } ,  { value: 'Mythili', label: 'Mythili' } ,  { value: 'Nagaraja', label: 'Nagaraja' } ,  { value: 'Naveen', label: 'Naveen' } ,  { value: 'Raju', label: 'Raju' } ,  { value: 'Ramanan', label: 'Ramanan' } ,  { value: 'Sudhanshu', label: 'Sudhanshu' } ,{ value: 'Viknesh', label: 'Viknesh' } , { value: 'Hari Shankar', label: 'Hari Shankar' } ]},
 
 
     { name: 'landing', options:
