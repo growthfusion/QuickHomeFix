@@ -181,3 +181,60 @@
         .animate-spin {
           animation: spin 1s linear infinite;
         }
+
+        /* DataTable.css */
+.data-table-container {
+  margin: 20px;
+}
+
+.column-controls {
+  margin-bottom: 20px;
+}
+
+.toggle-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.toggle-buttons button {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toggle-buttons button.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.toggle-buttons button.inactive {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.data-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+}
+
+.data-table tr:hover {
+  background-color: #f5f5f5;
+}
