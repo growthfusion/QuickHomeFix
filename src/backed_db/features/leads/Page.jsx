@@ -31,9 +31,8 @@ function Page() {
           tables.forEach(table => {
             const headers = Array.from(table.querySelectorAll('thead th'));
             
-            // Skip the first column, hide others based on saved visibility
             headers.forEach((header, index) => {
-              if (index === 0) return; // Always show first column
+              if (index === 0) return; 
               
               const text = header.textContent.trim();
               const shouldHide = Object.entries(visibility).some(([key, isVisible]) => {

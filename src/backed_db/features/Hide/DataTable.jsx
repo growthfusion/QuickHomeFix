@@ -46,63 +46,52 @@ const columnGroups = [
 function DataTable() {
   const [showSelector, setShowSelector] = useState(false);
   const [columnVisibility, setColumnVisibility] = useState(() => {
-    // Try to load from localStorage
+    
     const savedVisibility = localStorage.getItem('columnVisibility');
     if (savedVisibility) {
       return JSON.parse(savedVisibility);
     }
     
-    // Default all columns to visible
+  
     return columns.reduce((acc, col) => {
       acc[col.key] = true;
       return acc;
     }, {});
   });
 
-  // Apply visibility changes to DOM
+
   useEffect(() => {
-    // Save to localStorage
     localStorage.setItem('columnVisibility', JSON.stringify(columnVisibility));
     
-    // Directly manipulate the DOM to hide/show columns
+    
     applyColumnVisibility();
   }, [columnVisibility]);
 
-  // Function to apply visibility to all tables
   const applyColumnVisibility = () => {
-    // Wait for next render cycle
     setTimeout(() => {
       const tables = document.querySelectorAll('table');
       
       tables.forEach(table => {
-        // Get all headers
         const headers = Array.from(table.querySelectorAll('thead th'));
         
-        // Map each header to its index and text content
         const headerMap = headers.map((th, index) => ({
           index,
           text: th.textContent.trim()
         }));
         
-        // For each column in our visibility state
         columns.forEach(column => {
-          // Find matching headers (could be multiple for '%', 'SOLD', etc.)
           const matchingHeaders = headerMap.filter(h => 
             h.text === column.label || 
             (column.label === '%' && h.text === '%') || 
             (column.label === 'SOLD' && h.text === 'SOLD')
           );
           
-          // If column should be hidden
           if (!columnVisibility[column.key]) {
             matchingHeaders.forEach(header => {
-              // Skip first column (index 0)
               if (header.index === 0) return;
               
-              // Hide header
               headers[header.index].style.display = 'none';
               
-              // Hide corresponding cells in each row
               table.querySelectorAll('tbody tr').forEach(row => {
                 const cells = row.querySelectorAll('td');
                 if (cells.length > header.index) {
@@ -111,15 +100,11 @@ function DataTable() {
               });
             });
           } else {
-            // Show column
             matchingHeaders.forEach(header => {
-              // Skip first column
               if (header.index === 0) return;
               
-              // Show header
               headers[header.index].style.display = '';
               
-              // Show cells
               table.querySelectorAll('tbody tr').forEach(row => {
                 const cells = row.querySelectorAll('td');
                 if (cells.length > header.index) {
@@ -133,7 +118,6 @@ function DataTable() {
     }, 0);
   };
 
-  // Toggle a single column's visibility
   const toggleColumn = (key) => {
     setColumnVisibility(prev => ({
       ...prev,
@@ -141,7 +125,6 @@ function DataTable() {
     }));
   };
 
-  // Toggle all columns in a group
   const toggleGroup = (groupColumns, visibility) => {
     const updates = {};
     groupColumns.forEach(col => {
@@ -154,7 +137,6 @@ function DataTable() {
     }));
   };
 
-  // Toggle all columns
   const toggleAll = (visibility) => {
     const updates = {};
     columns.forEach(col => {
@@ -167,7 +149,6 @@ function DataTable() {
   return (
     <div className="my-4 mx-auto max-w-7xl px-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">Table Columns</h2>
         
         <div className="space-x-2">
           <button 
@@ -176,12 +157,12 @@ function DataTable() {
           >
             Show All
           </button>
-          <button 
+          {/* <button 
             onClick={() => toggleAll(false)}
             className="px-3 py-1 bg-red-500 text-white rounded text-sm"
           >
             Hide All
-          </button>
+          </button> */}
           <button 
             onClick={() => setShowSelector(!showSelector)}
             className="px-3 py-1 bg-blue-500 text-white rounded text-sm"
