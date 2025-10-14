@@ -1,7 +1,7 @@
 import React from 'react';
-import Header from '@/backed_db/components/header/Header';
-import DatePickerToggle from "@/backed_db/components/date/DatePicker"
-import FilterSelect from "@/backed_db/components/filters/Filter"
+import Header from '@/backend_db/components/header/Header';
+import DatePickerToggle from "@/backend_db/components/date/DatePicker"
+import FilterSelect from "@/backend_db/components/filters/Filter"
 
 
 const tableHeaders = [

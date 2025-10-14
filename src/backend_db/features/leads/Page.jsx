@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
-import Header from '@/backed_db/components/header/Header';
-import DatePickerToggle from "@/backed_db/components/date/DatePicker";
-import FilterSelect from "@/backed_db/components/filters/Filter";
+import Header from '@/backend_db/components/header/Header';
+import DatePickerToggle from "@/backend_db/components/date/DatePicker";
+import FilterSelect from "@/backend_db/components/filters/Filter";
 import Hide from '../Hide/DataTable';
 
 import Form from './Form'
@@ -18,7 +18,7 @@ import Device from './Device';
 import Os from './Os';
 
 function Page() {
-  // Apply initial column visibility when page loads
+
   useEffect(() => {
     const applyInitialColumnVisibility = () => {
       const savedVisibility = localStorage.getItem('columnVisibility');

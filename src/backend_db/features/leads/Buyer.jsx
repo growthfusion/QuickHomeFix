@@ -15,6 +15,7 @@ const tableData = [
 function Buyer() {
   const [expanded, setExpanded] = useState(false);
 
+  // useState for expend
   const toggleExpanded = () => {
     setExpanded(!expanded);
   };

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { useFormStore } from "@/lib/store";
@@ -6,28 +6,72 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail } from "lucide-react";
-import { TrustBadge } from '@/components/steps/trust-badge';
-import FooterSteps from '@/components/layout/footerSteps'
+import { TrustBadge } from "@/components/steps/trust-badge";
+import FooterSteps from "@/components/layout/footerSteps";
 
 function EmailStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [isFocused, setIsFocused] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Simple email validation
-  const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // Basic format validation
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  
+  // Enhanced Gmail validation - checks if username looks realistic
+  // Gmail usernames typically have letters and may have numbers and periods
+  const isRealisticGmailUsername = (email) => {
+    const username = email.split('@')[0];
+    // Check if username contains at least one letter
+    return /[a-zA-Z]/.test(username) && username.length >= 5;
   };
-  
-  const isEmailValid = formData.email && isValidEmail(formData.email);
-  
-  // Handle form submission
-  const handleSubmit = (e) => {
-    if (e) e.preventDefault();
-    if (isEmailValid) {
-      nextStep();
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const email = formData.email?.trim();
+  if (!email) {
+    setEmailError("Email is required");
+    return;
+  }
+  if (!isValidEmail(email)) {
+    setEmailError("Please enter a valid email");
+    return;
+  }
+
+  setLoading(true);
+  setEmailError("");
+
+  try {
+    const response = await fetch(
+      `http://localhost:5000/verify-email?email=${encodeURIComponent(email)}`
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("Backend error response:", text);
+      throw new Error(`Backend error: ${response.status}`);
     }
-  };
 
+    const result = await response.json();
+    console.log("API Result:", result);
+
+    // Check validation results
+    if (result.format_valid && result.mx_found) {
+      // Email is valid, proceed to next step
+      nextStep();
+    } else {
+      setEmailError(result.message || "Invalid email address. Please enter a real email.");
+    }
+  } catch (error) {
+    console.error("Fetch error:", error);
+    setEmailError("Unable to verify email. Try again later.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // Rest of your component remains the same
   return (
     <>
       <Card className="mx-auto max-w-3xl shadow-sm">
@@ -38,8 +82,8 @@ function EmailStep() {
               We'll send your estimate details to this address
             </p>
           </div>
-          
-          <form data-tf-element-role="offer" onSubmit={handleSubmit} className="space-y-5">
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="relative">
               <label className="block text-sm font-medium mb-2">Email Address</label>
               <div className="relative rounded-md">
@@ -54,38 +98,34 @@ function EmailStep() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   className={`w-full pl-10 ${isFocused ? 'ring-2 ring-blue-200 border-blue-300' : ''}`}
-                  autoFocus // Automatically focus on this input when the component loads
+                  autoFocus
                 />
               </div>
-              {formData.email && !isEmailValid && (
-                <p className="mt-1 text-sm text-red-500">Please enter a valid email</p>
-              )}
+              {emailError && <p className="mt-1 text-sm text-red-500">{emailError}</p>}
             </div>
 
-            {/* Hidden TrustedForm field */}
-            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
-                   value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+            <input
+              type="hidden"
+              name="xxTrustedFormCertUrl"
+              value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
             />
-            
-            {/* Just the Next button, full width */}
+
             <div className="pt-2">
               <Button
                 type="submit"
-                disabled={!isEmailValid}
+                disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                data-tf-element-role="submit"
               >
-                Next
+                {loading ? "Verifying..." : "Next"}
               </Button>
             </div>
-            
+
             <div className="text-center text-xs text-gray-500 pt-2">
               Your information is secure and confidential
             </div>
           </form>
         </CardContent>
-      <TrustBadge />
-
+        <TrustBadge />
       </Card>
       <FooterSteps />
     </>
