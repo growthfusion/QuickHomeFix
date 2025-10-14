@@ -415,14 +415,6 @@ app.get("/verify-email", async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
 app.get("/verify-phone", async (req, res) => {
   const phone = req.query.phone;
   if (!phone) return res.status(400).json({ error: "Phone number is required" });

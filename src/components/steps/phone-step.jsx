@@ -70,9 +70,10 @@ function PhoneStep() {
     try {
       // Using backend proxy to hide API key
       const cleanedNumber = formData.phone.replace(/\D/g, "");
-      
+
+      const apiUrl = process.env.VITE_API_BASE_URL;
       const response = await fetch(
-        `http://localhost:5000/verify-phone?phone=${cleanedNumber}`
+        `${apiUrl}/verify-phone?phone=${cleanedNumber}`
       );
 
       if (!response.ok) {
