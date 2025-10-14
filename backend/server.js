@@ -58,7 +58,7 @@ app.get("/api/leads/count", async (_req, res) => {
 app.get("/api/leads/latest", async (_req, res) => {
   try {
     const { rows } = await pool.query(
-        "SELECT id, service, city, state, zipcode, created_at FROM leads ORDER BY created_at DESC LIMIT 5"
+        "SELECT * FROM leads ORDER BY created_at DESC LIMIT 5"
     );
     res.json({ ok: true, rows });
   } catch (e) {
