@@ -314,7 +314,7 @@ app.get("/", (_req, res) => {
 
 
 // Fix DNS lookup and timeout issues
-app.get("/verify-email", async (req, res) => {
+app.get("/api/verify-email", async (req, res) => {
   const email = req.query.email;
   if (!email) return res.status(400).json({ error: "Email is required" });
 
@@ -415,7 +415,7 @@ app.get("/verify-email", async (req, res) => {
   }
 });
 
-app.get("/verify-phone", async (req, res) => {
+app.get("/api/verify-phone", async (req, res) => {
   const phone = req.query.phone;
   if (!phone) return res.status(400).json({ error: "Phone number is required" });
 

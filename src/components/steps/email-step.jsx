@@ -43,9 +43,9 @@ const handleSubmit = async (e) => {
   setEmailError("");
 
   try {
-    const apiUrl = process.env.VITE_API_BASE_URL;
+    const apiUrl = import.meta.env.VITE_API_BASE_URL;
     const response = await fetch(
-        `${apiUrl}/verify-email?email=${encodeURIComponent(email)}`
+        `${apiUrl}/api/verify-email?email=${encodeURIComponent(email)}`
     );
 
     if (!response.ok) {
