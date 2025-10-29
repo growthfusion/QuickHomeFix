@@ -13,6 +13,9 @@ function WindowCountStep() {
   const [selectedCount, setSelectedCount] = useState(formData.windowCount || null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // ✅ ADDED: single source of truth for this step’s question
+  const QUESTION_TEXT = "How many windows need service?";
   
   // Animation on load
   useEffect(() => {
@@ -22,7 +25,16 @@ function WindowCountStep() {
   const handleCountSelect = (count) => {
     setSelectedCount(count);
     updateFormData("windowCount", count);
-    
+
+    // ✅ ADDED: GTM dataLayer event with question & answer (DLV names match your GTM setup)
+    const answerLabel = count === "more" ? "More than 4" : count;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "FormEvent",
+      question_text: QUESTION_TEXT,
+      answer_text: answerLabel,
+    });
+
     // Start navigation process with visual feedback
     setIsNavigating(true);
   };

@@ -13,7 +13,10 @@ function RoofCountStep() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCount, setSelectedCount] = useState(formData.roofCount || null);
   const [isNavigating, setIsNavigating] = useState(false);
-  
+
+  // ✅ ADDED: single source of truth for this step’s question
+  const QUESTION_TEXT = "How many roof need service?";
+
   // Animation on load
   useEffect(() => {
     setIsLoaded(true);
@@ -22,6 +25,15 @@ function RoofCountStep() {
   const handleCountSelect = (count) => {
     setSelectedCount(count);
     updateFormData("roofCount", count);
+
+    // ✅ ADDED: GTM dataLayer event with question & answer (DLV names match your GTM setup)
+    const answerLabel = count === "more" ? "More than 4" : count;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "FormEvent",
+      question_text: QUESTION_TEXT,
+      answer_text: answerLabel,
+    });
     
     // Start navigation process with visual feedback
     setIsNavigating(true);
@@ -60,7 +72,7 @@ function RoofCountStep() {
                   <Home className="h-5 w-5 text-blue-600" />
                 </div>
               </div>
-              <h2 className="text-2xl font-semibold mb-2">How many windows need service?</h2>
+              <h2 className="text-2xl font-semibold mb-2">How many roof need service?</h2>
             </div>
 
             {/* Hidden TrustedForm field */}

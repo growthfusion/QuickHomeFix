@@ -30,6 +30,47 @@ export function AddressSteps() {
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
 
+  // ✅ ADDED: GTM push helpers
+  const pushQnaEvent = (questionId, questionText, answerText) => {
+    if (typeof window === "undefined") return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "AddressDetails",
+      question_id: questionId,
+      question_text: questionText,
+      answer_text: answerText
+    });
+  };
+
+  const pushSummaryEvent = () => {
+    if (typeof window === "undefined") return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "AddressDetailsSummary",
+      address: formData.address || "",
+      city: formData.city || "",
+      state: (formData.state || "").toUpperCase(),
+      zipcode: formData.zipcode || "",
+      isOwner: formData.isOwner === true ? "Yes" : formData.isOwner === false ? "No" : "",
+      canMakeChanges: formData.canMakeChanges === true ? "Yes" : formData.canMakeChanges === false ? "No" : ""
+    });
+  };
+
+  const pushLeadEvent = (leadId) => {
+    if (typeof window === "undefined") return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "Lead",
+      lead_id: leadId || "",
+      address: formData.address || "",
+      city: formData.city || "",
+      state: (formData.state || "").toUpperCase(),
+      zipcode: formData.zipcode || "",
+      isOwner: formData.isOwner === true ? "Yes" : formData.isOwner === false ? "No" : "",
+      canMakeChanges: formData.canMakeChanges === true ? "Yes" : formData.canMakeChanges === false ? "No" : ""
+    });                                                                // <-- ADDED
+  };
+
   const validateZipcode = (zip) => /^\d+$/.test(zip);
   
   // Check form validity whenever fields change
@@ -155,6 +196,8 @@ export function AddressSteps() {
       });
       setSubmitMsg(`Saved! Lead ID: ${result.id}`);
       // Move to Thank-You or next step as per your flow:
+      pushSummaryEvent(); // <-- ADDED
+
       nextStep();
       
     } catch (err) {
@@ -392,7 +435,7 @@ export function AddressSteps() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className={`w-full ${addressValid ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+                  className={`w-full ${addressValid ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white vc-btn`}
                   size="sm"
                   data-tf-element-role="submit"
                 >

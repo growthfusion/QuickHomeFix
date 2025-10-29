@@ -8,10 +8,24 @@ import { TrustBadge } from "@/components/steps/trust-badge";
 
 
 // Gutter Option Card Component
-const GutterOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
+const GutterOptionCard = ({ id, icon, title, isSelected, onSelect, questionText, answerText }) => {
+
+  const handleCardSelect = () => {
+    // Push the custom event with question and answer to the GTM dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'FormEvent',  // Custom event name
+      question_text: questionText, // The text of the question
+      answer_text: answerText, // The selected answer
+    });
+
+    // Call the parent handler to update the selected type
+    onSelect(id);
+  };
+
   return (
-    <div 
-      onClick={() => onSelect(id)}
+    <div
+      onClick={handleCardSelect}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out hover:scale-[1.03] hover:-translate-y-1 border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer"
     >
       <div className={`absolute inset-0 ${
@@ -48,10 +62,10 @@ const GutterOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
 };
 
 const gutterTypes = [
-  { id: "Gutter Replace", name: "Gutter Replace", icon: "🔄" },
-  { id: "Gutter Repair", name: "Gutter Repair", icon: "🪛" },
-  { id: "Gutter Install", name: "Gutter Install", icon: "⬇️" },
-  { id: "Gutter Guard", name: "Gutter Guard", icon: "🔰" },
+  { id: "Gutter Replace", name: "Gutter Replace", icon: "🔄", questionText: "What type of gutter service do you need?", answerText: "Gutter Replace" },
+  { id: "Gutter Repair", name: "Gutter Repair", icon: "🪛", questionText: "What type of gutter service do you need?", answerText: "Gutter Repair" },
+  { id: "Gutter Install", name: "Gutter Install", icon: "⬇️", questionText: "What type of gutter service do you need?", answerText: "Gutter Install" },
+  { id: "Gutter Guard", name: "Gutter Guard", icon: "🔰", questionText: "What type of gutter service do you need?", answerText: "Gutter Guard" },
 ];
 
 function GutterTypeStep() {
@@ -123,6 +137,8 @@ function GutterTypeStep() {
                     title={type.name}
                     isSelected={selectedType === type.id}
                     onSelect={handleTypeSelect}
+                    questionText={type.questionText}  // Pass the questionText dynamically
+                    answerText={type.answerText}  // Pass the answerText dynamically
                   />
                 </div>
               ))}

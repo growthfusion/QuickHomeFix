@@ -13,10 +13,24 @@ import { TrustBadge } from "@/components/steps/trust-badge";
 
 
 // Roofing Service Card Component
-const RoofingServiceCard = ({ id, image, title, isSelected, onSelect }) => {
+const RoofingServiceCard = ({ id, image, title, isSelected, onSelect, questionText, answerText }) => {
+
+  const handleCardSelect = () => {
+    // Push the custom event with question and answer to the GTM dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'FormEvent',  // Custom event name
+      question_text: questionText, // The text of the question
+      answer_text: answerText, // The selected answer
+    });
+
+    // Call the parent handler to update the selected type
+    onSelect(id);
+  };
+
   return (
-    <div 
-      onClick={() => onSelect(id)}
+    <div
+      onClick={handleCardSelect}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out hover:scale-[1.03] hover:-translate-y-1 border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer"
     >
       <div className={`absolute inset-0 ${
@@ -57,9 +71,9 @@ const RoofingServiceCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const roofingTypes = [
-  { id: "roof Replace", name: "Roof Replace", image: roof },
-  { id: "Roof Install", name: "Roof Install", image: install },
-  { id: "Roof Repair", name: "Roof Repair", image: repair },
+  { id: "roof Replace", name: "Roof Replace", image: roof, questionText: "What type of roofing service do you need?", answerText: "Roof Replace" },
+  { id: "Roof Install", name: "Roof Install", image: install, questionText: "What type of roofing service do you need?", answerText: "Roof Replace" },
+  { id: "Roof Repair", name: "Roof Repair", image: repair, questionText: "What type of roofing service do you need?", answerText: "Roof Replace" },
 ];
 
 function RoofingTypeStep() {
@@ -132,6 +146,8 @@ function RoofingTypeStep() {
                     title={type.name}
                     isSelected={selectedType === type.id}
                     onSelect={handleTypeSelect}
+                    questionText={type.questionText}  // Pass the questionText dynamically
+                    answerText={type.answerText}  // Pass the answerText dynamically
                   />
                 </div>
               ))}

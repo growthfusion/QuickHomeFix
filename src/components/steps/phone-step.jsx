@@ -15,6 +15,24 @@ function PhoneStep() {
   const [phoneError, setPhoneError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ ADDED: single source of truth for this step’s question
+  const QUESTION_TEXT = "Enter Your Phone Number";
+
+  // ✅ ADDED: helper to safely push to dataLayer
+  const pushPhoneEvent = (rawPhone) => {
+    if (typeof window === "undefined") return;
+    const digits = (rawPhone || "").replace(/\D/g, "");
+    const e164   = digits ? `+1${digits}` : "";
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "PhoneNumber",
+      question_text: QUESTION_TEXT,
+      answer_text: rawPhone,
+      phone_digits: digits,
+      phone_e164: e164,
+    });
+  };
+
   const formatPhoneNumber = (phoneNumberString) => {
     const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
@@ -86,6 +104,7 @@ function PhoneStep() {
       console.log("Phone verification result:", result);
 
       if (result.valid && result.country_code === "US") {
+        pushPhoneEvent(formData.phone);
         nextStep();
       } else if (!result.valid) {
         setPhoneError("Please enter a valid phone number.");
@@ -100,6 +119,7 @@ function PhoneStep() {
       // If API fails but the phone format is valid, allow to continue
       if (isPhoneValid) {
         console.log("API verification failed, but phone format is valid. Proceeding anyway.");
+        pushPhoneEvent(formData.phone);
         nextStep();
       } else {
         setPhoneError("Unable to verify phone number. Please try again later.");

@@ -12,10 +12,24 @@ import { TrustBadge } from "@/components/steps/trust-badge";
 
 
 
-const WindowServiceCard = ({ id, image, title, isSelected, onSelect }) => {
+const WindowServiceCard = ({ id, image, title, isSelected, onSelect, questionText, answerText }) => {
+
+  const handleCardSelect = () => {
+    // Push the custom event with question and answer to the GTM dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'FormEvent',  // Custom event name
+      question_text: questionText, // The text of the question
+      answer_text: answerText, // The selected answer
+    });
+
+    // Call the parent handler to update the selected type
+    onSelect(id);
+  };
+
   return (
-    <div 
-      onClick={() => onSelect(id)}
+    <div
+      onClick={handleCardSelect} //onClick={() => onSelect(id)}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out hover:scale-[1.03] hover:-translate-y-1 border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer"
     >
       <div className={`absolute inset-0 ${
@@ -67,9 +81,9 @@ function WindowServiceStep() {
   }, []);
 
   const windowTypes = [
-    { id: "Windows Install", name: "Windows Install", image: roof },
-    { id: "Windows Repair", name: "Windows Repair", image: install },
-    { id: "Windows Replace", name: "Windows Replace", image: repair },
+    { id: "Windows Install", name: "Windows Install", image: roof, questionText: "What type of windows service do you need?", answerText: "Windows Install"},
+    { id: "Windows Repair", name: "Windows Repair", image: install, questionText: "What type of windows service do you need?", answerText: "Windows Repair"},
+    { id: "Windows Replace", name: "Windows Replace", image: repair, questionText: "What type of windows service do you need?", answerText: "Windows Replace"},
   ];
 
   const handleTypeSelect = (typeId) => {
@@ -132,6 +146,8 @@ function WindowServiceStep() {
                     title={type.name}
                     isSelected={selectedType === type.id}
                     onSelect={handleTypeSelect}
+                    questionText={type.questionText}  // Pass the questionText dynamically
+                    answerText={type.answerText}  // Pass the answerText dynamically
                   />
                 </div>
               ))}

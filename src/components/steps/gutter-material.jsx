@@ -13,10 +13,24 @@ import { TrustBadge } from "@/components/steps/trust-badge";
 
 
 // Gutter Material Card Component
-const GutterMaterialCard = ({ id, image, title, isSelected, onSelect }) => {
+const GutterMaterialCard = ({ id, image, title, isSelected, onSelect, questionText, answerText }) => {
+
+  const handleCardSelect = () => {
+    // Push the custom event with question and answer to the GTM dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'FormEvent',  // Custom event name
+      question_text: questionText, // The text of the question
+      answer_text: answerText, // The selected answer
+    });
+
+    // Call the parent handler to update the selected type
+    onSelect(id);
+  };
+
   return (
-    <div 
-      onClick={() => onSelect(id)}
+    <div
+      onClick={handleCardSelect}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out hover:scale-[1.03] hover:-translate-y-1 border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer"
     >
       <div className={`absolute inset-0 ${
@@ -57,10 +71,10 @@ const GutterMaterialCard = ({ id, image, title, isSelected, onSelect }) => {
 };
 
 const materials = [
-  { id: "aluminum", name: "Aluminum", img: Aluminum },
-  { id: "steel", name: "Steel", img: steel },
-  { id: "copper", name: "Copper", img: copper },
-  { id: "vinyl", name: "Vinyl", img: vinyl }, // Fixed capitalization to match ID
+  { id: "aluminum", name: "Aluminum", img: Aluminum, questionText: "Select Gutter Material", answerText: "Aluminum" },
+  { id: "steel", name: "Steel", img: steel, questionText: "Select Gutter Material", answerText: "Steel" },
+  { id: "copper", name: "Copper", img: copper, questionText: "Select Gutter Material", answerText: "Copper" },
+  { id: "vinyl", name: "Vinyl", img: vinyl, questionText: "Select Gutter Material", answerText: "Vinyl" },
 ];
 
 function GutterMaterialStep() {
@@ -133,6 +147,8 @@ function GutterMaterialStep() {
                     title={material.name}
                     isSelected={selectedMaterial === material.id}
                     onSelect={handleMaterialSelect}
+                    questionText={material.questionText}  // Pass the questionText dynamically
+                    answerText={material.answerText}  // Pass the answerText dynamically
                   />
                 </div>
               ))}

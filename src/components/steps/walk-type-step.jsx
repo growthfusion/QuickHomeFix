@@ -9,9 +9,23 @@ import { TrustBadge } from "@/components/steps/trust-badge";
 
 // Service Option Card Component
 const ServiceOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
+
+  const handleCardSelect = () => {
+    // Push the custom event with question and answer to the GTM dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'FormEvent',  // Custom event name
+      question_text: questionText, // The text of the question
+      answer_text: answerText, // The selected answer
+    });
+
+    // Call the parent handler to update the selected type
+    onSelect(id);
+  };
+
   return (
-    <div 
-      onClick={() => onSelect(id)}
+    <div
+      onClick={handleCardSelect}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out hover:scale-[1.03] hover:-translate-y-1 border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer"
     >
       <div className={`absolute inset-0 ${
@@ -48,9 +62,9 @@ const ServiceOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
 };
 
 const walkinTypes = [
-  { id: "replace", name: "Replace", icon: "🔄" },
-  { id: "install", name: "Install", icon: "➕" },
-  { id: "repair", name: "Repair", icon: "🔧" },
+  { id: "replace", name: "Replace", icon: "🔄", questionText: "What type of Walk-In tub", answerText: "Replace" },
+  { id: "install", name: "Install", icon: "➕", questionText: "What type of Walk-In tub", answerText: "Install" },
+  { id: "repair", name: "Repair", icon: "🔧", questionText: "What type of Walk-In tub", answerText: "Repair" },
 ];
 
 function WalkTypeStepShower() {
@@ -124,6 +138,8 @@ function WalkTypeStepShower() {
                     title={type.name}
                     isSelected={selectedType === type.id}
                     onSelect={handleTypeSelect}
+                    questionText={type.questionText}  // Pass the questionText dynamically
+                    answerText={type.answerText}  // Pass the answerText dynamically
                   />
                 </div>
               ))}

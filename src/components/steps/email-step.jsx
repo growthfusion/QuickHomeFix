@@ -17,16 +17,28 @@ function EmailStep() {
 
   // Basic format validation
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  
+
   // Enhanced Gmail validation - checks if username looks realistic
-  // Gmail usernames typically have letters and may have numbers and periods
   const isRealisticGmailUsername = (email) => {
     const username = email.split('@')[0];
     // Check if username contains at least one letter
     return /[a-zA-Z]/.test(username) && username.length >= 5;
   };
 
-const handleSubmit = async (e) => {
+  // ✅ ADDED: helper to safely push to dataLayer
+  const pushEmailEvent = (email) => {
+    if (typeof window === "undefined") return; // SSR-safe
+    const domain = (email.split("@")[1] || "").toLowerCase();
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "email",               // separate event name
+      question_text: "Please Enter Your Email",
+      answer_text: email,
+      email_domain: domain,
+    });
+  };
+
+  const handleSubmit = async (e) => {
   e.preventDefault();
 
   const email = formData.email?.trim();
@@ -59,7 +71,7 @@ const handleSubmit = async (e) => {
 
     // Check validation results
     if (result.format_valid && result.mx_found) {
-      // Email is valid, proceed to next step
+      pushEmailEvent(email);
       nextStep();
     } else {
       setEmailError(result.message || "Invalid email address. Please enter a real email.");

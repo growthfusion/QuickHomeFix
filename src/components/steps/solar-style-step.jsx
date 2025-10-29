@@ -1,17 +1,36 @@
+"use client"
 
 import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
+
+import roof from '@/assets/images/cloud.png';
+import install from '@/assets/images/cloudy.png';
+import repair from '@/assets/images/sun.png';
 import FooterSteps from '@/components/layout/footerSteps'
 import { TrustBadge } from "@/components/steps/trust-badge";
 
 
 
-// Service Option Card Component
-const ServiceOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
+// Sun Exposure Option Card Component
+const SunExposureCard = ({ id, image, title, isSelected, onSelect, questionText, answerText }) => {
+
+  const handleCardSelect = () => {
+    // Push the custom event with question and answer to the GTM dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'FormEvent',  // Custom event name
+      question_text: questionText, // The text of the question
+      answer_text: answerText, // The selected answer
+    });
+
+    // Call the parent handler to update the selected type
+    onSelect(id);
+  };
+
   return (
-    <div 
-      onClick={() => onSelect(id)}
+    <div
+      onClick={handleCardSelect}
       className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out hover:scale-[1.03] hover:-translate-y-1 border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer"
     >
       <div className={`absolute inset-0 ${
@@ -22,7 +41,11 @@ const ServiceOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
       
       <div className="p-6 text-center relative z-10">
         <div className="w-20 h-20 mx-auto flex items-center justify-center rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out shadow-md group-hover:shadow-lg mb-4 overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-700 dark:via-gray-650 dark:to-gray-600">
-          <span className="text-3xl filter group-hover:brightness-110 group-hover:saturate-150 transition-all duration-500">{icon}</span>
+          <img 
+            src={image} 
+            alt={title}
+            className="w-16 h-16 object-contain filter group-hover:brightness-110 group-hover:saturate-150 transition-all duration-500"
+          />
         </div>
         
         <h3 className={`font-semibold text-base ${
@@ -47,15 +70,15 @@ const ServiceOptionCard = ({ id, icon, title, isSelected, onSelect }) => {
   );
 };
 
-const walkinTypes = [
-  { id: "replace", name: "Replace", icon: "🔄" },
-  { id: "install", name: "Install", icon: "➕" },
-  { id: "repair", name: "Repair", icon: "🔧" },
+const sunExposureOptions = [
+  { id: "Full Sun", name: "Full Sun", image: repair, questionText: "How much sun exposure does your roof get?", answerText: "Full Sun" },
+  { id: "Partial Shade", name: "Partial Shade", image: install, questionText: "How much sun exposure does your roof get?", answerText: "Partial Shade" },
+  { id: "Mostly Shaded", name: "Mostly Shaded", image: roof, questionText: "How much sun exposure does your roof get?", answerText: "Mostly Shaded" },
 ];
 
-function WalkTypeSteTub (){
+function SunExposureStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
-  const [selectedType, setSelectedType] = useState(formData.walkinType || null);
+  const [selectedExposure, setSelectedExposure] = useState(formData.sunExposure || null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -64,9 +87,9 @@ function WalkTypeSteTub (){
     setIsLoaded(true);
   }, []);
 
-  const handleTypeSelect = (typeId) => {
-    setSelectedType(typeId);
-    updateFormData("walkinType", typeId);
+  const handleExposureSelect = (typeId) => {
+    setSelectedExposure(typeId);
+    updateFormData("sunExposure", typeId); // Fixed property name to match the component purpose
     
     // Start navigation process with visual feedback
     setIsNavigating(true);
@@ -75,21 +98,20 @@ function WalkTypeSteTub (){
   // Effect for automatic navigation after selection
   useEffect(() => {
     let timer;
-    if (isNavigating && selectedType) {
+    if (isNavigating && selectedExposure) {
       timer = setTimeout(() => {
         nextStep();
       }, 800); // Delay navigation to show selection feedback
     }
     
     return () => clearTimeout(timer);
-  }, [isNavigating, selectedType, nextStep]);
+  }, [isNavigating, selectedExposure, nextStep]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (selectedType) {
+    if (selectedExposure) {
       setIsNavigating(true);
-      // Navigation is handled by the useEffect
     }
   };
 
@@ -100,7 +122,7 @@ function WalkTypeSteTub (){
         <CardContent className="p-8">
           <form data-tf-element-role="offer" onSubmit={handleSubmit}>
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">What type of Walk-In Tub/Shower service do you need?</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">How much sun exposure does your roof get?</h2>
             </div>
 
             {/* Hidden TrustedForm field */}
@@ -109,7 +131,7 @@ function WalkTypeSteTub (){
             />
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {walkinTypes.map((type, index) => (
+              {sunExposureOptions.map((type, index) => (
                 <div 
                   key={type.id}
                   className="animate-fade-in-up"
@@ -118,18 +140,20 @@ function WalkTypeSteTub (){
                     animationFillMode: 'both'
                   }}
                 >
-                  <ServiceOptionCard
+                  <SunExposureCard
                     id={type.id}
-                    icon={type.icon}
+                    image={type.image}
                     title={type.name}
-                    isSelected={selectedType === type.id}
-                    onSelect={handleTypeSelect}
+                    isSelected={selectedExposure === type.id}
+                    onSelect={handleExposureSelect}
+                    questionText={type.questionText}  // Pass the questionText dynamically
+                    answerText={type.answerText}  // Pass the answerText dynamically
                   />
                 </div>
               ))}
             </div>
             
-         
+      
             
             {/* Navigation status indicator */}
             {isNavigating && (
@@ -183,8 +207,8 @@ function WalkTypeSteTub (){
     </div>
         <FooterSteps />
 
-  </>
+    </>
   );
 }
 
-export default WalkTypeSteTub;
+export default SunExposureStep;

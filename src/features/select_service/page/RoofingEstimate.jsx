@@ -12,7 +12,7 @@ import EmailStep from "@/components/steps/email-step"
 // Roofing steps
 import RoofingTypeStep from "@/components/steps/roofing-type-step";
 import RoofCountStep from "@/components/steps/roof-count-step";
-import MaterialStep from "@/components/steps/material-step";
+import RoofMaterialStep from "@/components/steps/roof-material-step.jsx";
 // Windows steps
 import WindowTypeStep from "@/components/steps/window-type-step";
 import WindowCountStep from "@/components/steps/window-count-step";
@@ -21,7 +21,7 @@ import WindowStyleStep from "@/components/steps/window-style-step";
 import BathwallTypeStep from "@/components/steps/bathroom-wall";
 // Solar steps
 import SolarTypeStep from "@/components/steps/solar-type-step";
-import SunExposureStep from "@/components/steps/roof-size-step";
+import SunExposureStep from "@/components/steps/solar-style-step.jsx";
 //Gutter steps
 import GutterTypeStep from "@/components/steps/gutter-type-step";
 import GutterMaterialStep from "@/components/steps/gutter-material";
@@ -44,7 +44,7 @@ const stepComponents = {
   // Roofing specific
   "roofing-type": RoofingTypeStep,
   "roof-count": RoofCountStep,
-  material: MaterialStep,
+  material: RoofMaterialStep,
   // Windows specific
   "window-type": WindowTypeStep,
   "window-count": WindowCountStep,
