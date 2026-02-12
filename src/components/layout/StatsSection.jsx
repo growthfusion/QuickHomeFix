@@ -1,49 +1,46 @@
-import React, { useEffect } from 'react';
-import CountUp from 'react-countup';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import React, { useEffect, useRef, useState } from "react";
+import CountUp from "react-countup";
 
 function StatsSection() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
   useEffect(() => {
-    AOS.init({
-      duration: 1000,
-      once: true,
-    });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
   }, []);
 
+  const stats = [
+    { end: 7, suffix: "+", label: "Years Experience" },
+    { end: 1000, suffix: "+", label: "Happy Customers" },
+    { end: 100, suffix: "%", label: "Satisfaction" },
+    { end: 24, suffix: "/7", label: "Support" },
+  ];
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-      {/* Years Experience */}
-      <div data-aos="fade-up" className="text-center">
-        <div className="text-4xl md:text-5xl font-bold text-blue-600">
-          <CountUp start={0} end={7} duration={4} redraw />+
+    <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-12 md:mt-16">
+      {stats.map((stat, i) => (
+        <div key={i} className="text-center">
+          <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-600">
+            {visible ? (
+              <CountUp start={0} end={stat.end} duration={2.5} />
+            ) : (
+              0
+            )}
+            {stat.suffix}
+          </div>
+          <div className="text-gray-600 mt-2 text-sm sm:text-base">{stat.label}</div>
         </div>
-        <div className="text-gray-600 mt-2">Years Experience</div>
-      </div>
-
-      {/* Happy Customers */}
-      <div data-aos="fade-up" data-aos-delay="100" className="text-center">
-        <div className="text-4xl md:text-5xl font-bold text-blue-600">
-          <CountUp start={0} end={1000} duration={4.5} redraw />+
-        </div>
-        <div className="text-gray-600 mt-2">Happy Customers</div>
-      </div>
-
-      {/* Satisfaction */}
-      <div data-aos="fade-up" data-aos-delay="200" className="text-center">
-        <div className="text-4xl md:text-5xl font-bold text-blue-600">
-          <CountUp start={0} end={100} duration={4} redraw />%
-        </div>
-        <div className="text-gray-600 mt-2">Satisfaction</div>
-      </div>
-
-      {/* Support */}
-      <div data-aos="fade-up" data-aos-delay="300" className="text-center">
-        <div className="text-4xl md:text-5xl font-bold text-blue-600">
-          <CountUp start={0} end={24} duration={4} redraw />/7
-        </div>
-        <div className="text-gray-600 mt-2">Support</div>
-      </div>
+      ))}
     </div>
   );
 }

@@ -16,7 +16,9 @@ app.use(helmet());
 app.use(express.json({ limit: "200kb" }));
 app.use(
     cors({
-      origin: process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN] : true,
+      origin: process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim())
+        : true,
     })
 );
 
@@ -186,6 +188,8 @@ const LeadSchema = z.object({
   gutterMaterial: z.string().optional().or(z.literal("")),
   gutterType: z.string().optional().or(z.literal("")),
   walkinType: z.string().optional().or(z.literal("")),
+  bathNeeds: z.string().optional().or(z.literal("")),
+  tubReason: z.string().optional().or(z.literal("")),
   sunExposure: z.string().optional().or(z.literal("")),
 });
 
@@ -202,7 +206,7 @@ app.post("/api/leads", async (req, res) => {
         service, email, roofing_type, roof_count, material,
         window_type, window_count, window_style, solar_type, roof_size,
         address, city, state, zipcode, is_owner, can_make_changes, first_name, last_name, phone,client_ip, user_agent,
-        bathshower_type, bathwall_type, gutter_material, gutter_type, walkin_type, sunexposure
+        bathshower_type, bathwall_type, gutter_material, gutter_type, walkin_type, bath_needs, tub_reason, sunexposure
       )
       VALUES (
                $1,$2,$3,$4,$5,
@@ -210,7 +214,7 @@ app.post("/api/leads", async (req, res) => {
                $11,$12,$13,$14,$15,
                $16,$17,$18,$19,$20,
                $21,$22,$23,$24,$25,
-               $26,$27
+               $26,$27,$28,$29
              )
         RETURNING id, created_at
     `;
@@ -243,6 +247,8 @@ app.post("/api/leads", async (req, res) => {
       data.gutterMaterial || null,
       data.gutterType || null,
       data.walkinType || null,
+      data.bathNeeds || null,
+      data.tubReason || null,
       data.sunExposure || null,
     ];
 
@@ -329,20 +335,38 @@ app.get("/api/verify-email", async (req, res) => {
   }
 
   const domain = email.split('@')[1].toLowerCase();
+  const username = email.split('@')[0];
   
-  // List of common domains we consider valid
+  // Reject obviously fake patterns
+  const isSuspicious = (
+    /^(test|fake|asdf|qwerty|abc|xxx|noemail|noreply|admin)@/i.test(email) ||
+    username.length < 2 ||
+    /^[0-9]+$/.test(username)
+  );
+  
+  if (isSuspicious) {
+    return res.json({
+      format_valid: false,
+      mx_found: false,
+      message: "Please enter a valid email address"
+    });
+  }
+
+  // List of common domains we consider valid (expanded list)
   const commonDomains = [
     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", 
-    "aol.com", "icloud.com", "protonmail.com", "mail.com"
+    "aol.com", "icloud.com", "protonmail.com", "mail.com",
+    "live.com", "msn.com", "ymail.com", "yahoo.co.in",
+    "yahoo.co.uk", "outlook.in", "rediffmail.com", "zoho.com",
+    "me.com", "mac.com", "comcast.net", "verizon.net",
+    "att.net", "sbcglobal.net", "bellsouth.net", "cox.net",
+    "charter.net", "earthlink.net", "juno.com", "frontier.com"
   ];
   
   // Skip API for common domains to prevent timeouts
   if (commonDomains.includes(domain)) {
     // For Gmail, do some additional validation
     if (domain === "gmail.com") {
-      const username = email.split('@')[0];
-      
-      // Gmail-specific validation
       const isValidGmail = (
         username.length >= 5 && 
         /^[a-z]/i.test(username) && 
@@ -369,9 +393,8 @@ app.get("/api/verify-email", async (req, res) => {
     });
   }
 
-  // Only proceed with API check for non-common domains
+  // For non-common domains, try API but be lenient on failure
   try {
-    // Use a simple timeout pattern
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("API request timeout")), 5000)
     );
@@ -384,13 +407,10 @@ app.get("/api/verify-email", async (req, res) => {
       }
     );
     
-    // Race between fetch and timeout
     const response = await Promise.race([fetchPromise, timeoutPromise]);
     
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("Non-JSON response:", text);
       throw new Error("Invalid response format");
     }
     
@@ -400,17 +420,13 @@ app.get("/api/verify-email", async (req, res) => {
   } catch (err) {
     console.error("Email verification error:", err.message);
     
-    if (err.message.includes("timeout")) {
-      console.log("API request was aborted or timed out");
-    }
-    
-    // For unknown domains, make a conservative guess
+    // If API fails, allow through — the format is already validated
     return res.json({
-      format_valid: isValidFormat,
-      mx_found: false,  // Conservative: assume domain is invalid if we can't verify
+      format_valid: true,
+      mx_found: true,
       is_disposable: false,
       email: email,
-      message: "Could not verify this email domain"
+      message: "Email accepted (API verification unavailable)"
     });
   }
 });
@@ -419,28 +435,48 @@ app.get("/api/verify-phone", async (req, res) => {
   const phone = req.query.phone;
   if (!phone) return res.status(400).json({ error: "Phone number is required" });
 
-  // Basic format validation
+  // Basic format validation — 10 digits
   const isValidFormat = /^\d{10}$/.test(phone);
   if (!isValidFormat) {
     return res.json({
       valid: false,
       country_code: null,
-      message: "Invalid phone format"
+      message: "Please enter a valid 10-digit US phone number"
+    });
+  }
+
+  // Reject known invalid patterns (555 numbers, all-same digits, sequential)
+  const areaCode = phone.substring(0, 3);
+  const isFakeNumber = (
+    areaCode === "555" ||
+    /^(\d)\1{9}$/.test(phone) ||  // all same digit
+    phone === "1234567890"
+  );
+  
+  if (isFakeNumber) {
+    return res.json({
+      valid: false,
+      country_code: "US",
+      message: "Please enter a real phone number"
     });
   }
 
   try {
     const fullNumber = `+1${phone}`;
     
-    const response = await fetch(
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Phone API timeout")), 6000)
+    );
+    
+    const fetchPromise = fetch(
       `https://api.apilayer.com/number_verification/validate?number=${fullNumber}`,
       {
         method: "GET",
-        headers: { 
-          apikey: process.env.APILAYER_KEY
-        }
+        headers: { apikey: process.env.APILAYER_KEY }
       }
     );
+
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (!response.ok) {
       throw new Error(`API responded with status ${response.status}`);
@@ -452,14 +488,14 @@ app.get("/api/verify-phone", async (req, res) => {
   } catch (err) {
     console.error("Phone verification error:", err.message);
     
-    
+    // Format validated — allow through
     return res.json({
-      valid: isValidFormat,
-      country_code: "US", // Assume US since we're adding +1
+      valid: true,
+      country_code: "US",
       carrier: "",
       line_type: "",
       number: `+1${phone}`,
-      message: "Using fallback validation (API unavailable)"
+      message: "Phone accepted (API verification unavailable)"
     });
   }
 });

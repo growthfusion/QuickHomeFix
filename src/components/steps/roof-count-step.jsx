@@ -1,170 +1,69 @@
-"use client"
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
-import { Home } from "lucide-react";
-import FooterSteps from '@/components/layout/footerSteps'
-import { TrustBadge } from "@/components/steps/trust-badge";
+import { Button } from "@/components/ui/button";
+import StepProgressBar from "@/components/layout/step-progress-bar";
 
+const roofCounts = [
+  { id: "1", name: "1" },
+  { id: "2", name: "2" },
+  { id: "3", name: "3" },
+  { id: "4", name: "4" },
+  { id: "more", name: "More than 4" },
+];
+
+const QUESTION_TEXT = "How many roof need service?";
 
 function RoofCountStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
-  const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCount, setSelectedCount] = useState(formData.roofCount || null);
-  const [isNavigating, setIsNavigating] = useState(false);
 
-  // ✅ ADDED: single source of truth for this step’s question
-  const QUESTION_TEXT = "How many roof need service?";
-
-  // Animation on load
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  const handleCountSelect = (count) => {
-    setSelectedCount(count);
-    updateFormData("roofCount", count);
-
-    // ✅ ADDED: GTM dataLayer event with question & answer (DLV names match your GTM setup)
-    const answerLabel = count === "more" ? "More than 4" : count;
+  const handleCountSelect = (countId) => {
+    setSelectedCount(countId);
+    updateFormData("roofCount", countId);
+    const answerLabel = countId === "more" ? "More than 4" : countId;
     window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: "FormEvent",
-      question_text: QUESTION_TEXT,
-      answer_text: answerLabel,
-    });
-    
-    // Start navigation process with visual feedback
-    setIsNavigating(true);
+    window.dataLayer.push({ event: "FormEvent", question_text: QUESTION_TEXT, answer_text: answerLabel });
   };
-  
-  // Effect for automatic navigation after selection
-  useEffect(() => {
-    let timer;
-    if (isNavigating && selectedCount) {
-      timer = setTimeout(() => {
-        nextStep();
-      }, 800); // Delay navigation to show selection feedback
-    }
-    
-    return () => clearTimeout(timer);
-  }, [isNavigating, selectedCount, nextStep]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (selectedCount) {
-      setIsNavigating(true);
-      // Navigation is handled by the useEffect
-    }
+  const handleNext = () => {
+    if (selectedCount) nextStep();
   };
 
   return (
-    <>
-    <div style={{ background: '#f8fbfe', padding: '20px' }} className="">
-      <Card className="mx-auto max-w-2xl bg-white shadow-sm border-gray-100 overflow-hidden">
-        <CardContent className="p-8 pb-10">
-          <form data-tf-element-role="offer" onSubmit={handleSubmit}>
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-4">
-                <div className="p-2 bg-blue-50 rounded-full">
-                  <Home className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-              <h2 className="text-2xl font-semibold mb-2">How many roof need service?</h2>
-            </div>
-
-            {/* Hidden TrustedForm field */}
-            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
-                   value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
-            />
-            
-            {/* Original button sizing and layout, with animation */}
-            <div className={`grid grid-cols-4 gap-4 mb-6 ${isLoaded ? 'animate-fadeIn' : 'opacity-0'}`}>
-              {[1, 2, 3, 4].map((num, index) => (
-                <button
-                  key={num}
-                  type="button" // Important to specify button type to avoid form submission
-                  className={`h-12 text-lg rounded-md transition-all duration-300 ${
-                    selectedCount === num.toString() 
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-white hover:bg-blue-50 text-gray-700 border border-gray-200 hover:text-blue-600"
-                  }`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                  onClick={() => handleCountSelect(num.toString())}
-                  aria-pressed={selectedCount === num.toString()}
-                >
-                  {num}
-                </button>
-              ))}
-            </div>
-            
-            <div className={`transition-opacity duration-500 mb-8 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-              style={{ transitionDelay: '150ms' }}>
+    <div className="flex justify-center px-4 py-8 sm:py-12">
+      <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <StepProgressBar />
+        <CardContent className="p-6 sm:p-8">
+          <div className="text-center mb-6">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">How many roof need service?</h2>
+          </div>
+          <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
+          <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
+            {roofCounts.map((count, idx) => (
               <button
-                type="button" // Important to specify button type to avoid form submission
-                className={`w-full h-10 rounded-md transition-all duration-300 ${
-                  selectedCount === "more" 
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-white hover:bg-blue-50 text-gray-700 border border-gray-200 hover:text-blue-600"
-                }`}
-                onClick={() => handleCountSelect("more")}
-                aria-pressed={selectedCount === "more"}
+                key={count.id}
+                type="button"
+                onClick={() => handleCountSelect(count.id)}
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
+                  idx !== roofCounts.length - 1 ? "border-b border-gray-200" : ""
+                } ${selectedCount === count.id ? "bg-blue-50" : "bg-white"}`}
               >
-                More than 4
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  selectedCount === count.id ? "border-blue-600" : "border-gray-300"
+                }`}>
+                  {selectedCount === count.id && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                </div>
+                <span className={`font-medium text-base ${selectedCount === count.id ? "text-blue-600" : "text-gray-800"}`}>{count.name}</span>
               </button>
-            </div>
-            
-         
-            
-            {/* Navigation status indicator */}
-            {isNavigating && (
-              <div className="text-center text-blue-600 mt-8 animate-fade-in" aria-live="polite" role="status">
-                <div className="inline-block w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-                <span className="text-sm">Processing your selection...</span>
-              </div>
-            )}
-          </form>
+            ))}
+          </div>
+          <div className="flex justify-center">
+            <Button type="button" onClick={handleNext} disabled={!selectedCount} className="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</Button>
+          </div>
         </CardContent>
-        <TrustBadge />
       </Card>
-      
-      {/* Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.4s forwards;
-        }
-        
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
-        
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        
-        .animate-spin {
-          animation: spin 0.8s linear infinite;
-        }
-      `}</style>
-
     </div>
-        <FooterSteps />
-
-    </>
   );
 }
 

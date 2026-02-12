@@ -1,80 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import bath from '@/assets/images/bath-tub.png';
-import roof from '@/assets/images/roof.png';
-import solar from '@/assets/images/solar-panel.png';
-import windows from '@/assets/images/window.png';
-import shower from '@/assets/images/showerr.png';
-import gutter from '@/assets/images/round.png';
-import buket from '@/assets/images/buket.png'
+import bath from "@/assets/images/bath-tub.png";
+import roof from "@/assets/images/roof.png";
+import solar from "@/assets/images/solar-panel.png";
+import windows from "@/assets/images/window.png";
+import shower from "@/assets/images/showerr.png";
+import gutter from "@/assets/images/round.png";
+import buket from "@/assets/images/buket.png";
 
-import FooterSteps from '@/components/layout/footerSteps'
+import FooterSteps from "@/components/layout/footerSteps";
 
-
-// Service Card Component with enhanced ribbon-style popular indicator
-// Service Card Component with a working, robust ribbon
-const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => {
-  return (
-    <div 
-      onClick={() => onSelect(id)}
-      className="group relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/40 transition-all duration-500 ease-out border border-gray-200/60 dark:border-gray-700/60 overflow-hidden cursor-pointer h-full"
-    >
-      {/* Popular Ribbon - CORRECTED IMPLEMENTATION */}
-      {isPopular && (
-        <div className="absolute top-0 right-0 h-24 w-24 overflow-hidden z-20">
-          <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center font-semibold uppercase text-[11px] tracking-wider py-1 right-[-35px] top-[25px] w-[150px] shadow-md border-t border-b border-blue-400/30">
-            Popular
-          </div>
-        </div>
-      )}
-      
-      {/* Card content */}
-      <div className={`absolute inset-0 ${
-        isSelected
-          ? "opacity-100 bg-gradient-to-br from-blue-500/15 via-purple-500/15 to-pink-500/15 dark:from-blue-500/25 dark:via-purple-500/25 dark:to-pink-500/25"
-          : "opacity-0 bg-gradient-to-br from-blue-500/8 via-purple-500/8 to-pink-500/8"
-      } rounded-xl transition-opacity duration-500 group-hover:opacity-100`} />
-      
-      <div className="p-6 text-center relative z-10 flex flex-col items-center justify-center h-full">
-        <div className="w-20 h-20 mx-auto flex items-center justify-center rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 ease-out shadow-md group-hover:shadow-lg mb-4 overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-700 dark:via-gray-650 dark:to-gray-600">
-          <img 
-            src={image} 
-            alt={title}
-            className="w-16 h-16 object-contain filter group-hover:brightness-110 group-hover:saturate-150 transition-all duration-500"
-          />
-        </div>
-        
-        <h3 className={`font-semibold text-base ${
-          isSelected
-            ? "text-blue-600 dark:text-blue-400"
-            : "text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-        } transition-colors duration-500`}>
-          {title}
-        </h3>
-        
-        {isSelected && (
-          <div className="absolute right-3 bottom-3 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs animate-fade-in">
-            ✓
-          </div>
-        )}
-      </div>
-      
-      {/* Shimmer on hover */}
-      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out">
-        <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent skew-x-12" />
-      </div>
+const ServiceCard = ({ id, image, title, isSelected, onSelect, isPopular }) => (
+  <div
+    onClick={() => onSelect(id)}
+    className={`relative bg-white rounded-xl border cursor-pointer flex items-center gap-4 px-6 py-5 sm:px-8 sm:py-6 card-smooth transition-shadow duration-200 ${
+      isSelected
+        ? "border-blue-600 bg-blue-50/60 shadow-md"
+        : "border-gray-200"
+    }`}
+  >
+    <div className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-50">
+      <img
+        src={image}
+        alt={title}
+        className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+        loading="lazy"
+      />
     </div>
-  );
-};
+
+    <h3 className={`font-semibold text-base sm:text-lg ${
+      isSelected ? "text-blue-600" : "text-gray-800"
+    }`}>
+      {title}
+    </h3>
+
+    {isPopular && (
+      <span className="ml-auto bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full flex-shrink-0">
+        Popular
+      </span>
+    )}
+
+    {isSelected && (
+      <div className="ml-auto w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-[10px] flex-shrink-0">
+        ✓
+      </div>
+    )}
+  </div>
+);
 
 function ServiceSelection() {
   const { formData, updateFormData, resetForm, setStep } = useFormStore();
   const [selectedService, setSelectedService] = useState(formData.service || null);
-  const navigate = useNavigate();
-  
   const [isNavigating, setIsNavigating] = useState(false);
+  const navigate = useNavigate();
 
   const services = [
     { id: "roof", name: "Roof Services", image: roof, path: "/get-quotes/roof" },
@@ -82,12 +62,10 @@ function ServiceSelection() {
     { id: "bath", name: "Bath Remodeling", image: bath, path: "/get-quotes/bath" },
     { id: "solar", name: "Solar Energy", image: solar, path: "/get-quotes/solar" },
     { id: "gutter", name: "Gutter Services", image: gutter, path: "/get-quotes/gutter" },
-    { id: "walk-in tub", name: "Walk-In-Tub", image: buket, path: "/get-quotes/tub" },
-     { id: "walk-in Shower", name: "Walk-In-Shower", image: shower, path: "/get-quotes/shower" },
-
+    { id: "tub", name: "Walk-In-Tub", image: buket, path: "/get-quotes/tub" },
+    { id: "shower", name: "Walk-In-Shower", image: shower, path: "/get-quotes/shower" },
   ];
 
-  // Reset form when component mounts to ensure clean state
   useEffect(() => {
     resetForm();
   }, [resetForm]);
@@ -95,65 +73,53 @@ function ServiceSelection() {
   const handleServiceSelect = (serviceId) => {
     setSelectedService(serviceId);
     updateFormData("service", serviceId);
-    
-    // Start navigation process with visual feedback
     setIsNavigating(true);
   };
-  
-  // Effect for automatic navigation after selection
+
   useEffect(() => {
     let timer;
     if (isNavigating && selectedService) {
-      const selectedServiceData = services.find(service => service.id === selectedService);
-      
+      const selected = services.find((s) => s.id === selectedService);
       timer = setTimeout(() => {
-        if (selectedServiceData && selectedServiceData.path) {
-          setStep(1); // Move to first step after service selection
-          
-          navigate(selectedServiceData.path, { replace: true });
+        if (selected?.path) {
+          setStep(1);
+          navigate(selected.path, { replace: true });
         }
-      }, 800); // Delay navigation to show selection feedback
+      }, 300);
     }
-    
     return () => clearTimeout(timer);
-  }, [isNavigating, selectedService, navigate, services, setStep]);
+  }, [isNavigating, selectedService, navigate, setStep]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (selectedService) {
-      setIsNavigating(true);
-    }
+    if (selectedService) setIsNavigating(true);
   };
 
   return (
     <>
-    <div className="bg-gradient-to-br from-gray-50 via-blue-50/40 to-purple-50/40 dark:from-gray-900 dark:via-gray-850 dark:to-gray-800 transition-all duration-700 p-6">
-      <div className="mx-auto max-w-4xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg  border border-gray-200/60 dark:border-gray-700/60 overflow-hidden">
-        <form data-tf-element-role="offer" onSubmit={handleSubmit} className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Select Your Service</h2>
-            <p className="text-base text-gray-600 dark:text-gray-400">
-              Choose the home service you need to get started with your free get-quotes!
-            </p>
-          </div>
+      <div className="px-4 py-4 sm:px-8 sm:py-6 flex-1 flex flex-col">
+        <div className="mx-auto max-w-3xl w-full flex-1 flex flex-col">
+          <form data-tf-element-role="offer" onSubmit={handleSubmit} className="flex-1 flex flex-col">
+            <div className="text-center mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Select Your Service
+              </h2>
+              <p className="text-sm sm:text-base text-gray-500">
+                Choose the home service you need to get started with your free quote.
+              </p>
+            </div>
 
-          {/* Hidden TrustedForm field */}
-          <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
-                 value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
-          />
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {services.map((service, index) => (
-              <div
-                key={service.id}
-                className="animate-fade-in-up"
-                style={{
-                  animationDelay: `${index * 0.15}s`,
-                  animationFillMode: 'both'
-                }}
-              >
+            <input
+              type="hidden"
+              name="xxTrustedFormCertUrl"
+              id="xxTrustedFormCertUrl"
+              value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 flex-1">
+              {services.map((service) => (
                 <ServiceCard
+                  key={service.id}
                   id={service.id}
                   image={service.image}
                   title={service.name}
@@ -161,25 +127,12 @@ function ServiceSelection() {
                   onSelect={handleServiceSelect}
                   isPopular={service.isPopular}
                 />
-              </div>
-            ))}
-          </div>
-          
-          {/* Navigation status indicator */}
-          {isNavigating && (
-            <div className="text-center text-blue-600 dark:text-blue-400 mt-4 animate-fade-in">
-              <div className="inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
-              <span>Proceeding to next step...</span>
+              ))}
             </div>
-          )}
-        </form>
+          </form>
+        </div>
       </div>
-      
-      {/* CSS for animations */}
-    
-    </div>
-        <FooterSteps />
-
+      <FooterSteps />
     </>
   );
 }

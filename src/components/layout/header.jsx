@@ -1,47 +1,38 @@
-// components/Header.jsx
-import React from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useFormStore } from '@/lib/store';
-import logo from '@/assets/images/logo.png';
-import LeaveConfirmationDialog from './LeaveConfirmationDialog';
+import React from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useFormStore } from "@/lib/store";
+import logo from "@/assets/images/ChatGPT_Image_Feb_12__2026__12_32_18_PM__1_-removebg-preview.png";
+import LeaveConfirmationDialog from "./LeaveConfirmationDialog";
 
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { handleHomeNavigation, showLeaveDialog } = useFormStore();
+  const { handleHomeNavigation } = useFormStore();
 
   const handleHomeClick = (e) => {
-    // Only show confirmation if we're not already on home page
-    if (location.pathname !== '/') {
+    if (location.pathname !== "/") {
       e.preventDefault();
-      
       handleHomeNavigation(() => {
-        navigate('/');
+        navigate("/");
       });
     }
   };
 
   return (
     <>
-      <header className="bg-white border-b border-border shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <img src={logo} alt="QuickHomeFix Logo" className="w-10 h-10 object-contain" />
-              <Link 
-                to="/" 
-                onClick={handleHomeClick}
-                className="text-2xl font-bold text-gray-700 hover:text-gray-500 transition-colors"
-              >
-                QuickHomeFix
-              </Link>
-            </div>
-          </div>
+      <header className="bg-white sticky top-0 z-50">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center">
+          <Link
+            to="/"
+            onClick={handleHomeClick}
+            className="flex items-center gap-2"
+          >
+            <img src={logo} alt="QuickHomeFix" className="w-20 h-20 object-contain" />
+          </Link>
         </div>
       </header>
-      
-      {/* Render dialog */}
-      <LeaveConfirmationDialog onConfirm={() => navigate('/')} />
+
+      <LeaveConfirmationDialog onConfirm={() => navigate("/")} />
     </>
   );
 }

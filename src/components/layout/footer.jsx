@@ -6,15 +6,15 @@ function Footer() {
       <div className="container mx-auto px-4 text-center">
         <p className="text-sm mb-2">© 2025 QuickHomeFix. All rights reserved.</p>
         <div className="flex justify-center gap-4 text-sm">
-          <a href="#" className="hover:text-gray-300">
+          <a href="#" className="">
             Privacy Policy
           </a>
           <span>|</span>
-          <a href="#" className="hover:text-gray-300">
+          <a href="#" className="">
             Terms of Service
           </a>
           <span>|</span>
-          <a href="#" className="hover:text-gray-300">
+          <a href="#" className="">
             Contact Us
           </a>
         </div>

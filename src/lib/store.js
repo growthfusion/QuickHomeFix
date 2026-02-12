@@ -19,6 +19,8 @@ const initialFormData = {
   sunExposure:"",
   gutterType:"",
   walkinType:"",
+  bathNeeds:"",
+  tubReason:"",
   address: "",
   city: "",
   state: "",
@@ -115,73 +117,40 @@ const useFormStore = create(
       handleHomeNavigation: (navigateCallback) => {
         const state = get();
         
-        console.log('=== Home Navigation Debug ===');
-        console.log('isFormStarted:', state.isFormStarted);
-        console.log('isFormCompleted:', state.isFormCompleted);
-        console.log('service:', state.formData.service);
-        console.log('hasUnsavedChanges:', state.hasUnsavedChanges());
-        
-        // If no unsaved changes, navigate directly
         if (!state.hasUnsavedChanges()) {
-          console.log('No unsaved changes - navigating directly');
           navigateCallback();
           return;
         }
         
-        // Show confirmation dialog
-        console.log('Showing leave confirmation dialog');
         set({ showLeaveDialog: true });
       },
 
       // Save current progress and keep data for later
       saveProgress: () => {
-        const state = get();
-        console.log('Saving progress...', state.formData);
-        
-        // Mark progress as saved (but not completed)
         set({ 
-          isFormCompleted: false, // Keep as false so user can continue later
-          isFormStarted: true     // Keep as true to maintain progress
+          isFormCompleted: false,
+          isFormStarted: true
         });
-        
-        // You can add additional save logic here like:
-        // - Send to backend
-        // - Save to localStorage with timestamp
-        // - Send analytics event
-        
-        console.log('Progress saved successfully');
         return true;
       },
 
       // Save and leave - preserves progress
       saveAndLeave: (navigateCallback) => {
-        console.log('User chose Save & Leave');
-        
-        // Save the current progress
         const saved = get().saveProgress();
-        
         if (saved) {
-          // Don't reset the form - keep the data for later
           set({ showLeaveDialog: false });
-          
-          // Navigate to home but keep the progress
           if (navigateCallback) navigateCallback();
-          
-          console.log('Saved and navigated - user can continue later');
         }
       },
 
       // Leave without saving - resets everything
       confirmLeave: (navigateCallback) => {
-        console.log('User confirmed leave without saving - resetting and navigating');
         get().resetAll();
         set({ showLeaveDialog: false });
         if (navigateCallback) navigateCallback();
       },
 
-      // Cancel leave
       cancelLeave: () => {
-        console.log('User cancelled leave');
         set({ showLeaveDialog: false });
       },
 

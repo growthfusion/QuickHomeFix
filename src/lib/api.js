@@ -1,8 +1,9 @@
 // Simple, safe fetch wrapper for your app
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+// Empty string means requests go through Vite proxy in dev (avoids CORS)
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 function assertApiBase() {
-    if (!API_BASE) throw new Error("VITE_API_BASE_URL is not set");
+    // allow empty string (Vite proxy mode)
 }
 
 // Parse JSON safely (some endpoints may return empty text or HTML error pages)

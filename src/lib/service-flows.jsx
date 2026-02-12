@@ -1,84 +1,96 @@
 /**
- * @typedef {Object} ServiceFlow
- * @property {string} id - Unique identifier for the service
- * @property {string} name - Display name for the service
- * @property {string[]} steps - Array of step names in sequence
- * @property {number} totalSteps - Total number of steps in the flow
- */
-
-/**
- * Configuration for all service flows in the application
- * @type {Object.<string, ServiceFlow>}
+ * Central configuration for all service flows.
+ * This is the SINGLE SOURCE OF TRUTH for service definitions.
+ *
+ * FLOW ORDER: zipcode → service-specific steps → email → name → phone → dfaddress → complete
+ *
+ * To add a new service:
+ *   1. Add an entry here with id, name, initialStep, and steps.
+ *   2. Create the step components referenced in `steps`.
+ *   3. Register them in the stepComponents map inside QuoteWizard.
+ *   That's it — routing and navigation are handled automatically.
  */
 const serviceFlows = {
   roof: {
     id: "roof",
     name: "Roofing Service",
-    steps: [ "roofing-type", "roof-count", "material","email",  "name", "phone","dfaddress", "complete"],
-    totalSteps: 8,
+    initialStep: "zipcode",
+    steps: ["zipcode", "roofing-type", "material", "ownership", "details", "final", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
   windows: {
     id: "windows",
     name: "Windows Service",
-    steps: [ "window-type", "window-style", "window-count", "email", "name", "phone","dfaddress", "complete"],
-    totalSteps: 8,
+    initialStep: "zipcode",
+    steps: ["zipcode", "window-type", "window-count", "ownership", "details", "final", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
   solar: {
     id: "solar",
     name: "Solar Energy",
-    steps: [ "solar-type", "roof-size", "email", "name", "phone","dfaddress", "complete"],
-    totalSteps: 7,
+    initialStep: "zipcode",
+    steps: ["zipcode", "solar-type", "roof-size", "email", "name", "phone", "dfaddress", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
   bath: {
     id: "bath",
     name: "Bath Remodeling",
-    steps: ["bathroom-wall","bathroom-shower","email", "name", "phone","dfaddress", "complete"],
-    totalSteps: 7,
+    initialStep: "zipcode",
+    steps: ["zipcode", "bath-needs", "ownership", "details", "final", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
   gutter: {
     id: "gutter",
     name: "Gutter Services",
-    steps: ["gutter-type","gutter-material","email", "name", "phone","dfaddress", "complete"],
-    totalSteps: 7,
+    initialStep: "zipcode",
+    steps: ["zipcode", "gutter-type", "gutter-material", "email", "name", "phone", "dfaddress", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
-  "tub": {
-    id: "walk-in",
-    name: "Walk-in-Tub/Shower",
-    steps: ["walkin-type","email",  "name", "phone","dfaddress", "complete"],
-    totalSteps: 6,
+  tub: {
+    id: "tub",
+    name: "Walk-In Tub",
+    initialStep: "zipcode",
+    steps: ["zipcode", "tub-reason", "ownership", "details", "final", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
-  "shower": {
-    id: "walk-in",
-    name: "Walk-in-Tub/Shower",
-    steps: ["walk","email",  "name", "phone","dfaddress", "complete"],
-    totalSteps: 6,
+  shower: {
+    id: "shower",
+    name: "Walk-In Shower",
+    initialStep: "zipcode",
+    steps: ["zipcode", "walk", "email", "name", "phone", "dfaddress", "complete"],
+    get totalSteps() { return this.steps.length; },
   },
 };
 
+/** All valid service IDs (useful for route validation) */
+const validServiceIds = Object.keys(serviceFlows);
+
 /**
- * Get the service flow configuration for a specified service ID
- * @param {string} serviceId - The ID of the service to retrieve
- * @returns {ServiceFlow} The service flow configuration (defaults to roof if not found)
+ * Get the service flow configuration for a given service ID.
+ * @param {string} serviceId
+ * @returns {ServiceFlow} Defaults to roof if not found.
  */
 function getServiceFlow(serviceId) {
   if (!serviceId || serviceId.trim() === "") {
-    console.warn("Empty serviceId provided to getServiceFlow");
-    return serviceFlows.roof; // Default to roof
+    return serviceFlows.roof;
   }
-  
-  // Check if the service exists
-  if (!serviceFlows[serviceId]) {
-    console.warn(`Unknown service ID: ${serviceId}, defaulting to roof`);
-  }
-  
   return serviceFlows[serviceId] || serviceFlows.roof;
 }
 
 /**
- * Get the index of a specific step within a service flow
- * @param {string} serviceId - The ID of the service
- * @param {string} stepName - The name of the step to find
- * @returns {number} The index of the step in the flow (-1 if not found)
+ * Check if a service ID is valid / registered.
+ * @param {string} serviceId
+ * @returns {boolean}
+ */
+function isValidService(serviceId) {
+  return serviceId && serviceId in serviceFlows;
+}
+
+/**
+ * Get the index of a specific step within a service flow.
+ * @param {string} serviceId
+ * @param {string} stepName
+ * @returns {number} -1 if not found.
  */
 function getStepIndex(serviceId, stepName) {
   const flow = getServiceFlow(serviceId);
@@ -86,15 +98,14 @@ function getStepIndex(serviceId, stepName) {
 }
 
 /**
- * Check if a step is the final step in a service flow
- * @param {string} serviceId - The ID of the service
- * @param {string} stepName - The name of the step to check
- * @returns {boolean} True if the step is the last step in the flow
+ * Check if a step is the final step in a service flow.
+ * @param {string} serviceId
+ * @param {string} stepName
+ * @returns {boolean}
  */
 function isLastStep(serviceId, stepName) {
   const flow = getServiceFlow(serviceId);
   return stepName === flow.steps[flow.totalSteps - 1];
 }
 
-// Use ES Modules exports
-export { serviceFlows, getServiceFlow, getStepIndex, isLastStep };
+export { serviceFlows, validServiceIds, getServiceFlow, isValidService, getStepIndex, isLastStep };

@@ -4,13 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.98 0.02 240); /* Light blue-tinted background */
+  --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.6 0.2 240); /* Blue color matching the design */
+  --primary: oklch(0.55 0.22 260);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -28,7 +28,7 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -37,29 +37,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  
-  /* Container background gradient colors */
-  --container-bg-from: oklch(0.98 0.03 220);
-  --container-bg-via: oklch(0.97 0.02 240);
-  --container-bg-to: oklch(0.96 0.03 260);
-  
-  /* Dark mode container background */
-  --container-bg-dark-from: oklch(0.2 0.02 240);
-  --container-bg-dark-via: oklch(0.15 0.01 230);
-  --container-bg-dark-to: oklch(0.1 0.02 220);
-
-  /* Added trust indicator colors */
   --trust: oklch(0.6 0.15 150);
   --trust-foreground: oklch(0.985 0 0);
   --success: oklch(0.6 0.15 150);
 }
 
 @theme inline {
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-
-  /* Professional color system inspired by design brief */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -96,18 +81,6 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
-  /* Container background gradient colors */
-  --color-container-bg-from: var(--container-bg-from);
-  --color-container-bg-via: var(--container-bg-via);
-  --color-container-bg-to: var(--container-bg-to);
-  
-  /* Dark mode container background */
-  --color-container-bg-dark-from: var(--container-bg-dark-from);
-  --color-container-bg-dark-via: var(--container-bg-dark-via);
-  --color-container-bg-dark-to: var(--container-bg-dark-to);
-
-  /* Added trust and success color mappings */
   --color-trust: var(--trust);
   --color-trust-foreground: var(--trust-foreground);
   --color-success: var(--success);
@@ -128,67 +101,6 @@ body {
   color: var(--color-foreground);
 }
 
-/* Main container background styling */
-.service-selection-container {
-  background: linear-gradient(
-    135deg,
-    var(--color-container-bg-from),
-    var(--color-container-bg-via),
-    var(--color-container-bg-to)
-  );
-}
-
-/* Dark mode container background styling */
-.dark .service-selection-container {
-  background: linear-gradient(
-    135deg,
-    var(--color-container-bg-dark-from),
-    var(--color-container-bg-dark-via),
-    var(--color-container-bg-dark-to)
-  );
-}
-
-/* Updated progress bar to use CSS custom properties */
-.progress-bar {
-  background: linear-gradient(
-    90deg,
-    var(--color-primary) 0%,
-    var(--color-primary) var(--progress, 0%),
-    #e5e7eb var(--progress, 0%),
-    #e5e7eb 100%
-  );
-}
-
-/* Animation keyframes for the UI elements */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Full screen fixes */
 html, body, #__next {
   margin: 0;
   padding: 0;
@@ -197,7 +109,6 @@ html, body, #__next {
   overflow-x: hidden;
 }
 
-/* Make sure all elements honor the full height */
 #__next > div {
   min-height: 100%;
 }
