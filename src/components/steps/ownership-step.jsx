@@ -5,18 +5,20 @@ import { Button } from "@/components/ui/button";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 
 const options = [
-  { id: "yes", label: "Yes" },
-  { id: "authorized", label: "No, but I'm authorized to make improvements" },
-  { id: "no", label: "No" },
+  { id: "yes", label: "Yes", value: true },
+  { id: "authorized", label: "No, but I'm authorized to make improvements", value: true },
+  { id: "no", label: "No", value: false },
 ];
 
 function OwnershipStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
-  const [selected, setSelected] = useState(formData.isOwner || null);
+  const [selected, setSelected] = useState(
+    formData.isOwner === true ? "yes" : formData.isOwner === false ? "no" : null
+  );
 
-  const handleSelect = (id) => {
+  const handleSelect = (id, value) => {
     setSelected(id);
-    updateFormData("isOwner", id);
+    updateFormData("isOwner", value);
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: "FormEvent", question_text: "Do you own this home?", answer_text: id });
   };
@@ -26,7 +28,7 @@ function OwnershipStep() {
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 sm:py-12">
+    <div className="flex justify-center px-4 py-4 sm:py-12">
       <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <StepProgressBar />
         <CardContent className="p-6 sm:p-8">
@@ -41,7 +43,7 @@ function OwnershipStep() {
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => handleSelect(opt.id)}
+                onClick={() => handleSelect(opt.id, opt.value)}
                 className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
                   idx !== options.length - 1 ? "border-b border-gray-200" : ""
                 } ${selected === opt.id ? "bg-blue-50" : "bg-white"}`}

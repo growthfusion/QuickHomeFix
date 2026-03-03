@@ -142,7 +142,7 @@ export default function ServiceLandingPage({ data, onStartWizard }) {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 flex items-center h-14">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo1} alt="Logo" className="w-20 h-20 object-contain" />
-            <span className="text-lg font-bold text-white">QuickHomeFix<span className="text-orange-400">.</span></span>
+            <span className="text-lg font-bold text-white">QuickHomeFix</span>
           </Link>
         </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
@@ -304,7 +304,7 @@ export default function ServiceLandingPage({ data, onStartWizard }) {
             <div className="col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2 mb-3">
                 <img src={logo1} alt="Logo" className="w-20 h-20 object-contain" />
-                <span className="text-white text-[15px] font-bold">QuickHomeFix<span className="text-orange-500">.</span></span>
+                <span className="text-white text-[15px] font-bold">QuickHomeFix</span>
               </div>
               <p className="text-sm leading-relaxed">Connecting homeowners with top-rated local professionals.</p>
             </div>

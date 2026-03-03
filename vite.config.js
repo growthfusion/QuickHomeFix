@@ -22,9 +22,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://autopolicypro.us',
+        target: 'http://localhost:5050',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/zipapi': {
         target: 'https://api.zippopotam.us',

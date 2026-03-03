@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Phone, Lock } from "lucide-react";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 import { submitLead } from "@/lib/api";
+import {
+  getTrustedFormToken,
+  HOME_PHONE_CONSENT_LANGUAGE,
+} from "@/lib/leadpost";
 
 function PhoneStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
@@ -59,7 +63,15 @@ function PhoneStep() {
 
   const trySubmitLead = async () => {
     if (!shouldSubmitLead()) return;
-    try { await submitLead({ ...formData, state: (formData.state || "").toUpperCase() }); }
+    try {
+      const result = await submitLead({
+        ...formData,
+        state: (formData.state || "").toUpperCase(),
+        trustedFormToken: getTrustedFormToken(),
+        homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
+      });
+      console.log("[LeadPost] Phone step response:", JSON.stringify(result, null, 2));
+    }
     catch (err) { console.error("Lead submission error (phone step):", err); }
   };
 
@@ -105,7 +117,7 @@ function PhoneStep() {
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 sm:py-12">
+    <div className="flex justify-center px-4 py-4 sm:py-12">
       <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <StepProgressBar />
         <CardContent className="p-6 sm:p-8">

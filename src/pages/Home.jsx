@@ -158,7 +158,7 @@ function Home() {
               <div className="flex items-center gap-2 mb-3">
                 <img src={logo1} alt="Logo" className="w-20 h-20 object-contain" />
                 <span className="text-white text-sm font-bold">
-                  QuickHomeFix<span className="text-orange-500">.</span>
+                  QuickHomeFix
                 </span>
               </div>
               <p className="text-xs leading-relaxed">

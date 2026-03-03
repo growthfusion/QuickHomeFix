@@ -44,7 +44,7 @@ const HeroSection = () => {
           <Link to="/" className="flex items-center gap-2.5">
             <img src={logo1} alt="Logo" className="w-20 h-20 object-contain" />
             <span className="text-xl font-extrabold text-white tracking-tight">
-              QuickHomeFix<span className="text-orange-400">.</span>
+              QuickHomeFix
             </span>
           </Link>
         </div>
@@ -121,7 +121,7 @@ const HeroSection = () => {
             <img
               src={heroImg}
               alt="Home repair team at work"
-              loading="eager" decoding="async" fetchPriority="high"
+              loading="eager" decoding="async" fetchpriority="high"
               className="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl"
             />
           </div>

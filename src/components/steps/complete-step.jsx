@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Phone } from "lucide-react";
+import { CheckCircle, Shield, Clock, UserCheck, Star } from "lucide-react";
 
 import imgRoofing from "@/assets/images/roofing_services.webp";
 import imgSolar from "@/assets/images/Solar.webp";
@@ -12,19 +12,24 @@ import imgBath from "@/assets/images/walkin_tub_services.png";
 import imgShower from "@/assets/images/walkin_shower_services.png";
 
 export default function CompleteStep() {
-  const { formData } = useFormStore();
+  const { formData, resetAll } = useFormStore();
   const navigate = useNavigate();
-  const [showCall, setShowCall] = useState(false);
 
   const getServiceMessage = () => {
-    switch (formData.service) {
-      case "windows": return { title: "Thank You For Your Windows Request!", message: "Your windows service estimate request has been submitted. A window specialist will contact you within 24 hours." };
-      case "solar": return { title: "Thank You For Your Solar Request!", message: "Your solar energy estimate request has been submitted. A solar specialist will contact you within 24 hours." };
-      case "bath": return { title: "Thank You For Your Bath Remodeling Request!", message: "Your bath remodeling estimate has been submitted. A remodeling specialist will contact you within 24 hours." };
-      case "gutter": return { title: "Thank You For Your Gutter Service Request!", message: "Your gutter service estimate has been submitted. A gutter specialist will contact you within 24 hours." };
-      case "walk-in": return { title: "Thank You For Your Walk-in Request!", message: "Your walk-in tub/shower estimate has been submitted. A bathroom specialist will contact you within 24 hours." };
-      default: return { title: "Thank You For Your Request!", message: "Your roofing service estimate has been submitted. A roofing specialist will contact you within 24 hours." };
-    }
+    const serviceMap = {
+      windows: { label: "window", specialist: "window" },
+      solar: { label: "solar energy", specialist: "solar" },
+      bath: { label: "bath remodeling", specialist: "remodeling" },
+      gutter: { label: "gutter service", specialist: "gutter" },
+      "walk-in": { label: "walk-in tub/shower", specialist: "bathroom" },
+      shower: { label: "walk-in shower", specialist: "bathroom" },
+    };
+    const s = serviceMap[formData.service] || { label: "roofing", specialist: "roofing" };
+    return {
+      title: "Thank You!",
+      subtitle: "Your request has been submitted successfully.",
+      message: `A ${s.specialist} specialist will review your ${s.label} project and contact you within 24 hours with a free, no-obligation quote.`,
+    };
   };
 
   const getServiceCards = () => {
@@ -41,42 +46,76 @@ export default function CompleteStep() {
     return allKeys.filter((k) => k !== canonical).slice(0, 5).map((id) => ({ id, ...serviceDetails[id] }));
   };
 
-  const { title, message } = getServiceMessage();
+  const { title, subtitle, message } = getServiceMessage();
   const serviceCards = getServiceCards();
 
+  const handleGoHome = () => {
+    resetAll();
+    navigate("/");
+  };
+
   return (
-    <div className="flex-1 flex flex-col items-center px-4 py-8 sm:py-12">
+    <div className="flex-1 flex flex-col items-center px-4 py-4 sm:py-12">
       {/* Success Card */}
-      <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
-        <CardContent className="p-6 sm:p-8 text-center">
-          {!showCall ? (
-            <>
-              <div className="mb-5 animate-success">
-                <CheckCircle className="w-16 h-16 mx-auto text-green-500" />
+      <Card className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
+        <CardContent className="p-8 sm:p-10 text-center">
+          {/* Animated checkmark */}
+          <div className="mb-6 flex justify-center">
+            <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center animate-success">
+              <CheckCircle className="w-12 h-12 text-green-500" />
+            </div>
+          </div>
+
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
+          <p className="text-green-600 font-semibold text-sm mb-4">{subtitle}</p>
+          <p className="text-gray-500 text-sm leading-relaxed mb-6">{message}</p>
+
+          {/* What happens next */}
+          <div className="bg-gray-50 rounded-xl p-5 mb-6 text-left">
+            <h3 className="text-sm font-bold text-gray-800 mb-3 text-center">What Happens Next?</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Clock className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Review within 24 hours</p>
+                  <p className="text-xs text-gray-400">Our team will review your project details</p>
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{title}</h2>
-              <p className="text-gray-500 text-sm mb-6 leading-relaxed">{message}</p>
-              <button
-                onClick={() => setShowCall(true)}
-                className="bg-green-600 text-white px-6 py-2.5 rounded-full font-medium text-sm inline-flex items-center gap-2"
-              >
-                <Phone className="w-4 h-4" />
-                Get Local Contractor Number
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="mb-4">
-                <Phone className="w-12 h-12 mx-auto text-blue-600" />
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <UserCheck className="w-3.5 h-3.5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Matched with top professionals</p>
+                  <p className="text-xs text-gray-400">We connect you with vetted local contractors</p>
+                </div>
               </div>
-              <p className="text-gray-600 text-sm font-medium mb-2">Call Now</p>
-              <a href="tel:5551234567" className="text-blue-600 text-2xl font-bold mb-1 block">(555) 123-4567</a>
-              <p className="text-gray-400 text-xs mb-5">Available Mon-Fri, 9AM - 6PM</p>
-              <button onClick={() => (window.location.href = "tel:5551234567")}
-                className="bg-orange-400 text-white px-6 py-2.5 rounded-full font-medium text-sm w-full max-w-xs mx-auto block mb-3">Call Now</button>
-              <button onClick={() => setShowCall(false)} className="text-blue-600 font-medium text-sm">Back to confirmation</button>
-            </>
-          )}
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Star className="w-3.5 h-3.5 text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Get your free quotes</p>
+                  <p className="text-xs text-gray-400">Compare prices and choose the best offer</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="flex items-center justify-center gap-4 mb-6 text-xs text-gray-400">
+            <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Secure & Encrypted</span>
+            <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> 100% Free</span>
+          </div>
+
+          <button
+            onClick={handleGoHome}
+            className="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+          >
+            ← Back to Home
+          </button>
         </CardContent>
       </Card>
 
@@ -85,14 +124,14 @@ export default function CompleteStep() {
         <h3 className="text-base font-semibold text-gray-900 text-center mb-5">Explore Other Services</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {serviceCards.map((service) => (
-            <div key={service.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer"
-              onClick={() => navigate(service.path)}>
+            <div key={service.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => { resetAll(); navigate(service.path); }}>
               <img src={service.image} alt={service.name} className="w-full h-28 sm:h-36 object-cover" loading="lazy" decoding="async" />
               <div className="p-3">
                 <h4 className="font-medium text-sm text-gray-800 mb-1">{service.name}</h4>
                 <p className="text-gray-400 text-xs leading-relaxed hidden sm:block mb-2">{service.description}</p>
-                <button className="bg-orange-400 text-white w-full font-medium py-1.5 px-2 rounded-full text-xs"
-                  onClick={(e) => { e.stopPropagation(); navigate(service.path); }}>Get Quote</button>
+                <button className="bg-orange-400 hover:bg-orange-500 text-white w-full font-medium py-1.5 px-2 rounded-full text-xs transition-colors"
+                  onClick={(e) => { e.stopPropagation(); resetAll(); navigate(service.path); }}>Get Quote</button>
               </div>
             </div>
           ))}

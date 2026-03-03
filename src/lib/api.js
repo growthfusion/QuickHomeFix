@@ -22,7 +22,7 @@ async function http(path, init) {
     assertApiBase();
 
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 15000); // 15s safety
+    const timeout = setTimeout(() => ctrl.abort(), 45000); // 45s — PING+POST can be slow
 
     try {
         const res = await fetch(`${API_BASE}${path}`, {

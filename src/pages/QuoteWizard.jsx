@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ShieldCheck, Award, BadgeCheck, EyeOff } from "lucide-react";
 import { useFormStore } from "@/lib/store";
 import { getServiceFlow, isValidService } from "@/lib/service-flows";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 
 import wizardLogo from "@/assets/images/ChatGPT_Image_Feb_12__2026__12_32_18_PM__1_-removebg-preview.png";
 import ServiceLandingPage from "@/components/layout/ServiceLandingPage";
@@ -67,8 +67,9 @@ const stepComponents = {
 };
 
 function QuoteWizard() {
-  const { formData, currentStep, updateFormData, setStep, prevStep, isFormStarted } = useFormStore();
+  const { formData, currentStep, updateFormData, setStep, prevStep, isFormStarted, resetAll } = useFormStore();
   const location = useLocation();
+  const navigate = useNavigate();
   const { service } = useParams();
   const scrollRef = useRef(null);
 
@@ -181,13 +182,12 @@ function QuoteWizard() {
         position: "fixed",
         inset: 0,
         overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
         zIndex: 2000,
         background: "#ffffff",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
       }}
     >
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 pt-3 sm:pt-4 pb-2">
         {currentStep > 1 && (
           <button
@@ -198,17 +198,27 @@ function QuoteWizard() {
             <ChevronLeft className="w-5 h-5" />
           </button>
         )}
-        <img src={wizardLogo} alt="QuickHomeFix" className="w-12 h-12 sm:w-20 sm:h-20 object-contain brightness-0" />
-        <span className="text-base sm:text-2xl font-extrabold text-gray-900">
-          QuickHomeFix<span className="text-orange-400">.</span>
-        </span>
+        <a
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            resetAll();
+            navigate("/");
+          }}
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer"
+        >
+          <img src={wizardLogo} alt="QuickHomeFix" className="w-12 h-12 sm:w-20 sm:h-20 object-contain brightness-0" />
+          <span className="text-base sm:text-2xl font-extrabold text-gray-900">
+            QuickHomeFix
+          </span>
+        </a>
       </div>
-      <main key={currentStep} className="animate-fade-in flex-1">
+      <main key={currentStep} className="animate-fade-in">
         <StepComponent />
       </main>
 
       {/* Trust Badge */}
-      <div className="mt-auto px-4 sm:px-6 pt-6 pb-3">
+      <div className="px-4 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-3">
         <div className="max-w-md mx-auto">
           <div className="relative border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
             {/* Verified ribbon */}
@@ -273,6 +283,7 @@ function QuoteWizard() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

@@ -29,7 +29,7 @@ function WindowStyleStep() {
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 sm:py-12">
+    <div className="flex justify-center px-4 py-4 sm:py-12">
       <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <StepProgressBar />
         <CardContent className="p-6 sm:p-8">

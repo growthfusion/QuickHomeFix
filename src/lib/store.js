@@ -30,6 +30,8 @@ const initialFormData = {
   firstName: "",
   lastName: "",
   phone: "",
+  trustedFormToken: "",
+  homePhoneConsentLanguage: "",
 };
 
 const sessionStorageAdapter = {

@@ -1,12 +1,17 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Check } from "lucide-react";
 import StepProgressBar from "@/components/layout/step-progress-bar";
-import TFConsent from "@/components/TF/TFConsent";
 import { submitLead } from "@/lib/api";
+import {
+  getTrustedFormToken,
+  HOME_PHONE_CONSENT_LANGUAGE,
+  LEADPOST_PARTNERS_URL,
+} from "@/lib/leadpost";
 
 const debounce = (fn, delay) => {
   let timeoutId;
@@ -17,14 +22,16 @@ const debounce = (fn, delay) => {
 };
 
 export function AddressSteps() {
-  const { formData, updateFormData, nextStep, resetForm } = useFormStore();
+  const { formData, updateFormData, nextStep } = useFormStore();
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [addressValid, setAddressValid] = useState(false);
   const [errors, setErrors] = useState({});
-  const [zipTouched, setZipTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaError, setCaptchaError] = useState("");
+  const recaptchaRef = useRef(null);
 
   const pushSummaryEvent = () => {
     if (typeof window === "undefined") return;
@@ -72,7 +79,6 @@ export function AddressSteps() {
   const handleZipcodeChange = (e) => {
     const value = e.target.value.replace(/\D/g, "").substring(0, 5);
     updateFormData("zipcode", value);
-    setZipTouched(true);
     if (errors.zipcode) setErrors({ ...errors, zipcode: null });
   };
 
@@ -95,7 +101,7 @@ export function AddressSteps() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setZipTouched(true);
+    setCaptchaError("");
     setSubmitting(true);
     setSubmitMsg("");
 
@@ -107,24 +113,39 @@ export function AddressSteps() {
     if (!formData.zipcode) { hasErrors = true; newErrors.zipcode = "Zipcode is required"; }
     else if (!validateZipcode(formData.zipcode)) { hasErrors = true; newErrors.zipcode = "Please enter a valid 5-digit zipcode"; }
 
+    if (!captchaToken) {
+      setCaptchaError("Please verify you are not a robot");
+      hasErrors = true;
+    }
+
     setErrors(newErrors);
     if (hasErrors) { setSubmitting(false); return; }
 
     try {
-      const result = await submitLead({ ...formData, state: (formData.state || "").toUpperCase() });
+      const result = await submitLead({
+        ...formData,
+        state: (formData.state || "").toUpperCase(),
+        captchaToken,
+        trustedFormToken: getTrustedFormToken(),
+        homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
+      });
+      console.log("[LeadPost] Address step response:", JSON.stringify(result, null, 2));
       setSubmitMsg(`Saved! Lead ID: ${result.id}`);
       pushSummaryEvent();
       nextStep();
     } catch (err) {
       console.error(err);
       setSubmitMsg(`Error: ${err.message}`);
+      // Reset captcha on error
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+      setCaptchaToken(null);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 sm:py-12">
+    <div className="flex justify-center px-4 py-4 sm:py-12">
       <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <StepProgressBar />
         <CardContent className="p-6 sm:p-8">
@@ -209,14 +230,36 @@ export function AddressSteps() {
 
             <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
 
-            <TFConsent submitText="Get Free Quote" />
+            {/* Google reCAPTCHA v2 */}
+            <div className="mb-4 flex justify-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                onChange={(token) => { setCaptchaToken(token); setCaptchaError(""); }}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+            {captchaError && <p className="text-red-500 text-xs text-center mb-3">{captchaError}</p>}
 
-            <div className="mt-2 flex justify-center">
+            {/* Submit Button */}
+            <div className="flex justify-center">
               <Button type="submit" disabled={submitting}
-                className="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full" data-tf-element-role="submit">
-                {submitting ? "Processing..." : "Get Free Quote"}
+                className="w-full bg-purple-800 hover:bg-purple-900 text-white font-extrabold tracking-wider px-10 py-4 text-lg rounded-md uppercase" data-tf-element-role="submit">
+                {submitting ? "Processing..." : "Compare Prices"}
               </Button>
             </div>
+
+            {/* Consent Text */}
+            <div className="mt-4 text-center">
+              <p className="text-sm font-bold italic text-gray-800 mb-2">Encrypted form, free and competitive quotes</p>
+              <p className="text-[11px] text-gray-500 leading-relaxed" data-tf-element-role="consent-language">
+                By submitting, you authorize QuickHomeFix and up to{" "}
+                <a href={LEADPOST_PARTNERS_URL} target="_blank" rel="noopener noreferrer" className="underline text-gray-600 hover:text-gray-800">four home improvement companies</a>, to make marketing calls and texts to the phone number provided to discuss your home improvement project. You understand some may use auto-dialers, SMS messages, artificial and prerecorded voice messages to contact you. There is no requirement to purchase services. Please see our{" "}
+                <a href="/privacy-policy" className="underline text-gray-600 hover:text-gray-800">Privacy Notice</a> and{" "}
+                <a href="/terms-of-service" className="underline text-gray-600 hover:text-gray-800">Terms of Use</a>.
+              </p>
+            </div>
+
             {submitMsg && (
               <p className={`text-sm mt-2 text-center ${submitMsg.startsWith("Error") ? "text-red-600" : "text-green-600"}`}>{submitMsg}</p>
             )}

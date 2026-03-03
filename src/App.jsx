@@ -1,9 +1,11 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { preloadAllImages } from "@/lib/preload-images";
 
 // Pages
 import Home from "@/pages/Home";
 import QuoteWizard from "@/pages/QuoteWizard";
+import MarketingPartners from "@/pages/MarketingPartners";
 
 // Dashboard pages
 import LeadFull from "@/backend_db/features/LeadsFull/LeadsFull";
@@ -25,6 +27,11 @@ function ScrollToTop() {
 }
 
 function App() {
+  // Preload all images on app startup so they're cached for instant display
+  useEffect(() => {
+    preloadAllImages();
+  }, []);
+
   return (
     <>
     <ScrollToTop />
@@ -45,6 +52,7 @@ function App() {
       */}
       <Route path="/get-quotes" element={<QuoteWizard />} />
       <Route path="/get-quotes/:service" element={<QuoteWizard />} />
+      <Route path="/marketing-partners" element={<MarketingPartners />} />
 
       {/* ─── Dashboard ─── */}
       <Route path="/dash" element={<Dash />} />

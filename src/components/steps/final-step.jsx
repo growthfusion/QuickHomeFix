@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import { useFormStore } from "@/lib/store";
 import { getServiceFlow } from "@/lib/service-flows";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,12 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Phone, Mail, Lock } from "lucide-react";
 import { submitLead } from "@/lib/api";
 import StepProgressBar from "@/components/layout/step-progress-bar";
+import {
+  getTrustedFormToken,
+  HOME_PHONE_CONSENT_LANGUAGE,
+  LEADPOST_PARTNERS_URL,
+} from "@/lib/leadpost";
 
 function FinalStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaError, setCaptchaError] = useState("");
+  const recaptchaRef = useRef(null);
 
   const formatPhoneNumber = (phoneNumberString) => {
     const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
@@ -54,6 +63,7 @@ function FinalStep() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setCaptchaError("");
     const email = (formData.email || "").trim();
     const phone = formData.phone || "";
 
@@ -62,6 +72,7 @@ function FinalStep() {
     else { const digits = phone.replace(/\D/g, ""); if (digits.length < 10) { setPhoneError("Please enter a complete 10-digit phone number"); hasError = true; } }
     if (!email) { setEmailError("Email address is required"); hasError = true; }
     else if (!isValidEmail(email)) { setEmailError("Please enter a valid email address"); hasError = true; }
+    if (!captchaToken) { setCaptchaError("Please verify you are not a robot"); hasError = true; }
     if (hasError) return;
 
     setLoading(true);
@@ -70,20 +81,34 @@ function FinalStep() {
       pushEmailEvent(email);
       const flow = getServiceFlow(formData.service);
       if (!flow.steps.includes("dfaddress")) {
-        try { await submitLead({ ...formData, state: (formData.state || "").toUpperCase() }); }
+        try {
+          const result = await submitLead({
+            ...formData,
+            state: (formData.state || "").toUpperCase(),
+            captchaToken,
+            trustedFormToken: getTrustedFormToken(),
+            homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
+          });
+          console.log("[LeadPost] Final step response:", JSON.stringify(result, null, 2));
+        }
         catch (err) { console.error("Lead submission error:", err); }
       }
       nextStep();
-    } catch (err) { console.error("Final step error:", err); nextStep(); }
+    } catch (err) {
+      console.error("Final step error:", err);
+      if (recaptchaRef.current) recaptchaRef.current.reset();
+      setCaptchaToken(null);
+      nextStep();
+    }
     finally { setLoading(false); }
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 sm:py-12">
+    <div className="flex justify-center px-4 py-4 sm:py-12">
       <Card className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <StepProgressBar />
-        <CardContent className="p-6 sm:p-8">
-          <div className="text-center mb-6">
+        <CardContent className="p-4 sm:p-8">
+          <div className="text-center mb-4 sm:mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">The Last Step!</h2>
           </div>
 
@@ -120,6 +145,17 @@ function FinalStep() {
 
             <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
 
+            {/* Google reCAPTCHA v2 */}
+            <div className="mb-4 flex justify-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                onChange={(token) => { setCaptchaToken(token); setCaptchaError(""); }}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+            {captchaError && <p className="text-red-500 text-xs text-center mb-3">{captchaError}</p>}
+
             <div className="flex justify-center">
               <Button type="submit"
                 className="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full"
@@ -135,13 +171,15 @@ function FinalStep() {
             </div>
 
             <p className="text-[10px] leading-snug text-gray-400 mt-4">
-              By submitting, you authorize Modernize and up to four home improvement
-              companies, to make marketing calls and texts to the phone number provided
+              By submitting, you authorize QuickHomeFix and up to{" "}
+              <a href={LEADPOST_PARTNERS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                four home improvement companies
+              </a>, to make marketing calls and texts to the phone number provided
               to discuss your home improvement project. You understand some may use
               auto-dialers, SMS messages, artificial and prerecorded voice messages to
               contact you. There is no requirement to purchase services. Please see our{" "}
-              <a href="#" className="underline">Privacy Notice</a> and{" "}
-              <a href="#" className="underline">Terms of Use</a>.
+              <a href="/privacy-policy" className="underline">Privacy Notice</a> and{" "}
+              <a href="/terms-of-service" className="underline">Terms of Use</a>.
             </p>
           </form>
         </CardContent>
