@@ -11,8 +11,142 @@ import imgGutter from "@/assets/images/gutter_services.webp";
 import imgBath from "@/assets/images/walkin_tub_services.png";
 import imgShower from "@/assets/images/walkin_shower_services.png";
 
+function StatusBadge({ status }) {
+  const colors = {
+    success: "bg-green-100 text-green-700",
+    rejected: "bg-red-100 text-red-700",
+    error: "bg-yellow-100 text-yellow-700",
+  };
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${colors[status] || "bg-gray-100 text-gray-600"}`}>
+      {status || "unknown"}
+    </span>
+  );
+}
+
+function JsonBlock({ label, data }) {
+  if (!data) return null;
+  return (
+    <div className="mt-3">
+      <p className="text-xs font-semibold text-gray-500 mb-1">{label}</p>
+      <pre className="bg-gray-900 text-green-300 text-[11px] rounded-lg p-3 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
+        {typeof data === "string" ? data : JSON.stringify(data, null, 2)}
+      </pre>
+    </div>
+  );
+}
+
+function LeadResponsePanel({ response }) {
+  const pd = response?.partnerDelivery || {};
+  const pingResponse = pd.pingResponse || null;
+  const postResponse = pd.postResponse || null;
+  const pingPayload = pd.sentPayloads?.pingPayload || pd.pingPayload || null;
+  const postPayload = pd.sentPayloads?.postPayload || pd.postPayload || null;
+  const pingAccepted = Boolean(pd.pingToken || pingResponse?.status === "success");
+
+  return (
+    <Card className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-8">
+      <CardContent className="p-5 sm:p-6">
+        <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+          API Response Details
+        </h3>
+
+        {response.id && (
+          <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+            <span className="font-medium text-gray-700">Lead ID:</span>
+            <code className="bg-gray-100 px-1.5 py-0.5 rounded text-[11px]">{response.id}</code>
+          </div>
+        )}
+
+        {/* Ping Section */}
+        <div className="border border-gray-100 rounded-lg p-3 mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-gray-700">1. Ping Response</span>
+            {pingResponse && <StatusBadge status={pingResponse.status} />}
+          </div>
+          {pingResponse ? (
+            <div className="space-y-1 text-xs text-gray-600">
+              {pingResponse.pingToken && (
+                <p><span className="font-medium">Ping Token:</span>{" "}
+                  <code className="bg-gray-100 px-1 py-0.5 rounded text-[10px] break-all">{pingResponse.pingToken}</code>
+                </p>
+              )}
+              {pingResponse.price && <p><span className="font-medium">Price:</span> ${pingResponse.price}</p>}
+              {pingResponse.message && <p><span className="font-medium">Message:</span> {pingResponse.message}</p>}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">No ping response received</p>
+          )}
+          <JsonBlock label="Ping Payload Sent" data={pingPayload} />
+        </div>
+
+        {/* Post Section */}
+        {pingAccepted && (
+          <div className="border border-gray-100 rounded-lg p-3 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-gray-700">2. Post Response</span>
+              {postResponse && <StatusBadge status={postResponse.status} />}
+            </div>
+            {postResponse ? (
+              <div className="space-y-1 text-xs text-gray-600">
+                {postResponse.leadId && (
+                  <p><span className="font-medium">Lead ID:</span>{" "}
+                    <code className="bg-gray-100 px-1 py-0.5 rounded text-[10px]">{postResponse.leadId}</code>
+                  </p>
+                )}
+                {postResponse.message && <p><span className="font-medium">Message:</span> {postResponse.message}</p>}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic">No post response received</p>
+            )}
+            <JsonBlock label="Post Payload Sent" data={postPayload} />
+          </div>
+        )}
+
+        {/* Error/Rejected Section */}
+        {!pingAccepted && pd.enabled && (
+          <div className="border border-red-100 rounded-lg p-3 mb-3 bg-red-50">
+            <p className="text-xs font-bold text-red-700 mb-2">Partner Error</p>
+            <div className="space-y-1 text-xs text-red-600">
+              {pd.error && <p><span className="font-medium">Error:</span> {pd.error}</p>}
+              {pd.status && <p><span className="font-medium">Status:</span> {pd.status}</p>}
+              {pd.reason && <p><span className="font-medium">Reason:</span> {pd.reason}</p>}
+              {pd.message && <p><span className="font-medium">Message:</span> {pd.message}</p>}
+            </div>
+            <JsonBlock label="Partner Response" data={pd.partnerResponse} />
+            <JsonBlock label="Partner Request" data={pd.partnerRequest || pd.pingPayload} />
+          </div>
+        )}
+
+        {/* Skipped / Duplicate */}
+        {pd.skipped && (
+          <div className="border border-yellow-100 rounded-lg p-3 bg-yellow-50">
+            <p className="text-xs font-semibold text-yellow-700">
+              {pd.reason === "DUPLICATE_SUPPRESSED" ? "Duplicate lead suppressed" :
+               pd.reason === "PARTNER_DUPLICATE" ? "Partner duplicate detected" :
+               pd.enabled === false ? "LeadPost not enabled" : "Lead delivery skipped"}
+            </p>
+            {pd.message && <p className="text-xs text-yellow-600 mt-1">{pd.message}</p>}
+          </div>
+        )}
+
+        {/* Full Raw Response (collapsible) */}
+        <details className="mt-4">
+          <summary className="text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-600">
+            View Full Raw Response
+          </summary>
+          <pre className="bg-gray-900 text-gray-300 text-[10px] rounded-lg p-3 mt-2 overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap break-all">
+            {JSON.stringify(response, null, 2)}
+          </pre>
+        </details>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CompleteStep() {
-  const { formData, resetAll } = useFormStore();
+  const { formData, resetAll, leadResponse } = useFormStore();
   const navigate = useNavigate();
 
   const getServiceMessage = () => {
@@ -118,6 +252,8 @@ export default function CompleteStep() {
           </button>
         </CardContent>
       </Card>
+
+      {leadResponse && <LeadResponsePanel response={leadResponse} />}
 
       {/* Other Services */}
       <div className="w-full max-w-2xl">

@@ -31,7 +31,6 @@ function WindowServiceStep() {
           <div className="text-center mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">What is the nature of your windows project?</h2>
           </div>
-          <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
           <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
             {windowTypes.map((type, idx) => (
               <button key={type.id} type="button" onClick={() => handleTypeSelect(type.id, type.questionText, type.answerText)}

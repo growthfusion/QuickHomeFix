@@ -12,6 +12,7 @@ const initialFormData = {
   windowCount: "",
   windowStyle: "",
   solarType: "",
+  electricBill: "",
   roofSize: "",
   bathshowerType:"",
   bathwallType:"",
@@ -60,7 +61,10 @@ const useFormStore = create(
       isFormStarted: false,
       isFormCompleted: false,
       homePageState: {},
-      showLeaveDialog: false, // New state for leave dialog
+      showLeaveDialog: false,
+      leadResponse: null,
+
+      setLeadResponse: (response) => set({ leadResponse: response }),
 
       updateFormData: (field, value) =>
         set((state) => ({
@@ -171,6 +175,7 @@ const useFormStore = create(
           isFormStarted: false,
           isFormCompleted: false,
           showLeaveDialog: false,
+          leadResponse: null,
         });
       },
 
@@ -190,6 +195,7 @@ const useFormStore = create(
           isFormStarted: false,
           isFormCompleted: false,
           showLeaveDialog: false,
+          leadResponse: null,
         });
       },
 

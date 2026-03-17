@@ -1,6 +1,9 @@
 // Simple, safe fetch wrapper for your app
 // Empty string means requests go through Vite proxy in dev (avoids CORS)
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const timeoutFromEnv = Number(import.meta.env.VITE_API_TIMEOUT_MS || 90000);
+const API_TIMEOUT_MS =
+    Number.isFinite(timeoutFromEnv) && timeoutFromEnv > 0 ? timeoutFromEnv : 90000;
 
 function assertApiBase() {
     // allow empty string (Vite proxy mode)
@@ -22,7 +25,11 @@ async function http(path, init) {
     assertApiBase();
 
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 45000); // 45s — PING+POST can be slow
+    let didTimeout = false;
+    const timeout = setTimeout(() => {
+        didTimeout = true;
+        ctrl.abort();
+    }, API_TIMEOUT_MS);
 
     try {
         const res = await fetch(`${API_BASE}${path}`, {
@@ -41,6 +48,14 @@ async function http(path, init) {
             throw new Error(message);
         }
         return data;
+    } catch (err) {
+        if (err?.name === "AbortError") {
+            const message = didTimeout
+                ? `Request timed out after ${Math.round(API_TIMEOUT_MS / 1000)} seconds. Please try again.`
+                : "Request was cancelled. Please try again.";
+            throw new Error(message);
+        }
+        throw err;
     } finally {
         clearTimeout(timeout);
     }

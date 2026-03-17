@@ -77,8 +77,6 @@ function EmailStep() {
               {emailError && <p className="mt-1 text-sm text-red-500">{emailError}</p>}
             </div>
 
-            <input type="hidden" name="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
-
             <div className="flex justify-center">
               <Button type="submit" disabled={loading} className="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full">
                 {loading ? <><span className="btn-spinner mr-2" />Verifying...</> : "Next"}

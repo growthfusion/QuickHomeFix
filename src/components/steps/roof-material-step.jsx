@@ -38,10 +38,6 @@ function RoofMaterialStep() {
             </h2>
           </div>
 
-          <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl"
-            value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
-          />
-
           <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
             {materials.map((mat, idx) => (
               <button

@@ -19,6 +19,20 @@
 
   </head>
   <body>
+    <!-- TrustedForm: generates a fresh cert URL on every page load -->
+    <script type="text/javascript">
+    (function() {
+      var field = 'xxTrustedFormCertUrl';
+      var provideReferrer = false;
+      var tf = document.createElement('script');
+      tf.type = 'text/javascript'; tf.async = true;
+      tf.src = 'https://api.trustedform.com/trustedform.js?provide_referrer=' + escape(provideReferrer) + '&field=' + escape(field) + '&l=' + new Date().getTime() + Math.random();
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(tf, s);
+    })();
+    </script>
+
+    <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="" />
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 

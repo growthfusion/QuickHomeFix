@@ -32,7 +32,6 @@ function GutterMaterialStep() {
           <div className="text-center mb-6">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">Select Gutter Material</h2>
           </div>
-          <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
           <div className="border border-gray-200 rounded-xl overflow-hidden mb-6">
             {materials.map((mat, idx) => (
               <button key={mat.id} type="button" onClick={() => handleMaterialSelect(mat.id, mat.questionText, mat.answerText)}

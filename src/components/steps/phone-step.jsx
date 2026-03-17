@@ -13,7 +13,7 @@ import {
 } from "@/lib/leadpost";
 
 function PhoneStep() {
-  const { formData, updateFormData, nextStep } = useFormStore();
+  const { formData, updateFormData, nextStep, setLeadResponse } = useFormStore();
   const [phoneError, setPhoneError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +70,13 @@ function PhoneStep() {
         trustedFormToken: getTrustedFormToken(),
         homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
       });
-      console.log("[LeadPost] Phone step response:", JSON.stringify(result, null, 2));
+      setLeadResponse(result);
+      const pd = result?.partnerDelivery || {};
+      console.log("1. Ping Response:", pd.pingResponse || null);
+      console.log("2. Ping Payload Sent:", pd.sentPayloads?.pingPayload || pd.pingPayload || null);
+      console.log("3. Post Response:", pd.postResponse || null);
+      console.log("4. Post Payload Sent:", pd.sentPayloads?.postPayload || pd.postPayload || null);
+      console.log("Full API Result:", result);
     }
     catch (err) { console.error("Lead submission error (phone step):", err); }
   };

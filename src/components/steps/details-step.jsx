@@ -155,7 +155,14 @@ function DetailsStep() {
               {suggestions.length > 0 && !loading && (
                 <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-md mt-1 max-h-60 overflow-auto">
                   {suggestions.map((s, idx) => (
-                    <button type="button" key={idx} className="block w-full text-left px-3 py-2 text-sm" onClick={() => applySuggestion(s)}>{s.description}</button>
+                    <button
+                      type="button"
+                      key={idx}
+                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      onMouseDown={(e) => { e.preventDefault(); applySuggestion(s); }}
+                    >
+                      {s.description}
+                    </button>
                   ))}
                 </div>
               )}
@@ -187,8 +194,6 @@ function DetailsStep() {
               />
               {errors.zipcode && <p className="text-red-500 text-xs mt-1">{errors.zipcode}</p>}
             </div>
-
-            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
 
             <div className="flex justify-center">
               <Button type="submit" disabled={!isFormValid}

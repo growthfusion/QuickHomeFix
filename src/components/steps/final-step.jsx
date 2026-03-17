@@ -82,14 +82,37 @@ function FinalStep() {
       const flow = getServiceFlow(formData.service);
       if (!flow.steps.includes("dfaddress")) {
         try {
-          const result = await submitLead({
+          const tfToken = getTrustedFormToken();
+          console.log("TrustedForm Token:", tfToken || "(empty - not loaded)");
+          const clientPayload = {
             ...formData,
             state: (formData.state || "").toUpperCase(),
             captchaToken,
-            trustedFormToken: getTrustedFormToken(),
+            trustedFormToken: tfToken,
             homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
-          });
-          console.log("[LeadPost] Final step response:", JSON.stringify(result, null, 2));
+          };
+          const result = await submitLead(clientPayload);
+
+          const pd = result?.partnerDelivery || {};
+          const pingReq = pd.sentPayloads?.pingPayload || pd.pingPayload || null;
+          const pingRes = pd.pingResponse || null;
+          const postReq = pd.sentPayloads?.postPayload || pd.postPayload || pd.partnerRequest || null;
+          const postRes = pd.postResponse || pd.partnerResponse || null;
+
+          console.log("%c===== LeadPost PING =====", "color: #00bcd4; font-weight: bold");
+          console.log("%cPing Request:", "color: #ff9800; font-weight: bold");
+          console.log(JSON.stringify(pingReq, null, 2));
+          console.log("%cPing Response:", "color: #4caf50; font-weight: bold");
+          console.log(JSON.stringify(pingRes, null, 2));
+
+          console.log("%c===== LeadPost POST =====", "color: #00bcd4; font-weight: bold");
+          console.log("%cPost Request:", "color: #ff9800; font-weight: bold");
+          console.log(JSON.stringify(postReq, null, 2));
+          console.log("%cPost Response:", "color: #4caf50; font-weight: bold");
+          console.log(JSON.stringify(postRes, null, 2));
+
+          console.log("%c===== Full API Result =====", "color: #9c27b0; font-weight: bold");
+          console.log(result);
         }
         catch (err) { console.error("Lead submission error:", err); }
       }
@@ -142,8 +165,6 @@ function FinalStep() {
               </div>
               {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
             </div>
-
-            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
 
             {/* Google reCAPTCHA v2 */}
             <div className="mb-4 flex justify-center">

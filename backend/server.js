@@ -33,14 +33,20 @@ const LEADPOST_DEBUG = String(process.env.LEADPOST_DEBUG || "").toLowerCase() ==
 const LEADPOST_DUPLICATE_COOLDOWN_MS = Number(
   process.env.LEADPOST_DUPLICATE_COOLDOWN_MS || 10 * 60 * 1000
 );
+const leadpostTimeoutFromEnv = Number(process.env.LEADPOST_REQUEST_TIMEOUT_MS || 12000);
+const recaptchaTimeoutFromEnv = Number(process.env.RECAPTCHA_TIMEOUT_MS || 8000);
+const LEADPOST_REQUEST_TIMEOUT_MS =
+  Number.isFinite(leadpostTimeoutFromEnv) && leadpostTimeoutFromEnv > 0
+    ? leadpostTimeoutFromEnv
+    : 12000;
+const RECAPTCHA_TIMEOUT_MS =
+  Number.isFinite(recaptchaTimeoutFromEnv) && recaptchaTimeoutFromEnv > 0
+    ? recaptchaTimeoutFromEnv
+    : 8000;
 const recentLeadFingerprintMap = new Map();
 
 function normalizeTrustedFormToken(value) {
   const raw = String(value || "").trim();
-  if (!raw) return "";
-  if (raw.includes("cert.trustedform.com/")) {
-    return raw.split("/").pop()?.trim() || "";
-  }
   return raw;
 }
 
@@ -52,20 +58,230 @@ function normalizeZip(value) {
   return String(value || "").replace(/\D/g, "").slice(0, 5);
 }
 
+function normalizeBuyTimeframeForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const timeframeMap = {
+    immediately: "Immediately",
+    "1-6 months": "1-6 months",
+    "1 to 6 months": "1-6 months",
+    "dont know": "Don't know",
+    "don't know": "Don't know",
+    "not sure": "Don't know",
+  };
+  return timeframeMap[normalized] || LEADPOST_DEFAULT_BUY_TIMEFRAME;
+}
+
+function isLikelyLeadIdToken(value) {
+  const token = String(value || "").trim();
+  if (!token) return false;
+  return /^[A-Za-z0-9-]{32,36}$/.test(token);
+}
+
 function normalizeServiceForPartner(value) {
   const normalized = String(value || "").trim().toLowerCase();
   const serviceMap = {
     windows: "WINDOWS",
     window: "WINDOWS",
-    roof: "ROOFING",
-    roofing: "ROOFING",
     solar: "SOLAR",
-    bath: "BATHROOM",
-    shower: "SHOWER",
-    tub: "TUB",
-    gutter: "GUTTER",
+    bath: "BATH_REMODEL",
+    shower: "WALK_IN_SHOWERS",
+    tub: "WALK_IN_TUBS",
+    gutter: "GUTTERS",
   };
   return serviceMap[normalized] || String(value || "").trim().toUpperCase();
+}
+
+function normalizeWindowsCountForPartner(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  const directMap = {
+    "1": "1",
+    "2": "2",
+    "3-5": "3-5",
+    "3 to 5": "3-5",
+    "6+": "6-9",
+    "6-9": "6-9",
+    "9+": "6-9",
+  };
+  if (directMap[raw]) return directMap[raw];
+
+  const parsed = Number.parseInt(raw, 10);
+  if (Number.isFinite(parsed)) {
+    if (parsed <= 1) return "1";
+    if (parsed === 2) return "2";
+    if (parsed <= 5) return "3-5";
+    return "6-9";
+  }
+  return "";
+}
+
+function normalizeWindowsProjectScopeForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["repair", "fix"].includes(normalized)) return "Repair";
+  if (["replace", "install", "installation", "not sure"].includes(normalized)) {
+    return "Install";
+  }
+  return "";
+}
+
+function normalizeWalkInTubInterestForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "safety" || normalized.includes("safe")) return "Safety";
+  if (normalized === "therapeutic" || normalized.includes("therapy")) {
+    return "Therapeutic";
+  }
+  if (normalized) return "Other";
+  return "";
+}
+
+function normalizeBathOptInForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "full-remodel") return "Yes";
+  if (normalized === "tub-shower") return "No";
+  return "";
+}
+
+function normalizeGutterMaterialForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const materialMap = {
+    copper: "Copper",
+    steel: "Galvanized",
+    vinyl: "PVC",
+    aluminum: "Seamless Metal",
+    wood: "Wood",
+  };
+  return materialMap[normalized] || "";
+}
+
+function normalizeGutterProjectScopeForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized.includes("repair")) return "Repair";
+  if (normalized.includes("replace") || normalized.includes("install") || normalized.includes("guard")) {
+    return "Install";
+  }
+  return "";
+}
+
+function normalizeSolarElectricBillForPartner(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const billMap = {
+    "under $100": "Under $100",
+    "under 100": "Under $100",
+    "$100 - $200": "$100 - $200",
+    "100-200": "$100 - $200",
+    "$200 - $300": "$200 - $300",
+    "200-300": "$200 - $300",
+    "$300+": "$300+",
+    "300+": "$300+",
+  };
+  return billMap[normalized] || "";
+}
+
+function normalizeRoofingServiceForPartner(service, material) {
+  const serviceNormalized = String(service || "").trim().toLowerCase();
+  if (!["roof", "roofing"].includes(serviceNormalized)) return null;
+
+  const materialNormalized = String(material || "").trim().toLowerCase();
+  const roofingServiceMap = {
+    asphalt: "ROOFING_ASPHALT",
+    metal: "ROOFING_METAL",
+    tile: "ROOFING_TILE",
+    slate: "ROOFING_NATURAL_SLATE",
+    wood: "ROOFING_CEDAR_SHAKE",
+  };
+
+  // Partner does not accept generic ROOFING; default to a valid roofing subtype.
+  return roofingServiceMap[materialNormalized] || "ROOFING_ASPHALT";
+}
+
+function resolvePartnerServiceCode(data = {}) {
+  const roofingService =
+    normalizeRoofingServiceForPartner(data.service, data.material);
+  if (roofingService) return roofingService;
+
+  const baseService = String(data.service || "").trim().toLowerCase();
+  if (baseService === "gutter") {
+    const gutterType = String(data.gutterType || "").trim().toLowerCase();
+    if (gutterType.includes("guard")) return "GUTTER_COVERS";
+    return "GUTTERS";
+  }
+  return normalizeServiceForPartner(baseService);
+}
+
+function buildServiceSpecificPayloadFields(data, normalizedService) {
+  if (normalizedService === "WINDOWS") {
+    return {
+      NumberOfWindows: normalizeWindowsCountForPartner(data.windowCount),
+      WindowsProjectScope: normalizeWindowsProjectScopeForPartner(data.windowType),
+    };
+  }
+
+  if (normalizedService === "WALK_IN_TUBS") {
+    return {
+      Interest: normalizeWalkInTubInterestForPartner(data.tubReason || data.bathNeeds),
+    };
+  }
+
+  if (normalizedService === "SOLAR") {
+    return {
+      ElectricBill: normalizeSolarElectricBillForPartner(data.electricBill),
+    };
+  }
+
+  if (normalizedService === "BATH_REMODEL") {
+    return {
+      OptIn1: normalizeBathOptInForPartner(data.bathNeeds),
+    };
+  }
+
+  if (normalizedService === "GUTTERS") {
+    return {
+      GutterType: normalizeGutterMaterialForPartner(data.gutterMaterial),
+      GuttersProjectScope: normalizeGutterProjectScopeForPartner(data.gutterType),
+      CommercialLocation: "Home",
+    };
+  }
+
+  if (normalizedService === "GUTTER_COVERS") {
+    return {
+      GuttersProjectScope: normalizeGutterProjectScopeForPartner(data.gutterType) || "Install",
+      CommercialLocation: "Home",
+    };
+  }
+
+  if (normalizedService.startsWith("ROOFING_")) {
+    return {
+      roofingPlan: normalizeRoofingPlanForPartner(data.roofingType),
+    };
+  }
+
+  return {};
+}
+
+function missingRequiredPartnerFields(normalizedService, serviceSpecificFields) {
+  const requiredByService = {
+    WINDOWS: ["NumberOfWindows", "WindowsProjectScope"],
+    WALK_IN_TUBS: ["Interest"],
+    SOLAR: ["ElectricBill"],
+    GUTTERS: ["GutterType", "GuttersProjectScope", "CommercialLocation"],
+    GUTTER_COVERS: ["GuttersProjectScope", "CommercialLocation"],
+  };
+
+  const requiredFields = requiredByService[normalizedService] || [];
+  return requiredFields.filter((field) => !serviceSpecificFields[field]);
+}
+
+function normalizeRoofingPlanForPartner(roofingType) {
+  const normalized = String(roofingType || "").trim().toLowerCase();
+  const roofingPlanMap = {
+    "roof replace": "Completely replace roof",
+    replace: "Completely replace roof",
+    "roof repair": "Repair existing roof",
+    repair: "Repair existing roof",
+    "not sure": "Install roof on new construction",
+    "new construction": "Install roof on new construction",
+    install: "Install roof on new construction",
+  };
+  return roofingPlanMap[normalized] || "Install roof on new construction";
 }
 
 function toYesNoOwner(isOwner, canMakeChanges) {
@@ -97,6 +313,8 @@ function normalizeBooleanChoice(value) {
 function normalizeLeadInput(input = {}) {
   return {
     ...input,
+    zipcode: String(input.zipcode || input.postalCode || "").trim(),
+    buyTimeFrame: String(input.buyTimeFrame || input.buyTimeframe || "").trim(),
     isOwner: normalizeBooleanChoice(input.isOwner),
     canMakeChanges: normalizeBooleanChoice(input.canMakeChanges),
     ownHome: normalizeYesNo(input.ownHome),
@@ -175,12 +393,31 @@ function buildCompactPayload(fields) {
 
 async function postJson(url, fields) {
   const payload = buildCompactPayload(fields);
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), LEADPOST_REQUEST_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      const timeoutErr = new Error(
+        `Partner request timed out after ${LEADPOST_REQUEST_TIMEOUT_MS}ms`
+      );
+      timeoutErr.status = 504;
+      timeoutErr.url = url;
+      timeoutErr.partnerResponse = { message: timeoutErr.message };
+      timeoutErr.partnerRequest = payload;
+      throw timeoutErr;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const text = await res.text();
   let data = {};
@@ -210,30 +447,55 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
   const cleanedPhone = normalizePhone(data.phone);
   const cleanedZip = normalizeZip(data.zipcode);
   const upperState = (data.state || "").toUpperCase();
-  const normalizedService = normalizeServiceForPartner(data.service);
+  const normalizedService = resolvePartnerServiceCode(data);
   const ownHomeText =
     normalizeYesNo(data.ownHome) ||
     toYesNoOwner(data.isOwner, data.canMakeChanges) ||
     normalizeYesNo(LEADPOST_DEFAULT_OWN_HOME) ||
     "Yes";
-  const ownHomeBool = ownHomeText === "Yes";
   const partnerSourceId =
     String(data.partnerSourceId || "").trim() || LEADPOST_PARTNER_SOURCE_ID;
   const publisherSubIdFromInput = String(data.publisherSubId || "").trim();
   const leadIDTokenFromInput = String(data.leadIDToken || "").trim();
-  const runtimeLeadIdToken = leadIDTokenFromInput || makeRuntimeId("lead");
+  const runtimeLeadIdToken = makeRuntimeId("lead");
+  const leadIDToken = isLikelyLeadIdToken(leadIDTokenFromInput)
+    ? leadIDTokenFromInput
+    : "";
   const publisherSubId =
     publisherSubIdFromInput ||
     (LEADPOST_PUBLISHER_SUB_ID
       ? `${LEADPOST_PUBLISHER_SUB_ID}-${runtimeLeadIdToken}`
       : runtimeLeadIdToken);
-  const buyTimeFrame =
-    String(data.buyTimeFrame || data.buyTimeframe || "").trim() ||
-    LEADPOST_DEFAULT_BUY_TIMEFRAME;
-  const leadIDToken = runtimeLeadIdToken;
+  const buyTimeframe = normalizeBuyTimeframeForPartner(
+    data.buyTimeFrame || data.buyTimeframe
+  );
   const homePhoneConsentLanguage =
     String(data.homePhoneConsentLanguage || "").trim() ||
     LEADPOST_HOME_PHONE_CONSENT_LANGUAGE;
+  const serviceSpecificPayload = buildServiceSpecificPayloadFields(
+    data,
+    normalizedService
+  );
+  const missingFields = missingRequiredPartnerFields(
+    normalizedService,
+    serviceSpecificPayload
+  );
+  if (missingFields.length > 0) {
+    const err = new Error(
+      `Missing required partner field(s) for ${normalizedService}: ${missingFields.join(", ")}`
+    );
+    err.status = 400;
+    err.url = LEADPOST_PING_URL;
+    err.partnerResponse = {
+      status: "error",
+      message: err.message,
+    };
+    err.partnerRequest = buildCompactPayload({
+      service: normalizedService,
+      ...serviceSpecificPayload,
+    });
+    throw err;
+  }
   const leadFingerprint = makeLeadFingerprint({
     service: normalizedService,
     postalCode: cleanedZip,
@@ -260,9 +522,6 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
     service: normalizedService,
     postalCode: cleanedZip,
     ownHome: ownHomeText,
-    ownhome: ownHomeText,
-    isHomeOwner: ownHomeBool,
-    homeowner: ownHomeBool,
     partnerSourceId,
     publisherSubId,
     firstName: data.firstName || "",
@@ -273,23 +532,17 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
     city: data.city || "",
     state: upperState,
     trustedFormToken,
-    homePhoneConsentLanguage,
-    ipAddress: clientIp || "", // optional passthrough if partner accepts
-    userAgent: userAgent || "", // optional passthrough if partner accepts
   };
 
   const pingPayload = {
     tagId: commonPayload.tagId,
     service: commonPayload.service,
     postalCode: commonPayload.postalCode,
-    buyTimeFrame,
+    buyTimeframe,
     ownHome: commonPayload.ownHome,
-    ownhome: commonPayload.ownhome,
-    isHomeOwner: commonPayload.isHomeOwner,
-    homeowner: commonPayload.homeowner,
     partnerSourceId: commonPayload.partnerSourceId,
     publisherSubId: commonPayload.publisherSubId,
-    leadIDToken,
+    ...serviceSpecificPayload,
   };
   let pingResponse;
   try {
@@ -321,16 +574,14 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
 
   const postPayload = {
     ...commonPayload,
+    ...serviceSpecificPayload,
     pingToken,
-    buyTimeframe: buyTimeFrame,
+    buyTimeframe,
+    homePhoneConsentLanguage,
     ...(leadIDToken ? { leadIDToken } : {}),
-    ...(normalizedService === "WINDOWS" && data.windowCount
-      ? { NumberOfWindows: String(data.windowCount) }
-      : {}),
-    ...(normalizedService === "WINDOWS" && data.windowType
-      ? { WindowsProjectScope: String(data.windowType) }
-      : {}),
   };
+  const compactPingPayload = buildCompactPayload(pingPayload);
+  const compactPostPayload = buildCompactPayload(postPayload);
   const postResponse = await postJson(LEADPOST_POST_URL, postPayload);
   const delivery = {
     enabled: true,
@@ -338,13 +589,19 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
     pingToken,
     pingResponse,
     postResponse,
+    pingPayload: compactPingPayload,
+    postPayload: compactPostPayload,
+    sentPayloads: {
+      pingPayload: compactPingPayload,
+      postPayload: compactPostPayload,
+    },
   };
   if (LEADPOST_DEBUG) {
     delivery.debug = {
       pingUrl: LEADPOST_PING_URL,
       postUrl: LEADPOST_POST_URL,
-      pingPayload: buildCompactPayload(pingPayload),
-      postPayload: buildCompactPayload(postPayload),
+      pingPayload: compactPingPayload,
+      postPayload: compactPostPayload,
     };
   }
   return delivery;
@@ -457,6 +714,9 @@ app.get("/api/leads/latest", async (_req, res) => {
 });
 
 app.get("/api/places/autocomplete", async (req, res) => {
+  if (!GOOGLE_API_KEY) {
+    return res.status(500).json({ error: "Google API key is not configured on the server" });
+  }
   try {
     const { input } = req.query;
     if (!input) {
@@ -464,18 +724,29 @@ app.get("/api/places/autocomplete", async (req, res) => {
     }
 
     const response = await axios.get(
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json",
-        { params: { input, key: GOOGLE_API_KEY } }
+      "https://maps.googleapis.com/maps/api/place/autocomplete/json",
+      { params: { input, key: GOOGLE_API_KEY, types: "address", components: "country:us" } }
     );
 
-    res.json(response.data);
+    const { status, error_message, predictions } = response.data;
+
+    if (status !== "OK" && status !== "ZERO_RESULTS") {
+      console.error(`Google Places Autocomplete error: ${status} — ${error_message || "no detail"}`);
+      return res.status(502).json({ error: `Google Places API error: ${status}`, detail: error_message || "" });
+    }
+
+    res.json({ predictions: predictions || [] });
   } catch (error) {
-    console.error("Error with Places API:", error.message);
-    res.status(500).json({ error: "Failed to fetch suggestions" });
+    const detail = error.response?.data || error.message;
+    console.error("Error with Places Autocomplete API:", detail);
+    res.status(500).json({ error: "Failed to fetch suggestions", detail: String(detail) });
   }
 });
 
 app.get("/api/places/details", async (req, res) => {
+  if (!GOOGLE_API_KEY) {
+    return res.status(500).json({ error: "Google API key is not configured on the server" });
+  }
   try {
     const { place_id } = req.query;
     if (!place_id) {
@@ -483,15 +754,21 @@ app.get("/api/places/details", async (req, res) => {
     }
 
     const response = await axios.get(
-        "https://maps.googleapis.com/maps/api/place/details/json",
-        {
-          params: {
-            place_id,
-            fields: "address_component,formatted_address",
-            key: GOOGLE_API_KEY,
-          },
-        }
+      "https://maps.googleapis.com/maps/api/place/details/json",
+      {
+        params: {
+          place_id,
+          fields: "address_component,formatted_address",
+          key: GOOGLE_API_KEY,
+        },
+      }
     );
+
+    const { status, error_message } = response.data;
+    if (status !== "OK") {
+      console.error(`Google Places Details error: ${status} — ${error_message || "no detail"}`);
+      return res.status(502).json({ error: `Google Places API error: ${status}`, detail: error_message || "" });
+    }
 
     const addressComponents = response.data.result.address_components || [];
     const formattedAddress = response.data.result.formatted_address || "";
@@ -543,8 +820,9 @@ app.get("/api/places/details", async (req, res) => {
 
     res.json(addressData);
   } catch (error) {
-    console.error("Error with Place Details API:", error.message);
-    res.status(500).json({ error: "Failed to fetch place details" });
+    const detail = error.response?.data || error.message;
+    console.error("Error with Place Details API:", detail);
+    res.status(500).json({ error: "Failed to fetch place details", detail: String(detail) });
   }
 });
 
@@ -559,11 +837,18 @@ const LeadSchema = z.object({
   windowCount: z.string().optional().or(z.literal("")),
   windowStyle: z.string().optional().or(z.literal("")),
   solarType: z.string().optional().or(z.literal("")),
+  electricBill: z.string().optional().or(z.literal("")),
   roofSize: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   city: z.string().optional().or(z.literal("")),
   state: z.string().optional().or(z.literal("")),
   zipcode: z.string().optional().or(z.literal("")),
+  postalCode: z.string().optional().or(z.literal("")),
+  buyTimeFrame: z.string().optional().or(z.literal("")),
+  buyTimeframe: z.string().optional().or(z.literal("")),
+  partnerSourceId: z.string().optional().or(z.literal("")),
+  publisherSubId: z.string().optional().or(z.literal("")),
+  leadIDToken: z.string().optional().or(z.literal("")),
   isOwner: z.boolean().nullable().optional(),
   canMakeChanges: z.boolean().nullable().optional(),
   firstName: z.string().optional().or(z.literal("")),
@@ -592,11 +877,14 @@ app.post("/api/leads", async (req, res) => {
     const captchaToken = data.captchaToken;
     if (captchaToken && process.env.RECAPTCHA_SECRET_KEY) {
       try {
+        const captchaCtrl = new AbortController();
+        const captchaTimeout = setTimeout(() => captchaCtrl.abort(), RECAPTCHA_TIMEOUT_MS);
         const captchaRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`,
-        });
+          signal: captchaCtrl.signal,
+        }).finally(() => clearTimeout(captchaTimeout));
         const captchaData = await captchaRes.json();
         if (!captchaData.success) {
           return res.status(400).json({ ok: false, error: "CAPTCHA_FAILED", message: "reCAPTCHA verification failed. Please try again." });
@@ -652,12 +940,22 @@ app.post("/api/leads", async (req, res) => {
       partnerDelivery = await sendLeadpostPingThenPost(data, { clientIp, userAgent: ua });
     } catch (partnerErr) {
       console.error("LeadPost delivery error:", partnerErr.message);
+      console.error(
+        "LeadPost partner response:",
+        JSON.stringify(partnerErr.partnerResponse || null)
+      );
+      console.error(
+        "LeadPost partner request:",
+        JSON.stringify(partnerErr.partnerRequest || null)
+      );
       partnerDelivery = {
         enabled: LEADPOST_ENABLED,
         delivered: false,
         error: partnerErr.message,
         status: partnerErr.status || null,
         partnerUrl: partnerErr.url || null,
+        pingResponse: partnerErr.partnerResponse || null,
+        pingPayload: partnerErr.partnerRequest || null,
         partnerResponse: partnerErr.partnerResponse || null,
         partnerRequest: partnerErr.partnerRequest || null,
       };

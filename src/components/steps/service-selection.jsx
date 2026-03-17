@@ -109,13 +109,6 @@ function ServiceSelection() {
               </p>
             </div>
 
-            <input
-              type="hidden"
-              name="xxTrustedFormCertUrl"
-              id="xxTrustedFormCertUrl"
-              value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c"
-            />
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 flex-1">
               {services.map((service) => (
                 <ServiceCard

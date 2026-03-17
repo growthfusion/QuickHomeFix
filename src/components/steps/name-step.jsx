@@ -50,8 +50,6 @@ function NameStep() {
               </div>
             </div>
 
-            <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="https://cert.trustedform.com/454a35b802f3e7b63ffabb4efedb7c6ebe67886c" />
-
             <div className="flex justify-center">
               <Button type="submit" disabled={!isFormValid} className="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50" data-tf-element-role="submit">Next</Button>
             </div>
