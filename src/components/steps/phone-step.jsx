@@ -9,6 +9,7 @@ import StepProgressBar from "@/components/layout/step-progress-bar";
 import { submitLead } from "@/lib/api";
 import {
   getTrustedFormToken,
+  getLeadpostAttribution,
   HOME_PHONE_CONSENT_LANGUAGE,
 } from "@/lib/leadpost";
 
@@ -64,8 +65,10 @@ function PhoneStep() {
   const trySubmitLead = async () => {
     if (!shouldSubmitLead()) return;
     try {
+      const attribution = getLeadpostAttribution(formData);
       const result = await submitLead({
         ...formData,
+        ...attribution,
         state: (formData.state || "").toUpperCase(),
         trustedFormToken: getTrustedFormToken(),
         homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,

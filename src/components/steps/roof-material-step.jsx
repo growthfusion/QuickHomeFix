@@ -8,8 +8,10 @@ const materials = [
   { id: "asphalt", name: "Asphalt", questionText: "What type of roofing material are you looking for?", answerText: "Asphalt" },
   { id: "metal", name: "Metal", questionText: "What type of roofing material are you looking for?", answerText: "Metal" },
   { id: "tile", name: "Tile", questionText: "What type of roofing material are you looking for?", answerText: "Tile" },
-  { id: "slate", name: "Slate", questionText: "What type of roofing material are you looking for?", answerText: "Slate" },
-  { id: "wood", name: "Wood", questionText: "What type of roofing material are you looking for?", answerText: "Wood" },
+  { id: "slate", name: "Natural Slate", questionText: "What type of roofing material are you looking for?", answerText: "Natural Slate" },
+  { id: "wood", name: "Cedar Shake", questionText: "What type of roofing material are you looking for?", answerText: "Cedar Shake" },
+  { id: "composite", name: "Composite", questionText: "What type of roofing material are you looking for?", answerText: "Composite" },
+  { id: "tar", name: "Tar/Torchdown", questionText: "What type of roofing material are you looking for?", answerText: "Tar/Torchdown" },
 ];
 
 function RoofMaterialStep() {

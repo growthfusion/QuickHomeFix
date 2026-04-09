@@ -12,37 +12,44 @@ import { createClient } from "@clickhouse/client";
 dotenv.config({ override: true });
 
 const app = express();
-const LEADPOST_PING_URL = process.env.LEADPOST_PING_URL || "";
-const LEADPOST_POST_URL = process.env.LEADPOST_POST_URL || "";
-const LEADPOST_STAGE_TAG_ID = process.env.LEADPOST_STAGE_TAG_ID || "204670250";
-const LEADPOST_TAG_ID = process.env.LEADPOST_TAG_ID || LEADPOST_STAGE_TAG_ID;
-const LEADPOST_GROWTH_FUSION_TAG_ID =
-  process.env.LEADPOST_GROWTH_FUSION_TAG_ID || "204696034";
-const LEADPOST_PARTNER_SOURCE_ID = process.env.LEADPOST_PARTNER_SOURCE_ID || "CampaignA";
-const LEADPOST_PUBLISHER_SUB_ID = process.env.LEADPOST_PUBLISHER_SUB_ID || "123456";
-const LEADPOST_DEFAULT_BUY_TIMEFRAME =
-  process.env.LEADPOST_DEFAULT_BUY_TIMEFRAME || "Immediately";
-const LEADPOST_DEFAULT_OWN_HOME =
-  process.env.LEADPOST_DEFAULT_OWN_HOME || "Yes";
-const LEADPOST_HOME_PHONE_CONSENT_LANGUAGE =
-  process.env.LEADPOST_HOME_PHONE_CONSENT_LANGUAGE ||
+
+// --- LeadProsper configuration ---
+const LP_PING_URL = "https://api.leadprosper.io/ping";
+const LP_POST_URL = "https://api.leadprosper.io/post";
+const LP_DIRECT_POST_URL = "https://api.leadprosper.io/direct_post";
+const LP_TEST_MODE = String(process.env.LP_TEST_MODE || "").toLowerCase() === "true";
+
+// Per-campaign credentials: { campaign_id, supplier_id, key }
+const LP_CAMPAIGNS = {
+  WINDOWS:         { id: process.env.LP_CAMPAIGN_WINDOWS || "33804", supplier: process.env.LP_SUPPLIER_WINDOWS || "109535", key: process.env.LP_KEY_WINDOWS || "y7jwcl0k2i1ko2" },
+  BATH_REMODEL:    { id: process.env.LP_CAMPAIGN_BATH || "33806", supplier: process.env.LP_SUPPLIER_BATH || "109536", key: process.env.LP_KEY_BATH || "pzvwtmvp3u7jkx" },
+  WALK_IN_SHOWERS: { id: process.env.LP_CAMPAIGN_BATH || "33806", supplier: process.env.LP_SUPPLIER_BATH || "109536", key: process.env.LP_KEY_BATH || "pzvwtmvp3u7jkx" },
+  ROOFING_ASPHALT:       { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  ROOFING_METAL:         { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  ROOFING_TILE:          { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  ROOFING_NATURAL_SLATE: { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  ROOFING_CEDAR_SHAKE:   { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  ROOFING_COMPOSITE:     { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  ROOFING_TAR_TORCHDOWN: { id: process.env.LP_CAMPAIGN_ROOF || "33808", supplier: process.env.LP_SUPPLIER_ROOF || "109537", key: process.env.LP_KEY_ROOF || "6lrysd311cg7dq" },
+  WALK_IN_TUBS:  { id: process.env.LP_CAMPAIGN_TUB || "33810", supplier: process.env.LP_SUPPLIER_TUB || "109538", key: process.env.LP_KEY_TUB || "525ys2e67f7orj" },
+  GUTTERS:       { id: process.env.LP_CAMPAIGN_GUTTERS || "", supplier: "", key: "" },
+  GUTTER_COVERS: { id: process.env.LP_CAMPAIGN_GUTTERS || "", supplier: "", key: "" },
+  SOLAR:         { id: process.env.LP_CAMPAIGN_SOLAR || "", supplier: "", key: "" },
+};
+const LP_ENABLED = true;
+const LP_TCPA_TEXT = process.env.LP_TCPA_TEXT ||
   "By submitting, you authorize QuickHomeFix and up to four home improvement companies, to make marketing calls and texts to the phone number provided to discuss your home improvement project.";
-const LEADPOST_ENABLED = Boolean(LEADPOST_PING_URL && LEADPOST_POST_URL);
+const LP_DEBUG = String(process.env.LP_DEBUG || "").toLowerCase() === "true";
+
 const ALLOW_LEAD_WITHOUT_DB = String(process.env.ALLOW_LEAD_WITHOUT_DB || "").toLowerCase() === "true";
-const LEADPOST_DEBUG = String(process.env.LEADPOST_DEBUG || "").toLowerCase() === "true";
-const LEADPOST_DUPLICATE_COOLDOWN_MS = Number(
-  process.env.LEADPOST_DUPLICATE_COOLDOWN_MS || 10 * 60 * 1000
+const LP_DUPLICATE_COOLDOWN_MS = Number(
+  process.env.LP_DUPLICATE_COOLDOWN_MS || 10 * 60 * 1000
 );
-const leadpostTimeoutFromEnv = Number(process.env.LEADPOST_REQUEST_TIMEOUT_MS || 12000);
-const recaptchaTimeoutFromEnv = Number(process.env.RECAPTCHA_TIMEOUT_MS || 8000);
-const LEADPOST_REQUEST_TIMEOUT_MS =
-  Number.isFinite(leadpostTimeoutFromEnv) && leadpostTimeoutFromEnv > 0
-    ? leadpostTimeoutFromEnv
-    : 12000;
-const RECAPTCHA_TIMEOUT_MS =
-  Number.isFinite(recaptchaTimeoutFromEnv) && recaptchaTimeoutFromEnv > 0
-    ? recaptchaTimeoutFromEnv
-    : 8000;
+const lpTimeoutFromEnv = Number(process.env.LP_REQUEST_TIMEOUT_MS || 15000);
+const LP_REQUEST_TIMEOUT_MS =
+  Number.isFinite(lpTimeoutFromEnv) && lpTimeoutFromEnv > 0
+    ? lpTimeoutFromEnv
+    : 15000;
 const recentLeadFingerprintMap = new Map();
 
 function normalizeTrustedFormToken(value) {
@@ -58,24 +65,6 @@ function normalizeZip(value) {
   return String(value || "").replace(/\D/g, "").slice(0, 5);
 }
 
-function normalizeBuyTimeframeForPartner(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  const timeframeMap = {
-    immediately: "Immediately",
-    "1-6 months": "1-6 months",
-    "1 to 6 months": "1-6 months",
-    "dont know": "Don't know",
-    "don't know": "Don't know",
-    "not sure": "Don't know",
-  };
-  return timeframeMap[normalized] || LEADPOST_DEFAULT_BUY_TIMEFRAME;
-}
-
-function isLikelyLeadIdToken(value) {
-  const token = String(value || "").trim();
-  if (!token) return false;
-  return /^[A-Za-z0-9-]{32,36}$/.test(token);
-}
 
 function normalizeServiceForPartner(value) {
   const normalized = String(value || "").trim().toLowerCase();
@@ -91,19 +80,60 @@ function normalizeServiceForPartner(value) {
   return serviceMap[normalized] || String(value || "").trim().toUpperCase();
 }
 
-function normalizeWindowsCountForPartner(value) {
-  const raw = String(value || "").trim().toLowerCase();
-  const directMap = {
-    "1": "1",
-    "2": "2",
-    "3-5": "3-5",
-    "3 to 5": "3-5",
-    "6+": "6-9",
-    "6-9": "6-9",
-    "9+": "6-9",
-  };
-  if (directMap[raw]) return directMap[raw];
+function normalizeOwnHome(data) {
+  const own = String(data.ownHome || "").trim().toLowerCase();
+  if (["yes", "y", "true", "1"].includes(own)) return "Yes";
+  if (["no", "n", "false", "0"].includes(own)) return "No";
+  if (data.canMakeChanges === true || data.isOwner === true) return "Yes";
+  if (data.isOwner === false) return "No";
+  return "Yes";
+}
 
+function normalizeBuyTimeframe(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const map = {
+    immediately: "Immediately",
+    "1-6 months": "1-6 months",
+    "1 to 6 months": "1-6 months",
+    "dont know": "Don't know",
+    "don't know": "Don't know",
+    "not sure": "Don't know",
+  };
+  return map[normalized] || "Immediately";
+}
+
+function normalizeRoofingPlan(roofingType) {
+  const normalized = String(roofingType || "").trim().toLowerCase();
+  const map = {
+    "roof replace": "Completely replace roof",
+    replace: "Completely replace roof",
+    "roof repair": "Repair existing roof",
+    repair: "Repair existing roof",
+    "new construction": "Install roof on new construction",
+    install: "Install roof on new construction",
+  };
+  return map[normalized] || "Install roof on new construction";
+}
+
+function normalizeWalkInTubInterest(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "safety" || normalized.includes("safe")) return "Safety";
+  if (normalized === "therapeutic" || normalized.includes("therapy")) return "Therapeutic";
+  if (normalized) return "Other";
+  return "";
+}
+
+function normalizeBathOptIn(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "full-remodel") return "Yes";
+  if (normalized === "tub-shower") return "No";
+  return "";
+}
+
+function normalizeWindowsCount(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  const map = { "1": "1", "2": "2", "3-5": "3-5", "3 to 5": "3-5", "6+": "6-9", "6-9": "6-9", "9+": "6-9" };
+  if (map[raw]) return map[raw];
   const parsed = Number.parseInt(raw, 10);
   if (Number.isFinite(parsed)) {
     if (parsed <= 1) return "1";
@@ -114,181 +144,76 @@ function normalizeWindowsCountForPartner(value) {
   return "";
 }
 
-function normalizeWindowsProjectScopeForPartner(value) {
+function normalizeWindowsProjectScope(value) {
   const normalized = String(value || "").trim().toLowerCase();
   if (["repair", "fix"].includes(normalized)) return "Repair";
-  if (["replace", "install", "installation", "not sure"].includes(normalized)) {
-    return "Install";
+  if (["replace", "install", "installation", "not sure"].includes(normalized)) return "Install";
+  return "";
+}
+
+// Build service-specific fields for LeadProsper → LeadPost
+function buildServiceFields(data, normalizedService) {
+  if (normalizedService === "WINDOWS") {
+    return {
+      NumberOfWindows: normalizeWindowsCount(data.windowCount),
+      WindowsProjectScope: normalizeWindowsProjectScope(data.windowType),
+    };
   }
-  return "";
-}
-
-function normalizeWalkInTubInterestForPartner(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (normalized === "safety" || normalized.includes("safe")) return "Safety";
-  if (normalized === "therapeutic" || normalized.includes("therapy")) {
-    return "Therapeutic";
+  if (normalizedService === "WALK_IN_TUBS") {
+    return { Interest: normalizeWalkInTubInterest(data.tubReason || data.bathNeeds) };
   }
-  if (normalized) return "Other";
-  return "";
-}
-
-function normalizeBathOptInForPartner(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (normalized === "full-remodel") return "Yes";
-  if (normalized === "tub-shower") return "No";
-  return "";
-}
-
-function normalizeGutterMaterialForPartner(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  const materialMap = {
-    copper: "Copper",
-    steel: "Galvanized",
-    vinyl: "PVC",
-    aluminum: "Seamless Metal",
-    wood: "Wood",
-  };
-  return materialMap[normalized] || "";
-}
-
-function normalizeGutterProjectScopeForPartner(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (normalized.includes("repair")) return "Repair";
-  if (normalized.includes("replace") || normalized.includes("install") || normalized.includes("guard")) {
-    return "Install";
+  if (normalizedService === "BATH_REMODEL" || normalizedService === "WALK_IN_SHOWERS") {
+    return { OptIn1: normalizeBathOptIn(data.bathNeeds) };
   }
-  return "";
-}
-
-function normalizeSolarElectricBillForPartner(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  const billMap = {
-    "under $100": "Under $100",
-    "under 100": "Under $100",
-    "$100 - $200": "$100 - $200",
-    "100-200": "$100 - $200",
-    "$200 - $300": "$200 - $300",
-    "200-300": "$200 - $300",
-    "$300+": "$300+",
-    "300+": "$300+",
-  };
-  return billMap[normalized] || "";
-}
-
-function normalizeRoofingServiceForPartner(service, material) {
-  const serviceNormalized = String(service || "").trim().toLowerCase();
-  if (!["roof", "roofing"].includes(serviceNormalized)) return null;
-
-  const materialNormalized = String(material || "").trim().toLowerCase();
-  const roofingServiceMap = {
-    asphalt: "ROOFING_ASPHALT",
-    metal: "ROOFING_METAL",
-    tile: "ROOFING_TILE",
-    slate: "ROOFING_NATURAL_SLATE",
-    wood: "ROOFING_CEDAR_SHAKE",
-  };
-
-  // Partner does not accept generic ROOFING; default to a valid roofing subtype.
-  return roofingServiceMap[materialNormalized] || "ROOFING_ASPHALT";
+  if (normalizedService.startsWith("ROOFING_")) {
+    return { RoofingPlan: normalizeRoofingPlan(data.roofingType) };
+  }
+  if (normalizedService === "GUTTERS") {
+    return {
+      GutterType: data.gutterMaterial || "",
+      GuttersProjectScope: data.gutterType || "",
+      CommercialLocation: "Home",
+    };
+  }
+  if (normalizedService === "GUTTER_COVERS") {
+    return {
+      GuttersProjectScope: data.gutterType || "",
+      CommercialLocation: "Home",
+    };
+  }
+  if (normalizedService === "SOLAR") {
+    return {
+      ElectricBill: data.electricBill || "",
+    };
+  }
+  return {};
 }
 
 function resolvePartnerServiceCode(data = {}) {
-  const roofingService =
-    normalizeRoofingServiceForPartner(data.service, data.material);
-  if (roofingService) return roofingService;
+  const service = String(data.service || "").trim().toLowerCase();
 
-  const baseService = String(data.service || "").trim().toLowerCase();
-  if (baseService === "gutter") {
+  if (["roof", "roofing"].includes(service)) {
+    const material = String(data.material || "").trim().toLowerCase();
+    const roofingMap = {
+      asphalt: "ROOFING_ASPHALT",
+      metal: "ROOFING_METAL",
+      tile: "ROOFING_TILE",
+      slate: "ROOFING_NATURAL_SLATE",
+      wood: "ROOFING_CEDAR_SHAKE",
+      composite: "ROOFING_COMPOSITE",
+      tar: "ROOFING_TAR_TORCHDOWN",
+      torchdown: "ROOFING_TAR_TORCHDOWN",
+    };
+    return roofingMap[material] || "ROOFING_ASPHALT";
+  }
+
+  if (service === "gutter") {
     const gutterType = String(data.gutterType || "").trim().toLowerCase();
     if (gutterType.includes("guard")) return "GUTTER_COVERS";
     return "GUTTERS";
   }
-  return normalizeServiceForPartner(baseService);
-}
 
-function buildServiceSpecificPayloadFields(data, normalizedService) {
-  if (normalizedService === "WINDOWS") {
-    return {
-      NumberOfWindows: normalizeWindowsCountForPartner(data.windowCount),
-      WindowsProjectScope: normalizeWindowsProjectScopeForPartner(data.windowType),
-    };
-  }
-
-  if (normalizedService === "WALK_IN_TUBS") {
-    return {
-      Interest: normalizeWalkInTubInterestForPartner(data.tubReason || data.bathNeeds),
-    };
-  }
-
-  if (normalizedService === "SOLAR") {
-    return {
-      ElectricBill: normalizeSolarElectricBillForPartner(data.electricBill),
-    };
-  }
-
-  if (normalizedService === "BATH_REMODEL") {
-    return {
-      OptIn1: normalizeBathOptInForPartner(data.bathNeeds),
-    };
-  }
-
-  if (normalizedService === "GUTTERS") {
-    return {
-      GutterType: normalizeGutterMaterialForPartner(data.gutterMaterial),
-      GuttersProjectScope: normalizeGutterProjectScopeForPartner(data.gutterType),
-      CommercialLocation: "Home",
-    };
-  }
-
-  if (normalizedService === "GUTTER_COVERS") {
-    return {
-      GuttersProjectScope: normalizeGutterProjectScopeForPartner(data.gutterType) || "Install",
-      CommercialLocation: "Home",
-    };
-  }
-
-  if (normalizedService.startsWith("ROOFING_")) {
-    return {
-      roofingPlan: normalizeRoofingPlanForPartner(data.roofingType),
-    };
-  }
-
-  return {};
-}
-
-function missingRequiredPartnerFields(normalizedService, serviceSpecificFields) {
-  const requiredByService = {
-    WINDOWS: ["NumberOfWindows", "WindowsProjectScope"],
-    WALK_IN_TUBS: ["Interest"],
-    SOLAR: ["ElectricBill"],
-    GUTTERS: ["GutterType", "GuttersProjectScope", "CommercialLocation"],
-    GUTTER_COVERS: ["GuttersProjectScope", "CommercialLocation"],
-  };
-
-  const requiredFields = requiredByService[normalizedService] || [];
-  return requiredFields.filter((field) => !serviceSpecificFields[field]);
-}
-
-function normalizeRoofingPlanForPartner(roofingType) {
-  const normalized = String(roofingType || "").trim().toLowerCase();
-  const roofingPlanMap = {
-    "roof replace": "Completely replace roof",
-    replace: "Completely replace roof",
-    "roof repair": "Repair existing roof",
-    repair: "Repair existing roof",
-    "not sure": "Install roof on new construction",
-    "new construction": "Install roof on new construction",
-    install: "Install roof on new construction",
-  };
-  return roofingPlanMap[normalized] || "Install roof on new construction";
-}
-
-function toYesNoOwner(isOwner, canMakeChanges) {
-  if (canMakeChanges === true) return "Yes";
-  if (isOwner === true) return "Yes";
-  if (isOwner === false) return "No";
-  return "";
+  return normalizeServiceForPartner(service);
 }
 
 function normalizeYesNo(value) {
@@ -321,11 +246,6 @@ function normalizeLeadInput(input = {}) {
   };
 }
 
-function makeRuntimeId(prefix = "qhf") {
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `${prefix}-${Date.now()}-${rand}`;
-}
-
 function makeLeadFingerprint({
   service,
   postalCode,
@@ -350,13 +270,13 @@ function makeLeadFingerprint({
 function isRecentDuplicateLead(fingerprint) {
   const now = Date.now();
   const last = recentLeadFingerprintMap.get(fingerprint);
-  if (last && now - last < LEADPOST_DUPLICATE_COOLDOWN_MS) return true;
+  if (last && now - last < LP_DUPLICATE_COOLDOWN_MS) return true;
   recentLeadFingerprintMap.set(fingerprint, now);
 
   // Light cleanup to keep map bounded.
   if (recentLeadFingerprintMap.size > 2000) {
     for (const [key, ts] of recentLeadFingerprintMap.entries()) {
-      if (now - ts > LEADPOST_DUPLICATE_COOLDOWN_MS) {
+      if (now - ts > LP_DUPLICATE_COOLDOWN_MS) {
         recentLeadFingerprintMap.delete(key);
       }
     }
@@ -364,37 +284,9 @@ function isRecentDuplicateLead(fingerprint) {
   return false;
 }
 
-function extractPingToken(payload) {
-  return (
-    payload?.pingToken ||
-    payload?.ping_token ||
-    payload?.PingToken ||
-    payload?.pingtoken ||
-    payload?.token ||
-    payload?.data?.pingToken ||
-    payload?.data?.ping_token ||
-    payload?.data?.PingToken ||
-    payload?.data?.token ||
-    payload?.result?.pingToken ||
-    payload?.result?.ping_token ||
-    payload?.result?.token ||
-    ""
-  );
-}
-
-function buildCompactPayload(fields) {
-  const payload = {};
-  Object.entries(fields).forEach(([k, v]) => {
-    if (v === undefined || v === null || v === "") return;
-    payload[k] = v;
-  });
-  return payload;
-}
-
-async function postJson(url, fields) {
-  const payload = buildCompactPayload(fields);
+async function postJson(url, payload) {
   const ctrl = new AbortController();
-  const timeout = setTimeout(() => ctrl.abort(), LEADPOST_REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => ctrl.abort(), LP_REQUEST_TIMEOUT_MS);
   let res;
   try {
     res = await fetch(url, {
@@ -406,7 +298,7 @@ async function postJson(url, fields) {
   } catch (err) {
     if (err?.name === "AbortError") {
       const timeoutErr = new Error(
-        `Partner request timed out after ${LEADPOST_REQUEST_TIMEOUT_MS}ms`
+        `LeadProsper request timed out after ${LP_REQUEST_TIMEOUT_MS}ms`
       );
       timeoutErr.status = 504;
       timeoutErr.url = url;
@@ -428,7 +320,7 @@ async function postJson(url, fields) {
   }
 
   if (!res.ok) {
-    const err = new Error(`Partner HTTP ${res.status}`);
+    const err = new Error(`LeadProsper HTTP ${res.status}`);
     err.status = res.status;
     err.url = url;
     err.partnerResponse = data;
@@ -438,8 +330,17 @@ async function postJson(url, fields) {
   return data;
 }
 
-async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
-  if (!LEADPOST_ENABLED) {
+function resolveCampaignCredentials(normalizedService) {
+  const campaign = LP_CAMPAIGNS[normalizedService];
+  if (!campaign || !campaign.id) {
+    console.warn(`No LeadProsper campaign mapped for service: ${normalizedService}`);
+    return null;
+  }
+  return campaign;
+}
+
+async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
+  if (!LP_ENABLED) {
     return { enabled: false, skipped: true };
   }
 
@@ -448,54 +349,18 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
   const cleanedZip = normalizeZip(data.zipcode);
   const upperState = (data.state || "").toUpperCase();
   const normalizedService = resolvePartnerServiceCode(data);
-  const ownHomeText =
-    normalizeYesNo(data.ownHome) ||
-    toYesNoOwner(data.isOwner, data.canMakeChanges) ||
-    normalizeYesNo(LEADPOST_DEFAULT_OWN_HOME) ||
-    "Yes";
-  const partnerSourceId =
-    String(data.partnerSourceId || "").trim() || LEADPOST_PARTNER_SOURCE_ID;
-  const publisherSubIdFromInput = String(data.publisherSubId || "").trim();
-  const leadIDTokenFromInput = String(data.leadIDToken || "").trim();
-  const runtimeLeadIdToken = makeRuntimeId("lead");
-  const leadIDToken = isLikelyLeadIdToken(leadIDTokenFromInput)
-    ? leadIDTokenFromInput
-    : "";
-  const publisherSubId =
-    publisherSubIdFromInput ||
-    (LEADPOST_PUBLISHER_SUB_ID
-      ? `${LEADPOST_PUBLISHER_SUB_ID}-${runtimeLeadIdToken}`
-      : runtimeLeadIdToken);
-  const buyTimeframe = normalizeBuyTimeframeForPartner(
-    data.buyTimeFrame || data.buyTimeframe
-  );
-  const homePhoneConsentLanguage =
-    String(data.homePhoneConsentLanguage || "").trim() ||
-    LEADPOST_HOME_PHONE_CONSENT_LANGUAGE;
-  const serviceSpecificPayload = buildServiceSpecificPayloadFields(
-    data,
-    normalizedService
-  );
-  const missingFields = missingRequiredPartnerFields(
-    normalizedService,
-    serviceSpecificPayload
-  );
-  if (missingFields.length > 0) {
-    const err = new Error(
-      `Missing required partner field(s) for ${normalizedService}: ${missingFields.join(", ")}`
-    );
-    err.status = 400;
-    err.url = LEADPOST_PING_URL;
-    err.partnerResponse = {
-      status: "error",
-      message: err.message,
+
+  const campaign = resolveCampaignCredentials(normalizedService);
+  if (!campaign) {
+    return {
+      enabled: true,
+      delivered: false,
+      skipped: true,
+      reason: "NO_CAMPAIGN",
+      message: `No LeadProsper campaign configured for service: ${normalizedService}`,
     };
-    err.partnerRequest = buildCompactPayload({
-      service: normalizedService,
-      ...serviceSpecificPayload,
-    });
-    throw err;
   }
+
   const leadFingerprint = makeLeadFingerprint({
     service: normalizedService,
     postalCode: cleanedZip,
@@ -513,95 +378,161 @@ async function sendLeadpostPingThenPost(data, { clientIp, userAgent }) {
       skipped: true,
       reason: "DUPLICATE_SUPPRESSED",
       message: "Duplicate lead suppressed within cooldown window.",
-      cooldownMs: LEADPOST_DUPLICATE_COOLDOWN_MS,
+      cooldownMs: LP_DUPLICATE_COOLDOWN_MS,
     };
   }
 
-  const commonPayload = {
-    tagId: LEADPOST_TAG_ID,
+  const tcpaText =
+    String(data.homePhoneConsentLanguage || "").trim() || LP_TCPA_TEXT;
+  const ownHome = normalizeOwnHome(data);
+  const buyTimeframe = normalizeBuyTimeframe(data.buyTimeFrame || data.buyTimeframe);
+  const serviceFields = buildServiceFields(data, normalizedService);
+
+  // --- TEST MODE: direct_post (single step) ---
+  if (LP_TEST_MODE) {
+    const testCampaignId = process.env.LP_TEST_CAMPAIGN_ID || "";
+    const testSupplierId = process.env.LP_TEST_SUPPLIER_ID || "";
+    const testKey = process.env.LP_TEST_KEY || "";
+
+    const directPayload = {
+      lp_campaign_id: testCampaignId,
+      lp_supplier_id: testSupplierId,
+      lp_key: testKey,
+      lp_action: "test",
+      // Standard fields
+      first_name: data.firstName || "",
+      last_name: data.lastName || "",
+      email: data.email || "",
+      phone: cleanedPhone,
+      address: data.address || "",
+      city: data.city || "",
+      state: upperState,
+      zip_code: cleanedZip,
+      ip_address: clientIp || "",
+      user_agent: userAgent || "",
+      trustedform_cert_url: trustedFormToken,
+      tcpa_text: tcpaText,
+      // Custom fields
+      service: normalizedService,
+      ownHome,
+      buyTimeframe,
+      ...serviceFields,
+    };
+
+    const directResponse = await postJson(LP_DIRECT_POST_URL, directPayload);
+
+    const delivery = {
+      enabled: true,
+      delivered: String(directResponse.status || "").toUpperCase() === "ACCEPTED",
+      testMode: true,
+      postResponse: directResponse,
+      leadId: directResponse.lead_id || "",
+    };
+    if (LP_DEBUG) {
+      delivery.debug = {
+        url: LP_DIRECT_POST_URL,
+        payload: directPayload,
+      };
+    }
+    return delivery;
+  }
+
+  // --- PRODUCTION: PING/POST two-step flow ---
+  const pingPayload = {
+    lp_campaign_id: campaign.id,
+    lp_supplier_id: campaign.supplier,
+    lp_key: campaign.key,
+    zip_code: cleanedZip,
+    // Custom fields forwarded to Modernize via LeadProsper buyer delivery
     service: normalizedService,
-    postalCode: cleanedZip,
-    ownHome: ownHomeText,
-    partnerSourceId,
-    publisherSubId,
-    firstName: data.firstName || "",
-    lastName: data.lastName || "",
-    email: data.email || "",
-    phone: cleanedPhone,
-    address: data.address || "",
-    city: data.city || "",
-    state: upperState,
-    trustedFormToken,
+    ownHome,
+    buyTimeframe,
+    ...serviceFields,
   };
 
-  const pingPayload = {
-    tagId: commonPayload.tagId,
-    service: commonPayload.service,
-    postalCode: commonPayload.postalCode,
-    buyTimeframe,
-    ownHome: commonPayload.ownHome,
-    partnerSourceId: commonPayload.partnerSourceId,
-    publisherSubId: commonPayload.publisherSubId,
-    ...serviceSpecificPayload,
-  };
   let pingResponse;
   try {
-    pingResponse = await postJson(LEADPOST_PING_URL, pingPayload);
+    pingResponse = await postJson(LP_PING_URL, pingPayload);
   } catch (pingErr) {
     const partnerMsg = String(pingErr?.partnerResponse?.message || "");
-    if (/duplicate ping request/i.test(partnerMsg)) {
+    if (/duplicate/i.test(partnerMsg)) {
       return {
         enabled: true,
         delivered: false,
         skipped: true,
         reason: "PARTNER_DUPLICATE",
         message: partnerMsg,
-        partnerUrl: pingErr.url || LEADPOST_PING_URL,
         partnerResponse: pingErr.partnerResponse || null,
       };
     }
     throw pingErr;
   }
-  const pingToken = extractPingToken(pingResponse);
-  if (!pingToken) {
-    const err = new Error("PING succeeded but pingToken is missing");
+
+  // LeadProsper returns status: "ACCEPTED" (uppercase)
+  if (String(pingResponse.status || "").toUpperCase() !== "ACCEPTED") {
+    return {
+      enabled: true,
+      delivered: false,
+      skipped: true,
+      reason: "PING_REJECTED",
+      message: pingResponse.message || "Ping was not accepted",
+      pingResponse,
+    };
+  }
+
+  const pingId = pingResponse.ping_id || "";
+  if (!pingId) {
+    const err = new Error("PING accepted but ping_id is missing");
     err.status = 400;
-    err.url = LEADPOST_PING_URL;
+    err.url = LP_PING_URL;
     err.partnerResponse = pingResponse;
-    err.partnerRequest = buildCompactPayload(pingPayload);
+    err.partnerRequest = pingPayload;
     throw err;
   }
 
+  // --- POST to LeadProsper ---
   const postPayload = {
-    ...commonPayload,
-    ...serviceSpecificPayload,
-    pingToken,
+    lp_campaign_id: campaign.id,
+    lp_supplier_id: campaign.supplier,
+    lp_key: campaign.key,
+    lp_ping_id: pingId,
+    // Custom fields forwarded to Modernize via LeadProsper buyer delivery
+    service: normalizedService,
+    ownHome,
     buyTimeframe,
-    homePhoneConsentLanguage,
-    ...(leadIDToken ? { leadIDToken } : {}),
+    ...serviceFields,
+    // Standard LeadProsper fields
+    first_name: data.firstName || "",
+    last_name: data.lastName || "",
+    email: data.email || "",
+    phone: cleanedPhone,
+    address: data.address || "",
+    city: data.city || "",
+    state: upperState,
+    zip_code: cleanedZip,
+    ip_address: clientIp || "",
+    user_agent: userAgent || "",
+    trustedform_cert_url: trustedFormToken,
+    tcpa_text: tcpaText,
   };
-  const compactPingPayload = buildCompactPayload(pingPayload);
-  const compactPostPayload = buildCompactPayload(postPayload);
-  const postResponse = await postJson(LEADPOST_POST_URL, postPayload);
+
+  const postResponse = await postJson(LP_POST_URL, postPayload);
+
   const delivery = {
     enabled: true,
-    delivered: true,
-    pingToken,
+    delivered: String(postResponse.status || "").toUpperCase() === "ACCEPTED",
+    pingId,
     pingResponse,
     postResponse,
-    pingPayload: compactPingPayload,
-    postPayload: compactPostPayload,
-    sentPayloads: {
-      pingPayload: compactPingPayload,
-      postPayload: compactPostPayload,
-    },
+    payout: postResponse.payout || 0,
+    leadId: postResponse.lead_id || "",
   };
-  if (LEADPOST_DEBUG) {
+  if (LP_DEBUG) {
     delivery.debug = {
-      pingUrl: LEADPOST_PING_URL,
-      postUrl: LEADPOST_POST_URL,
-      pingPayload: compactPingPayload,
-      postPayload: compactPostPayload,
+      pingUrl: LP_PING_URL,
+      postUrl: LP_POST_URL,
+      pingPayload,
+      postPayload,
     };
   }
   return delivery;
@@ -826,6 +757,51 @@ app.get("/api/places/details", async (req, res) => {
   }
 });
 
+// --- Reverse Geocoding: lat/lng → address ---
+app.get("/api/places/geocode", async (req, res) => {
+  if (!GOOGLE_API_KEY) {
+    return res.status(500).json({ error: "Google API key is not configured on the server" });
+  }
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) {
+      return res.status(400).json({ error: "lat and lng parameters are required" });
+    }
+
+    const response = await axios.get(
+      "https://maps.googleapis.com/maps/api/geocode/json",
+      { params: { latlng: `${lat},${lng}`, key: GOOGLE_API_KEY } }
+    );
+
+    const { status, error_message, results } = response.data;
+    if (status !== "OK" || !results?.length) {
+      console.error(`Google Geocode error: ${status} — ${error_message || "no detail"}`);
+      return res.status(502).json({ error: `Google Geocode API error: ${status}`, detail: error_message || "" });
+    }
+
+    const components = results[0].address_components || [];
+    const addressData = { street: "", city: "", state: "", zipcode: "" };
+    let streetNumber = "";
+    let route = "";
+
+    components.forEach((c) => {
+      if (c.types.includes("street_number")) streetNumber = c.long_name;
+      else if (c.types.includes("route")) route = c.long_name;
+      else if (c.types.includes("locality")) addressData.city = c.long_name;
+      else if (c.types.includes("administrative_area_level_1")) addressData.state = c.short_name;
+      else if (c.types.includes("postal_code")) addressData.zipcode = c.long_name;
+    });
+
+    addressData.street = streetNumber && route ? `${streetNumber} ${route}` : "";
+
+    res.json(addressData);
+  } catch (error) {
+    const detail = error.response?.data || error.message;
+    console.error("Error with Geocode API:", detail);
+    res.status(500).json({ error: "Failed to reverse geocode", detail: String(detail) });
+  }
+});
+
 // --- Zod schema for your 9-step form ---
 const LeadSchema = z.object({
   service: z.string().min(1),
@@ -864,7 +840,6 @@ const LeadSchema = z.object({
   bathNeeds: z.string().optional().or(z.literal("")),
   tubReason: z.string().optional().or(z.literal("")),
   sunExposure: z.string().optional().or(z.literal("")),
-  captchaToken: z.string().optional().or(z.literal("")),
   trustedFormToken: z.string().optional().or(z.literal("")),
   homePhoneConsentLanguage: z.string().optional().or(z.literal("")),
 });
@@ -872,28 +847,6 @@ const LeadSchema = z.object({
 app.post("/api/leads", async (req, res) => {
   try {
     const data = LeadSchema.parse(normalizeLeadInput(req.body));
-
-    // Verify reCAPTCHA token
-    const captchaToken = data.captchaToken;
-    if (captchaToken && process.env.RECAPTCHA_SECRET_KEY) {
-      try {
-        const captchaCtrl = new AbortController();
-        const captchaTimeout = setTimeout(() => captchaCtrl.abort(), RECAPTCHA_TIMEOUT_MS);
-        const captchaRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`,
-          signal: captchaCtrl.signal,
-        }).finally(() => clearTimeout(captchaTimeout));
-        const captchaData = await captchaRes.json();
-        if (!captchaData.success) {
-          return res.status(400).json({ ok: false, error: "CAPTCHA_FAILED", message: "reCAPTCHA verification failed. Please try again." });
-        }
-      } catch (captchaErr) {
-        console.error("reCAPTCHA verification error:", captchaErr.message);
-        // Allow through if verification service is down
-      }
-    }
 
     const ua = req.get("user-agent") ?? null;
     const clientIp =
@@ -935,27 +888,25 @@ app.post("/api/leads", async (req, res) => {
       created_at: createdAt,
     };
 
-    let partnerDelivery = { enabled: LEADPOST_ENABLED, skipped: !LEADPOST_ENABLED };
+    let partnerDelivery = { enabled: LP_ENABLED, skipped: !LP_ENABLED };
     try {
-      partnerDelivery = await sendLeadpostPingThenPost(data, { clientIp, userAgent: ua });
+      partnerDelivery = await sendLeadProsperPingThenPost(data, { clientIp, userAgent: ua });
     } catch (partnerErr) {
-      console.error("LeadPost delivery error:", partnerErr.message);
+      console.error("LeadProsper delivery error:", partnerErr.message);
       console.error(
-        "LeadPost partner response:",
+        "LeadProsper response:",
         JSON.stringify(partnerErr.partnerResponse || null)
       );
       console.error(
-        "LeadPost partner request:",
+        "LeadProsper request:",
         JSON.stringify(partnerErr.partnerRequest || null)
       );
       partnerDelivery = {
-        enabled: LEADPOST_ENABLED,
+        enabled: LP_ENABLED,
         delivered: false,
         error: partnerErr.message,
         status: partnerErr.status || null,
         partnerUrl: partnerErr.url || null,
-        pingResponse: partnerErr.partnerResponse || null,
-        pingPayload: partnerErr.partnerRequest || null,
         partnerResponse: partnerErr.partnerResponse || null,
         partnerRequest: partnerErr.partnerRequest || null,
       };

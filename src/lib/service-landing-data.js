@@ -221,7 +221,6 @@ const serviceLandingData = {
       "UV protection coatings",
       "Custom sizes & styles",
       "Professional installation",
-      "Warranty included",
     ],
     features: [
       { title: "Double & Triple Pane", desc: "Multi-pane windows with gas fills provide superior insulation and energy savings." },

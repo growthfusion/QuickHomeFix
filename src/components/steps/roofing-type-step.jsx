@@ -7,7 +7,7 @@ import StepProgressBar from "@/components/layout/step-progress-bar";
 const roofingTypes = [
   { id: "Roof Replace", name: "Replace", questionText: "What type of roofing service do you need?", answerText: "Replace" },
   { id: "Roof Repair", name: "Repair", questionText: "What type of roofing service do you need?", answerText: "Repair" },
-  { id: "Not Sure", name: "Not Sure", questionText: "What type of roofing service do you need?", answerText: "Not Sure" },
+  { id: "New Construction", name: "Install (New Construction)", questionText: "What type of roofing service do you need?", answerText: "Install (New Construction)" },
 ];
 
 function RoofingTypeStep() {

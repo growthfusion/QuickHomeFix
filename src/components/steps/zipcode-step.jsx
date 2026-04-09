@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LocateFixed } from "lucide-react";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 import roofHeroImg from "@/assets/images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png";
 import windowHeroImg from "@/assets/images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png";
@@ -29,6 +30,39 @@ function ZipcodeStep() {
   const { formData, updateFormData, nextStep } = useFormStore();
   const [zip, setZip] = useState(formData.zipcode || "");
   const [error, setError] = useState("");
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+
+  // Auto-detect location on page load
+  useEffect(() => {
+    if (zip) return; // already has a zip, skip
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`${apiBase}/api/places/geocode?lat=${latitude}&lng=${longitude}`);
+          if (!res.ok) throw new Error("Geocode failed");
+          const data = await res.json();
+          if (data.zipcode) {
+            setZip(data.zipcode);
+            updateFormData("zipcode", data.zipcode);
+          }
+          if (data.city) updateFormData("city", data.city);
+          if (data.state) updateFormData("state", data.state.toUpperCase());
+          if (data.street) updateFormData("address", data.street);
+        } catch (err) {
+          console.warn("Auto-detect location failed:", err);
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      () => { setGeoLoading(false); },
+      { enableHighAccuracy: false, timeout: 5000 }
+    );
+  }, []);
 
   const handleChange = (e) => {
     const value = e.target.value.replace(/\D/g, "").substring(0, 5);
@@ -36,8 +70,45 @@ function ZipcodeStep() {
     setError("");
   };
 
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+    setGeoLoading(true);
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`${apiBase}/api/places/geocode?lat=${latitude}&lng=${longitude}`);
+          if (!res.ok) throw new Error("Geocode failed");
+          const data = await res.json();
+          if (data.zipcode) {
+            setZip(data.zipcode);
+            updateFormData("zipcode", data.zipcode);
+          }
+          if (data.city) updateFormData("city", data.city);
+          if (data.state) updateFormData("state", data.state.toUpperCase());
+          if (data.street) updateFormData("address", data.street);
+        } catch (err) {
+          console.error("Reverse geocode error:", err);
+          setError("Could not detect your location. Please enter manually.");
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setGeoLoading(false);
+        if (err.code === 1) setError("Location access denied. Please enter your ZIP manually.");
+        else setError("Could not detect your location. Please enter manually.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const lookupZipcode = async (zipcode) => {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || "";
     try {
       const autoRes = await fetch(`${apiBase}/api/places/autocomplete?input=${zipcode}`);
       if (!autoRes.ok) throw new Error("Autocomplete failed");
@@ -127,6 +198,16 @@ function ZipcodeStep() {
                 }`}
               />
               {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={geoLoading}
+                className="flex items-center justify-center gap-2 w-full mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+              >
+                <LocateFixed className="h-4 w-4" />
+                {geoLoading ? "Detecting location..." : "Use My Location"}
+              </button>
             </div>
 
             <div className="flex justify-center">

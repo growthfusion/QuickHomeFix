@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 
 const gutterTypes = [
-  { id: "Gutter Replace", name: "Gutter Replace", questionText: "What type of gutter service do you need?", answerText: "Gutter Replace" },
-  { id: "Gutter Repair", name: "Gutter Repair", questionText: "What type of gutter service do you need?", answerText: "Gutter Repair" },
-  { id: "Gutter Install", name: "Gutter Install", questionText: "What type of gutter service do you need?", answerText: "Gutter Install" },
-  { id: "Gutter Guard", name: "Gutter Guard", questionText: "What type of gutter service do you need?", answerText: "Gutter Guard" },
+  { id: "Install", name: "Install", questionText: "What type of gutter service do you need?", answerText: "Install" },
+  { id: "Repair", name: "Repair", questionText: "What type of gutter service do you need?", answerText: "Repair" },
 ];
 
 function GutterTypeStep() {

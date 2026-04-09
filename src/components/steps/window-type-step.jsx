@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 
 const windowTypes = [
-  { id: "Replace", name: "Replace", questionText: "What is the nature of your windows project?", answerText: "Replace" },
+  { id: "Install", name: "Install", questionText: "What is the nature of your windows project?", answerText: "Install" },
   { id: "Repair", name: "Repair", questionText: "What is the nature of your windows project?", answerText: "Repair" },
-  { id: "Not Sure", name: "Not Sure", questionText: "What is the nature of your windows project?", answerText: "Not Sure" },
 ];
 
 function WindowServiceStep() {

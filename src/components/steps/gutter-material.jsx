@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 
 const materials = [
-  { id: "aluminum", name: "Aluminum", questionText: "Select Gutter Material", answerText: "Aluminum" },
-  { id: "steel", name: "Steel", questionText: "Select Gutter Material", answerText: "Steel" },
-  { id: "copper", name: "Copper", questionText: "Select Gutter Material", answerText: "Copper" },
-  { id: "vinyl", name: "Vinyl", questionText: "Select Gutter Material", answerText: "Vinyl" },
+  { id: "Copper", name: "Copper", questionText: "Select Gutter Material", answerText: "Copper" },
+  { id: "Galvanized", name: "Galvanized", questionText: "Select Gutter Material", answerText: "Galvanized" },
+  { id: "PVC", name: "PVC", questionText: "Select Gutter Material", answerText: "PVC" },
+  { id: "Seamless Metal", name: "Seamless Metal", questionText: "Select Gutter Material", answerText: "Seamless Metal" },
+  { id: "Wood", name: "Wood", questionText: "Select Gutter Material", answerText: "Wood" },
 ];
 
 function GutterMaterialStep() {

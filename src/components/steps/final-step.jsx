@@ -1,5 +1,4 @@
-import React, { useState, useRef } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
+import React, { useState } from "react";
 import { useFormStore } from "@/lib/store";
 import { getServiceFlow } from "@/lib/service-flows";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { submitLead } from "@/lib/api";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 import {
   getTrustedFormToken,
+  getLeadpostAttribution,
   HOME_PHONE_CONSENT_LANGUAGE,
   LEADPOST_PARTNERS_URL,
 } from "@/lib/leadpost";
@@ -19,9 +19,6 @@ function FinalStep() {
   const [phoneError, setPhoneError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const [captchaError, setCaptchaError] = useState("");
-  const recaptchaRef = useRef(null);
 
   const formatPhoneNumber = (phoneNumberString) => {
     const cleaned = ("" + phoneNumberString).replace(/\D/g, "");
@@ -63,7 +60,6 @@ function FinalStep() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setCaptchaError("");
     const email = (formData.email || "").trim();
     const phone = formData.phone || "";
 
@@ -72,7 +68,6 @@ function FinalStep() {
     else { const digits = phone.replace(/\D/g, ""); if (digits.length < 10) { setPhoneError("Please enter a complete 10-digit phone number"); hasError = true; } }
     if (!email) { setEmailError("Email address is required"); hasError = true; }
     else if (!isValidEmail(email)) { setEmailError("Please enter a valid email address"); hasError = true; }
-    if (!captchaToken) { setCaptchaError("Please verify you are not a robot"); hasError = true; }
     if (hasError) return;
 
     setLoading(true);
@@ -83,11 +78,12 @@ function FinalStep() {
       if (!flow.steps.includes("dfaddress")) {
         try {
           const tfToken = getTrustedFormToken();
+          const attribution = getLeadpostAttribution(formData);
           console.log("TrustedForm Token:", tfToken || "(empty - not loaded)");
           const clientPayload = {
             ...formData,
+            ...attribution,
             state: (formData.state || "").toUpperCase(),
-            captchaToken,
             trustedFormToken: tfToken,
             homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
           };
@@ -119,8 +115,6 @@ function FinalStep() {
       nextStep();
     } catch (err) {
       console.error("Final step error:", err);
-      if (recaptchaRef.current) recaptchaRef.current.reset();
-      setCaptchaToken(null);
       nextStep();
     }
     finally { setLoading(false); }
@@ -166,23 +160,12 @@ function FinalStep() {
               {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
             </div>
 
-            {/* Google reCAPTCHA v2 */}
-            <div className="mb-4 flex justify-center">
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                onChange={(token) => { setCaptchaToken(token); setCaptchaError(""); }}
-                onExpired={() => setCaptchaToken(null)}
-              />
-            </div>
-            {captchaError && <p className="text-red-500 text-xs text-center mb-3">{captchaError}</p>}
-
             <div className="flex justify-center">
               <Button type="submit"
                 className="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full"
                 disabled={loading}
               >
-                {loading ? <><span className="btn-spinner mr-2" />Submitting...</> : "Check My Prices"}
+                {loading ? <><span className="btn-spinner mr-2" />Submitting...</> : "Submit"}
               </Button>
             </div>
 

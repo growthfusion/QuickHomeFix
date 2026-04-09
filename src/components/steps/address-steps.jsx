@@ -1,14 +1,14 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import ReCAPTCHA from "react-google-recaptcha";
+import React, { useState, useCallback, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Check } from "lucide-react";
+import { MapPin, Check, LocateFixed } from "lucide-react";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 import { submitLead } from "@/lib/api";
 import {
   getTrustedFormToken,
+  getLeadpostAttribution,
   HOME_PHONE_CONSENT_LANGUAGE,
   LEADPOST_PARTNERS_URL,
 } from "@/lib/leadpost";
@@ -29,9 +29,7 @@ export function AddressSteps() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const [captchaError, setCaptchaError] = useState("");
-  const recaptchaRef = useRef(null);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const pushSummaryEvent = () => {
     if (typeof window === "undefined") return;
@@ -48,6 +46,40 @@ export function AddressSteps() {
   };
 
   const validateZipcode = (zip) => /^\d+$/.test(zip);
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setErrors((prev) => ({ ...prev, address: "Geolocation is not supported by your browser" }));
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`${apiBase}/api/places/geocode?lat=${latitude}&lng=${longitude}`);
+          if (!res.ok) throw new Error("Geocode failed");
+          const data = await res.json();
+          if (data.street) updateFormData("address", data.street);
+          if (data.city) updateFormData("city", data.city);
+          if (data.state) updateFormData("state", data.state.toUpperCase());
+          if (data.zipcode) updateFormData("zipcode", data.zipcode);
+        } catch (err) {
+          console.error("Reverse geocode error:", err);
+          setErrors((prev) => ({ ...prev, address: "Could not detect your location" }));
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setGeoLoading(false);
+        if (err.code === 1) setErrors((prev) => ({ ...prev, address: "Location access denied" }));
+        else setErrors((prev) => ({ ...prev, address: "Could not detect your location" }));
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   useEffect(() => {
     const valid = formData.address && formData.city && formData.state && formData.zipcode && validateZipcode(formData.zipcode);
@@ -101,7 +133,6 @@ export function AddressSteps() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setCaptchaError("");
     setSubmitting(true);
     setSubmitMsg("");
 
@@ -113,21 +144,17 @@ export function AddressSteps() {
     if (!formData.zipcode) { hasErrors = true; newErrors.zipcode = "Zipcode is required"; }
     else if (!validateZipcode(formData.zipcode)) { hasErrors = true; newErrors.zipcode = "Please enter a valid 5-digit zipcode"; }
 
-    if (!captchaToken) {
-      setCaptchaError("Please verify you are not a robot");
-      hasErrors = true;
-    }
-
     setErrors(newErrors);
     if (hasErrors) { setSubmitting(false); return; }
 
     try {
       const tfToken = getTrustedFormToken();
+      const attribution = getLeadpostAttribution(formData);
       console.log("TrustedForm Token:", tfToken || "(empty - not loaded)");
       const result = await submitLead({
         ...formData,
+        ...attribution,
         state: (formData.state || "").toUpperCase(),
-        captchaToken,
         trustedFormToken: tfToken,
         homePhoneConsentLanguage: HOME_PHONE_CONSENT_LANGUAGE,
       });
@@ -157,9 +184,6 @@ export function AddressSteps() {
     } catch (err) {
       console.error(err);
       setSubmitMsg(`Error: ${err.message}`);
-      // Reset captcha on error
-      if (recaptchaRef.current) recaptchaRef.current.reset();
-      setCaptchaToken(null);
     } finally {
       setSubmitting(false);
     }
@@ -190,6 +214,15 @@ export function AddressSteps() {
                 )}
               </div>
               {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={geoLoading}
+                className="flex items-center gap-1.5 mt-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+              >
+                <LocateFixed className="h-3.5 w-3.5" />
+                {geoLoading ? "Detecting..." : "Use My Location"}
+              </button>
               {loading && <p className="text-sm text-gray-400 mt-1">Loading...</p>}
               {suggestions.length > 0 && !loading && (
                 <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-md mt-1 max-h-60 overflow-auto">
@@ -248,17 +281,6 @@ export function AddressSteps() {
                 </div>
               </div>
             </div>
-
-            {/* Google reCAPTCHA v2 */}
-            <div className="mb-4 flex justify-center">
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                onChange={(token) => { setCaptchaToken(token); setCaptchaError(""); }}
-                onExpired={() => setCaptchaToken(null)}
-              />
-            </div>
-            {captchaError && <p className="text-red-500 text-xs text-center mb-3">{captchaError}</p>}
 
             {/* Submit Button */}
             <div className="flex justify-center">

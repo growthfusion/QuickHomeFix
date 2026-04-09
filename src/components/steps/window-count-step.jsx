@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 
 const countOptions = [
-  { label: "6+", value: "6-9" },
-  { label: "3-5", value: "3-5" },
-  { label: "2", value: "2" },
   { label: "1", value: "1" },
+  { label: "2", value: "2" },
+  { label: "3-5", value: "3-5" },
+  { label: "6-9", value: "6-9" },
 ];
 
 const normalizeWindowCount = (value) => (value === "6+" ? "6-9" : value);

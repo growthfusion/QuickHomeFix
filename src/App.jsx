@@ -6,6 +6,8 @@ import { preloadAllImages } from "@/lib/preload-images";
 import Home from "@/pages/Home";
 import QuoteWizard from "@/pages/QuoteWizard";
 import MarketingPartners from "@/pages/MarketingPartners";
+import TermsOfService from "@/pages/TermsOfService";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 
 // Dashboard pages
 import LeadFull from "@/backend_db/features/LeadsFull/LeadsFull";
@@ -53,6 +55,8 @@ function App() {
       <Route path="/get-quotes" element={<QuoteWizard />} />
       <Route path="/get-quotes/:service" element={<QuoteWizard />} />
       <Route path="/marketing-partners" element={<MarketingPartners />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
       {/* ─── Dashboard ─── */}
       <Route path="/dash" element={<Dash />} />

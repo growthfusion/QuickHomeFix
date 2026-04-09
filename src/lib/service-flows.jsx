@@ -15,14 +15,14 @@ const serviceFlows = {
     id: "roof",
     name: "Roofing Service",
     initialStep: "zipcode",
-    steps: ["zipcode", "roofing-type", "material", "ownership", "details", "final", "complete"],
+    steps: ["zipcode", "roofing-type", "material", "details", "final", "complete"],
     get totalSteps() { return this.steps.length; },
   },
   windows: {
     id: "windows",
     name: "Windows Service",
     initialStep: "zipcode",
-    steps: ["zipcode", "window-type", "window-count", "ownership", "details", "final", "complete"],
+    steps: ["zipcode", "window-type", "window-count", "details", "final", "complete"],
     get totalSteps() { return this.steps.length; },
   },
   solar: {
@@ -36,7 +36,7 @@ const serviceFlows = {
     id: "bath",
     name: "Bath Remodeling",
     initialStep: "zipcode",
-    steps: ["zipcode", "bath-needs", "ownership", "details", "final", "complete"],
+    steps: ["zipcode", "bath-needs", "details", "final", "complete"],
     get totalSteps() { return this.steps.length; },
   },
   gutter: {
@@ -50,7 +50,7 @@ const serviceFlows = {
     id: "tub",
     name: "Walk-In Tub",
     initialStep: "zipcode",
-    steps: ["zipcode", "tub-reason", "ownership", "details", "final", "complete"],
+    steps: ["zipcode", "tub-reason", "details", "final", "complete"],
     get totalSteps() { return this.steps.length; },
   },
   shower: {

@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useFormStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Check } from "lucide-react";
+import { MapPin, Check, LocateFixed } from "lucide-react";
 import StepProgressBar from "@/components/layout/step-progress-bar";
 
 const debounce = (fn, delay) => {
@@ -19,8 +19,51 @@ function DetailsStep() {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  // Default isOwner to "Yes"
+  useEffect(() => {
+    if (formData.isOwner === undefined || formData.isOwner === null) {
+      updateFormData("isOwner", true);
+    }
+  }, []);
 
   const validateZipcode = (zip) => /^\d{5,6}$/.test(zip);
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setErrors((prev) => ({ ...prev, address: "Geolocation is not supported by your browser" }));
+      return;
+    }
+    setGeoLoading(true);
+    setErrors({});
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`${apiBase}/api/places/geocode?lat=${latitude}&lng=${longitude}`);
+          if (!res.ok) throw new Error("Geocode failed");
+          const data = await res.json();
+          if (data.street) updateFormData("address", data.street);
+          if (data.city) updateFormData("city", data.city);
+          if (data.state) updateFormData("state", data.state.toUpperCase());
+          if (data.zipcode) updateFormData("zipcode", data.zipcode);
+        } catch (err) {
+          console.error("Reverse geocode error:", err);
+          setErrors((prev) => ({ ...prev, address: "Could not detect your location" }));
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (err) => {
+        console.error("Geolocation error:", err);
+        setGeoLoading(false);
+        if (err.code === 1) setErrors((prev) => ({ ...prev, address: "Location access denied" }));
+        else setErrors((prev) => ({ ...prev, address: "Could not detect your location" }));
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const isFormValid =
     formData.firstName && formData.lastName && formData.address && formData.city && formData.state && formData.zipcode && validateZipcode(formData.zipcode);
@@ -151,6 +194,15 @@ function DetailsStep() {
                 )}
               </div>
               {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={geoLoading}
+                className="flex items-center gap-1.5 mt-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+              >
+                <LocateFixed className="h-3.5 w-3.5" />
+                {geoLoading ? "Detecting location..." : "Use My Location"}
+              </button>
               {loading && <p className="text-sm text-gray-400 mt-1">Loading...</p>}
               {suggestions.length > 0 && !loading && (
                 <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-md mt-1 max-h-60 overflow-auto">
@@ -187,12 +239,32 @@ function DetailsStep() {
               </div>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-3">
               <label htmlFor="detailZip" className="block text-sm font-medium text-gray-700 mb-1">Zipcode <span className="text-red-500">*</span></label>
               <Input id="detailZip" placeholder="5-digit zipcode" value={formData.zipcode || ""}
                 onChange={handleZipcodeChange} className={`w-full ${errors.zipcode ? "border-red-300" : ""}`} required maxLength={6}
               />
               {errors.zipcode && <p className="text-red-500 text-xs mt-1">{errors.zipcode}</p>}
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Do you own this home?</label>
+              <div className="flex gap-4">
+                <button type="button" onClick={() => updateFormData("isOwner", true)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${formData.isOwner === true ? "border-blue-600 bg-blue-50 text-blue-600" : "border-gray-200 bg-white text-gray-700"}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${formData.isOwner === true ? "border-blue-600" : "border-gray-300"}`}>
+                    {formData.isOwner === true && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                  </div>
+                  Yes
+                </button>
+                <button type="button" onClick={() => updateFormData("isOwner", false)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${formData.isOwner === false ? "border-blue-600 bg-blue-50 text-blue-600" : "border-gray-200 bg-white text-gray-700"}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${formData.isOwner === false ? "border-blue-600" : "border-gray-300"}`}>
+                    {formData.isOwner === false && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                  </div>
+                  No
+                </button>
+              </div>
             </div>
 
             <div className="flex justify-center">
