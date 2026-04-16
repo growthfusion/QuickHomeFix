@@ -1,0 +1,37 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [prod]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/quickhomefix
+            git fetch origin prod
+            git checkout prod
+            git pull origin prod
+            cd backend && npm ci --production
+            pm2 restart quickhomefix-prod || pm2 start server.js --name quickhomefix-prod
