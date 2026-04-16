@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – QuickHomeFix</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-bold text-gray-800">QuickHomeFix Dashboard</h1>
+      <nav class="flex gap-4 text-sm">
+        <a href="index.html" class="text-blue-600 font-medium">Dashboard</a>
+        <a href="form-leads.html" class="text-gray-600 hover:text-blue-600">Form Leads</a>
+        <a href="form-leads-full.html" class="text-gray-600 hover:text-blue-600">Full Leads</a>
+        <a href="forms/pre-sales.html" class="text-gray-600 hover:text-blue-600">Pre Sales</a>
+        <a href="forms/form-steps.html" class="text-gray-600 hover:text-blue-600">Form Steps</a>
+        <a href="bucket-affiliate-statistics.html" class="text-gray-600 hover:text-blue-600">Statistics</a>
+        <a href="bucket-affiliate-settings.html" class="text-gray-600 hover:text-blue-600">Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- Domains -->
+    <div class="mb-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <h1 class="text-2xl font-bold mb-4 text-gray-800">DOMAINS</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="https://quickhomefix.pro/" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline hover:bg-yellow-50 p-3 rounded transition-colors">quickhomefix.pro</a>
+        <a href="https://autopolicypro.us/" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline hover:bg-yellow-50 p-3 rounded transition-colors">autopolicypro.us</a>
+      </div>
+    </div>
+
+    <!-- Forms -->
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <h1 class="text-2xl font-bold mb-6 text-gray-800">FORM DETAILS</h1>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form URL</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">roof</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=roof" class="text-blue-600 hover:underline">/get-quotes/roof</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">gutter</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=gutter" class="text-blue-600 hover:underline">/get-quotes/gutter</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">walk-in-tubs</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=tub" class="text-blue-600 hover:underline">/get-quotes/tub</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">window</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=windows" class="text-blue-600 hover:underline">/get-quotes/windows</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">solar</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=solar" class="text-blue-600 hover:underline">/get-quotes/solar</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">bath-remodel</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=bath" class="text-blue-600 hover:underline">/get-quotes/bath</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">walk-in-shower</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html?service=shower" class="text-blue-600 hover:underline">/get-quotes/shower</a></td></tr>
+            <tr class="hover:bg-yellow-50"><td class="px-6 py-4 text-sm font-medium text-gray-900">multi</td><td class="px-6 py-4 text-sm"><a href="../get-quotes.html" class="text-blue-600 hover:underline">/get-quotes</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

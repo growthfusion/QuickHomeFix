@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings – QuickHomeFix Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-bold text-gray-800">QuickHomeFix Dashboard</h1>
+      <nav class="flex gap-4 text-sm">
+        <a href="index.html" class="text-gray-600 hover:text-blue-600">Dashboard</a>
+        <a href="form-leads.html" class="text-gray-600 hover:text-blue-600">Form Leads</a>
+        <a href="form-leads-full.html" class="text-gray-600 hover:text-blue-600">Full Leads</a>
+        <a href="forms/pre-sales.html" class="text-gray-600 hover:text-blue-600">Pre Sales</a>
+        <a href="forms/form-steps.html" class="text-gray-600 hover:text-blue-600">Form Steps</a>
+        <a href="bucket-affiliate-statistics.html" class="text-gray-600 hover:text-blue-600">Statistics</a>
+        <a href="bucket-affiliate-settings.html" class="text-blue-600 font-medium">Settings</a>
+      </nav>
+    </div>
+  </header>
+  <div class="max-w-4xl mx-auto p-6">
+    <h2 class="text-xl font-bold mb-6 text-gray-800">Bucket / Affiliate Settings</h2>
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">API Endpoint</label>
+        <input type="text" value="https://api.quickhomefix.pro/v1" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm" readonly />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Webhook URL</label>
+        <input type="text" placeholder="https://your-webhook-url.com" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Lead Cap (daily)</label>
+        <input type="number" value="100" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Active Services</label>
+        <div class="space-y-2 mt-2">
+          <label class="flex items-center gap-2"><input type="checkbox" checked class="accent-blue-600" /><span class="text-sm">Roofing</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" checked class="accent-blue-600" /><span class="text-sm">Solar</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" checked class="accent-blue-600" /><span class="text-sm">Windows</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" checked class="accent-blue-600" /><span class="text-sm">Bath Remodeling</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" checked class="accent-blue-600" /><span class="text-sm">Gutters</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-blue-600" /><span class="text-sm">Walk-In Shower</span></label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="accent-blue-600" /><span class="text-sm">Walk-In Tub</span></label>
+        </div>
+      </div>
+      <button class="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Save Settings</button>
+    </div>
+  </div>
+</body>
+</html>

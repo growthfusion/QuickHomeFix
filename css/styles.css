@@ -1,0 +1,149 @@
+/* ─── QuickHomeFix – Custom Styles ─── */
+
+/* Base reset */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  text-rendering: optimizeLegibility;
+  margin: 0; padding: 0;
+  overflow-x: hidden;
+}
+
+/* Remove focus outlines on non-input elements */
+*:focus:not(input):not(textarea):not(select),
+*:focus-visible:not(input):not(textarea):not(select) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+img { image-rendering: auto; content-visibility: auto; }
+
+::selection {
+  background-color: rgba(29, 58, 155, 0.15);
+  color: inherit;
+}
+
+/* ─── Interactive elements ─── */
+button, a, [role="button"] { transition: transform 0.1s ease; }
+button:active, [role="button"]:active { transform: scale(0.97); }
+
+/* ─── Smooth step fade-in ─── */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeSlideIn 0.35s ease-out forwards; }
+
+/* ─── Input focus glow ─── */
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 0 3px rgba(29, 58, 155, 0.1) !important;
+  outline: none !important;
+}
+
+/* ─── Card lift shadow ─── */
+.card-smooth {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* ─── Dropdown animation ─── */
+@keyframes dropdownSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-dropdown { animation: dropdownSlide 0.2s ease-out forwards; }
+
+/* ─── Success checkmark bounce ─── */
+@keyframes successBounce {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-success { animation: successBounce 0.5s ease-out forwards; }
+
+/* ─── FAQ accordion smooth expand ─── */
+@keyframes expandDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 500px; }
+}
+.animate-expand { animation: expandDown 0.25s ease-out forwards; overflow: hidden; }
+
+/* ─── Pulse ring for loading buttons ─── */
+@keyframes spinnerRotate { to { transform: rotate(360deg); } }
+.btn-spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spinnerRotate 0.6s linear infinite;
+}
+
+/* ─── Custom scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+/* ─── Wizard step container ─── */
+.wizard-step { display: none; }
+.wizard-step.active { display: block; }
+
+/* ─── Progress bar ─── */
+.progress-bar {
+  height: 8px; background: #f3f4f6; border-radius: 8px 8px 0 0; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, #3b82f6, #1d4ed8);
+  border-radius: 0 9999px 9999px 0;
+  transition: width 0.7s ease-out;
+}
+
+/* ─── Radio option style ─── */
+.radio-option {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; text-align: left; transition: background-color 0.15s;
+  border: none; cursor: pointer; background: white;
+}
+.radio-option:hover { background-color: #f8fafc; }
+.radio-option.selected { background-color: #eff6ff; }
+.radio-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid #d1d5db;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.radio-option.selected .radio-dot { border-color: #2563eb; }
+.radio-dot-inner {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #2563eb; display: none;
+}
+.radio-option.selected .radio-dot-inner { display: block; }
+.radio-label { font-weight: 500; font-size: 16px; color: #1f2937; }
+.radio-option.selected .radio-label { color: #2563eb; }
+
+/* ─── DataTable styles (dashboard) ─── */
+.data-table-container { margin: 20px; }
+.toggle-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+.toggle-buttons button { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+.toggle-buttons button.active { background-color: #4CAF50; color: white; }
+.toggle-buttons button.inactive { background-color: #f1f1f1; color: #333; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+.data-table th { background-color: #f2f2f2; font-weight: bold; position: sticky; top: 0; }
+.data-table tr:hover { background-color: #f5f5f5; }
+
+/* ─── Verified ribbon ─── */
+.verified-ribbon {
+  position: absolute; top: 0; right: 0; width: 80px; height: 80px;
+  overflow: hidden; pointer-events: none; z-index: 10;
+}
+.verified-ribbon-text {
+  position: absolute; top: 14px; right: -28px; width: 120px;
+  transform: rotate(45deg); padding: 4px 0;
+  background: #22c55e; color: white; font-size: 9px;
+  font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
