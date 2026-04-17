@@ -1,0 +1,13 @@
+FROM nginx:alpine
+
+COPY . /usr/share/nginx/html
+
+RUN rm -f /usr/share/nginx/html/.env \
+          /usr/share/nginx/html/Dockerfile \
+          /usr/share/nginx/html/.dockerignore
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 8080
+
+CMD ["nginx", "-g", "daemon off;"]
