@@ -5,7 +5,7 @@
 
 var QHF_CONFIG = {
   // Backend API URL — frontend calls this
-  API_BASE_URL: "https://quickhomefix.pro",
+  API_BASE_URL: "https://api-test.quickhomefix.pro",
 
   // Request timeout (ms)
   API_TIMEOUT_MS: 90000,
