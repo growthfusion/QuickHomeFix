@@ -1,37 +1,71 @@
-name: Deploy to Test
+name: Deploy Test Environment
 
 on:
   push:
     branches: [test]
 
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-south1
+
 jobs:
-  deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Install backend dependencies
-        working-directory: backend
-        run: npm ci
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy to Test Server
-        uses: appleboy/ssh-action@v1
+      - name: Build frontend image
+        run: |
+          gcloud builds submit frontend/ \
+            --tag gcr.io/$PROJECT_ID/quickhomefix-frontend-test \
+            --project $PROJECT_ID
+
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy quickhomefix-frontend-test \
+            --image gcr.io/$PROJECT_ID/quickhomefix-frontend-test \
+            --platform managed \
+            --region $REGION \
+            --allow-unauthenticated \
+            --port 8080 \
+            --project $PROJECT_ID
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.TEST_SERVER_HOST }}
-          username: ${{ secrets.TEST_SERVER_USER }}
-          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
-          script: |
-            cd /var/www/quickhomefix
-            git fetch origin test
-            git checkout test
-            git pull origin test
-            cd backend && npm ci --production
-            pm2 restart quickhomefix-test || pm2 start server.js --name quickhomefix-test
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build backend image
+        run: |
+          gcloud builds submit backend/ \
+            --tag gcr.io/$PROJECT_ID/quickhomefix-backend-test \
+            --project $PROJECT_ID
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy quickhomefix-backend-test \
+            --image gcr.io/$PROJECT_ID/quickhomefix-backend-test \
+            --platform managed \
+            --region $REGION \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-env-vars "NODE_ENV=test" \
+            --project $PROJECT_ID
