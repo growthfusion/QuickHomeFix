@@ -6,7 +6,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: asia-south1
+  REGION: us-central1
 
 jobs:
   deploy-frontend:
