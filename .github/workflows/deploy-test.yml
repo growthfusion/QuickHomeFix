@@ -1,0 +1,71 @@
+name: Deploy Test Environment
+
+on:
+  push:
+    branches: [test]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-south1
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build frontend image
+        run: |
+          gcloud builds submit frontend/ \
+            --tag gcr.io/$PROJECT_ID/quickhomefix-frontend-test \
+            --project $PROJECT_ID
+
+      - name: Deploy frontend to Cloud Run
+        run: |
+          gcloud run deploy quickhomefix-frontend-test \
+            --image gcr.io/$PROJECT_ID/quickhomefix-frontend-test \
+            --platform managed \
+            --region $REGION \
+            --allow-unauthenticated \
+            --port 8080 \
+            --project $PROJECT_ID
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build backend image
+        run: |
+          gcloud builds submit backend/ \
+            --tag gcr.io/$PROJECT_ID/quickhomefix-backend-test \
+            --project $PROJECT_ID
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          gcloud run deploy quickhomefix-backend-test \
+            --image gcr.io/$PROJECT_ID/quickhomefix-backend-test \
+            --platform managed \
+            --region $REGION \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-env-vars "NODE_ENV=test" \
+            --project $PROJECT_ID
