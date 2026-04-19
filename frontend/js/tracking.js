@@ -155,7 +155,7 @@ function getTrustedFormToken() {
 /* ═══════════════════════════════════════════
    6. LEADPOST – Attribution
    ═══════════════════════════════════════════ */
-var LEADPOST_PARTNERS_URL = "marketing-partners.html";
+var LEADPOST_PARTNERS_URL = "/marketing-partners";
 var LEADPOST_PARTNER_SOURCE_ID = (typeof QHF_CONFIG !== "undefined" && QHF_CONFIG.LEADPOST_PARTNER_SOURCE_ID) || "CampaignA";
 var LEADPOST_PUBLISHER_SUB_ID = (typeof QHF_CONFIG !== "undefined" && QHF_CONFIG.LEADPOST_PUBLISHER_SUB_ID) || "123456";
 var HOME_PHONE_CONSENT_LANGUAGE = "By submitting, you authorize QuickHomeFix and up to four home improvement companies, to make marketing calls and texts to the phone number provided to discuss your home improvement project. You understand some may use auto-dialers, SMS messages, artificial and prerecorded voice messages to contact you. There is no requirement to purchase services. Please see our Privacy Notice and Terms of Use.";

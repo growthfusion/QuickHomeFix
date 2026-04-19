@@ -597,12 +597,12 @@ function showPhoneError(msg) {
 
 /* ═══ UPSELL CARDS (complete step) ═══ */
 var upsellServiceData = {
-  roof:    { name:"Roofing",        key:"roof",    image:"images/roofing_services.webp",      desc:"Premium roofing solutions for any home",    path:"get-quotes.html?service=roof" },
-  solar:   { name:"Solar Energy",   key:"solar",   image:"images/Solar.webp",                 desc:"Save on energy costs with clean solar power",path:"get-quotes.html?service=solar" },
-  windows: { name:"Windows",        key:"windows", image:"images/window_services.webp",       desc:"Modern windows that improve comfort",       path:"get-quotes.html?service=windows" },
-  gutter:  { name:"Gutters",        key:"gutter",  image:"images/gutter_services.webp",       desc:"Quality gutter systems to protect your home",path:"get-quotes.html?service=gutter" },
-  bath:    { name:"Bath Remodeling", key:"bath",    image:"images/walkin_tub_services.png",    desc:"Modern bathroom renovations for comfort",   path:"get-quotes.html?service=bath" },
-  shower:  { name:"Walk-in Shower", key:"shower",  image:"images/walkin_shower_services.png", desc:"Modern, accessible shower solutions",       path:"get-quotes.html?service=shower" },
+  roof:    { name:"Roofing",        key:"roof",    image:"images/roofing_services.webp",      desc:"Premium roofing solutions for any home",    path:"/get-quotes?service=roof" },
+  solar:   { name:"Solar Energy",   key:"solar",   image:"images/Solar.webp",                 desc:"Save on energy costs with clean solar power",path:"/get-quotes?service=solar" },
+  windows: { name:"Windows",        key:"windows", image:"images/window_services.webp",       desc:"Modern windows that improve comfort",       path:"/get-quotes?service=windows" },
+  gutter:  { name:"Gutters",        key:"gutter",  image:"images/gutter_services.webp",       desc:"Quality gutter systems to protect your home",path:"/get-quotes?service=gutter" },
+  bath:    { name:"Bath Remodeling", key:"bath",    image:"images/walkin_tub_services.png",    desc:"Modern bathroom renovations for comfort",   path:"/get-quotes?service=bath" },
+  shower:  { name:"Walk-in Shower", key:"shower",  image:"images/walkin_shower_services.png", desc:"Modern, accessible shower solutions",       path:"/get-quotes?service=shower" },
 };
 
 function buildUpsellCards() {
@@ -682,12 +682,12 @@ function hideLeaveDialog() {
 }
 function handleSaveAndLeave() {
   hideLeaveDialog();
-  window.location.href = "index.html";
+  window.location.href = "/";
 }
 function handleLeaveWithoutSaving() {
   store.resetAll();
   hideLeaveDialog();
-  window.location.href = "index.html";
+  window.location.href = "/";
 }
 // Warn on browser back / close if wizard is in progress
 window.addEventListener("beforeunload", function(e) {
