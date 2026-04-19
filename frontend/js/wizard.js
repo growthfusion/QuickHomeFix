@@ -72,12 +72,9 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("trustDate").textContent = new Date().toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});
   buildServiceCards();
 
+  const pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)\/?$/);
   const params = new URLSearchParams(window.location.search);
-  let svc = params.get("service");
-  if (!svc) {
-    const pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)/);
-    if (pathMatch) svc = pathMatch[1];
-  }
+  const svc = (pathMatch && pathMatch[1]) || params.get("service");
   if (svc && isValidService(svc)) {
     currentLandingService = svc;
     // Check if landing data exists for this service
@@ -686,12 +683,12 @@ function hideLeaveDialog() {
 }
 function handleSaveAndLeave() {
   hideLeaveDialog();
-  window.location.href = "/";
+  window.location.href = "index.html";
 }
 function handleLeaveWithoutSaving() {
   store.resetAll();
   hideLeaveDialog();
-  window.location.href = "/";
+  window.location.href = "index.html";
 }
 // Warn on browser back / close if wizard is in progress
 window.addEventListener("beforeunload", function(e) {
