@@ -69,8 +69,8 @@
       <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-400/[0.06] rounded-full blur-3xl"></div>
     </div>
     <div class="relative z-20 max-w-6xl mx-auto px-5 sm:px-6 flex items-center justify-between h-16">
-      <a href="index.html" class="flex items-center gap-2.5"><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" /></a>
-      <a href="contractor.html" class="text-sm font-medium text-white/80 hover:text-white transition-colors">I'm a contractor</a>
+      <a href="/" class="flex items-center gap-2.5"><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" /></a>
+      <a href="/contractor" class="text-sm font-medium text-white/80 hover:text-white transition-colors">I'm a contractor</a>
     </div>
     <div class="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-14 lg:py-16">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -165,14 +165,14 @@
         <div>
           <h4 class="text-white text-sm font-semibold mb-3">Services</h4>
           <ul class="space-y-2 text-sm">
-            <li><a href="get-quotes.html?service=roof">Roofing</a></li><li><a href="get-quotes.html?service=solar">Solar</a></li>
-            <li><a href="get-quotes.html?service=windows">Windows</a></li><li><a href="get-quotes.html?service=gutter">Gutters</a></li>
-            <li><a href="get-quotes.html?service=bath">Bathroom</a></li>
+            <li><a href="/get-quotes?service=roof">Roofing</a></li><li><a href="/get-quotes?service=solar">Solar</a></li>
+            <li><a href="/get-quotes?service=windows">Windows</a></li><li><a href="/get-quotes?service=gutter">Gutters</a></li>
+            <li><a href="/get-quotes?service=bath">Bathroom</a></li>
           </ul>
         </div>
         <div>
           <h4 class="text-white text-sm font-semibold mb-3">Company</h4>
-          <ul class="space-y-2 text-sm"><li><a href="index.html#about">How It Works</a></li><li><a href="index.html#services">Services</a></li><li><a href="index.html#contact">Contact</a></li></ul>
+          <ul class="space-y-2 text-sm"><li><a href="/#about">How It Works</a></li><li><a href="/#services">Services</a></li><li><a href="/#contact">Contact</a></li></ul>
         </div>
         <div>
           <h4 class="text-white text-sm font-semibold mb-3">Contact</h4>
@@ -184,7 +184,7 @@
       </div>
       <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-5 text-xs text-gray-500">
         <span>&copy; <script>document.write(new Date().getFullYear())</script> QuickHomeFix. All rights reserved.</span>
-        <div class="flex gap-4"><a href="privacy-policy.html">Privacy Policy</a><a href="terms-of-service.html">Terms of Service</a></div>
+        <div class="flex gap-4"><a href="/privacy-policy">Privacy Policy</a><a href="/terms-of-service">Terms of Service</a></div>
       </div>
     </div>
   </footer>
@@ -199,7 +199,7 @@
     <button id="backBtn" onclick="wizardBack()" style="display:none" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 items-center justify-center text-gray-500 flex-shrink-0" aria-label="Go back">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
     </button>
-    <a href="index.html" onclick="_allowNavigation=true;store.resetAll();" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
+    <a href="/" onclick="_allowNavigation=true;store.resetAll();" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
       <img src="images/landing/quickhomefix_Logo2.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" />
     </a>
   </div>
@@ -415,12 +415,12 @@
               </div>
               <p class="text-[10px] leading-snug text-gray-400 mt-4">
                 By submitting, you authorize QuickHomeFix and up to
-                <a href="marketing-partners.html" target="_blank" class="underline text-blue-600 hover:text-blue-800">four home improvement companies</a>,
+                <a href="/marketing-partners" target="_blank" class="underline text-blue-600 hover:text-blue-800">four home improvement companies</a>,
                 to make marketing calls and texts to the phone number provided to discuss your home improvement project.
                 You understand some may use auto-dialers, SMS messages, artificial and prerecorded voice messages to contact you.
                 There is no requirement to purchase services. Please see our
-                <a href="privacy-policy.html" class="underline text-blue-600 hover:text-blue-800">Privacy Notice</a> and
-                <a href="terms-of-service.html" class="underline text-blue-600 hover:text-blue-800">Terms of Use</a>.
+                <a href="/privacy-policy" class="underline text-blue-600 hover:text-blue-800">Privacy Notice</a> and
+                <a href="/terms-of-service" class="underline text-blue-600 hover:text-blue-800">Terms of Use</a>.
               </p>
             </form>
           </div>
@@ -478,7 +478,7 @@
                 100% Free
               </span>
             </div>
-            <button onclick="_allowNavigation=true;store.resetAll();window.location.href='index.html'" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors">Back to Home</button>
+            <button onclick="_allowNavigation=true;store.resetAll();window.location.href='/'" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors">Back to Home</button>
           </div>
         </div>
 
@@ -540,8 +540,8 @@
       <span>&copy; <script>document.write(new Date().getFullYear())</script> QuickHomeFix. All rights reserved.</span>
       <span class="hidden sm:inline">|</span>
       <div class="flex items-center gap-3">
-        <a href="privacy-policy.html" class="underline underline-offset-2">Privacy Policy</a>
-        <a href="terms-of-service.html" class="underline underline-offset-2">Terms of Service</a>
+        <a href="/privacy-policy" class="underline underline-offset-2">Privacy Policy</a>
+        <a href="/terms-of-service" class="underline underline-offset-2">Terms of Service</a>
       </div>
     </div>
   </footer>
@@ -1156,12 +1156,12 @@ function showPhoneError(msg) {
 
 /* ═══ UPSELL CARDS (complete step) ═══ */
 var upsellServiceData = {
-  roof:    { name:"Roofing",        key:"roof",    image:"images/roofing_services.webp",      desc:"Premium roofing solutions for any home",    path:"get-quotes.html?service=roof" },
-  solar:   { name:"Solar Energy",   key:"solar",   image:"images/Solar.webp",                 desc:"Save on energy costs with clean solar power",path:"get-quotes.html?service=solar" },
-  windows: { name:"Windows",        key:"windows", image:"images/window_services.webp",       desc:"Modern windows that improve comfort",       path:"get-quotes.html?service=windows" },
-  gutter:  { name:"Gutters",        key:"gutter",  image:"images/gutter_services.webp",       desc:"Quality gutter systems to protect your home",path:"get-quotes.html?service=gutter" },
-  bath:    { name:"Bath Remodeling", key:"bath",    image:"images/walkin_tub_services.png",    desc:"Modern bathroom renovations for comfort",   path:"get-quotes.html?service=bath" },
-  shower:  { name:"Walk-in Shower", key:"shower",  image:"images/walkin_shower_services.png", desc:"Modern, accessible shower solutions",       path:"get-quotes.html?service=shower" },
+  roof:    { name:"Roofing",        key:"roof",    image:"images/roofing_services.webp",      desc:"Premium roofing solutions for any home",    path:"/get-quotes?service=roof" },
+  solar:   { name:"Solar Energy",   key:"solar",   image:"images/Solar.webp",                 desc:"Save on energy costs with clean solar power",path:"/get-quotes?service=solar" },
+  windows: { name:"Windows",        key:"windows", image:"images/window_services.webp",       desc:"Modern windows that improve comfort",       path:"/get-quotes?service=windows" },
+  gutter:  { name:"Gutters",        key:"gutter",  image:"images/gutter_services.webp",       desc:"Quality gutter systems to protect your home",path:"/get-quotes?service=gutter" },
+  bath:    { name:"Bath Remodeling", key:"bath",    image:"images/walkin_tub_services.png",    desc:"Modern bathroom renovations for comfort",   path:"/get-quotes?service=bath" },
+  shower:  { name:"Walk-in Shower", key:"shower",  image:"images/walkin_shower_services.png", desc:"Modern, accessible shower solutions",       path:"/get-quotes?service=shower" },
 };
 
 function buildUpsellCards() {
