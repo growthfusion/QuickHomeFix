@@ -52,16 +52,6 @@ const serviceSubtitles = {
   tub: "Enter your ZIP to find walk-in tub pros near you",
 };
 
-const services = [
-  { id: "roof", name: "Roof Services", image: "images/roof.png", popular: false },
-  { id: "windows", name: "Windows", image: "images/window.png", popular: true },
-  { id: "bath", name: "Bath Remodeling", image: "images/bath-tub.png", popular: false },
-  { id: "solar", name: "Solar Energy", image: "images/solar-panel.png", popular: false },
-  { id: "gutter", name: "Gutter Services", image: "images/round.png", popular: false },
-  { id: "tub", name: "Walk-In-Tub", image: "images/buket.png", popular: false },
-  { id: "shower", name: "Walk-In-Shower", image: "images/showerr.png", popular: false },
-];
-
 let currentRadioField = "";
 let currentRadioValue = "";
 let currentLandingService = "";
@@ -70,22 +60,16 @@ let showingLanding = false;
 /* ═══ INIT ═══ */
 document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("trustDate").textContent = new Date().toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});
-  buildServiceCards();
 
   const pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)\/?$/);
   const params = new URLSearchParams(window.location.search);
   const svc = (pathMatch && pathMatch[1]) || params.get("service");
   if (svc && isValidService(svc)) {
     currentLandingService = svc;
-    // Check if landing data exists for this service
-    if (serviceLandingData[svc]) {
-      showLandingPage(svc);
-    } else {
-      store.updateFormData("service", svc);
-      store.setStep(1);
-      showWizard();
-      renderCurrentStep();
-    }
+    store.updateFormData("service", svc);
+    store.setStep(1);
+    showWizard();
+    renderCurrentStep();
   } else {
     window.location.replace("/");
     return;
@@ -258,15 +242,8 @@ function renderCurrentStep() {
   const trust = document.getElementById("trustBadge");
   const stepName = store.getCurrentStepName();
 
-  if (step === 0) {
-    document.getElementById("step-service-selection").classList.add("active");
-    trust.style.display = "none";
-    return;
-  }
-
-  if (!stepName) {
-    document.getElementById("step-service-selection").classList.add("active");
-    trust.style.display = "none";
+  if (step === 0 || !stepName) {
+    window.location.replace("/");
     return;
   }
 
@@ -350,27 +327,6 @@ function renderRadioStep(stepName, progress) {
   });
 
   document.getElementById("radioNextBtn").disabled = !currentRadioValue;
-}
-
-/* ═══ SERVICE CARDS ═══ */
-function buildServiceCards() {
-  const container = document.getElementById("serviceCards");
-  services.forEach(function(svc) {
-    const div = document.createElement("div");
-    div.onclick = function() { selectService(svc.id); };
-    div.className = "relative bg-white rounded-xl border border-gray-200 cursor-pointer flex items-center gap-4 px-6 py-5 sm:px-8 sm:py-6 card-smooth transition-shadow duration-200 hover:shadow-md";
-    div.innerHTML = '<div class="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-50"><img src="'+svc.image+'" alt="'+svc.name+'" class="w-10 h-10 sm:w-12 sm:h-12 object-contain" loading="lazy" /></div>' +
-      '<h3 class="font-semibold text-base sm:text-lg text-gray-800">'+svc.name+'</h3>' +
-      (svc.popular ? '<span class="ml-auto bg-blue-600 text-white text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full flex-shrink-0">Popular</span>' : '');
-    container.appendChild(div);
-  });
-}
-
-function selectService(id) {
-  store.resetAll();
-  store.updateFormData("service", id);
-  store.setStep(1);
-  renderCurrentStep();
 }
 
 /* ═══ STEP HANDLERS ═══ */
