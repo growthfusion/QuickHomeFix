@@ -614,6 +614,10 @@ document.addEventListener("DOMContentLoaded", function() {
   if (store.state.isFormStarted && store.formData.service === svc && store.currentStep > 0) {
     showWizard();
     renderCurrentStep();
+  }
+  // Fresh visit — show the marketing landing page first (hero + Get Started)
+  else if (serviceLandingData[svc]) {
+    showLandingPage(svc);
   } else {
     store.updateFormData("service", svc);
     store.setStep(1);
