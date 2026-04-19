@@ -87,9 +87,8 @@ document.addEventListener("DOMContentLoaded", function() {
       renderCurrentStep();
     }
   } else {
-    store.setStep(0);
-    showWizard();
-    renderCurrentStep();
+    window.location.replace("/");
+    return;
   }
 
   // ZIP input
