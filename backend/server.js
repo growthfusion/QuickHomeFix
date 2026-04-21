@@ -893,19 +893,47 @@ app.get("/api/leads/latest", async (_req, res) => {
   }
 });
 
+// In-memory cache: US ZIP → "lat,lng". Keeps Google results biased near the
+// user's area even though the request originates from our Cloud Run server.
+const ZIP_LATLNG_CACHE = new Map();
+async function zipToLatLng(zip) {
+  if (!/^\d{5}$/.test(zip)) return null;
+  if (ZIP_LATLNG_CACHE.has(zip)) return ZIP_LATLNG_CACHE.get(zip);
+  try {
+    const { data } = await axios.get(`https://api.zippopotam.us/us/${zip}`, { timeout: 2000 });
+    const p = data && data.places && data.places[0];
+    if (p && p.latitude && p.longitude) {
+      const latlng = `${p.latitude},${p.longitude}`;
+      ZIP_LATLNG_CACHE.set(zip, latlng);
+      return latlng;
+    }
+  } catch (_) { /* fall through */ }
+  ZIP_LATLNG_CACHE.set(zip, null);
+  return null;
+}
+
 app.get("/api/places/autocomplete", async (req, res) => {
   if (!GOOGLE_API_KEY) {
     return res.status(500).json({ error: "Google API key is not configured on the server" });
   }
   try {
-    const { input } = req.query;
+    const { input, zip } = req.query;
     if (!input) {
       return res.status(400).json({ error: "Input parameter is required" });
     }
 
+    const params = { input, key: GOOGLE_API_KEY, types: "address", components: "country:us" };
+    if (zip) {
+      const latlng = await zipToLatLng(String(zip));
+      if (latlng) {
+        params.location = latlng;
+        params.radius = 50000; // 50 km soft bias; does not exclude far results
+      }
+    }
+
     const response = await axios.get(
       "https://maps.googleapis.com/maps/api/place/autocomplete/json",
-      { params: { input, key: GOOGLE_API_KEY, types: "address", components: "country:us" } }
+      { params }
     );
 
     const { status, error_message, predictions } = response.data;

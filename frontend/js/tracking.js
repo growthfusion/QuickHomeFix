@@ -216,9 +216,12 @@ function verifyPhone(phone) {
   return apiRequest("/api/verify-phone?phone=" + encodeURIComponent(phone));
 }
 
-/** GET /api/places/autocomplete?input=... */
+/** GET /api/places/autocomplete?input=...&zip=... */
 function placesAutocomplete(input) {
-  return apiRequest("/api/places/autocomplete?input=" + encodeURIComponent(input));
+  var url = "/api/places/autocomplete?input=" + encodeURIComponent(input);
+  var zip = (typeof store !== "undefined" && store.formData && store.formData.zipcode) || "";
+  if (/^\d{5}$/.test(zip)) url += "&zip=" + zip;
+  return apiRequest(url);
 }
 
 /** GET /api/places/details?place_id=... */
