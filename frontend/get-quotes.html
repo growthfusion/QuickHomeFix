@@ -785,6 +785,13 @@ function startWizardFromLanding() {
 
   if (zip && zip.length === 5) {
     store.updateFormData("zipcode", zip);
+    trackMetaEvent("zipcode", "Enter Your Zip Code", zip, "zipcode");
+    lookupZipcode(zip).then(function(loc) {
+      if (loc) {
+        store.updateFormData("city", loc.city);
+        store.updateFormData("state", loc.state);
+      }
+    });
     // Skip the zipcode step
     var flow = getServiceFlow(currentLandingService);
     var zipIdx = flow.steps.indexOf("zipcode");
