@@ -1214,7 +1214,6 @@ function firePageTracking() {
     service: service,
   });
   if (typeof window.fbq === "function") window.fbq("track", "PageView");
-  if (typeof window.snaptr === "function") window.snaptr("track", "PAGE_VIEW");
 }
 // Hook into renderCurrentStep
 var _origRender = renderCurrentStep;
