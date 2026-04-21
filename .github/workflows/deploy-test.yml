@@ -67,5 +67,5 @@ jobs:
             --region $REGION \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars "NODE_ENV=test" \
+            --update-env-vars "NODE_ENV=test" \
             --project $PROJECT_ID

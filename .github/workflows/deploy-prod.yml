@@ -67,5 +67,5 @@ jobs:
             --region $REGION \
             --allow-unauthenticated \
             --port 8080 \
-            --set-env-vars "NODE_ENV=production" \
+            --update-env-vars "NODE_ENV=production" \
             --project $PROJECT_ID
