@@ -552,40 +552,40 @@
 <script>
 /* ═══ STEP CONFIGURATIONS ═══ */
 const radioStepConfigs = {
-  "roofing-type": { title: "What type of roofing service do you need?", field: "roofingType", options: [
+  "roofing-type": { title: "What type of roofing service do you need?", field: "roofingType", event: "types", options: [
     { id: "Roof Replace", name: "Replace" }, { id: "Roof Repair", name: "Repair" }, { id: "New Construction", name: "Install" }
   ]},
-  "material": { title: "What type of roofing material are you looking for?", field: "material", options: [
+  "material": { title: "What type of roofing material are you looking for?", field: "material", event: "services", options: [
     { id: "asphalt", name: "Asphalt" }, { id: "metal", name: "Metal" }, { id: "tile", name: "Tile" },
     { id: "slate", name: "Natural Slate" }, { id: "wood", name: "Cedar Shake" }, { id: "composite", name: "Composite" }, { id: "tar", name: "Tar/Torchdown" }
   ]},
-  "window-type": { title: "What is the nature of your windows project?", field: "windowType", options: [
+  "window-type": { title: "What is the nature of your windows project?", field: "windowType", event: "types", options: [
     { id: "Install", name: "Install" }, { id: "Repair", name: "Repair" }
   ]},
-  "window-count": { title: "How many windows are involved?", field: "windowCount", options: [
+  "window-count": { title: "How many windows are involved?", field: "windowCount", event: "services", options: [
     { id: "1", name: "1" }, { id: "2", name: "2" }, { id: "3-5", name: "3-5" }, { id: "6-9", name: "6-9" }
   ]},
-  "solar-type": { title: "What type of solar solution do you need?", field: "solarType", options: [
+  "solar-type": { title: "What type of solar solution do you need?", field: "solarType", event: "types", options: [
     { id: "solarInstall", name: "Solar Install" }, { id: "solarRepair", name: "Solar Repair" }, { id: "solarUpgrade", name: "Solar Upgrade" }
   ]},
-  "roof-size": { title: "What is your average monthly electric bill?", field: "electricBill", options: [
+  "roof-size": { title: "What is your average monthly electric bill?", field: "electricBill", event: "services", options: [
     { id: "Under $100", name: "Under $100" }, { id: "$100 - $200", name: "$100 - $200" },
     { id: "$200 - $300", name: "$200 - $300" }, { id: "$300+", name: "$300+" }
   ]},
-  "bathroom-wall": { title: "Need to remove or add walls for bath remodel?", field: "bathwallType", options: [
+  "bathroom-wall": { title: "Need to remove or add walls for bath remodel?", field: "bathwallType", event: "types", options: [
     { id: "Yes", name: "Yes" }, { id: "No", name: "No" }
   ]},
-  "gutter-type": { title: "What type of gutter service do you need?", field: "gutterType", options: [
+  "gutter-type": { title: "What type of gutter service do you need?", field: "gutterType", event: "types", options: [
     { id: "Install", name: "Install" }, { id: "Repair", name: "Repair" }
   ]},
-  "gutter-material": { title: "Select Gutter Material", field: "gutterMaterial", options: [
+  "gutter-material": { title: "Select Gutter Material", field: "gutterMaterial", event: "services", options: [
     { id: "Copper", name: "Copper" }, { id: "Galvanized", name: "Galvanized" }, { id: "PVC", name: "PVC" },
     { id: "Seamless Metal", name: "Seamless Metal" }, { id: "Wood", name: "Wood" }
   ]},
-  "tub-reason": { title: "What's the biggest reason you are considering a walk-in tub?", field: "tubReason", options: [
+  "tub-reason": { title: "What's the biggest reason you are considering a walk-in tub?", field: "tubReason", event: "types", options: [
     { id: "safety", name: "For Safety" }, { id: "therapeutic", name: "For Therapeutic Reasons" }, { id: "other", name: "Other Reasons" }
   ]},
-  "walk": { title: "What type of Walk-In tub", field: "walkinType", options: [
+  "walk": { title: "What type of Walk-In tub", field: "walkinType", event: "types", options: [
     { id: "replace", name: "Replace Walk-In Tub" }, { id: "install", name: "Install Walk-In Tub" }, { id: "repair", name: "Repair Walk-In Tub" }
   ]},
 };
@@ -954,6 +954,16 @@ function submitZipcode() {
 
 function submitRadioStep() {
   if (!currentRadioValue) return;
+  var stepName = store.getCurrentStepName();
+  var config = radioStepConfigs[stepName];
+  if (config && config.event) {
+    var selected = null;
+    for (var i = 0; i < config.options.length; i++) {
+      if (config.options[i].id === currentRadioValue) { selected = config.options[i]; break; }
+    }
+    var answer = selected ? selected.name : currentRadioValue;
+    trackMetaEvent(config.event, config.title, answer, stepName);
+  }
   store.nextStep();
   renderCurrentStep();
 }
@@ -1069,7 +1079,6 @@ function submitDetails(e) {
   store.updateFormData("zipcode", zip);
   store.updateFormData("isOwner", true);
   trackMetaEvent("AddressDetails", "Property Address", addr+", "+city+", "+state+" "+zip);
-  trackSnapEvent("AddressDetails", { description: "Property Address", item_category: addr+", "+city+", "+state+" "+zip });
   store.nextStep();
   renderCurrentStep();
 }
@@ -1122,7 +1131,6 @@ function submitFinal(e) {
 
 function doLeadSubmit(phone, btn) {
   trackMetaEvent("PhoneNumber", "Enter Your Phone Number", phone);
-  trackSnapEvent("PhoneNumber", { description: "Enter Your Phone Number", item_category: phone });
 
   // Submit the lead to backend
   submitFullLead(store.formData)
