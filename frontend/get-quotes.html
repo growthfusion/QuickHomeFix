@@ -133,9 +133,21 @@
 
   <!-- Gallery -->
   <section id="landingGallerySection" class="py-10 sm:py-12 bg-gray-50 hidden">
-    <div class="max-w-6xl mx-auto px-5 sm:px-6">
+    <div class="max-w-3xl mx-auto px-5 sm:px-6">
       <h2 class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">Photo Gallery of Completed Projects</h2>
-      <div id="landingGallery" class="grid grid-cols-3 gap-3"></div>
+      <div id="landingGallery">
+        <div class="relative rounded-2xl overflow-hidden bg-gray-200 aspect-[4/3] sm:aspect-[16/10]">
+          <img id="landingGalleryMain" src="" alt="" class="w-full h-full object-cover transition-opacity duration-300" />
+          <button id="landingGalleryPrev" type="button" aria-label="Previous image" class="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white shadow-md flex items-center justify-center text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button id="landingGalleryNext" type="button" aria-label="Next image" class="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white shadow-md flex items-center justify-center text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <div id="landingGalleryDots" class="absolute left-0 right-0 bottom-3 flex justify-center gap-1.5"></div>
+        </div>
+        <div id="landingGalleryThumbs" class="grid grid-cols-3 gap-2 sm:gap-3 mt-3 sm:mt-4"></div>
+      </div>
     </div>
   </section>
 
@@ -700,11 +712,42 @@ function showLandingPage(svc) {
   // Gallery
   if (data.gallery && data.gallery.length > 0) {
     document.getElementById("landingGallerySection").classList.remove("hidden");
-    var galEl = document.getElementById("landingGallery");
-    galEl.innerHTML = "";
-    data.gallery.forEach(function(img, i) {
-      galEl.innerHTML += '<div class="rounded-xl overflow-hidden border border-gray-200 group cursor-pointer"><img src="'+img+'" alt="Project '+(i+1)+'" loading="lazy" class="w-full h-24 sm:h-32 lg:h-40 object-cover group-hover:scale-105 transition-transform duration-300" /></div>';
-    });
+    var gallery = data.gallery;
+    var mainImg = document.getElementById("landingGalleryMain");
+    var dotsEl = document.getElementById("landingGalleryDots");
+    var thumbsEl = document.getElementById("landingGalleryThumbs");
+    var current = 0;
+
+    function renderGallery(idx) {
+      current = (idx + gallery.length) % gallery.length;
+      mainImg.src = gallery[current];
+      mainImg.alt = "Project " + (current + 1);
+      var dotsHtml = "";
+      for (var i = 0; i < gallery.length; i++) {
+        var active = i === current;
+        dotsHtml += '<button type="button" aria-label="Go to slide '+(i+1)+'" data-gallery-dot="'+i+'" class="h-2 rounded-full transition-all '+(active ? 'bg-gray-800 w-6' : 'bg-white/70 hover:bg-white w-2')+'"></button>';
+      }
+      dotsEl.innerHTML = dotsHtml;
+      var thumbsHtml = "";
+      for (var j = 0; j < gallery.length; j++) {
+        var activeThumb = j === current;
+        thumbsHtml += '<button type="button" data-gallery-thumb="'+j+'" class="rounded-xl overflow-hidden border '+(activeThumb ? 'border-gray-800 ring-2 ring-gray-800' : 'border-gray-200 opacity-85 hover:opacity-100')+' transition"><img src="'+gallery[j]+'" alt="Thumbnail '+(j+1)+'" loading="lazy" class="w-full h-20 sm:h-24 lg:h-28 object-cover" /></button>';
+      }
+      thumbsEl.innerHTML = thumbsHtml;
+    }
+
+    document.getElementById("landingGalleryPrev").onclick = function() { renderGallery(current - 1); };
+    document.getElementById("landingGalleryNext").onclick = function() { renderGallery(current + 1); };
+    dotsEl.onclick = function(e) {
+      var t = e.target.closest("[data-gallery-dot]");
+      if (t) renderGallery(parseInt(t.getAttribute("data-gallery-dot"), 10));
+    };
+    thumbsEl.onclick = function(e) {
+      var t = e.target.closest("[data-gallery-thumb]");
+      if (t) renderGallery(parseInt(t.getAttribute("data-gallery-thumb"), 10));
+    };
+
+    renderGallery(0);
   }
 
   // Reviews
