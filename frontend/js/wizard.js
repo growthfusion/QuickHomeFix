@@ -369,7 +369,7 @@ function submitRadioStep() {
       if (config.options[i].id === currentRadioValue) { selected = config.options[i]; break; }
     }
     var answer = selected ? selected.name : currentRadioValue;
-    trackMetaEvent(config.event, config.title, answer);
+    trackMetaEvent(config.event, config.title, answer, stepName);
   }
   store.nextStep();
   renderCurrentStep();

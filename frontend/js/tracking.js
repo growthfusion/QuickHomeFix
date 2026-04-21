@@ -35,10 +35,16 @@ function trackStepEvent(eventName, data) {
   window.dataLayer.push(Object.assign({ event: eventName }, data || {}));
 }
 
-function trackMetaEvent(eventName, question, value) {
-  // Push to dataLayer — GTM Custom HTML tags fire fbq using {{question_text}} / {{answer_text}}
+function trackMetaEvent(eventName, question, value, questionId) {
+  // Push to dataLayer — GTM Custom HTML tags fire fbq using
+  // {{question_id}} / {{question_text}} / {{answer_text}}
   window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({ event: eventName, question_text: question, answer_text: value });
+  window.dataLayer.push({
+    event: eventName,
+    question_id: questionId || eventName,
+    question_text: question,
+    answer_text: value,
+  });
 }
 
 function trackSnapEvent(eventName, params) {
