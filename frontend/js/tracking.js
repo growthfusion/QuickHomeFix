@@ -36,15 +36,9 @@ function trackStepEvent(eventName, data) {
 }
 
 function trackMetaEvent(eventName, question, value) {
-  // DataLayer push (for GTM)
+  // Push to dataLayer — GTM Custom HTML tags fire fbq using {{question_text}} / {{answer_text}}
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({ event: eventName, question_text: question, answer_text: value });
-  // Direct Meta Pixel (if loaded)
-  if (typeof window.fbq === "function") {
-    var params = { content_name: question };
-    if (value !== undefined && value !== null && value !== "") params.value = value;
-    window.fbq("trackCustom", eventName, params);
-  }
 }
 
 function trackSnapEvent(eventName, params) {
