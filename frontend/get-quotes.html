@@ -1021,13 +1021,13 @@ document.addEventListener("DOMContentLoaded", function() {
     addrInput.addEventListener("input", function() {
       var val = this.value;
       clearTimeout(_addrDebounce);
-      if (!val || val.length < 3) { hideSuggestions(); return; }
+      if (!val || val.length < 2) { hideSuggestions(); return; }
       _addrDebounce = setTimeout(function() {
         placesAutocomplete(val).then(function(data) {
           var preds = (data && data.predictions) || [];
           showSuggestions(preds);
         }).catch(function() { hideSuggestions(); });
-      }, 400);
+      }, 200);
     });
     addrInput.addEventListener("blur", function() { setTimeout(hideSuggestions, 200); });
   }
