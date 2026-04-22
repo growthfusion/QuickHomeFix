@@ -467,14 +467,12 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
         WindowsProjectScope: normalizeWindowsProjectScope(data.windowType),
       } : {}),
       ...(isBath ? { OptIn1: bathOptIn } : {}),
-      ...(isTub ? {
-        Interest: tubInterestDirect,
-        source_id: String(data.source_id || ""),
-      } : {}),
+      ...(isTub ? { Interest: tubInterestDirect } : {}),
       ...(isRoofing ? { RoofingPlan: normalizeRoofingPlan(data.roofingType) } : {}),
-      rt_ad:   String(data.rt_ad   || ""),
-      fbclid:  String(data.fbclid  || ""),
-      clickid: String(data.clickid || ""),
+      rt_ad:     String(data.rt_ad     || ""),
+      fbclid:    String(data.fbclid    || ""),
+      clickid:   String(data.clickid   || ""),
+      source_id: String(data.source_id || ""),
     };
 
     if (LP_DEBUG) console.log("[LP DIRECT POST OUT]", JSON.stringify(directPayload));
