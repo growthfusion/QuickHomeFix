@@ -4,8 +4,14 @@
    ═══════════════════════════════════════════════════════════════ */
 
 var QHF_CONFIG = {
-  // Backend API URL — frontend calls this
-  API_BASE_URL: "https://api-test.quickhomefix.pro",
+  // Backend API URL — chosen by hostname so prod hits prod, everything else hits test
+  API_BASE_URL: (function () {
+    var host = (typeof location !== "undefined" && location.hostname) || "";
+    if (host === "quickhomefix.pro" || host === "www.quickhomefix.pro") {
+      return "https://api.quickhomefix.pro";
+    }
+    return "https://api-test.quickhomefix.pro";
+  })(),
 
   // Request timeout (ms)
   API_TIMEOUT_MS: 90000,
