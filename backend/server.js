@@ -467,7 +467,10 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
         WindowsProjectScope: normalizeWindowsProjectScope(data.windowType),
       } : {}),
       ...(isBath ? { OptIn1: bathOptIn } : {}),
-      ...(isTub ? { Interest: tubInterestDirect } : {}),
+      ...(isTub ? {
+        Interest: tubInterestDirect,
+        source_id: String(data.source_id || ""),
+      } : {}),
       ...(isRoofing ? { RoofingPlan: normalizeRoofingPlan(data.roofingType) } : {}),
       rt_ad:   String(data.rt_ad   || ""),
       fbclid:  String(data.fbclid  || ""),
@@ -1130,9 +1133,10 @@ const LeadSchema = z.object({
   sunExposure: z.string().optional().or(z.literal("")),
   trustedFormToken: z.string().optional().or(z.literal("")),
   homePhoneConsentLanguage: z.string().optional().or(z.literal("")),
-  rt_ad:   z.string().optional().or(z.literal("")),
-  fbclid:  z.string().optional().or(z.literal("")),
-  clickid: z.string().optional().or(z.literal("")),
+  rt_ad:     z.string().optional().or(z.literal("")),
+  fbclid:    z.string().optional().or(z.literal("")),
+  clickid:   z.string().optional().or(z.literal("")),
+  source_id: z.string().optional().or(z.literal("")),
 });
 
 app.post("/api/leads", async (req, res) => {

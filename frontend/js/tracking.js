@@ -83,6 +83,15 @@ function getFbclid() {
   } catch (e) { return ""; }
 }
 
+function getSourceId() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var val = params.get("source_id") || params.get("sourceId") || params.get("sub4") || "";
+    if (val) sessionStorage.setItem("qhf_source_id", val);
+    return val || sessionStorage.getItem("qhf_source_id") || "";
+  } catch (e) { return ""; }
+}
+
 /* ═══════════════════════════════════════════
    4. REDTRACK – Postback & Click Beacons
    ═══════════════════════════════════════════ */
@@ -273,6 +282,7 @@ function submitFullLead(formData) {
     clickid: getClickId(),
     rt_ad: getRtAd(),
     fbclid: getFbclid(),
+    source_id: getSourceId(),
   });
 
   return submitLead(payload)
@@ -297,6 +307,7 @@ function submitFullLead(formData) {
    ═══════════════════════════════════════════ */
 document.addEventListener("DOMContentLoaded", function () {
   getClickId();
+  getSourceId();
   getRtAd();
   getFbclid();
 });
