@@ -244,6 +244,25 @@
       </div>
     </div>
 
+    <!-- ═══ THUMBTACK KEYWORDS STEP ═══ -->
+    <div id="step-thumbtack-keywords" class="wizard-step">
+      <div class="flex justify-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="progress-bar"><div id="progressThumbTackKeywords" class="progress-bar-fill" style="width:0%"></div></div>
+          <div class="p-6 sm:p-8">
+            <div class="text-center mb-6">
+              <h2 id="thumbTackKeywordsTitle" class="text-lg sm:text-xl font-bold text-gray-900">What type of service do you need?</h2>
+              <p class="text-sm text-gray-500 mt-1">Select the option that best matches your project</p>
+            </div>
+            <div id="thumbTackKeywordsLoading" class="flex justify-center py-8">
+              <div class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+            <div id="thumbTackKeywordsOptions" class="space-y-3" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ GENERIC RADIO STEP (reused for all service-specific questions) ═══ -->
     <div id="step-radio" class="wizard-step">
       <div class="flex justify-center px-4 py-4 sm:py-12">
@@ -582,6 +601,80 @@ const radioStepConfigs = {
   ]},
 };
 
+const THUMBTACK_SERVICE_QUERIES = {
+  roof:    "roofing",
+  windows: "window installation",
+  solar:   "solar panels",
+  bath:    "bathroom remodeling",
+  gutter:  "gutters",
+  tub:     "walk-in tub",
+  shower:  "walk-in shower",
+};
+
+const THUMBTACK_SERVICE_NAMES = {
+  roof: "roofing", windows: "windows", solar: "solar",
+  bath: "bathroom", gutter: "gutter", tub: "walk-in tub", shower: "walk-in shower",
+};
+
+function renderThumbTackKeywordsStep(progress) {
+  document.getElementById("step-thumbtack-keywords").classList.add("active");
+  document.getElementById("progressThumbTackKeywords").style.width = progress + "%";
+
+  var service = store.formData.service;
+  var searchQuery = THUMBTACK_SERVICE_QUERIES[service] || service;
+  document.getElementById("thumbTackKeywordsTitle").textContent =
+    "What type of " + (THUMBTACK_SERVICE_NAMES[service] || "home") + " service do you need?";
+
+  var loadingEl = document.getElementById("thumbTackKeywordsLoading");
+  var optionsEl = document.getElementById("thumbTackKeywordsOptions");
+  loadingEl.style.display = "flex";
+  optionsEl.style.display = "none";
+  optionsEl.textContent = "";
+
+  fetchThumbTackKeywords(searchQuery)
+    .then(function(data) {
+      // Thumbtack keyword response: { data: [{ keywordID, name }, ...] }
+      var rawList = (data && data.data) || [];
+      if (!rawList.length) throw new Error("empty");
+      loadingEl.style.display = "none";
+      optionsEl.style.display = "block";
+      rawList.forEach(function(kw) {
+        var label = (typeof kw === "string") ? kw : (kw.name || kw.keyword || kw.displayName || "");
+        if (!label) return;
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "w-full flex items-center gap-3 px-5 py-4 text-left bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors";
+        var icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        icon.setAttribute("class", "w-5 h-5 text-blue-400 flex-shrink-0");
+        icon.setAttribute("fill", "none");
+        icon.setAttribute("viewBox", "0 0 24 24");
+        icon.setAttribute("stroke", "currentColor");
+        icon.setAttribute("stroke-width", "2");
+        var iconPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        iconPath.setAttribute("stroke-linecap", "round");
+        iconPath.setAttribute("stroke-linejoin", "round");
+        iconPath.setAttribute("d", "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z");
+        icon.appendChild(iconPath);
+        var span = document.createElement("span");
+        span.className = "font-medium text-base text-gray-800";
+        span.textContent = label;
+        btn.appendChild(icon);
+        btn.appendChild(span);
+        btn.onclick = function() {
+          store.updateFormData("thumbtackKeyword", label);
+          store.nextStep();
+          renderCurrentStep();
+        };
+        optionsEl.appendChild(btn);
+      });
+    })
+    .catch(function() {
+      store.updateFormData("thumbtackKeyword", searchQuery);
+      store.nextStep();
+      renderCurrentStep();
+    });
+}
+
 const serviceImages = {
   roof: "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png",
   windows: "images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png",
@@ -877,6 +970,8 @@ function renderCurrentStep() {
     var label = svcMap[store.formData.service] || "roofing";
     document.getElementById("completeMessage").textContent = "A specialist will review your " + label + " project and contact you within 24 hours with a free, no-obligation quote.";
     buildUpsellCards();
+  } else if (stepName === "thumbtack-keywords") {
+    renderThumbTackKeywordsStep(progress);
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
   }
