@@ -1526,7 +1526,7 @@ async function getThumbTackToken() {
   const clientId = process.env.THUMBTACK_CLIENT_ID;
   const clientSecret = process.env.THUMBTACK_CLIENT_SECRET;
   const authUrl = process.env.THUMBTACK_AUTH_URL;
-  if (!clientId || !clientSecret || !authUrl) {
+  if (!clientId || !clientSecret || !authUrl || !process.env.THUMBTACK_API_BASE) {
     throw new Error("Thumbtack credentials not configured");
   }
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
