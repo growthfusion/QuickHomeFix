@@ -15,7 +15,7 @@ var stepLabels = {
   "solar-type": "Solar Type", "roof-size": "Roof Size / Sun Exposure",
   "bathroom-wall": "Bathroom Wall", "gutter-type": "Gutter Type",
   "gutter-material": "Gutter Material", "tub-reason": "Tub Reason",
-  walk: "Walk-In Shower", email: "Email", details: "Address Details",
+  walk: "Walk-In Shower", "thumbtack-keywords": "Service Type", email: "Email", details: "Address Details",
   name: "Name", phone: "Phone", final: "Final / Phone", complete: "Thank You",
 };
 
@@ -300,6 +300,28 @@ function submitFullLead(formData) {
       fireRedtrackClick(formData);
       return null;
     });
+}
+
+function esc(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/** GET /api/thumbtack/keywords?searchQuery=... */
+function fetchThumbTackKeywords(searchQuery) {
+  return apiRequest("/api/thumbtack/keywords?searchQuery=" + encodeURIComponent(searchQuery));
+}
+
+/** POST /api/thumbtack/businesses — body: { searchQuery, zipCode } */
+function fetchThumbTackBusinesses(searchQuery, zipCode) {
+  return apiRequest("/api/thumbtack/businesses", {
+    method: "POST",
+    body: JSON.stringify({ searchQuery: searchQuery, zipCode: zipCode }),
+  });
 }
 
 /* ═══════════════════════════════════════════
