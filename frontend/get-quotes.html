@@ -879,6 +879,10 @@ function renderCurrentStep() {
     var svcMap = { windows:"window", solar:"solar energy", bath:"bath remodeling", gutter:"gutter service", shower:"walk-in shower", tub:"walk-in tub" };
     var label = svcMap[store.formData.service] || "roofing";
     document.getElementById("completeMessage").textContent = "A specialist will review your " + label + " project and contact you within 24 hours with a free, no-obligation quote.";
+    if (!window._qhf_purchase_fired) {
+      window._qhf_purchase_fired = true;
+      trackStepEvent("purchaseComplete", { service: store.formData.service });
+    }
     buildThumbTackContractors();
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
