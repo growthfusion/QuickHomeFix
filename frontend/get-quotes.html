@@ -413,7 +413,7 @@
                   <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                   </div>
-                  <input type="tel" id="phoneInput" placeholder="(123) 456-7890" class="w-full pl-10 py-3 border border-gray-200 rounded-lg" maxlength="14" autofocus />
+                  <input type="tel" id="phoneInput" placeholder="1234567890" class="w-full pl-10 py-3 border border-gray-200 rounded-lg" maxlength="10" autofocus />
                 </div>
                 <p id="phoneError" class="text-red-500 text-xs mt-1 hidden"></p>
               </div>
@@ -902,14 +902,7 @@ function showWizard() {
 /* Fix back button display */
 
 function formatPhone(val) {
-  const cleaned = val.replace(/\D/g,"");
-  const m = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-  if (!m) return val;
-  let f = "";
-  if (m[1]) { f = "(" + m[1]; if (m[1].length===3) f += ") "; }
-  if (m[2]) { f += m[2]; if (m[2].length===3) f += "-"; }
-  if (m[3]) f += m[3];
-  return f;
+  return val.replace(/\D/g,"").slice(0,10);
 }
 
 /* ═══ RENDER ═══ */

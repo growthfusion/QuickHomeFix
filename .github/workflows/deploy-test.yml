@@ -3,6 +3,7 @@ name: Deploy Test Environment
 on:
   push:
     branches: [test]
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
