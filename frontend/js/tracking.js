@@ -112,7 +112,6 @@ function fireRedtrackPostback(formData) {
   });
   var img = new Image();
   img.src = REDTRACK_POSTBACK_URL + "?" + params.toString();
-  console.log("[Redtrack postback]", img.src);
 }
 
 function fireRedtrackClick(formData) {
@@ -133,7 +132,6 @@ function fireRedtrackClick(formData) {
   });
   var img = new Image();
   img.src = REDTRACK_CLICK_URL + "?" + params.toString();
-  console.log("[Redtrack click]", img.src);
 }
 
 /* ═══════════════════════════════════════════
@@ -304,7 +302,6 @@ function submitFullLead(formData) {
 
   return submitLead(payload)
     .then(function (result) {
-      console.log("Lead submitted:", result);
       trackStepEvent("leadSubmit", { service: formData.service });
       pushLeadEvent();
       fireRedtrackPostback(formData);
@@ -312,7 +309,6 @@ function submitFullLead(formData) {
       return result;
     })
     .catch(function (err) {
-      console.error("Lead submission error:", err);
       trackStepEvent("leadSubmit", { service: formData.service });
       pushLeadEvent();
       fireRedtrackPostback(formData);
