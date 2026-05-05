@@ -1578,7 +1578,7 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
     const apiBase = process.env.THUMBTACK_API_BASE;
     const response = await axios.post(
       `${apiBase}/api/v4/businesses/search`,
-      { searchQuery, zipCode, utmData: { utm_source: "cma-housecrew" } },
+      { searchQuery, zipCode, utmData: { utm_source: "cma-growthfusion" } },
       {
         headers: {
           Authorization: `Bearer ${token}`,

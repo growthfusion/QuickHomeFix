@@ -1421,8 +1421,6 @@ var _allowNavigation = true;
   var iframeEl = document.getElementById("tt-popup-iframe");
 
   function openPopup(url, bizName) {
-    // Map staging Thumbtack host → production
-    url = url.replace("staging-partner.thumbtack.com", "thumbtack.com");
     backdrop.style.display = "flex";
     document.body.style.overflow = "hidden";
     iframeEl.src = url;
