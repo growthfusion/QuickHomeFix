@@ -1225,19 +1225,23 @@ function buildThumbTackContractors() {
 
       container.innerHTML = "";
       businesses.forEach(function(biz) {
-        var name       = String(biz.businessName || "");
-        var rating     = parseFloat(biz.rating || 0);
-        var reviews    = parseInt(biz.numberOfReviews || 0, 10);
-        var rawPhoto   = String(biz.businessImageURL || "");
-        var rawProfile = String((biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
-        var price      = String((biz.quote && biz.quote.costUnit) ? biz.quote.costUnit : "");
+        var name     = String(biz.businessName || "");
+        var rating   = parseFloat(biz.rating || 0);
+        var reviews  = parseInt(biz.numberOfReviews || 0, 10);
+        var rawPhoto = String(biz.businessImageURL || "");
+        // Prefer Thumbtack Request Flow Widget URL (quote popup) — fall back to profile page.
+        var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
+        var price    = String((biz.quote && biz.quote.costUnit) ? biz.quote.costUnit : "");
 
         // Only allow safe http/https URLs to prevent javascript: injection
-        var safePhoto   = /^https?:\/\//.test(rawPhoto)   ? rawPhoto   : "";
-        var safeProfile = /^https?:\/\//.test(rawProfile) ? rawProfile : "";
+        var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
+        var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
 
         var card = document.createElement("div");
-        card.className = "bg-white border border-gray-200 rounded-2xl p-4 mb-4 flex gap-4 hover:shadow-md transition-shadow";
+        card.className = "bg-white border border-gray-200 rounded-2xl p-4 mb-4 flex flex-col gap-3 hover:shadow-md transition-shadow";
+
+        var rowEl = document.createElement("div");
+        rowEl.className = "flex gap-4";
 
         // Photo element
         var photoEl;
@@ -1294,26 +1298,33 @@ function buildThumbTackContractors() {
           infoEl.appendChild(priceEl);
         }
 
-        if (safeProfile) {
-          var linkEl = document.createElement("a");
-          linkEl.href = safeProfile;
-          linkEl.target = "_blank";
-          linkEl.rel = "noopener noreferrer";
-          linkEl.className = "inline-flex items-center gap-1 text-blue-600 text-sm font-medium mt-2 hover:underline";
-          linkEl.textContent = "View Profile";
-          var arrowSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          arrowSvg.setAttribute("class", "w-3 h-3");
-          arrowSvg.setAttribute("fill", "none");
-          arrowSvg.setAttribute("viewBox", "0 0 24 24");
-          arrowSvg.setAttribute("stroke", "currentColor");
-          arrowSvg.setAttribute("stroke-width", "2");
-          arrowSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>';
-          linkEl.appendChild(arrowSvg);
-          infoEl.appendChild(linkEl);
+        rowEl.appendChild(photoEl);
+        rowEl.appendChild(infoEl);
+        card.appendChild(rowEl);
+
+        if (safeCta) {
+          var ctaEl = document.createElement("a");
+          ctaEl.href = safeCta;
+          ctaEl.className = "js-tt-cta vc-btn flex items-center justify-center gap-2 w-full text-white font-semibold py-3 rounded-xl text-sm bg-blue-600 hover:bg-blue-700 transition-colors";
+          ctaEl.setAttribute("data-biz-name", name);
+          var sendSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          sendSvg.setAttribute("class", "w-4 h-4");
+          sendSvg.setAttribute("fill", "none");
+          sendSvg.setAttribute("viewBox", "0 0 24 24");
+          sendSvg.setAttribute("stroke", "currentColor");
+          sendSvg.setAttribute("stroke-width", "2");
+          var sendPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          sendPath.setAttribute("stroke-linecap", "round");
+          sendPath.setAttribute("stroke-linejoin", "round");
+          sendPath.setAttribute("d", "M12 19l9 2-9-18-9 18 9-2zm0 0v-8");
+          sendSvg.appendChild(sendPath);
+          ctaEl.appendChild(sendSvg);
+          var ctaLabel = document.createElement("span");
+          ctaLabel.textContent = "Compare Free Quote";
+          ctaEl.appendChild(ctaLabel);
+          card.appendChild(ctaEl);
         }
 
-        card.appendChild(photoEl);
-        card.appendChild(infoEl);
         container.appendChild(card);
       });
     })
@@ -1381,6 +1392,91 @@ var _allowNavigation = true;
   }, 1500);
 })();
 
+</script>
+
+<!-- ═══ Thumbtack Request Flow Widget — Popup ═══ -->
+<div id="tt-popup-backdrop" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;">
+  <div id="tt-popup-card" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;">
+    <iframe id="tt-popup-iframe"
+      width="860" height="760"
+      style="width:860px;height:760px;max-width:100%;display:block;border:none;"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+      src=""></iframe>
+  </div>
+</div>
+
+<style>
+@keyframes ttPopIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@media (max-width: 660px) {
+  #tt-popup-backdrop { padding: 0; align-items: flex-end; }
+  #tt-popup-card { width: 100%; border-radius: 16px 16px 0 0; animation: ttSlideUp 0.25s ease; }
+  #tt-popup-iframe { width: 100% !important; height: 90vh !important; }
+}
+@keyframes ttSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+</style>
+
+<script>
+(function () {
+  var backdrop = document.getElementById("tt-popup-backdrop");
+  var iframeEl = document.getElementById("tt-popup-iframe");
+
+  function openPopup(url, bizName) {
+    // Map staging Thumbtack host → production
+    url = url.replace("staging-partner.thumbtack.com", "thumbtack.com");
+    backdrop.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    iframeEl.src = url;
+
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: "CompareQuoteOpen", businessName: bizName });
+  }
+
+  function closePopup() {
+    backdrop.style.display = "none";
+    document.body.style.overflow = "";
+    iframeEl.src = "";
+  }
+
+  // Listen for postMessage events from the Thumbtack iframe
+  window.addEventListener("message", function (e) {
+    if (!e.origin || e.origin.indexOf("thumbtack.com") === -1) return;
+
+    var raw  = typeof e.data === "string"
+                 ? e.data.toLowerCase()
+                 : JSON.stringify(e.data || "").toLowerCase();
+    var msg  = (typeof e.data === "object" && e.data !== null) ? e.data : {};
+    var type = String(msg.type || msg.event || msg.action || msg.name || e.data || "").toLowerCase();
+
+    if (type.indexOf("close") !== -1 || raw.indexOf("close") !== -1) {
+      closePopup();
+      return;
+    }
+
+    if (type.indexOf("submit") !== -1 || type.indexOf("complete") !== -1 ||
+        raw.indexOf("submit") !== -1  || raw.indexOf("complete") !== -1) {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: "QuoteSubmitted", rfwData: msg.data || {} });
+      return;
+    }
+
+    if (type.indexOf("resize") !== -1 && msg.height) {
+      iframeEl.style.height = msg.height + "px";
+      iframeEl.setAttribute("height", msg.height);
+    }
+  });
+
+  // Close on backdrop click / Escape
+  backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closePopup(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePopup(); });
+
+  // Delegated click on dynamically rendered CTA buttons
+  document.addEventListener("click", function (e) {
+    var link = e.target.closest(".js-tt-cta");
+    if (!link) return;
+    e.preventDefault();
+    openPopup(link.getAttribute("href"), link.dataset.bizName || "");
+  });
+})();
 </script>
 </body>
 </html>
