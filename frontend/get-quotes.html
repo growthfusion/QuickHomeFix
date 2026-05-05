@@ -475,7 +475,7 @@
         </div>
 
         <!-- Thumbtack Matched Contractors -->
-        <div id="thumbtackContractorsSection" class="w-full max-w-3xl mb-12" style="display:none;">
+        <div id="thumbtackContractorsSection" class="w-full max-w-7xl mb-12" style="display:none;">
           <div class="text-center mb-6">
             <h3 class="text-xl font-bold text-gray-900">Matched Contractors Near You</h3>
             <p class="text-sm text-gray-400 mt-1">Top-rated professionals ready to help with your project</p>
@@ -1192,6 +1192,8 @@ function buildUpsellCards() {
   });
 }
 
+var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5";
+
 function buildThumbTackContractors() {
   var section = document.getElementById("thumbtackContractorsSection");
   var container = document.getElementById("thumbtackContractors");
@@ -1203,134 +1205,317 @@ function buildThumbTackContractors() {
 
   section.style.display = "block";
 
-  // Skeleton loaders
-  var skeletons = "";
-  for (var i = 0; i < 3; i++) {
-    skeletons += '<div class="bg-white border border-gray-200 rounded-2xl p-4 mb-4 flex gap-4 animate-pulse">' +
-      '<div class="w-20 h-20 rounded-xl bg-gray-200 flex-shrink-0"></div>' +
-      '<div class="flex-1 space-y-2 py-1">' +
+  // Skeleton grid (matches final card layout)
+  var skeletonHtml = '<div class="' + TT_GRID_CLASS + '">';
+  for (var i = 0; i < 4; i++) {
+    skeletonHtml += '<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col animate-pulse">' +
+      '<div class="w-full bg-gray-200" style="height:160px"></div>' +
+      '<div class="p-4 flex-1 space-y-2">' +
         '<div class="h-4 bg-gray-200 rounded w-3/4"></div>' +
         '<div class="h-3 bg-gray-200 rounded w-1/2"></div>' +
-        '<div class="h-3 bg-gray-200 rounded w-1/3"></div>' +
+        '<div class="h-3 bg-gray-200 rounded w-2/3"></div>' +
       '</div>' +
+      '<div class="px-4 pb-4"><div class="h-10 bg-gray-200 rounded-xl"></div></div>' +
     '</div>';
   }
-  container.innerHTML = skeletons;
+  skeletonHtml += '</div>';
+  container.innerHTML = skeletonHtml;
 
   fetchThumbTackBusinesses(keyword, zipCode)
     .then(function(data) {
-      // Thumbtack business response: { data: [{ businessName, businessImageURL, rating, numberOfReviews, quote, servicePageURL, ... }] }
+      // Response: { data: [{ businessName, businessImageURL, rating, numberOfReviews, businessLocation,
+      //                       isTopPro, opinionatedSignal, yearsInBusiness, numberOfHires,
+      //                       businessIntroduction, widgets, servicePageURL, quote, ... }] }
       var businesses = (data && data.data) || [];
       if (!businesses.length) { section.style.display = "none"; return; }
 
-      container.innerHTML = "";
-      businesses.forEach(function(biz) {
-        var name     = String(biz.businessName || "");
-        var rating   = parseFloat(biz.rating || 0);
-        var reviews  = parseInt(biz.numberOfReviews || 0, 10);
-        var rawPhoto = String(biz.businessImageURL || "");
-        // Prefer Thumbtack Request Flow Widget URL (quote popup) — fall back to profile page.
-        var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
-        var price    = String((biz.quote && biz.quote.costUnit) ? biz.quote.costUnit : "");
-
-        // Only allow safe http/https URLs to prevent javascript: injection
-        var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
-        var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
-
-        var card = document.createElement("div");
-        card.className = "bg-white border border-gray-200 rounded-2xl p-4 mb-4 flex flex-col gap-3 hover:shadow-md transition-shadow";
-
-        var rowEl = document.createElement("div");
-        rowEl.className = "flex gap-4";
-
-        // Photo element
-        var photoEl;
-        if (safePhoto) {
-          photoEl = document.createElement("img");
-          photoEl.src = safePhoto;
-          photoEl.alt = name;
-          photoEl.className = "w-20 h-20 rounded-xl object-cover flex-shrink-0";
-        } else {
-          photoEl = document.createElement("div");
-          photoEl.className = "w-20 h-20 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0";
-          var placeholderSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          placeholderSvg.setAttribute("class", "w-8 h-8 text-blue-400");
-          placeholderSvg.setAttribute("fill", "none");
-          placeholderSvg.setAttribute("viewBox", "0 0 24 24");
-          placeholderSvg.setAttribute("stroke", "currentColor");
-          placeholderSvg.setAttribute("stroke-width", "2");
-          placeholderSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>';
-          photoEl.appendChild(placeholderSvg);
-        }
-
-        // Info column
-        var infoEl = document.createElement("div");
-        infoEl.className = "flex-1 min-w-0";
-
-        var nameEl = document.createElement("h4");
-        nameEl.className = "font-bold text-gray-900 text-base truncate";
-        nameEl.textContent = name;
-
-        // Stars
-        var starsEl = document.createElement("div");
-        starsEl.className = "flex items-center gap-0.5 mt-1";
-        for (var s = 0; s < 5; s++) {
-          var starSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          starSvg.setAttribute("class", "w-4 h-4 " + (s < Math.round(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"));
-          starSvg.setAttribute("viewBox", "0 0 24 24");
-          starSvg.innerHTML = '<path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>';
-          starsEl.appendChild(starSvg);
-        }
-        if (reviews) {
-          var reviewSpan = document.createElement("span");
-          reviewSpan.className = "text-xs text-gray-400 ml-1";
-          reviewSpan.textContent = "(" + reviews + ")";
-          starsEl.appendChild(reviewSpan);
-        }
-
-        infoEl.appendChild(nameEl);
-        infoEl.appendChild(starsEl);
-
-        if (price) {
-          var priceEl = document.createElement("p");
-          priceEl.className = "text-sm text-gray-500 mt-1 capitalize";
-          priceEl.textContent = price;
-          infoEl.appendChild(priceEl);
-        }
-
-        rowEl.appendChild(photoEl);
-        rowEl.appendChild(infoEl);
-        card.appendChild(rowEl);
-
-        if (safeCta) {
-          var ctaEl = document.createElement("a");
-          ctaEl.href = safeCta;
-          ctaEl.className = "js-tt-cta vc-btn flex items-center justify-center gap-2 w-full text-white font-semibold py-3 rounded-xl text-sm bg-blue-600 hover:bg-blue-700 transition-colors";
-          ctaEl.setAttribute("data-biz-name", name);
-          var sendSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-          sendSvg.setAttribute("class", "w-4 h-4");
-          sendSvg.setAttribute("fill", "none");
-          sendSvg.setAttribute("viewBox", "0 0 24 24");
-          sendSvg.setAttribute("stroke", "currentColor");
-          sendSvg.setAttribute("stroke-width", "2");
-          var sendPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          sendPath.setAttribute("stroke-linecap", "round");
-          sendPath.setAttribute("stroke-linejoin", "round");
-          sendPath.setAttribute("d", "M12 19l9 2-9-18-9 18 9-2zm0 0v-8");
-          sendSvg.appendChild(sendPath);
-          ctaEl.appendChild(sendSvg);
-          var ctaLabel = document.createElement("span");
-          ctaLabel.textContent = "Compare Free Quote";
-          ctaEl.appendChild(ctaLabel);
-          card.appendChild(ctaEl);
-        }
-
-        container.appendChild(card);
+      // Sort by rating descending (mirrors HouseCrew results.html)
+      businesses = businesses.slice().sort(function(a, b) {
+        return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
       });
+
+      var grid = document.createElement("div");
+      grid.className = TT_GRID_CLASS;
+
+      businesses.forEach(function(biz) {
+        grid.appendChild(buildBizCard(biz));
+      });
+
+      while (container.firstChild) container.removeChild(container.firstChild);
+      container.appendChild(grid);
     })
     .catch(function() {
       section.style.display = "none";
     });
+}
+
+/* Build a single vertical contractor card (HouseCrew-style). */
+function buildBizCard(biz) {
+  var name     = String(biz.businessName || "Local Pro");
+  var address  = String(biz.businessLocation || "");
+  var rating   = parseFloat(biz.rating || 0);
+  var reviews  = parseInt(biz.numberOfReviews || 0, 10);
+  var rawPhoto = String(biz.businessImageURL || "");
+  var isTopPro = !!biz.isTopPro;
+  var signal   = String(biz.opinionatedSignal || "");
+  var years    = parseInt(biz.yearsInBusiness || 0, 10);
+  var hires    = parseInt(biz.numberOfHires || 0, 10);
+  var rawIntro = String(biz.businessIntroduction || "");
+  var intro    = rawIntro ? (rawIntro.length > 140 ? rawIntro.slice(0, 140) + "…" : rawIntro) : "";
+  // Prefer Thumbtack Request Flow Widget URL (quote popup) — fall back to profile page.
+  var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
+
+  // URL whitelist — only http/https, no javascript: payloads
+  var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
+  var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
+
+  var card = document.createElement("div");
+  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200";
+
+  // ─── Image area (top of card) ───────────────────────────────────────────
+  var imgWrap = document.createElement("div");
+  imgWrap.className = "relative w-full bg-gradient-to-br from-blue-400 to-blue-600";
+  imgWrap.style.height = "160px";
+
+  if (safePhoto) {
+    var imgEl = document.createElement("img");
+    imgEl.src = safePhoto;
+    imgEl.alt = name;
+    imgEl.loading = "lazy";
+    imgEl.className = "w-full h-full object-cover";
+    imgWrap.appendChild(imgEl);
+  } else {
+    var phWrap = document.createElement("div");
+    phWrap.className = "w-full h-full flex items-center justify-center";
+    var phSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    phSvg.setAttribute("class", "w-12 h-12 text-white opacity-80");
+    phSvg.setAttribute("fill", "none");
+    phSvg.setAttribute("viewBox", "0 0 24 24");
+    phSvg.setAttribute("stroke", "currentColor");
+    phSvg.setAttribute("stroke-width", "1.5");
+    var phPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    phPath.setAttribute("stroke-linecap", "round");
+    phPath.setAttribute("stroke-linejoin", "round");
+    phPath.setAttribute("d", "M3 21V8l9-5 9 5v13M9 21V12h6v9");
+    phSvg.appendChild(phPath);
+    phWrap.appendChild(phSvg);
+    imgWrap.appendChild(phWrap);
+  }
+
+  // Top Pro overlay badge on image
+  if (isTopPro) {
+    var topProBadge = document.createElement("div");
+    topProBadge.className = "absolute top-2.5 left-2.5 inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md text-white";
+    topProBadge.style.background = "linear-gradient(135deg,#F59E0B,#D97706)";
+    var bdgStar = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    bdgStar.setAttribute("class", "w-3 h-3 fill-current");
+    bdgStar.setAttribute("viewBox", "0 0 24 24");
+    var bdgStarPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    bdgStarPath.setAttribute("d", "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
+    bdgStar.appendChild(bdgStarPath);
+    var bdgText = document.createElement("span");
+    bdgText.textContent = "Top Pro";
+    topProBadge.appendChild(bdgStar);
+    topProBadge.appendChild(bdgText);
+    imgWrap.appendChild(topProBadge);
+  }
+
+  card.appendChild(imgWrap);
+
+  // ─── Body ───────────────────────────────────────────────────────────────
+  var body = document.createElement("div");
+  body.className = "p-4 flex flex-col flex-1";
+
+  // Name
+  var nameEl = document.createElement("h4");
+  nameEl.className = "font-bold text-gray-900 text-base leading-snug";
+  nameEl.textContent = name;
+  body.appendChild(nameEl);
+
+  // Star rating row
+  if (rating > 0) {
+    var starRow = document.createElement("div");
+    starRow.className = "flex items-center gap-1 mt-1.5";
+    for (var s = 0; s < 5; s++) {
+      var starEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      starEl.setAttribute("class", "w-3.5 h-3.5 " + (s < Math.round(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"));
+      starEl.setAttribute("viewBox", "0 0 24 24");
+      var starPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      starPath.setAttribute("d", "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
+      starEl.appendChild(starPath);
+      starRow.appendChild(starEl);
+    }
+    var ratingNum = document.createElement("span");
+    ratingNum.className = "font-bold text-gray-900 text-xs ml-1";
+    ratingNum.textContent = rating.toFixed(1);
+    starRow.appendChild(ratingNum);
+    if (reviews) {
+      var reviewSpan = document.createElement("span");
+      reviewSpan.className = "text-xs text-gray-400";
+      reviewSpan.textContent = "· " + reviews + " reviews";
+      starRow.appendChild(reviewSpan);
+    }
+    body.appendChild(starRow);
+  }
+
+  // Badges row (Top Pro / opinionated signal e.g. "Highly rated", "Responds quickly")
+  if (isTopPro || signal) {
+    var badgesRow = document.createElement("div");
+    badgesRow.className = "flex flex-wrap gap-1.5 mt-2";
+    if (isTopPro) {
+      var topProBdg = document.createElement("span");
+      topProBdg.className = "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full";
+      topProBdg.style.background = "#FEF3C7";
+      topProBdg.style.color = "#B45309";
+      topProBdg.style.border = "1px solid #FDE68A";
+      var inlineStar = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      inlineStar.setAttribute("class", "w-2.5 h-2.5 fill-current");
+      inlineStar.setAttribute("viewBox", "0 0 24 24");
+      var inlineStarPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      inlineStarPath.setAttribute("d", "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
+      inlineStar.appendChild(inlineStarPath);
+      var topProText = document.createElement("span");
+      topProText.textContent = "Top Pro";
+      topProBdg.appendChild(inlineStar);
+      topProBdg.appendChild(topProText);
+      badgesRow.appendChild(topProBdg);
+    }
+    if (signal) {
+      var sigBdg = document.createElement("span");
+      sigBdg.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full";
+      sigBdg.style.background = "rgba(37,99,235,0.08)";
+      sigBdg.style.color = "#2563EB";
+      sigBdg.style.border = "1px solid rgba(37,99,235,0.2)";
+      sigBdg.textContent = signal;
+      badgesRow.appendChild(sigBdg);
+    }
+    body.appendChild(badgesRow);
+  }
+
+  // Address row
+  if (address) {
+    var addrRow = document.createElement("div");
+    addrRow.className = "flex items-center gap-1 text-gray-400 text-xs mt-1.5";
+    var pinSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    pinSvg.setAttribute("class", "w-3 h-3 flex-shrink-0");
+    pinSvg.setAttribute("fill", "none");
+    pinSvg.setAttribute("viewBox", "0 0 24 24");
+    pinSvg.setAttribute("stroke", "currentColor");
+    pinSvg.setAttribute("stroke-width", "2");
+    var pinPath1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pinPath1.setAttribute("stroke-linecap", "round");
+    pinPath1.setAttribute("stroke-linejoin", "round");
+    pinPath1.setAttribute("d", "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z");
+    var pinPath2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pinPath2.setAttribute("stroke-linecap", "round");
+    pinPath2.setAttribute("stroke-linejoin", "round");
+    pinPath2.setAttribute("d", "M15 11a3 3 0 11-6 0 3 3 0 016 0z");
+    pinSvg.appendChild(pinPath1);
+    pinSvg.appendChild(pinPath2);
+    var addrText = document.createElement("span");
+    addrText.className = "truncate";
+    addrText.textContent = address;
+    addrRow.appendChild(pinSvg);
+    addrRow.appendChild(addrText);
+    body.appendChild(addrRow);
+  }
+
+  // Meta row (years in business + hires)
+  if (years > 0 || hires > 0) {
+    var metaRow = document.createElement("div");
+    metaRow.className = "flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium mt-2";
+    if (years > 0) {
+      var yrsEl = document.createElement("span");
+      yrsEl.className = "inline-flex items-center gap-1";
+      var clockSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      clockSvg.setAttribute("class", "w-3 h-3 text-gray-400");
+      clockSvg.setAttribute("fill", "none");
+      clockSvg.setAttribute("viewBox", "0 0 24 24");
+      clockSvg.setAttribute("stroke", "currentColor");
+      clockSvg.setAttribute("stroke-width", "2");
+      var clockPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      clockPath.setAttribute("stroke-linecap", "round");
+      clockPath.setAttribute("stroke-linejoin", "round");
+      clockPath.setAttribute("d", "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z");
+      clockSvg.appendChild(clockPath);
+      var yrsText = document.createElement("span");
+      yrsText.textContent = years + " yrs";
+      yrsEl.appendChild(clockSvg);
+      yrsEl.appendChild(yrsText);
+      metaRow.appendChild(yrsEl);
+    }
+    if (years > 0 && hires > 0) {
+      var dot = document.createElement("span");
+      dot.className = "text-gray-200";
+      dot.textContent = "·";
+      metaRow.appendChild(dot);
+    }
+    if (hires > 0) {
+      var hiresEl = document.createElement("span");
+      hiresEl.className = "inline-flex items-center gap-1";
+      hiresEl.style.color = "#059669";
+      var checkSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      checkSvg.setAttribute("class", "w-3 h-3");
+      checkSvg.style.color = "#10B981";
+      checkSvg.setAttribute("fill", "none");
+      checkSvg.setAttribute("viewBox", "0 0 24 24");
+      checkSvg.setAttribute("stroke", "currentColor");
+      checkSvg.setAttribute("stroke-width", "2");
+      var checkPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      checkPath.setAttribute("stroke-linecap", "round");
+      checkPath.setAttribute("stroke-linejoin", "round");
+      checkPath.setAttribute("d", "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z");
+      checkSvg.appendChild(checkPath);
+      var hiresText = document.createElement("span");
+      hiresText.textContent = hires + " hired";
+      hiresEl.appendChild(checkSvg);
+      hiresEl.appendChild(hiresText);
+      metaRow.appendChild(hiresEl);
+    }
+    body.appendChild(metaRow);
+  }
+
+  // Intro text
+  if (intro) {
+    var introEl = document.createElement("p");
+    introEl.className = "text-gray-500 text-xs leading-relaxed mt-3 pt-3 border-t border-gray-100";
+    introEl.style.lineHeight = "1.65";
+    introEl.textContent = intro;
+    body.appendChild(introEl);
+  }
+
+  // Spacer pushes the CTA to the bottom so cards in the same row align
+  var spacer = document.createElement("div");
+  spacer.className = "flex-1";
+  spacer.style.minHeight = "10px";
+  body.appendChild(spacer);
+
+  // CTA button (delegated click → opens Thumbtack iframe popup)
+  if (safeCta) {
+    var ctaEl = document.createElement("a");
+    ctaEl.href = safeCta;
+    ctaEl.className = "js-tt-cta mt-3 flex items-center justify-center gap-1.5 w-full text-white font-semibold py-2.5 rounded-xl text-sm bg-blue-600 hover:bg-blue-700 transition-colors";
+    ctaEl.setAttribute("data-biz-name", name);
+    var sendSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    sendSvg.setAttribute("class", "w-4 h-4");
+    sendSvg.setAttribute("fill", "none");
+    sendSvg.setAttribute("viewBox", "0 0 24 24");
+    sendSvg.setAttribute("stroke", "currentColor");
+    sendSvg.setAttribute("stroke-width", "2");
+    var sendPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    sendPath.setAttribute("stroke-linecap", "round");
+    sendPath.setAttribute("stroke-linejoin", "round");
+    sendPath.setAttribute("d", "M12 19l9 2-9-18-9 18 9-2zm0 0v-8");
+    sendSvg.appendChild(sendPath);
+    var ctaLabel = document.createElement("span");
+    ctaLabel.textContent = "Compare Free Quote";
+    ctaEl.appendChild(sendSvg);
+    ctaEl.appendChild(ctaLabel);
+    body.appendChild(ctaEl);
+  }
+
+  card.appendChild(body);
+  return card;
 }
 
 function switchToService(serviceKey, path) {
