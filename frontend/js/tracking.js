@@ -285,17 +285,36 @@ function submitFullLead(formData) {
     source_id: getSourceId(),
   });
 
+  function pushLeadEvent() {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "redtrackLead",
+      rt_ad: getRtAd(),
+      service: formData.service || "",
+      fname: formData.firstName || "",
+      lname: formData.lastName || "",
+      city: formData.city || "",
+      email: formData.email || "",
+      zipcode: formData.zipcode || "",
+      fbclid: getFbclid(),
+      clickid: getClickId(),
+      payout_amount: REDTRACK_PAYOUT_AMOUNT,
+    });
+  }
+
   return submitLead(payload)
     .then(function (result) {
       console.log("Lead submitted:", result);
-      // Fire Redtrack beacons
+      trackStepEvent("leadSubmit", { service: formData.service });
+      pushLeadEvent();
       fireRedtrackPostback(formData);
       fireRedtrackClick(payload);
       return result;
     })
     .catch(function (err) {
       console.error("Lead submission error:", err);
-      // Still fire Redtrack even if lead save failed
+      trackStepEvent("leadSubmit", { service: formData.service });
+      pushLeadEvent();
       fireRedtrackPostback(formData);
       fireRedtrackClick(formData);
       return null;
