@@ -1515,6 +1515,86 @@ app.get("/api/verify-phone", async (req, res) => {
 });
 
 
+// ─── Thumbtack OAuth token cache ───────────────────────────────────────────
+let _thumbtackToken = null;
+let _thumbtackTokenExpiresAt = 0;
+
+async function getThumbTackToken() {
+  if (_thumbtackToken && Date.now() < _thumbtackTokenExpiresAt - 60000) {
+    return _thumbtackToken;
+  }
+  const clientId = process.env.THUMBTACK_CLIENT_ID;
+  const clientSecret = process.env.THUMBTACK_CLIENT_SECRET;
+  const authUrl = process.env.THUMBTACK_AUTH_URL;
+  if (!clientId || !clientSecret || !authUrl || !process.env.THUMBTACK_API_BASE) {
+    throw new Error("Thumbtack credentials not configured");
+  }
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const response = await axios.post(
+    authUrl,
+    new URLSearchParams({ grant_type: "client_credentials", audience: "urn:partner-api" }),
+    {
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      timeout: 10000,
+    }
+  );
+  _thumbtackToken = response.data.access_token;
+  _thumbtackTokenExpiresAt = Date.now() + (response.data.expires_in || 3600) * 1000;
+  return _thumbtackToken;
+}
+
+// GET /api/thumbtack/keywords?searchQuery=roofing
+app.get("/api/thumbtack/keywords", async (req, res) => {
+  const { searchQuery } = req.query;
+  if (!searchQuery) return res.status(400).json({ error: "searchQuery is required" });
+  try {
+    const token = await getThumbTackToken();
+    const apiBase = process.env.THUMBTACK_API_BASE;
+    const response = await axios.get(
+      `${apiBase}/api/v4/keywords/search?searchQuery=${encodeURIComponent(searchQuery)}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000,
+      }
+    );
+    return res.json(response.data);
+  } catch (err) {
+    console.error("Thumbtack keywords error:", err.message);
+    return res.status(500).json({ error: "Failed to fetch Thumbtack keywords" });
+  }
+});
+
+// POST /api/thumbtack/businesses
+app.post("/api/thumbtack/businesses", async (req, res) => {
+  const { searchQuery, zipCode } = req.body || {};
+  if (!searchQuery || !zipCode) {
+    return res.status(400).json({ error: "searchQuery and zipCode are required" });
+  }
+  try {
+    const token = await getThumbTackToken();
+    const apiBase = process.env.THUMBTACK_API_BASE;
+    const response = await axios.post(
+      `${apiBase}/api/v4/businesses/search`,
+      { searchQuery, zipCode, utmData: { utm_source: "cma-growthfusion" } },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+    return res.json(response.data);
+  } catch (err) {
+    console.error("Thumbtack businesses error:", err.message);
+    return res.status(500).json({ error: "Failed to fetch Thumbtack businesses" });
+  }
+});
+// ───────────────────────────────────────────────────────────────────────────
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

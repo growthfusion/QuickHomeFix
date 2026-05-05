@@ -112,6 +112,7 @@ function fireRedtrackPostback(formData) {
   });
   var img = new Image();
   img.src = REDTRACK_POSTBACK_URL + "?" + params.toString();
+  console.log("[Redtrack postback]", img.src);
 }
 
 function fireRedtrackClick(formData) {
@@ -132,6 +133,7 @@ function fireRedtrackClick(formData) {
   });
   var img = new Image();
   img.src = REDTRACK_CLICK_URL + "?" + params.toString();
+  console.log("[Redtrack click]", img.src);
 }
 
 /* ═══════════════════════════════════════════
@@ -283,38 +285,38 @@ function submitFullLead(formData) {
     source_id: getSourceId(),
   });
 
-  function pushLeadEvent() {
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: "redtrackLead",
-      rt_ad: getRtAd(),
-      service: formData.service || "",
-      fname: formData.firstName || "",
-      lname: formData.lastName || "",
-      city: formData.city || "",
-      email: formData.email || "",
-      zipcode: formData.zipcode || "",
-      fbclid: getFbclid(),
-      clickid: getClickId(),
-      payout_amount: REDTRACK_PAYOUT_AMOUNT,
-    });
-  }
-
   return submitLead(payload)
     .then(function (result) {
-      trackStepEvent("leadSubmit", { service: formData.service });
-      pushLeadEvent();
+      console.log("Lead submitted:", result);
+      // Fire Redtrack beacons
       fireRedtrackPostback(formData);
       fireRedtrackClick(payload);
       return result;
     })
     .catch(function (err) {
-      trackStepEvent("leadSubmit", { service: formData.service });
-      pushLeadEvent();
+      console.error("Lead submission error:", err);
+      // Still fire Redtrack even if lead save failed
       fireRedtrackPostback(formData);
       fireRedtrackClick(formData);
       return null;
     });
+}
+
+function esc(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/** POST /api/thumbtack/businesses — body: { searchQuery, zipCode } */
+function fetchThumbTackBusinesses(searchQuery, zipCode) {
+  return apiRequest("/api/thumbtack/businesses", {
+    method: "POST",
+    body: JSON.stringify({ searchQuery: searchQuery, zipCode: zipCode }),
+  });
 }
 
 /* ═══════════════════════════════════════════
