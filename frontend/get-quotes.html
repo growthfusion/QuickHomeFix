@@ -369,10 +369,12 @@
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">First Name <span class="text-red-500">*</span></label>
                   <input id="firstNameInput" placeholder="First name" class="w-full py-3 px-3 border border-gray-200 rounded-lg" required autofocus />
+                  <p id="firstNameError" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Last Name <span class="text-red-500">*</span></label>
                   <input id="lastNameInput" placeholder="Last name" class="w-full py-3 px-3 border border-gray-200 rounded-lg" required />
+                  <p id="lastNameError" class="text-red-500 text-xs mt-1 hidden"></p>
                 </div>
               </div>
               <div class="flex justify-center">
@@ -1103,9 +1105,22 @@ function setOwner(val) {
 
 function submitName(e) {
   e.preventDefault();
-  const fn = document.getElementById("firstNameInput").value;
-  const ln = document.getElementById("lastNameInput").value;
-  if (!fn || !ln) return;
+  const fn = document.getElementById("firstNameInput").value.trim();
+  const ln = document.getElementById("lastNameInput").value.trim();
+  const fnErr = document.getElementById("firstNameError");
+  const lnErr = document.getElementById("lastNameError");
+  const nameRe = /^[A-Za-z][A-Za-z'’\-\s]{1,}$/;
+  let ok = true;
+  fnErr.classList.add("hidden"); lnErr.classList.add("hidden");
+  if (!fn || fn.length < 2 || !nameRe.test(fn)) {
+    fnErr.textContent = "Please enter a valid first name (at least 2 letters).";
+    fnErr.classList.remove("hidden"); ok = false;
+  }
+  if (!ln || ln.length < 2 || !nameRe.test(ln)) {
+    lnErr.textContent = "Please enter a valid last name (at least 2 letters).";
+    lnErr.classList.remove("hidden"); ok = false;
+  }
+  if (!ok) return;
   store.updateFormData("firstName", fn);
   store.updateFormData("lastName", ln);
   trackMetaEvent("name", "Enter Your Name", fn+" "+ln);

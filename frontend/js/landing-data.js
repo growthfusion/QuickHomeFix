@@ -48,6 +48,8 @@ const serviceLandingData = {
       { title: "Quality Fixtures", desc: "Premium faucets, showerheads, and hardware that combine style with durability." },
       { title: "Modern Tile & Flooring", desc: "Beautiful tile work for floors, walls, and showers with waterproof installation." }
     ],
+
+    
     advantages: [
       { title: "Increased Home Value", desc: "A bathroom remodel offers one of the highest returns on investment." },
       { title: "Improved Functionality", desc: "Upgrade your layout with better storage, lighting, and fixtures." },
