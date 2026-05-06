@@ -11,6 +11,8 @@ import { createClient } from "@clickhouse/client";
 // Force local .env values to override any stale system env vars.
 dotenv.config({ override: true });
 
+
+
 const app = express();
 
 // --- LeadProsper configuration ---
@@ -37,6 +39,10 @@ const LP_CAMPAIGNS = {
   SOLAR:         { id: process.env.LP_CAMPAIGN_SOLAR || "", supplier: "", key: "" },
 };
 const LP_ENABLED = true;
+
+
+
+
 const LP_TCPA_TEXT = process.env.LP_TCPA_TEXT ||
   "By submitting, you authorize QuickHomeFix and up to four home improvement companies, to make marketing calls and texts to the phone number provided to discuss your home improvement project.";
 const LP_DEBUG = String(process.env.LP_DEBUG || "").toLowerCase() === "true";
