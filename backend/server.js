@@ -1573,18 +1573,57 @@ app.get("/api/thumbtack/keywords", async (req, res) => {
   }
 });
 
-// POST /api/thumbtack/businesses
+// POST /api/thumbtack/businesses  { searchQuery, zipCode, utmData }
 app.post("/api/thumbtack/businesses", async (req, res) => {
-  const { searchQuery, zipCode } = req.body || {};
-  if (!searchQuery || !zipCode) {
+  const { searchQuery, zipCode, utmData } = req.body || {};
+  const cleanZip = String(zipCode || "").trim();
+
+  if (!searchQuery || !cleanZip) {
     return res.status(400).json({ error: "searchQuery and zipCode are required" });
   }
+  if (!/^\d{5}$/.test(cleanZip)) {
+    return res.status(400).json({ error: "zipCode must be a 5-digit US ZIP code" });
+  }
+
+  // Whitelist of UTM keys Thumbtack accepts.
+  // utm_medium and utm_tt_session are explicitly disallowed by Thumbtack.
+  const ALLOWED_UTM_KEYS = [
+    "utm_source",
+    "utm_campaign",
+    "utm_content",
+    "utm_subid",
+    "utm_facebook_click_id",
+    "utm_google_click_id",
+  ];
+
+  // Always force a valid utm_source (must match ^cma-[a-zA-Z0-9-_]+$, ≤48 chars).
+  const cleanUtm = { utm_source: "cma-growthfusion" };
+  if (utmData && typeof utmData === "object") {
+    ALLOWED_UTM_KEYS.forEach(function (k) {
+      const v = utmData[k];
+      if (typeof v === "string" && v.trim()) {
+        cleanUtm[k] = v.trim().slice(0, 200);
+      }
+    });
+    // Re-validate utm_source against Thumbtack's pattern; fall back if invalid.
+    if (!/^cma-[a-zA-Z0-9-_]{1,44}$/.test(cleanUtm.utm_source)) {
+      cleanUtm.utm_source = "cma-growthfusion";
+    }
+  }
+
+  const payload = {
+    searchQuery: String(searchQuery).slice(0, 200),
+    zipCode:     cleanZip,
+    utmData:     cleanUtm,
+  };
+
   try {
     const token = await getThumbTackToken();
     const apiBase = process.env.THUMBTACK_API_BASE;
+    console.log("[thumbtack/businesses] → upstream:", JSON.stringify(payload));
     const response = await axios.post(
       `${apiBase}/api/v4/businesses/search`,
-      { searchQuery, zipCode, utmData: { utm_source: "cma-growthfusion" } },
+      payload,
       {
         headers: {
           Authorization: `Bearer ${token}`,
