@@ -1051,7 +1051,7 @@ function showSuggestions(predictions) {
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "block w-full text-left px-3 py-2 text-sm hover:bg-gray-50";
-    btn.textContent = p.description;
+    btn.textContent = (p.description || "").split(",")[0];
     btn.onmousedown = function(e) {
       e.preventDefault();
       applySuggestion(p);
@@ -1068,15 +1068,13 @@ function hideSuggestions() {
 }
 
 function applySuggestion(suggestion) {
-  document.getElementById("addressInput").value = suggestion.description;
-  store.updateFormData("address", suggestion.description);
+  var streetOnly = (suggestion.description || "").split(",")[0].trim();
+  document.getElementById("addressInput").value = streetOnly;
+  store.updateFormData("address", streetOnly);
   hideSuggestions();
   if (!suggestion.place_id) return;
   placeDetails(suggestion.place_id).then(function(data) {
     if (data.street) { document.getElementById("addressInput").value = data.street; store.updateFormData("address", data.street); }
-    if (data.city) { document.getElementById("cityInput").value = data.city; store.updateFormData("city", data.city); }
-    if (data.state) { document.getElementById("stateInput").value = data.state.toUpperCase(); store.updateFormData("state", data.state.toUpperCase()); }
-    if (data.zipcode) { document.getElementById("detailZipInput").value = data.zipcode; store.updateFormData("zipcode", data.zipcode); }
   }).catch(function() {});
 }
 
