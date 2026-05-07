@@ -1592,7 +1592,7 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
     "utm_campaign",
     "utm_content",
     "utm_subid",
-    "utm_facebook_click_id",
+    "utm_user_hash",
     "utm_google_click_id",
   ];
 
