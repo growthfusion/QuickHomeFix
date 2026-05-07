@@ -1068,10 +1068,6 @@ function applySuggestion(suggestion) {
   document.getElementById("addressInput").value = streetOnly;
   store.updateFormData("address", streetOnly);
   hideSuggestions();
-  if (!suggestion.place_id) return;
-  placeDetails(suggestion.place_id).then(function(data) {
-    if (data.street) { document.getElementById("addressInput").value = data.street; store.updateFormData("address", data.street); }
-  }).catch(function() {});
 }
 
 function submitDetails(e) {
