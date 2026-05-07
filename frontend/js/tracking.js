@@ -330,11 +330,39 @@ function esc(str) {
     .replace(/'/g, "&#039;");
 }
 
-/** POST /api/thumbtack/businesses — body: { searchQuery, zipCode } */
+/** Build the utmData object Thumbtack expects from URL params + tracking helpers.
+ *  Mapping (per Thumbtack /v4/businesses/search schema):
+ *    utm_source            ← cma-growthfusion (required, ^cma-... pattern)
+ *    utm_campaign          ← Redtrack rt_cid / source_id  (sub4)
+ *    utm_content           ← Redtrack rt_ad               (sub2)
+ *    utm_subid             ← Redtrack clickid             (sub1)
+ *    utm_facebook_click_id ← Facebook fbclid
+ */
+function buildThumbTackUtmData() {
+  var params = new URLSearchParams(window.location.search);
+  var utmSrc      = params.get("utm_source")  || "cma-growthfusion";
+  var utmCampaign = params.get("utm_campaign") || params.get("rt_cid") || getSourceId() || "";
+  var utmContent  = params.get("utm_content")  || params.get("utm_rt_ad") || getRtAd() || "";
+  var utmSubid    = params.get("utm_subid")    || getClickId() || "";
+  var utmFbclid   = params.get("utm_facebook_click_id") || params.get("utm_user_hash") || getFbclid() || "";
+
+  var utmData = { utm_source: utmSrc };
+  if (utmCampaign) utmData.utm_campaign          = utmCampaign;
+  if (utmContent)  utmData.utm_content           = utmContent;
+  if (utmSubid)    utmData.utm_subid             = utmSubid;
+  if (utmFbclid)   utmData.utm_facebook_click_id = utmFbclid;
+  return utmData;
+}
+
+/** POST /api/thumbtack/businesses — body: { searchQuery, zipCode, utmData } */
 function fetchThumbTackBusinesses(searchQuery, zipCode) {
   return apiRequest("/api/thumbtack/businesses", {
     method: "POST",
-    body: JSON.stringify({ searchQuery: searchQuery, zipCode: zipCode }),
+    body: JSON.stringify({
+      searchQuery: searchQuery,
+      zipCode:     zipCode,
+      utmData:     buildThumbTackUtmData(),
+    }),
   });
 }
 
