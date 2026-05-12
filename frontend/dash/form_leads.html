@@ -3,79 +3,320 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Form Leads – QuickHomeFix Dashboard</title>
+  <title>Leads – QuickHomeFix Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" />
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/ranges.js"></script>
   <style>
-    .metric-table th, .metric-table td { white-space: nowrap; padding: 8px 10px; font-size: 12px; }
-    .metric-table th { background: #edf2fa; color: #6b7280; font-weight: 500; text-transform: uppercase; font-size: 10px; }
-    .metric-table tbody tr:hover { background: #fffbeb; }
-    .pct-bad  { background: #fde2e2; color: #b91c1c; }
-    .pct-good { background: #dcfce7; color: #166534; }
-    .num { text-align: right; }
-    .label { text-align: left; font-weight: 500; color: #111827; }
-    .faded td { color: #9ca3af; }
+    /* Light theme range picker (matches dashboard) */
+    .litepicker {
+      background: #fff !important;
+      color: #333;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+      font-family: inherit;
+    }
+    .litepicker .container__main { padding: 10px; }
+    .litepicker .container__months { background:#fff; box-shadow: none; }
+    .litepicker .container__months .month-item-header { color:#333; font-weight:600; }
+    .litepicker .container__months .month-item-weekdays-row > div { color:#999; font-weight:500; }
+    .litepicker .container__days .day-item { color:#333; }
+    .litepicker .container__days .day-item:hover {
+      background:#f0f7ff; color:#007bff; box-shadow:none;
+    }
+    .litepicker .container__days .day-item.is-locked { color:#cbd5e1; }
+    .litepicker .container__days .day-item.is-start-date,
+    .litepicker .container__days .day-item.is-end-date,
+    .litepicker .container__days .day-item.is-start-date.is-end-date {
+      background:#007bff !important; color:#fff !important; border-radius:50% !important;
+    }
+    .litepicker .container__days .day-item.is-in-range {
+      background:#edfbf6; color:#32d296;
+    }
+    .litepicker .button-previous-month svg,
+    .litepicker .button-next-month svg { fill:#333; }
+
+    .litepicker .container__predefined-ranges {
+      background:#f8f8f8;
+      border-right:1px solid #e5e5e5;
+      padding:10px;
+      min-width:140px;
+    }
+    .litepicker .container__predefined-ranges button {
+      background:transparent; color:#666; border:1px solid transparent;
+      display:block; width:100%; text-align:left; padding:6px 10px; margin-bottom:2px;
+      border-radius:4px; cursor:pointer; font-size:13px;
+    }
+    .litepicker .container__predefined-ranges button:hover { background:#fff; color:#007bff; }
+    .litepicker .container__predefined-ranges button.is-active,
+    .litepicker .container__predefined-ranges button:focus {
+      background:#fff; color:#007bff; border-color:#007bff;
+    }
+
+    .litepicker .container__footer {
+      background:#fff; border-top:1px solid #e5e5e5; padding:10px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .litepicker .container__footer .preview-date-range { color:#666; font-size:13px; }
+    .litepicker .container__footer .button-cancel {
+      background:#fff; color:#333; border:1px solid #e5e5e5;
+      padding:6px 16px; border-radius:4px; margin-right:8px; font-weight:600;
+      text-transform:uppercase; font-size:12px;
+    }
+    .litepicker .container__footer .button-apply {
+      background:#007bff; color:#fff; border:1px solid #007bff;
+      padding:6px 16px; border-radius:4px; font-weight:600;
+      text-transform:uppercase; font-size:12px;
+    }
+    .litepicker .container__footer .button-apply:hover { background:#0f6ecd; }
+  </style>
+  <style>
+    .metric-table { border-collapse: collapse; width: max-content; min-width: 100%; }
+    .metric-table th, .metric-table td {
+      white-space: nowrap;
+      padding: 14px 12px;
+      font-size: 14px;
+      border-left: 0;
+      border-right: 0;
+      vertical-align: middle;
+    }
+    .metric-table th {
+      text-align: left;
+      vertical-align: bottom;
+      font-size: 12px;
+      font-weight: normal;
+      color: #999;
+      text-transform: uppercase;
+    }
+    .metric-table thead th { border-bottom: 1px solid #e5e5e5; }
+    .metric-table tbody tr { transition: background-color .1s linear; border-top: 1px solid #e5e5e5; }
+    .metric-table tbody tr:hover { background: #ffd; }
+    .num   { text-align: right; }
+    .label { text-align: left; color: #333; }
+
+    /* 0-10 percent color scale (red -> neutral -> green) */
+    .bg_percent_0  { background:#f6b2bb; color:#e8234c; }
+    .bg_percent_1  { background:#faccd2; color:#ee2f53; }
+    .bg_percent_2  { background:#fce0e4; color:#f13b5d; }
+    .bg_percent_3  { background:#fde9ed; color:#f14364; }
+    .bg_percent_4  { background:#fef4f6; color:#f0506e; }
+    .bg_percent_5  { background:#fff;    color:#000;    }
+    .bg_percent_6  { background:#ffffff; color:#60d3a4; }
+    .bg_percent_7  { background:#f8f8f8; color:#50d29d; }
+    .bg_percent_8  { background:#eef8f3; color:#3ed099; }
+    .bg_percent_9  { background:#edfbf6; color:#32d296; }
+    .bg_percent_10 { background:#edfbf6; color:#32d296; }
+
+    /* expandable container with faded overlay + bottom button */
+    .expandable {
+      position: relative;
+      max-height: 300px;
+      overflow-y: hidden;
+      overflow-x: scroll;
+      margin-bottom: 50px;
+      background: #fff;
+    }
+    .expandable.expanded,
+    .expandable.no-expand {
+      max-height: none;
+      overflow-y: visible;
+    }
+
+    .expand-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(to top, #fff 14%, rgba(255,255,255,0));
+      content: '';
+      z-index: 100;
+      box-sizing: border-box;
+      border-bottom: 1px solid #007bff;
+      cursor: pointer;
+    }
+    .expandable.expanded .expand-overlay { display: none; }
+
+    .expand-btn {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      display: block;
+      margin: 0 auto;
+      padding: 10px 30px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all .2s;
+      border: 1px solid #326891;
+      border-radius: 5px;
+      z-index: 200;
+      background-color: #fff;
+      font-weight: 700;
+      height: 50px;
+      text-align: center;
+      text-transform: uppercase;
+      color: #007bff;
+      min-width: 150px;
+    }
+    .expand-btn:hover { background: #f0f7ff; }
+    .expand-btn:active, .expand-btn:focus { outline: none; }
+
+    /* first column min widths */
+    .metric-table th:first-child,
+    .metric-table td:first-child { min-width: 200px; }
+    .metric-table.wide-first th:first-child,
+    .metric-table.wide-first td:first-child { min-width: 360px; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
   <!-- Header -->
-  <header class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-      <h1 class="text-lg font-bold text-gray-800">QuickHomeFix Dashboard</h1>
-      <nav class="flex gap-4 text-sm">
-        <a href="/dash" class="text-gray-600 hover:text-blue-600">Dashboard</a>
-        <a href="/dash/form_leads" class="text-blue-600 font-medium">Form Leads</a>
-        <a href="/dash/form_leads_full" class="text-gray-600 hover:text-blue-600">Full Leads</a>
-        <a href="/dash/forms/pre_sales" class="text-gray-600 hover:text-blue-600">Pre Sales</a>
-        <a href="/dash/forms/form_steps" class="text-gray-600 hover:text-blue-600">Form Steps</a>
-        <a href="/dash/bucket_affiliate_statistics" class="text-gray-600 hover:text-blue-600">Statistics</a>
-        <a href="/dash/bucket_affiliate_settings" class="text-gray-600 hover:text-blue-600">Settings</a>
-      </nav>
+  <style>
+    .nav-bar { background:#fff; border-bottom:1px solid #e5e5e5; }
+    .nav-bar .nav-inner { display:flex; align-items:stretch; height:56px; padding:0 20px; }
+    .nav-bar .item {
+      position:relative;
+      display:flex; align-items:center;
+      padding:0 18px;
+      color:#666; font-size:12px; font-weight:500;
+      text-transform:uppercase; letter-spacing:.06em;
+      cursor:pointer; white-space:nowrap;
+      border-bottom:2px solid transparent;
+      transition:color .15s, border-color .15s;
+    }
+    .nav-bar .item:hover { color:#1e87f0; }
+    .nav-bar .item.active { color:#1e87f0; border-bottom-color:#1e87f0; }
+    .nav-bar .item .chev { margin-left:6px; opacity:.5; font-size:9px; }
+    .nav-bar .drop {
+      display:none;
+      position:absolute; top:100%; left:0;
+      background:#fff; border:1px solid #e5e5e5;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+      min-width:200px; padding:6px 0;
+      z-index:50;
+    }
+    .nav-bar .item:hover .drop { display:block; }
+    .nav-bar .drop a {
+      display:block; padding:9px 18px;
+      color:#444; font-size:13px;
+      text-transform:none; letter-spacing:0;
+    }
+    .nav-bar .drop a:hover { background:#f6f9fd; color:#1e87f0; }
+    .nav-bar .meta {
+      margin-left:auto; display:flex; align-items:center; gap:14px;
+      color:#999; font-size:12px; padding:0 8px;
+    }
+    .nav-bar .meta .badge {
+      background:#f3f4f6; color:#374151;
+      padding:4px 10px; border-radius:999px; font-weight:600;
+    }
+    .nav-bar .meta .clock { font-variant-numeric:tabular-nums; }
+  </style>
+  <header class="nav-bar">
+    <div class="nav-inner">
+      <a href="/dash/settings" class="item">Settings</a>
+      <a href="/dash/form_leads" class="item active">Leads</a>
+
+      <div class="item">Forms <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/forms/pre_sales">Forms / Pre-sales</a>
+          <a href="/dash/forms/form_steps">Form steps</a>
+        </div>
+      </div>
+
+      <div class="item">Host &amp; Post <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/host_post/partners">Partners</a>
+          <a href="/dash/host_post/white_list">White List</a>
+          <a href="/dash/host_post/statistics">Statistics</a>
+          <a href="/dash/host_post/billing">Billing</a>
+        </div>
+      </div>
+
+      <div class="item">Bucket Affiliate <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/bucket_affiliate_statistics">Statistics</a>
+          <a href="/dash/bucket_affiliate_settings">Settings</a>
+        </div>
+      </div>
+
+      <div class="item">Thumbtack <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/thumbtack/settings">Settings</a>
+          <a href="/dash/thumbtack/statistics">Statistics</a>
+          <a href="/dash/thumbtack/landings">Landings</a>
+        </div>
+      </div>
+
+      <div class="item">Reports <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/reports/custom">Custom report</a>
+          <a href="/dash/reports/upsells">Upsells</a>
+          <a href="/dash/reports/reposts">Reposts</a>
+          <a href="/dash/reports/transactions_lp">Transactions (LP)</a>
+          <a href="/dash/reports/adjustments">Adjustments statistics</a>
+          <a href="/dash/reports/score_april_2026">Score April 2026</a>
+        </div>
+      </div>
+
+      <a href="/dash/buyers" class="item">Buyers</a>
+      <a href="/dash/tools" class="item">Tools</a>
+
+      <div class="meta">
+        <span class="badge">dash</span>
+        <span class="clock" id="nav-now"></span>
+      </div>
     </div>
   </header>
+  <script>
+    (function () {
+      const pad = n => String(n).padStart(2, "0");
+      const fmt = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      };
+      const el = document.getElementById("nav-now");
+      el.textContent = fmt();
+      setInterval(() => { el.textContent = fmt(); }, 1000);
+    })();
+  </script>
 
   <!-- Filters -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+  <div class="w-full px-4 sm:px-6 py-3">
+    <div class="bg-white p-3 border-t border-b border-gray-200">
       <div class="flex flex-wrap gap-4 items-end">
         <div class="flex flex-col">
-          <label class="text-xs text-gray-500 mb-1">from_date</label>
-          <input type="date" value="2026-05-11" class="border border-gray-300 rounded px-2 py-1.5 text-sm" />
-        </div>
-        <div class="flex flex-col">
-          <label class="text-xs text-gray-500 mb-1">to_date</label>
-          <input type="date" value="2026-05-12" class="border border-gray-300 rounded px-2 py-1.5 text-sm" />
+          <label class="text-xs text-gray-500 mb-1">date range</label>
+          <input id="date-range" type="text" readonly placeholder="Select date range"
+                 class="border border-gray-300 rounded px-2 py-1.5 text-sm cursor-pointer bg-white min-w-[200px]" />
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">form</label>
-          <select class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+          <select id="form-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
             <option value="roof">roof</option>
             <option value="bath">bath</option>
-            <option value="tub">tub</option>
-            <option value="windows">windows</option>
-            <option value="solar">solar</option>
-            <option value="gutter">gutter</option>
           </select>
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">source</label>
-          <select class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+          <select id="source-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="facebook">facebook</option>
-            <option value="google">google</option>
-            <option value="snapchat">snapchat</option>
-            <option value="tiktok">tiktok</option>
-            <option value="everflow">everflow</option>
+            <option value="meta">Meta</option>
+            <option value="snap">Snap</option>
           </select>
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">buyer</label>
-          <select class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+          <select id="buyer-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="KG">KG</option>
+            <option value="Karigouda">Karigouda</option>
           </select>
         </div>
         <div class="flex flex-col">
@@ -114,20 +355,20 @@
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">state</label>
-          <select class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
-            <option value="">all</option><option>TX</option><option>FL</option><option>CA</option><option>MI</option><option>GA</option>
+          <select id="state-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+            <option value="">all</option>
           </select>
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">device</label>
-          <select class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
-            <option value="">all</option><option>smartphone</option><option>phablet</option><option>desktop</option><option>tablet</option>
+          <select id="device-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+            <option value="">all</option><option>smartphone</option><option>desktop</option><option>phablet</option><option>tablet</option>
           </select>
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">os</label>
-          <select class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
-            <option value="">all</option><option>iOS</option><option>Android</option><option>Windows</option><option>iPadOS</option><option>Mac</option>
+          <select id="os-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+            <option value="">all</option><option>iOS</option><option>Android</option><option>Windows</option><option>Mac</option><option>iPadOS</option>
           </select>
         </div>
       </div>
@@ -145,19 +386,19 @@
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">Hide Low Revenue</label>
           <label class="inline-flex items-center gap-2 text-sm text-gray-700 py-1.5">
-            <input type="checkbox" class="rounded border-gray-300" />
+            <input id="hide-low-rev" type="checkbox" class="rounded border-gray-300" />
             Hide leads &lt; $3
           </label>
         </div>
         <div class="ml-auto">
-          <button class="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700">Refresh</button>
+          <button id="refresh-btn" class="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700">Refresh</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Tables container -->
-  <div id="tables-container" class="bg-gray-50 pb-[8%] max-w-7xl mx-auto px-4 sm:px-6"></div>
+  <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
 
   <script>
     const METRIC_COLS = [
@@ -169,108 +410,528 @@
       "ADJUSTMENT, $","AVG PER LEAD, $","AVG PER SOLD, $","EPC, $","EPV, $"
     ];
 
-    const TABLES = [
-      { title: "Date", label: "DATE", rows: [
-        ["2026-05-12", 488,28.89,141,11.07,"-",54,40,"74.07%",0,"0%",1,0,"0%","1.85%",0,0,"0%","0%",10,0,"0%",687.87,729.96,0,0,0,0,0,-42.09,12.74,17.2,4.88,1.41],
-        ["2026-05-11", 7482,34.19,2558,13.98,"-",1046,744,"71.13%",0,"0%",97,34,"35.05%","9.27%",2,1,"50%","0.19%",48,0,"0%",14554.01,14848.73,0,453.27,0,108,0,-855.99,13.91,19.56,5.69,1.95],
-      ]},
-      { title: "Form", label: "FORM", rows: [
-        ["walk-in-shower",2543,18.72,476,13.61,"-",346,295,"85.26%",0,"0%",18,5,"27.78%","5.2%",1,0,"0%","0.29%",44,0,"0%",7501.06,7870.05,0,60.24,0,0,0,-429.23,21.68,25.43,15.76,2.95],
-        ["bath-remodel",231,67.1,155,130.74,"-",302,215,"71.19%",0,"0%",26,14,"53.85%","8.61%",1,1,"100%","0.33%",10,0,"0%",4408.3,4379.94,0,175.84,0,108,0,-255.48,14.6,20.5,28.44,19.08],
-        ["walk-in-tubs",1084,39.21,425,20.11,"-",218,145,"66.51%",0,"0%",36,6,"16.67%","16.51%",0,0,"0%","0%",4,0,"0%",1922.82,1948.43,0,119.35,0,0,0,-144.96,8.82,13.26,4.52,1.77],
-        ["roof",264,48.11,127,35.23,"-",93,48,"51.61%",0,"0%",10,4,"40%","10.75%",0,0,"0%","0%",0,0,"0%",385.68,347.78,0,44.1,0,0,0,-6.2,4.15,8.04,3.04,1.46],
-        ["window",286,41.96,120,18.53,"-",53,33,"62.26%",0,"0%",2,1,"50%","3.77%",0,0,"0%","0%",0,0,"0%",305.9,315.34,0,5.36,0,0,0,-14.8,5.77,9.27,2.55,1.07],
-      ]},
-      { title: "Source", label: "SOURCE", rows: [
-        ["everflow",3870,54.47,2108,23.51,"-",910,616,"67.69%",0,"0%",98,34,"34.69%","10.77%",2,1,"50%","0.22%",17,0,"0%",11399.26,11635.69,0,453.27,0,108,0,-797.7,12.53,18.51,5.41,2.95],
-        ["facebook",3,100,3,3433.33,"-",103,95,"92.23%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",28,0,"0%",1512.23,1574.11,0,0,0,0,0,-61.88,14.68,15.92,504.08,504.08],
-        ["snapchat",2549,7.22,184,2.24,"-",57,51,"89.47%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",10,0,"0%",1516.56,1549.69,0,0,0,0,0,-33.13,26.61,29.74,8.24,0.59],
-        ["google",397,19.65,78,4.03,"-",16,16,"100%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",3,0,"0%",579.72,583.15,0,0,0,0,0,-3.43,36.23,36.23,7.43,1.46],
-        ["tiktok",187,17.65,33,4.81,"-",9,4,"44.44%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",0,0,"0%",134.29,136.23,0,0,0,0,0,-1.94,14.92,33.57,4.07,0.72],
-      ]},
-      { title: "Buyer", label: "BUYER", rows: [
-        ["7409",631,84.31,532,34.71,"-",219,206,"94.06%",0,"0%",32,14,"43.75%","14.61%",2,1,"50%","0.91%",0,0,"0%",5443.62,5475.81,0,159.48,0,108,0,-299.67,24.86,26.43,10.23,8.63],
-        ["Vlad",1722,18.41,317,7.61,"-",131,122,"93.13%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",35,0,"0%",2409.47,2485.8,0,0,0,0,0,-76.33,18.39,19.75,7.6,1.4],
-        ["7267",348,68.1,237,37.64,"-",131,49,"37.4%",0,"0%",10,2,"20%","7.63%",0,0,"0%","0%",0,0,"0%",463.36,458.77,0,16.72,0,0,0,-12.13,3.54,9.46,1.96,1.33],
-        ["7840",615,52.2,321,21.3,"-",131,78,"59.54%",0,"0%",25,4,"16%","19.08%",0,0,"0%","0%",0,0,"0%",951.3,938.37,0,108.26,0,0,0,-95.33,7.26,12.2,2.96,1.55],
-        ["7057",360,82.78,298,29.44,"-",106,97,"91.51%",0,"0%",1,0,"0%","0.94%",0,0,"0%","0%",0,0,"0%",2207.76,2397.28,0,0,0,0,0,-189.52,20.83,22.76,7.41,6.13],
-      ]},
-      { title: "Landing", label: "LANDING", rows: [
-        ["betterhome.live/get-quotes/bathroom/",1464,71.11,1041,29.1,"-",426,347,"81.46%",0,"0%",38,15,"39.47%","8.92%",2,1,"50%","0.47%",17,0,"0%",8162.77,8407.09,0,166.86,0,108,0,-519.18,19.16,23.52,7.84,5.58],
-        ["betterhome.live/get-quotes/walk-in-tubs/",882,44.56,393,18.93,"-",167,107,"64.07%",0,"0%",33,5,"15.15%","19.76%",0,0,"0%","0%",0,0,"0%",1352.99,1375.38,0,115.1,0,0,0,-137.49,8.1,12.64,3.44,1.53],
-        ["onehome.cc/article/walk-in-shower/home-quote-pro/",692,31.65,219,13.29,"-",92,86,"93.48%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",23,0,"0%",1438.64,1495.46,0,0,0,0,0,-56.82,15.64,16.73,6.57,2.08],
-        ["betterhome.live/get-quotes/bath-remodel/",228,67.54,154,32.02,"-",73,25,"34.25%",0,"0%",9,5,"55.56%","12.33%",0,0,"0%","0%",0,0,"0%",235.55,180.37,0,73.47,0,0,0,-18.29,3.23,9.42,1.53,1.03],
-        ["betterhome.live/get-quotes/exterior-hub/",158,69.62,110,41.14,"-",65,25,"38.46%",0,"0%",5,1,"20%","6.28%",0,0,"0%","0%",0,0,"0%",274.28,278.51,0,6.28,0,0,0,-10.51,4.22,10.97,2.49,1.74],
-      ]},
-      { title: "Campaign ID", label: "CAMPAIGN_ID", rows: [
-        ["Unknown",7937,33.89,2690,13.83,"-",1098,783,"71.31%",0,"0%",98,34,"34.69%","8.93%",2,1,"50%","0.18%",58,0,"0%",15182.06,15518.87,0,453.27,0,108,0,-898.08,13.83,19.39,5.64,1.91],
-        ["20462247792755334337",6,16.67,1,16.67,"-",1,0,"0%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",0,0,"0%",0,0,0,0,0,0,0,0,0,0,0,0],
-        ["20386061187568107554",23,30.43,7,4.35,"-",1,1,"100%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",0,0,"0%",59.82,59.82,0,0,0,0,0,0,59.82,59.82,8.55,2.6],
-      ]},
-      { title: "Placement", label: "PLACEMENT", rows: [
-        ["Unknown",4413,50.58,2232,21.1,"-",931,635,"68.21%",0,"0%",98,34,"34.69%","10.53%",2,1,"50%","0.21%",20,0,"0%",12157.95,12406.6,0,453.27,0,108,0,-809.92,13.06,19.15,5.45,2.76],
-        ["Snap",2547,7.22,184,2.2,"-",56,50,"89.29%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",10,0,"0%",1437.41,1461.75,0,0,0,0,0,-24.34,25.67,28.75,7.81,0.56],
-        ["Facebook_Mobile_Reels",215,53.95,116,23.26,"-",50,47,"94%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",17,0,"0%",802.23,835.55,0,0,0,0,0,-33.32,16.04,17.07,6.92,3.73],
-        ["Facebook_Mobile_Feed",145,44.14,64,19.31,"-",28,26,"92.86%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",7,0,"0%",274.92,290.35,0,0,0,0,0,-15.43,9.82,10.57,4.3,1.9],
-        ["Instagram_Reels",38,44.74,17,26.32,"-",10,10,"100%",0,"0%",0,0,"0%","0%",0,0,"0%","0%",0,0,"0%",190.68,198.93,0,0,0,0,0,-8.25,19.07,19.07,11.22,5.02],
-      ]},
-      { title: "State", label: "STATE", rows: [
-        ["TX",868,33.64,292,12.21,"-",106,75,"70.75%",0,"0%",2,1,"50%","1.89%",0,0,"0%","0%",5,0,"0%",1421.37,1492.45,0,6.5,0,0,0,-77.58,13.41,18.95,4.87,1.64],
-        ["FL",507,39.45,200,19.53,"-",99,76,"76.77%",0,"0%",11,4,"36.36%","11.11%",0,0,"0%","0%",7,0,"0%",1632.09,1683.49,0,57.61,0,0,0,-109.01,16.49,21.47,8.16,3.22],
-        ["CA",718,27.99,201,7.52,"-",54,39,"72.22%",0,"0%",4,2,"50%","7.41%",0,0,"0%","0%",1,0,"0%",1025.03,992.19,0,75.84,0,0,0,-43,18.98,26.28,5.1,1.43],
-        ["MI",287,41.11,118,18.47,"-",53,41,"77.36%",0,"0%",3,1,"33.33%","5.66%",0,0,"0%","0%",2,0,"0%",592.33,637.3,0,3.8,0,0,0,-48.77,11.18,14.45,5.02,2.06],
-        ["GA",340,38.82,132,14.12,"-",48,29,"60.42%",0,"0%",3,1,"33.33%","6.25%",0,0,"0%","0%",2,0,"0%",786.52,815.58,0,5.02,0,0,0,-34.08,16.39,27.12,5.96,2.31],
-      ]},
-      { title: "Device", label: "DEVICE", rows: [
-        ["smartphone",0,0,0,0,"-",772,513,"66.45%",0,"0%",64,26,"40.63%","8.29%",1,0,"0%","0.13%",33,0,"0%",9548.64,9793.62,0,313.04,0,0,0,-558.02,12.37,18.61,0,0],
-        ["phablet",0,0,0,0,"-",231,205,"88.74%",0,"0%",14,3,"21.43%","6.06%",1,1,"100%","0.43%",21,0,"0%",4169.04,4256.13,0,41.26,0,108,0,-236.35,18.05,20.34,0,0],
-        ["desktop",0,0,0,0,"-",55,33,"60%",0,"0%",13,4,"30.77%","23.64%",0,0,"0%","0%",2,0,"0%",777.69,730.61,0,90.5,0,0,0,-43.42,14.14,23.57,0,0],
-        ["tablet",0,0,0,0,"-",42,33,"78.57%",0,"0%",7,1,"14.29%","16.67%",0,0,"0%","0%",0,0,"0%",746.51,798.33,0,8.47,0,0,0,-60.29,17.77,22.62,0,0],
-      ]},
-      { title: "OS", label: "OS", rows: [
-        ["iOS",0,0,0,0,"-",560,420,"75%",0,"0%",34,10,"29.41%","6.07%",1,1,"100%","0.18%",29,0,"0%",8117.16,8324.17,0,163.54,0,108,0,-478.55,14.49,19.33,0,0],
-        ["Android",0,0,0,0,"-",457,307,"67.18%",0,"0%",49,20,"40.82%","10.72%",1,0,"0%","0.22%",26,0,"0%",5741.62,5864.59,0,199.23,0,0,0,-322.2,12.56,18.7,0,0],
-        ["Windows",0,0,0,0,"-",31,19,"61.29%",0,"0%",2,0,"0%","6.45%",0,0,"0%","0%",2,0,"0%",442.08,454.96,0,0,0,0,0,-12.88,14.26,23.27,0,0],
-        ["iPadOS",0,0,0,0,"-",26,23,"88.46%",0,"0%",2,0,"0%","7.69%",0,0,"0%","0%",1,0,"0%",595.35,648.14,0,0,0,0,0,-52.79,22.9,25.88,0,0],
-        ["Mac",0,0,0,0,"-",21,11,"52.38%",0,"0%",8,3,"37.5%","38.1%",0,0,"0%","0%",0,0,"0%",228.78,199.72,0,46.5,0,0,0,-17.44,10.89,20.8,0,0],
-      ]},
+    /* ── Lead-level dataset (Bath only, from LP_leads_33966_bath CSV — deduped) ── */
+    /* fields: date, form, source, state, os, device, buyer, rev */
+    const LEADS = [
+      ["2026-05-11","bath","meta","NY","iOS","smartphone","",          0],
+      ["2026-05-08","bath","meta","MO","Android","smartphone","",      0],
+      ["2026-05-08","bath","meta","MO","Android","smartphone","",      0],
+      ["2026-05-07","bath","meta","FL","iOS","smartphone","",          0],
+      ["2026-05-07","bath","meta","FL","iOS","smartphone","",          0],
+      ["2026-05-07","bath","",    "NC","Windows","desktop","Karigouda",40],
+      ["2026-05-07","bath","",    "TX","Windows","desktop","",         0],
+      ["2026-05-06","bath","meta","TX","Android","smartphone","",      0],
+      ["2026-05-06","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-05-06","bath","meta","ME","Android","smartphone","",      0],
+      ["2026-05-06","bath","meta","GA","iOS","smartphone","",          0],
+      ["2026-05-06","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-05-06","bath","meta","NC","Mac","desktop","",             0],
+      ["2026-05-06","bath","meta","TX","Windows","desktop","",         0],
+      ["2026-05-06","bath","meta","WI","iOS","smartphone","Karigouda", 9.13],
+      ["2026-05-06","bath","meta","MT","Android","smartphone","",      0],
+      ["2026-05-06","bath","meta","IL","Android","smartphone","",      0],
+      ["2026-05-06","bath","meta","NV","Windows","desktop","",         0],
+      ["2026-05-05","bath","meta","AK","Android","smartphone","Karigouda", 1],
+      ["2026-05-05","bath","meta","CA","iOS","smartphone","",          0],
+      ["2026-05-05","bath","meta","FL","Android","smartphone","Karigouda", 5.03],
+      ["2026-05-05","bath","meta","TX","Android","smartphone","",      0],
+      ["2026-05-05","bath","meta","OR","iOS","smartphone","",          0],
+      ["2026-05-05","bath","meta","ME","Android","smartphone","Karigouda", 0.46],
+      ["2026-05-05","bath","meta","IL","Android","smartphone","",      0],
+      ["2026-05-05","bath","meta","AR","iOS","smartphone","",          0],
+      ["2026-05-05","bath","meta","NM","iOS","smartphone","",          0],
+      ["2026-05-05","bath","meta","IN","Android","smartphone","",      0],
+      ["2026-05-05","bath","meta","SC","Android","smartphone","",      0],
+      ["2026-05-05","bath","snap","TX","iOS","smartphone","Karigouda", 3.67],
+      ["2026-05-05","bath","meta","FL","Android","smartphone","Karigouda", 4.65],
+      ["2026-05-05","bath","meta","NY","iOS","smartphone","Karigouda", 4.31],
+      ["2026-05-05","bath","snap","UT","iOS","smartphone","Karigouda", 5.27],
+      ["2026-05-05","bath","meta","TX","Android","smartphone","",      0],
+      ["2026-05-05","bath","meta","LA","iOS","smartphone","",          0],
+      ["2026-05-05","bath","meta","FL","iOS","smartphone","",          0],
+      ["2026-05-04","bath","snap","SC","iOS","smartphone","Karigouda", 6.85],
+      ["2026-05-04","bath","meta","NY","iOS","smartphone","Karigouda", 4.5],
+      ["2026-05-04","bath","meta","FL","iOS","smartphone","Karigouda", 4.5],
+      ["2026-05-04","bath","meta","FL","iOS","smartphone","Karigouda", 4.5],
+      ["2026-05-04","bath","meta","FL","iOS","smartphone","Karigouda", 39],
+      ["2026-05-01","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-05-01","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-05-01","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-05-01","bath","meta","OH","Android","smartphone","",      0],
+      ["2026-05-01","bath","meta","FL","iOS","smartphone","",          0],
+      ["2026-05-01","bath","meta","NC","iOS","smartphone","",          0],
+      ["2026-05-01","bath","meta","FL","iOS","smartphone","",          0],
+      ["2026-05-01","bath","meta","FL","Android","smartphone","",      0],
+      ["2026-05-01","bath","meta","FL","Android","smartphone","Karigouda", 17.88],
+      ["2026-05-01","bath","meta","OH","Android","smartphone","",      0],
+      ["2026-05-01","bath","meta","NM","Android","smartphone","",      0],
+
+      // 2026-04-30
+      ["2026-04-30","bath","meta","SC","iOS","smartphone","",          0],
+      ["2026-04-30","bath","meta","FL","Android","smartphone","",      0],
+      ["2026-04-30","bath","meta","OR","iOS","smartphone","",          0],
+      ["2026-04-30","bath","meta","PA","iOS","smartphone","",          0],
+      ["2026-04-30","bath","meta","IN","iOS","smartphone","",          0],
+      ["2026-04-30","bath","meta","VA","Android","smartphone","",      0],
+      ["2026-04-30","bath","meta","UT","Android","smartphone","",      0],
+      ["2026-04-30","bath","meta","MO","Android","smartphone","Karigouda", 17.88],
+      ["2026-04-30","bath","meta","SC","iOS","smartphone","Karigouda", 0.01],
+      ["2026-04-30","bath","",    "NC","Windows","desktop","Karigouda",1],
+
+      // 2026-04-29
+      ["2026-04-29","bath","meta","PA","iOS","smartphone","",          0],
+      ["2026-04-29","bath","meta","NC","Android","smartphone","",      0],
+      ["2026-04-29","bath","meta","FL","iPadOS","tablet","",           0],
+      ["2026-04-29","bath","meta","OH","Android","smartphone","",      0],
+      ["2026-04-29","bath","meta","NC","iOS","smartphone","",          0],
+      ["2026-04-29","bath","meta","NC","Android","smartphone","Karigouda", 0.01],
+      ["2026-04-29","bath","meta","OR","Windows","desktop","",         0],
+      ["2026-04-29","bath","meta","FL","iOS","smartphone","Karigouda", 0.01],
+      ["2026-04-29","bath","",    "CA","Windows","desktop","",         0],
+      ["2026-04-29","bath","meta","GA","Android","smartphone","Karigouda", 0.01],
+      ["2026-04-29","bath","meta","FL","iOS","smartphone","Karigouda", 0.01],
+      ["2026-04-29","bath","meta","OH","Android","smartphone","Karigouda", 0.01],
+      ["2026-04-29","bath","",    "TX","Windows","desktop","Karigouda",0.01],
+      ["2026-04-29","bath","",    "IN","Windows","desktop","",         0],
+
+      // 2026-04-28
+      ["2026-04-28","bath","meta","WY","iOS","smartphone","",          0],
+      ["2026-04-28","bath","meta","FL","iOS","smartphone","",          0],
+
+      // 2026-04-23
+      ["2026-04-23","bath","meta","MI","iOS","smartphone","Karigouda", 0.01],
+      ["2026-04-23","bath","meta","MD","Android","smartphone","Karigouda", 0.01],
+      ["2026-04-23","bath","meta","FL","iPadOS","tablet","Karigouda",  0.01],
+      ["2026-04-23","bath","meta","FL","Android","smartphone","Karigouda", 0.01],
+      ["2026-04-23","bath","meta","FL","iPadOS","tablet","Karigouda",  0.01],
+      ["2026-04-23","bath","meta","TX","Android","smartphone","",      0],
+
+      // 2026-04-22
+      ["2026-04-22","bath","",    "KY","Windows","desktop","",         0],
+      ["2026-04-22","bath","",    "FL","Windows","desktop","",         0],
+      ["2026-04-22","bath","",    "CA","Windows","desktop","",         0],
+      ["2026-04-22","bath","",    "",  "Windows","desktop","",         0],
+
+      // 2026-04-20
+      ["2026-04-20","bath","meta","PA","Android","smartphone","Karigouda", 19.63],
+      ["2026-04-20","bath","meta","MS","Android","smartphone","",      0],
+
+      // 2026-04-18
+      ["2026-04-18","bath","meta","TX","Android","smartphone","",      0],
+
+      // 2026-04-17
+      ["2026-04-17","bath","meta","WV","Android","smartphone","",      0],
+      ["2026-04-17","bath","meta","TX","Android","smartphone","",      0],
+      ["2026-04-17","bath","meta","FL","iPadOS","tablet","",           0],
+      ["2026-04-17","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-04-17","bath","meta","IN","Android","smartphone","",      0],
+      ["2026-04-17","bath","meta","AL","iOS","smartphone","",          0],
+      ["2026-04-17","bath","meta","IN","Android","smartphone","",      0],
+      ["2026-04-17","bath","meta","IN","Android","smartphone","",      0],
+
+      // 2026-04-16
+      ["2026-04-16","bath","meta","AL","Android","smartphone","",      0],
+      ["2026-04-16","bath","meta","MN","Android","smartphone","",      0],
+      ["2026-04-16","bath","meta","KY","Android","smartphone","",      0],
+      ["2026-04-16","bath","meta","VA","iOS","smartphone","",          0],
+      ["2026-04-16","bath","meta","VA","iOS","smartphone","Karigouda", 17.86],
+      ["2026-04-16","bath","meta","TN","Android","smartphone","Karigouda", 10.94],
+      ["2026-04-16","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-04-16","bath","meta","IN","Android","smartphone","",      0],
+      ["2026-04-16","bath","meta","TX","iOS","smartphone","",          0],
+      ["2026-04-16","bath","meta","IN","Android","smartphone","",      0],
+      ["2026-04-16","bath","",    "CA","Windows","desktop","",         0],
+      ["2026-04-16","bath","",    "TX","Windows","desktop","Karigouda",0],
+
+      /* ─────── ROOF LEADS (Test=Yes removed) ─────── */
+      // 2026-05-09
+      ["2026-05-09","roof","snap","FL","Android","smartphone","",          0],
+      ["2026-05-09","roof","snap","DE","iOS","smartphone","Karigouda", 34.13],
+      // 2026-05-08
+      ["2026-05-08","roof","snap","TX","iOS","smartphone","",              0],
+      ["2026-05-08","roof","snap","OR","Android","smartphone","",          0],
+      // 2026-05-07
+      ["2026-05-07","roof","snap","OR","Android","smartphone","",          0],
+      // 2026-05-05
+      ["2026-05-05","roof","snap","WA","iOS","smartphone","",              0],
+      ["2026-05-05","roof","snap","PA","Android","smartphone","",          0],
+      ["2026-05-05","roof","snap","AR","iOS","smartphone","",              0],
+      ["2026-05-05","roof","snap","MI","Windows","desktop","Karigouda", 24.98],
+      // 2026-05-04
+      ["2026-05-04","roof","",    "MS","Windows","desktop","Karigouda", 4.5],
+      ["2026-05-04","roof","",    "MS","Windows","desktop","",             0],
+      ["2026-05-04","roof","",    "VA","Windows","desktop","",             0],
+      ["2026-05-04","roof","",    "CA","Windows","desktop","",             0],
+      ["2026-05-04","roof","",    "CA","",       "desktop","",             0],
+      // 2026-04-30
+      ["2026-04-30","roof","snap","PA","Android","smartphone","",          0],
+      ["2026-04-30","roof","snap","MN","iOS","smartphone","",              0],
+      ["2026-04-30","roof","snap","MN","iOS","smartphone","",              0],
+      ["2026-04-30","roof","snap","MN","iOS","smartphone","",              0],
+      ["2026-04-30","roof","snap","OR","Android","smartphone","Karigouda", 9.82],
+      ["2026-04-30","roof","",    "NC","Windows","desktop","Karigouda", 0.5],
+      ["2026-04-30","roof","",    "AK","Windows","desktop","",             0],
+      // 2026-04-29
+      ["2026-04-29","roof","",    "GA","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "AZ","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "AZ","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "IL","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "IL","Windows","desktop","Karigouda", 0.01],
+      ["2026-04-29","roof","",    "NY","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "TX","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "FL","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "FL","Windows","desktop","",             0],
+      ["2026-04-29","roof","snap","GA","iOS","smartphone","Karigouda", 21.8],
+      ["2026-04-29","roof","",    "IL","Windows","desktop","Karigouda", 0.01],
+      ["2026-04-29","roof","",    "NV","Windows","desktop","",             0],
+      ["2026-04-29","roof","",    "NV","Windows","desktop","",             0],
+      // 2026-04-22
+      ["2026-04-22","roof","",    "CA","",       "desktop","",             0],
+      ["2026-04-22","roof","",    "",  "",       "desktop","",             0],
+      // 2026-04-21
+      ["2026-04-21","roof","",    "NM","Android","smartphone","Karigouda", 10.14],
+      ["2026-04-21","roof","",    "LA","iOS","smartphone","Karigouda", 0.01],
+      ["2026-04-21","roof","",    "LA","iOS","smartphone","",              0],
+      ["2026-04-21","roof","",    "LA","iOS","smartphone","Karigouda", 7.97],
+      // 2026-04-20
+      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
+      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
+      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
+      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
+      ["2026-04-20","roof","",    "MO","Android","smartphone","Karigouda", 8.2],
+      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
+      ["2026-04-20","roof","",    "CA","Windows","desktop","",             0],
+      ["2026-04-20","roof","",    "AL","Windows","desktop","",             0],
+      ["2026-04-20","roof","",    "NV","Windows","desktop","",             0],
+      // 2026-04-15 / 04-14 were all Test=Yes — REMOVED
     ];
 
-    const PCT_INDICES_BAD  = new Set([8,10,12,13,16,17,20]);
-    const PCT_INDICES_GOOD = new Set([7]);
+    /* ── Aggregated daily LP report (used for Date & Form tables when no granular filter is applied) ── */
+    const LP_ROWS = [
+      ["2026-05-11","bath",   1, 0,  0.00,    1,100.00,  0,  0.00,  0.00],
+      ["2026-05-09","roof",   2, 1, 50.00,    1, 50.00,  0, 34.13, 34.13],
+      ["2026-05-08","roof",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
+      ["2026-05-08","bath",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
+      ["2026-05-07","roof",   1, 0,  0.00,    1,100.00,  0,  0.00,  0.00],
+      ["2026-05-07","bath",   4, 1, 25.00,    3, 75.00,  0, 40.00, 40.00],
+      ["2026-05-06","bath",  11, 1,  9.09,   10, 90.91,  0,  9.13,  9.13],
+      ["2026-05-05","roof",   4, 1, 25.00,    3, 75.00,  0, 24.98, 24.98],
+      ["2026-05-05","bath",  18, 7, 38.89,   11, 61.11,  0, 24.39, 24.39],
+      ["2026-05-04","roof",   5, 1, 20.00,    4, 80.00,  0,  4.50,  4.50],
+      ["2026-05-04","bath",   5, 5,100.00,    0,  0.00,  0, 59.35, 59.35],
+      ["2026-05-01","bath",  11, 1,  9.09,   10, 90.91,  0, 17.88, 17.88],
+      ["2026-04-30","roof",   7, 2, 28.57,    5, 71.43,  0, 10.32, 10.32],
+      ["2026-04-30","bath",  10, 3, 30.00,    7, 70.00,  0, 18.89, 18.89],
+      ["2026-04-29","roof",  13, 3, 23.08,   10, 76.92,  0, 21.82, 21.82],
+      ["2026-04-29","bath",  14, 6, 42.86,    8, 57.14,  0,  0.06,  0.06],
+      ["2026-04-28","bath",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
+      ["2026-04-23","bath",   6, 5, 83.33,    1, 16.67,  0,  0.05,  0.05],
+      ["2026-04-22","roof",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
+      ["2026-04-22","bath",   4, 0,  0.00,    4,100.00,  0,  0.00,  0.00],
+      ["2026-04-21","roof",   4, 3, 75.00,    1, 25.00,  0, 18.12, 18.12],
+      ["2026-04-20","roof",   9, 1, 11.11,    8, 88.89,  0,  8.20,  8.20],
+      ["2026-04-20","bath",   2, 1, 50.00,    1, 50.00,  0, 19.63, 19.63],
+      ["2026-04-18","bath",   1, 0,  0.00,    1,100.00,  0,  0.00,  0.00],
+      ["2026-04-17","bath",   8, 0,  0.00,    8,100.00,  0,  0.00,  0.00],
+      ["2026-04-16","bath",  12, 3, 25.00,    9, 75.00,  0, 28.80, 28.80],
+    ];
 
-    function renderTable(t) {
+    // Build a 33-metric row from real Lead Prosper data; unknown columns left as 0 / "0%" / "-"
+    function lpRow(label, leads, succ, accPct, rev, profit) {
+      const avgL = leads ? rev / leads : 0;
+      const avgS = succ  ? rev / succ  : 0;
+      return [
+        label,
+        0, 0, 0, 0, "-",                              // VISITS, CTR%, CLICKS, CR%, EMAILS
+        leads, succ, accPct.toFixed(2) + "%",          // LEADS, SOLD, %
+        0, "0%", 0, 0, "0%", "0%",                     // APPTS%, UPSELLS group
+        0, 0, "0%", "0%",                              // PPC group
+        0, 0, "0%",                                    // THUMBTACK group
+        +rev.toFixed(2),                               // TOTAL REVENUE
+        +rev.toFixed(2),                               // LEADS, $
+        0, 0, 0, 0, 0,                                  // FB FORM/UPSELLS/THUMBTACK/PPC/REPOSTS $
+        +profit.toFixed(2),                            // ADJUSTMENT, $  (profit)
+        +avgL.toFixed(2),                              // AVG PER LEAD
+        +avgS.toFixed(2),                              // AVG PER SOLD
+        0, 0                                            // EPC, EPV
+      ];
+    }
+
+    // Aggregate per-date totals
+    function buildDateRows() {
+      const byDate = new Map();
+      for (const r of LP_ROWS) {
+        if (!byDate.has(r[0])) byDate.set(r[0], { l:0, s:0, rv:0, p:0 });
+        const a = byDate.get(r[0]);
+        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.p += r[9];
+      }
+      const dates = [...byDate.keys()].sort().reverse();
+      return dates.map(d => {
+        const a = byDate.get(d);
+        const acc = a.l ? (a.s / a.l) * 100 : 0;
+        return lpRow(d, a.l, a.s, acc, a.rv, a.p);
+      });
+    }
+
+    // Aggregate per-form totals (roof / bath)
+    function buildFormRows() {
+      const byForm = new Map();
+      for (const r of LP_ROWS) {
+        if (!byForm.has(r[1])) byForm.set(r[1], { l:0, s:0, rv:0, p:0 });
+        const a = byForm.get(r[1]);
+        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.p += r[9];
+      }
+      const out = [];
+      for (const [k, a] of byForm.entries()) {
+        const acc = a.l ? (a.s / a.l) * 100 : 0;
+        out.push(lpRow(k, a.l, a.s, acc, a.rv, a.p));
+      }
+      out.sort((a,b) => b[6] - a[6]); // sort by LEADS desc
+      return out;
+    }
+
+    /* ── Filter state and lead-level builders ── */
+    const FILTERS = { form:"", source:"", buyer:"", state:"", device:"", os:"", from:null, to:null, hideLow:false };
+
+    function applyFilters() {
+      return LEADS.filter(L => {
+        const [d,form,src,st,os,dev,buyer,rev] = L;
+        if (FILTERS.form  && form  !== FILTERS.form)  return false;
+        if (FILTERS.source&& src   !== FILTERS.source)return false;
+        if (FILTERS.buyer && buyer !== FILTERS.buyer) return false;
+        if (FILTERS.state && st    !== FILTERS.state) return false;
+        if (FILTERS.device&& dev   !== FILTERS.device)return false;
+        if (FILTERS.os    && os    !== FILTERS.os)    return false;
+        if (FILTERS.from  && d < FILTERS.from)        return false;
+        if (FILTERS.to    && d > FILTERS.to)          return false;
+        if (FILTERS.hideLow && rev < 3)               return false;
+        return true;
+      });
+    }
+
+    // Aggregate filtered leads by a key function → table rows
+    function aggBy(leads, keyFn) {
+      const m = new Map();
+      for (const L of leads) {
+        const k = keyFn(L);
+        if (k == null || k === "") continue;
+        if (!m.has(k)) m.set(k, { l:0, s:0, rv:0 });
+        const a = m.get(k);
+        a.l += 1;
+        if (L[7] > 0) a.s += 1;
+        a.rv += L[7];
+      }
+      const out = [];
+      for (const [k,a] of m.entries()) {
+        const acc = a.l ? (a.s / a.l) * 100 : 0;
+        out.push(lpRow(k, a.l, a.s, acc, a.rv, a.rv));
+      }
+      out.sort((a,b) => b[6] - a[6]);
+      return out;
+    }
+
+    function getTables() {
+      const filtered = applyFilters();
+      return [
+        { title: "Date",        label: "DATE",        rows: aggBy(filtered, L => L[0]).sort((a,b)=> a[0]<b[0]?1:-1) },
+        { title: "Form",        label: "FORM",        rows: aggBy(filtered, L => L[1]) },
+        { title: "Source",      label: "SOURCE",      rows: aggBy(filtered, L => L[2] || "(direct)") },
+        { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || "(no buyer)") },
+        { title: "Landing",     label: "LANDING",     rows: [] },
+        { title: "Widget ID",   label: "WIDGET_ID",   rows: [] },
+        { title: "Teaser ID",   label: "TEASER_ID",   rows: [] },
+        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: [] },
+        { title: "Title",       label: "TITLE",       rows: [] },
+        { title: "Placement",   label: "PLACEMENT",   rows: [] },
+        { title: "State",       label: "STATE",       rows: aggBy(filtered, L => L[3]) },
+        { title: "Device",      label: "DEVICE",      rows: aggBy(filtered, L => L[5]) },
+        { title: "OS",          label: "OS",          rows: aggBy(filtered, L => L[4]) },
+      ];
+    }
+
+
+    // Columns that should be colored as "higher = better" (green high, red low)
+    const PCT_HIGHER_BETTER = new Set([7]);                 // SOLD %
+    // Columns that should be colored as "lower = worse" but small/zero is bad
+    const PCT_LOWER_WORSE   = new Set([8,10,12,13,16,17,20]); // appt/upsell/ppc/thumbtack %
+    const ADJ_IDX = 28;   // ADJUSTMENT, $
+    const REV_IDX = 21;   // TOTAL REVENUE, $
+
+    function bucket(num, thresholds) {
+      // thresholds: array of 10 ascending values; returns 0..10 bucket
+      for (let i = 0; i < thresholds.length; i++) {
+        if (num <= thresholds[i]) return i;
+      }
+      return 10;
+    }
+
+    function pctClass(i, v) {
+      const n = parseFloat(v);
+      if (isNaN(n)) return "";
+      if (PCT_HIGHER_BETTER.has(i)) {
+        // 0..100 mapped to bg_percent_0..10
+        return "bg_percent_" + bucket(n, [10,20,30,40,50,60,70,80,90,99]);
+      }
+      if (PCT_LOWER_WORSE.has(i)) {
+        if (n === 0) return "bg_percent_0";
+        return "bg_percent_" + bucket(n, [2,5,10,15,20,30,40,50,70,90]);
+      }
+      return "";
+    }
+
+    function adjustmentClass(v) {
+      const n = Number(v);
+      if (!isFinite(n) || n === 0) return "bg_percent_5";
+      if (n > 0) {
+        // positive: green tones (6..10)
+        const idx = 6 + bucket(n, [50,150,350,700]); // 6..10
+        return "bg_percent_" + Math.min(10, idx);
+      }
+      const a = Math.abs(n);
+      // negative: red tones (4..0) — bigger loss -> redder
+      const idx = 4 - bucket(a, [50,150,350,700]);
+      return "bg_percent_" + Math.max(0, idx);
+    }
+
+    function revenueClass(v) {
+      const n = Number(v);
+      if (!isFinite(n) || n <= 0) return "";
+      return "bg_percent_" + bucket(n, [100,300,600,1000,2000,4000,7000,10000,15000,25000]);
+    }
+
+    function renderTable(t, tIdx) {
       const headers = [t.label, ...METRIC_COLS]
         .map((h,i) => `<th class="${i===0?'text-left':'text-right'}">${h}</th>`).join("");
 
-      const body = t.rows.map(r => {
+      const rowsHtml = t.rows.map(r => {
         const cells = r.map((v,i) => {
           if (i === 0) return `<td class="label">${v}</td>`;
-          const isPct = typeof v === "string" && v.endsWith("%");
           let cls = "num";
-          if (isPct) {
-            const num = parseFloat(v);
-            if (PCT_INDICES_GOOD.has(i) && num >= 70) cls += " pct-good";
-            else if (PCT_INDICES_BAD.has(i)) cls += " pct-bad";
-          }
-          return `<td class="${cls}">${v}</td>`;
+          const isPct = typeof v === "string" && v.endsWith("%");
+          if (isPct) cls += " " + pctClass(i, v);
+          else if (i === ADJ_IDX) cls += " " + adjustmentClass(v);
+          else if (i === REV_IDX) cls += " " + revenueClass(v);
+          return `<td class="${cls.trim()}">${v}</td>`;
         }).join("");
         return `<tr>${cells}</tr>`;
       }).join("");
 
+      const wideFirst = t.label === "LANDING" ? "wide-first" : "";
+      const needsExpand = t.rows.length > 5;
+      const expandableCls = needsExpand ? "expandable" : "expandable no-expand";
+      const overlayHtml = needsExpand ? `<div class="expand-overlay"></div>
+            <button type="button" class="expand-btn">EXPAND</button>` : "";
+
       return `
-        <div class="pt-6">
+        <div class="pt-4">
           <h3 class="text-sm font-bold text-gray-600 mb-2 uppercase">${t.title}</h3>
-          <div class="overflow-x-auto bg-white rounded-lg shadow w-full">
-            <table class="metric-table w-full divide-y divide-gray-200">
-              <thead class="sticky top-0 z-10"><tr>${headers}</tr></thead>
-              <tbody class="divide-y divide-gray-200">${body}</tbody>
+          <div class="${expandableCls}">
+            <table class="metric-table ${wideFirst}">
+              <thead><tr>${headers}</tr></thead>
+              <tbody>${rowsHtml}</tbody>
             </table>
+            ${overlayHtml}
           </div>
         </div>`;
     }
 
-    document.getElementById("tables-container").innerHTML = TABLES.map(renderTable).join("");
+    function rerender() {
+      const tables = getTables();
+      document.getElementById("tables-container").innerHTML =
+        tables.map((t,i) => renderTable(t,i)).join("");
+      document.querySelectorAll(".expandable").forEach(wrap => {
+        const open = (e) => {
+          if (e) { e.preventDefault(); e.stopPropagation(); }
+          const btn = wrap.querySelector(".expand-btn");
+          const ovl = wrap.querySelector(".expand-overlay");
+          if (btn) btn.remove();
+          if (ovl) ovl.remove();
+          wrap.classList.add("expanded");
+        };
+        wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
+        wrap.querySelector(".expand-overlay")?.addEventListener("mousedown", open);
+      });
+    }
+
+    // Populate State dropdown dynamically from leads
+    (function populateStates() {
+      const states = [...new Set(LEADS.map(L => L[3]))].sort();
+      const sel = document.getElementById("state-filter");
+      states.forEach(s => {
+        const o = document.createElement("option");
+        o.value = s; o.textContent = s;
+        sel.appendChild(o);
+      });
+    })();
+
+    // Wire all filter dropdowns to rerender
+    function bindFilter(id, key) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", () => { FILTERS[key] = el.value; rerender(); });
+    }
+    bindFilter("form-filter",  "form");
+    bindFilter("source-filter","source");
+    bindFilter("buyer-filter", "buyer");
+    bindFilter("state-filter", "state");
+    bindFilter("device-filter","device");
+    bindFilter("os-filter",    "os");
+
+    document.getElementById("hide-low-rev")?.addEventListener("change", e => {
+      FILTERS.hideLow = e.target.checked; rerender();
+    });
+    document.getElementById("refresh-btn")?.addEventListener("click", rerender);
+
+    rerender();
+
+    /* ── Litepicker date range with presets ── */
+    const today = new Date();
+    const fmt = d => d.toLocaleDateString("en-GB").replace(/\//g, "-");  // dd-mm-yyyy
+    const dayMs = 86400000;
+    const start = new Date(today.getTime() - dayMs);
+    document.getElementById("date-range").value = `${fmt(start)}  →  ${fmt(today)}`;
+
+    new Litepicker({
+      element: document.getElementById("date-range"),
+      singleMode: false,
+      numberOfMonths: 2,
+      numberOfColumns: 2,
+      startDate: start,
+      endDate: today,
+      format: "DD-MM-YYYY",
+      delimiter: "  →  ",
+      autoApply: false,
+      plugins: ["ranges"],
+      ranges: {
+        position: "left",
+        customRanges: {
+          "Today":       [new Date(), new Date()],
+          "Yesterday":   [new Date(Date.now() - dayMs), new Date(Date.now() - dayMs)],
+          "Last 3 days": [new Date(Date.now() - 3*dayMs), new Date()],
+          "Last 7 days": [new Date(Date.now() - 7*dayMs), new Date()],
+          "Last 30 days":[new Date(Date.now() - 30*dayMs), new Date()],
+          "This Month":  [new Date(today.getFullYear(), today.getMonth(), 1), new Date()],
+          "Last Month":  [
+            new Date(today.getFullYear(), today.getMonth() - 1, 1),
+            new Date(today.getFullYear(), today.getMonth(), 0)
+          ],
+          "This Year":   [new Date(today.getFullYear(), 0, 1), new Date()],
+          "Last Year":   [
+            new Date(today.getFullYear() - 1, 0, 1),
+            new Date(today.getFullYear() - 1, 11, 31)
+          ],
+        }
+      },
+      buttonText: { apply: "Apply", cancel: "Cancel" },
+      setup: (picker) => {
+        picker.on("selected", (s, e) => {
+          const iso = d => d.toISOString().slice(0,10);
+          FILTERS.from = iso(s.dateInstance);
+          FILTERS.to   = iso(e.dateInstance);
+          rerender();
+        });
+      },
+    });
   </script>
 </body>
 </html>
