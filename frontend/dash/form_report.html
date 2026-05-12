@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="/dash/auth.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom Report – QuickHomeFix Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+    /* ── nav bar ── */
+    .nav-bar { background:#fff; border-bottom:1px solid #e5e5e5; }
+    .nav-bar .nav-inner { display:flex; align-items:stretch; height:56px; padding:0 20px; }
+    .nav-bar .item {
+      position:relative; display:flex; align-items:center;
+      padding:0 18px; color:#666; font-size:14px; font-weight:500;
+      text-transform:uppercase; letter-spacing:.06em;
+      cursor:pointer; white-space:nowrap;
+      border-bottom:2px solid transparent; transition:color .15s, border-color .15s;
+    }
+    .nav-bar .item:hover { color:#1e87f0; }
+    .nav-bar .item.active { color:#1e87f0; border-bottom-color:#1e87f0; }
+    .nav-bar .item .chev { margin-left:6px; opacity:.5; font-size:9px; }
+    .nav-bar .drop {
+      display:none; position:absolute; top:100%; left:0;
+      background:#fff; border:1px solid #e5e5e5;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+      min-width:200px; padding:6px 0; z-index:50;
+    }
+    .nav-bar .item:hover .drop { display:block; }
+    .nav-bar .drop a {
+      display:block; padding:9px 18px; color:#444; font-size:13px;
+      text-transform:none; letter-spacing:0;
+    }
+    .nav-bar .drop a:hover { background:#f6f9fd; color:#1e87f0; }
+    .nav-bar .meta {
+      margin-left:auto; display:flex; align-items:center; gap:14px;
+      color:#999; font-size:12px; padding:0 8px;
+    }
+    .nav-bar .meta .badge {
+      background:#f3f4f6; color:#374151;
+      padding:4px 10px; border-radius:999px; font-weight:600;
+    }
+    .nav-bar .meta .clock { font-variant-numeric:tabular-nums; }
+
+    /* ── filters (UIkit form style) ── */
+    .filter-bar { padding: 28px 30px 0; }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 170px 170px 220px 220px 180px;
+      gap: 18px 24px;
+      align-items: end;
+    }
+    .filter-cell { display: flex; flex-direction: column; }
+    .filter-cell label {
+      color: #333;
+      font-size: .875rem;
+      margin-bottom: 5px;
+    }
+    .filter-cell input[type="date"],
+    .filter-cell input[type="text"],
+    .filter-cell select {
+      box-sizing: border-box;
+      margin: 0;
+      border-radius: 0;
+      font: inherit;
+      max-width: 100%;
+      width: 100%;
+      padding: 0 10px;
+      background: #fff;
+      color: #666;
+      border: 1px solid #e5e5e5;
+      transition: .2s ease-in-out;
+      transition-property: color, background-color, border;
+      height: 40px;
+      vertical-align: middle;
+    }
+    .filter-cell input:focus, .filter-cell select:focus {
+      outline: 0;
+      background-color: #fff;
+      color: #666;
+      border-color: #1e87f0;
+    }
+    .filter-cell select:not([multiple]):not([size]) {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 20px;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2224%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2016%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%20%20%20%20%3Cpolygon%20fill%3D%22%23666%22%20points%3D%2212%201%209%206%2015%206%22%20%2F%3E%0A%20%20%20%20%3Cpolygon%20fill%3D%22%23666%22%20points%3D%2212%2013%209%208%2015%208%22%20%2F%3E%0A%3C%2Fsvg%3E%0A");
+      background-repeat: no-repeat;
+      background-position: 100% 50%;
+    }
+
+    /* Presets + Refresh row */
+    .preset-row {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding: 22px 30px 0;
+    }
+    .preset-row a {
+      color: #1e87f0;
+      font-size: .875rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .preset-row a:hover { color: #0f6ecd; text-decoration: underline; }
+    /* uk-button-default styling */
+    .refresh-btn {
+      margin-left: auto;
+      margin: 0 0 0 auto;
+      border: 1px solid #e5e5e5;
+      border-radius: 0;
+      background-color: transparent;
+      color: #333;
+      padding: 0 30px;
+      font-size: .875rem;
+      line-height: 38px;
+      text-transform: uppercase;
+      text-align: center;
+      transition: .1s ease-in-out;
+      transition-property: color, background-color, border-color;
+      cursor: pointer;
+      overflow: visible;
+      font-family: inherit;
+    }
+    .refresh-btn:hover, .refresh-btn:focus {
+      background-color: transparent;
+      color: #333;
+      border-color: #b2b2b2;
+      outline: 0;
+    }
+    .refresh-btn:active {
+      background-color: transparent;
+      color: #333;
+      border-color: #999;
+    }
+
+    .data-for {
+      padding: 26px 30px 18px;
+      font-size: .875rem;
+      color: #666;
+    }
+    .data-for b { color: #333; font-weight: 600; }
+
+    /* ── table (UIkit-inspired) ── */
+    .report-wrap { padding: 0 30px 60px; }
+    .report-scroll {
+      overflow-x: auto;
+      overflow-y: hidden;
+      border: 1px solid #e5e5e5;
+      background: #fff;
+    }
+    .report-scroll::-webkit-scrollbar { height: 12px; }
+    .report-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+    .report-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+    .report-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .report-table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      font-size: 13px;
+      margin-bottom: 0;
+    }
+    .report-table th {
+      padding: 16px 12px;
+      text-align: left;
+      vertical-align: bottom;
+      font-size: .875rem;
+      font-weight: normal;
+      color: #1e87f0;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .report-table th.num { text-align: right; }
+    .report-table td {
+      padding: 16px 12px;
+      vertical-align: top;
+      white-space: nowrap;
+      color: #333;
+    }
+    .report-table td.num { text-align: right; }
+    /* row dividers — like uk-table-divider */
+    .report-table tbody tr:not(:first-child) td {
+      border-top: 1px solid #e5e5e5;
+    }
+    .report-table tbody tr {
+      transition: background-color .1s linear;
+    }
+    .report-table tbody tr:hover { background: #ffd; }
+    .report-table tbody tr:hover td.bg_percent_0,
+    .report-table tbody tr:hover td.bg_percent_1,
+    .report-table tbody tr:hover td.bg_percent_2,
+    .report-table tbody tr:hover td.bg_percent_3,
+    .report-table tbody tr:hover td.bg_percent_4,
+    .report-table tbody tr:hover td.bg_percent_6,
+    .report-table tbody tr:hover td.bg_percent_7,
+    .report-table tbody tr:hover td.bg_percent_8,
+    .report-table tbody tr:hover td.bg_percent_9,
+    .report-table tbody tr:hover td.bg_percent_10 {
+      /* keep pct color cells distinct on hover */
+      filter: brightness(0.97);
+    }
+    .report-table tr.total-row td {
+      font-weight: 700;
+      color: #111;
+      border-top: 2px solid #999;
+    }
+    /* 0–10 percent color scale (red → neutral → green) */
+    .bg_percent_0  { background:#f6b2bb; color:#e8234c; }
+    .bg_percent_1  { background:#faccd2; color:#ee2f53; }
+    .bg_percent_2  { background:#fce0e4; color:#f13b5d; }
+    .bg_percent_3  { background:#fde9ed; color:#f14364; }
+    .bg_percent_4  { background:#fef4f6; color:#f0506e; }
+    .bg_percent_5  { background:#fff;    color:#000;    }
+    .bg_percent_6  { background:#ffffff; color:#60d3a4; }
+    .bg_percent_7  { background:#f8f8f8; color:#50d29d; }
+    .bg_percent_8  { background:#eef8f3; color:#3ed099; }
+    .bg_percent_9  { background:#edfbf6; color:#32d296; }
+    .bg_percent_10 { background:#edfbf6; color:#32d296; }
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Header -->
+  <header class="nav-bar">
+    <div class="nav-inner">
+      <a href="/dash/settings" class="item">Settings</a>
+      <a href="/dash/form_leads" class="item">Leads</a>
+      <div class="item">Forms <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/forms/pre_sales">Forms / Pre-sales</a>
+          <a href="/dash/forms/form_steps">Form steps</a>
+        </div>
+      </div>
+      <div class="item">Host &amp; Post <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/host_post/partners">Partners</a>
+          <a href="/dash/host_post/white_list">White List</a>
+          <a href="/dash/host_post/statistics">Statistics</a>
+          <a href="/dash/host_post/billing">Billing</a>
+        </div>
+      </div>
+      <div class="item">Bucket Affiliate <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/bucket_affiliate_statistics">Statistics</a>
+          <a href="/dash/bucket_affiliate_settings">Settings</a>
+        </div>
+      </div>
+      <div class="item">Thumbtack <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/thumbtack/settings">Settings</a>
+          <a href="/dash/thumbtack/statistics">Statistics</a>
+          <a href="/dash/thumbtack/landings">Landings</a>
+        </div>
+      </div>
+      <div class="item active">Reports <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/form_report" class="text-blue-600">Custom report</a>
+          <a href="/dash/form_upsells">Upsells</a>
+          <a href="/dash/reports/reposts">Reposts</a>
+          <a href="/dash/reports/transactions_lp">Transactions (LP)</a>
+          <a href="/dash/reports/adjustments">Adjustments statistics</a>
+          <a href="/dash/reports/score_april_2026">Score April 2026</a>
+        </div>
+      </div>
+      <a href="/dash/buyers" class="item">Buyers</a>
+      <a href="/dash/tools" class="item">Tools</a>
+      <div class="meta">
+        <span class="badge">dash</span>
+        <span class="clock" id="nav-now"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-grid">
+      <!-- Row 1: top labels for first cells -->
+      <div class="filter-cell">
+        <label>from_date</label>
+        <input type="date" id="from-date" value="2026-05-05" />
+      </div>
+      <div class="filter-cell">
+        <label>to_date</label>
+        <input type="date" id="to-date" value="2026-05-12" />
+      </div>
+      <div class="filter-cell up">
+        <label>filter</label>
+        <select id="filter1">
+          <option value=""></option>
+          <option>form</option><option>source</option><option>buyer</option>
+          <option>state</option><option>device</option><option>os</option>
+        </select>
+      </div>
+      <div class="filter-cell up">
+        <label>filter</label>
+        <select id="filter2">
+          <option value=""></option>
+          <option>form</option><option>source</option><option>buyer</option>
+          <option>state</option><option>device</option><option>os</option>
+        </select>
+      </div>
+      <div class="filter-cell">
+        <label>group 1</label>
+        <select id="group1">
+          <option>DATE</option>
+          <option>FORM</option>
+          <option>SOURCE</option>
+          <option>BUYER</option>
+          <option>STATE</option>
+        </select>
+      </div>
+
+      <!-- Row 2 -->
+      <div></div>
+      <div></div>
+      <div class="filter-cell">
+        <label>value(s)</label>
+        <input type="text" id="filter1-val" />
+      </div>
+      <div class="filter-cell">
+        <label>value(s)</label>
+        <input type="text" id="filter2-val" />
+      </div>
+      <div class="filter-cell">
+        <label>group 2</label>
+        <select id="group2">
+          <option value=""></option>
+          <option>FORM</option>
+          <option>SOURCE</option>
+          <option>BUYER</option>
+          <option>STATE</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="preset-row">
+    <a data-preset="today">today</a>
+    <a data-preset="yesterday">yesterday</a>
+    <a data-preset="3days">3days</a>
+    <a data-preset="7days">7days</a>
+    <a data-preset="14days">14days</a>
+    <button class="refresh-btn" id="refresh-btn">REFRESH</button>
+  </div>
+
+  <div class="data-for" id="data-for">
+    Data FOR: <b>2026-05-05 - 2026-05-12 (GMT -04:00) America/New_York</b>
+  </div>
+
+  <!-- Report Table -->
+  <div class="report-wrap">
+    <div class="report-scroll">
+      <table class="report-table" id="report-table"></table>
+    </div>
+  </div>
+
+  <script>
+    /* ── columns ── (scaled = use bg_percent_0..10 by value) */
+    const COLS = [
+      { key:"date",  label:"DATE",                 align:"left" },
+      { key:"leads", label:"LEADS",                align:"right" },
+      { key:"sold",  label:"SOLD",                 align:"right" },
+      { key:"ls",    label:"LEADS_SOLD",           align:"right", pct:true, scaled:true },
+      { key:"ups",   label:"UPSELLS",              align:"right" },
+      { key:"sups",  label:"SOLD_UPSELLS",         align:"right" },
+      { key:"usold", label:"UPSELLS_SOLD",         align:"right", pct:true, scaled:true },
+      { key:"urate", label:"UPSELL_RATE",          align:"right", pct:true, scaled:true },
+      { key:"appts", label:"APPTS",                align:"right" },
+      { key:"arate", label:"APPT_RATE",            align:"right", pct:true, scaled:true },
+      { key:"revT",  label:"REVENUE_TOTAL",        align:"right" },
+      { key:"lrev",  label:"LEAD_REV",             align:"right" },
+      { key:"urev",  label:"UPSELL_REV",           align:"right" },
+      { key:"rrev",  label:"REPOST_REV",           align:"right" },
+      { key:"adj",   label:"ADJUSTMENT",           align:"right" },
+      { key:"avgL",  label:"AVG_PER_LEAD",         align:"right" },
+      { key:"avgS",  label:"AVG_PER_SOLD",         align:"right" },
+      { key:"avgU",  label:"AVG_PER_UPSELL",       align:"right" },
+      { key:"avgSU", label:"AVG_PER_SOLD_UPSELL",  align:"right" },
+      { key:"avgSR", label:"AVG_PER_SOLD_REPOST",  align:"right" },
+    ];
+
+    /* ── dummy data ── */
+    const ROWS = [
+      { date:"2026-05-12 (not finalized)", leads:120,  sold:67,   ls:55.83, ups:13,  sups:2,   usold:15.38, urate:10.83, appts:0, arate:0, revT:1260.81,  lrev:1323.45,  urev:5.80,   rrev:0.00, adj:-68.44,   avgL:10.51, avgS:18.82, avgU:0.05, avgSU:0.05, avgSR:0.00 },
+      { date:"2026-05-11 (not finalized)", leads:1170, sold:744,  ls:63.59, ups:97,  sups:34,  usold:35.05, urate:8.29,  appts:0, arate:0, revT:14446.01, lrev:14848.73, urev:453.27, rrev:0.00, adj:-855.99,  avgL:12.35, avgS:19.42, avgU:0.38, avgSU:0.39, avgSR:0.00 },
+      { date:"2026-05-10 (not finalized)", leads:770,  sold:508,  ls:65.97, ups:38,  sups:9,   usold:23.68, urate:4.94,  appts:0, arate:0, revT:8021.60,  lrev:8404.86,  urev:123.63, rrev:0.00, adj:-506.89,  avgL:10.42, avgS:15.79, avgU:0.16, avgSU:0.16, avgSR:0.00 },
+      { date:"2026-05-09 (not finalized)", leads:1327, sold:819,  ls:61.72, ups:102, sups:24,  usold:23.53, urate:7.69,  appts:0, arate:0, revT:13312.83, lrev:13590.90, urev:247.31, rrev:0.00, adj:-525.38,  avgL:10.03, avgS:16.25, avgU:0.18, avgSU:0.19, avgSR:0.00 },
+      { date:"2026-05-08 (not finalized)", leads:1217, sold:758,  ls:62.28, ups:87,  sups:24,  usold:27.59, urate:7.15,  appts:0, arate:0, revT:14502.70, lrev:15056.72, urev:191.28, rrev:0.00, adj:-745.30,  avgL:11.92, avgS:19.13, avgU:0.16, avgSU:0.16, avgSR:0.00 },
+      { date:"2026-05-07 (not finalized)", leads:1327, sold:826,  ls:62.25, ups:78,  sups:30,  usold:38.46, urate:5.88,  appts:0, arate:0, revT:14219.12, lrev:14728.08, urev:223.60, rrev:0.00, adj:-732.56,  avgL:10.72, avgS:17.21, avgU:0.17, avgSU:0.17, avgSR:0.00 },
+      { date:"2026-05-06 (not finalized)", leads:1274, sold:702,  ls:55.10, ups:40,  sups:14,  usold:35.00, urate:3.14,  appts:0, arate:0, revT:11883.15, lrev:12286.76, urev:129.97, rrev:0.00, adj:-533.58,  avgL:9.33,  avgS:16.93, avgU:0.10, avgSU:0.10, avgSR:0.00 },
+      { date:"2026-05-05 (not finalized)", leads:1232, sold:675,  ls:54.79, ups:59,  sups:14,  usold:23.73, urate:4.79,  appts:0, arate:0, revT:11846.84, lrev:12214.91, urev:87.30,  rrev:0.00, adj:-455.37,  avgL:9.62,  avgS:17.55, avgU:0.07, avgSU:0.07, avgSR:0.00 },
+    ];
+
+    /* ── helpers ── */
+    function fmt(v, col) {
+      if (v == null || v === "") return "";
+      if (col.pct) return v.toFixed(2) + "%";
+      if (typeof v === "number") {
+        if (Number.isInteger(v)) return v.toString();
+        return v.toFixed(2);
+      }
+      return v;
+    }
+
+    function pctClass(col, v) {
+      if (!col.scaled || v == null || isNaN(v)) return "";
+      // map 0..100 → bg_percent_0..10
+      const n = Math.max(0, Math.min(100, v));
+      const idx = Math.min(10, Math.floor(n / 10));
+      return "bg_percent_" + idx;
+    }
+
+    function render() {
+      const t = document.getElementById("report-table");
+      const thead = "<thead><tr>" +
+        COLS.map(c => `<th class="${c.align==='right'?'num':''}">${c.label}</th>`).join("") +
+      "</tr></thead>";
+
+      const body = ROWS.map(r => "<tr>" +
+        COLS.map(c => {
+          const v = r[c.key];
+          const cls = [c.align==='right'?'num':'', pctClass(c, v)].filter(Boolean).join(' ');
+          return `<td class="${cls}">${fmt(v, c)}</td>`;
+        }).join("") +
+      "</tr>").join("");
+
+      // totals
+      const tot = {};
+      for (const c of COLS) {
+        if (c.key === "date") { tot[c.key] = "TOTAL:"; continue; }
+        if (c.pct) { tot[c.key] = null; continue; }
+        tot[c.key] = ROWS.reduce((s,r) => s + (r[c.key] || 0), 0);
+      }
+      // derived pct totals
+      tot.ls    = tot.leads ? (tot.sold/tot.leads)*100 : 0;
+      tot.usold = tot.ups   ? (tot.sups/tot.ups)*100   : 0;
+      tot.urate = tot.sold  ? (tot.ups/tot.sold)*100   : 0;
+      tot.arate = tot.leads ? (tot.appts/tot.leads)*100: 0;
+      tot.avgL  = tot.leads ? tot.lrev/tot.leads       : 0;
+      tot.avgS  = tot.sold  ? tot.lrev/tot.sold        : 0;
+      tot.avgU  = tot.ups   ? tot.urev/tot.ups         : 0;
+      tot.avgSU = tot.sups  ? tot.urev/tot.sups        : 0;
+      tot.avgSR = 0;
+
+      const totRow = `<tr class="total-row">` +
+        COLS.map(c => {
+          const v = tot[c.key];
+          const cls = [c.align==='right'?'num':'', pctClass(c, v)].filter(Boolean).join(' ');
+          return `<td class="${cls}">${fmt(v, c)}</td>`;
+        }).join("") +
+      "</tr>";
+
+      t.innerHTML = thead + "<tbody>" + body + totRow + "</tbody>";
+    }
+
+    /* ── date presets ── */
+    function setRange(days) {
+      const today = new Date();
+      const to = today.toISOString().slice(0,10);
+      const from = new Date(today.getTime() - (days-1)*86400000).toISOString().slice(0,10);
+      document.getElementById("from-date").value = from;
+      document.getElementById("to-date").value = to;
+      updateDataFor();
+    }
+    document.querySelectorAll(".preset-row a").forEach(a => {
+      a.addEventListener("click", () => {
+        const p = a.dataset.preset;
+        if (p === "today") setRange(1);
+        else if (p === "yesterday") {
+          const y = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+          document.getElementById("from-date").value = y;
+          document.getElementById("to-date").value = y;
+        }
+        else if (p === "3days") setRange(3);
+        else if (p === "7days") setRange(7);
+        else if (p === "14days") setRange(14);
+        updateDataFor();
+      });
+    });
+
+    function updateDataFor() {
+      const f = document.getElementById("from-date").value;
+      const t = document.getElementById("to-date").value;
+      document.getElementById("data-for").innerHTML =
+        `Data FOR: <b>${f} - ${t} (GMT -04:00) America/New_York</b>`;
+    }
+    document.getElementById("from-date").addEventListener("change", updateDataFor);
+    document.getElementById("to-date").addEventListener("change", updateDataFor);
+    document.getElementById("refresh-btn").addEventListener("click", render);
+
+    /* ── live clock ── */
+    (function () {
+      const pad = n => String(n).padStart(2, "0");
+      const fmtNow = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      };
+      const el = document.getElementById("nav-now");
+      el.textContent = fmtNow();
+      setInterval(() => { el.textContent = fmtNow(); }, 1000);
+    })();
+
+    render();
+  </script>
+</body>
+</html>

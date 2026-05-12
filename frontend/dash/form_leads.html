@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/dash/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leads – QuickHomeFix Dashboard</title>
@@ -256,8 +257,8 @@
 
       <div class="item">Reports <span class="chev">▾</span>
         <div class="drop">
-          <a href="/dash/reports/custom">Custom report</a>
-          <a href="/dash/reports/upsells">Upsells</a>
+          <a href="/dash/form_report">Custom report</a>
+          <a href="/dash/form_upsells">Upsells</a>
           <a href="/dash/reports/reposts">Reposts</a>
           <a href="/dash/reports/transactions_lp">Transactions (LP)</a>
           <a href="/dash/reports/adjustments">Adjustments statistics</a>
@@ -406,7 +407,7 @@
       "APPTS","%","UPSELLS","SOLD","%","UPSELL_RATE, %",
       "PPC","SOLD","%","PPC_RATE, %",
       "THUMBTACK","SOLD","%",
-      "TOTAL REVENUE, $","LEADS, $","FB FORM, $","UPSELLS, $","THUMBTACK, $","PPC, $","REPOSTS, $",
+      "TOTAL REVENUE, $","LEADS, $","COST, $","UPSELLS, $","THUMBTACK, $","PPC, $","REPOSTS, $",
       "ADJUSTMENT, $","AVG PER LEAD, $","AVG PER SOLD, $","EPC, $","EPV, $"
     ];
 
@@ -636,25 +637,81 @@
       ["2026-04-16","bath",  12, 3, 25.00,    9, 75.00,  0, 28.80, 28.80],
     ];
 
-    // Build a 33-metric row from real Lead Prosper data; unknown columns left as 0 / "0%" / "-"
-    function lpRow(label, leads, succ, accPct, rev, profit) {
-      const avgL = leads ? rev / leads : 0;
-      const avgS = succ  ? rev / succ  : 0;
+    /* ── Ad-spend data (from Meta + Snap daily ad reports) ─────────────
+       fields: date, form, source, clicks, ctr%, cost                   */
+    const AD_SPEND = [
+      // Meta Bath
+      ["2026-04-15","bath","meta",  5, 3.57,   9.63],
+      ["2026-04-16","bath","meta", 37, 7.18,  62.73],
+      ["2026-04-17","bath","meta", 32, 5.20,  48.75],
+      ["2026-04-20","bath","meta", 33, 3.64,  89.23],
+      ["2026-04-21","bath","meta", 26, 3.10,  85.71],
+      ["2026-04-22","bath","meta",  9, 2.03,  28.92],
+      ["2026-04-23","bath","meta", 56, 3.41, 143.56],
+      ["2026-04-24","bath","meta",  8, 2.66,  27.12],
+      ["2026-04-27","bath","meta",  0, 0,      0.93],
+      ["2026-04-28","bath","meta", 26, 4.48,  74.58],
+      ["2026-04-29","bath","meta", 41, 4.81, 147.61],
+      ["2026-04-30","bath","meta", 29, 3.97, 120.86],
+      ["2026-05-01","bath","meta", 29, 3.97, 126.00],
+      ["2026-05-04","bath","meta", 14, 4.07,  67.14],
+      ["2026-05-05","bath","meta", 40, 4.21, 205.04],
+      ["2026-05-06","bath","meta", 30, 4.40, 130.71],
+      ["2026-05-07","bath","meta", 12, 3.93,  63.00],
+      ["2026-05-08","bath","meta", 19, 4.07,  82.24],
+      ["2026-05-11","bath","meta", 12, 2.52, 111.00],
+      // Meta Roof
+      ["2026-04-29","roof","meta",  8, 1.85,  52.12],
+      ["2026-04-30","roof","meta", 19, 2.91,  99.54],
+      ["2026-05-01","roof","meta",  5, 1.87,  49.87],
+      ["2026-05-05","roof","meta",  9, 2.79,  45.00],
+      ["2026-05-06","roof","meta",  0, 0,     22.52],
+      ["2026-05-07","roof","meta",  2, 0.74,  22.52],
+      // Snap Bath
+      ["2026-05-04","bath","snap", 54, 1.12,  27.61],
+      ["2026-05-05","bath","snap", 37, 1.37,  19.73],
+    ];
+
+    // Build a 33-metric row, optionally enriched with ad-spend metrics
+    function lpRow(label, leads, succ, accPct, rev, ad) {
+      ad = ad || { c:0, ctr:0, cost:0 };
+      const profit = rev - ad.cost;
+      const cr    = ad.c     ? (leads / ad.c) * 100   : 0;
+      const epc   = ad.c     ? rev / ad.c              : 0;
+      const avgL  = leads    ? rev / leads             : 0;
+      const avgS  = succ     ? rev / succ              : 0;
       return [
         label,
-        0, 0, 0, 0, "-",                              // VISITS, CTR%, CLICKS, CR%, EMAILS
+        0,                                             // VISITS (not tracked)
+        ad.ctr ? ad.ctr.toFixed(2) + "%" : "0%",       // CTR, %
+        ad.c,                                          // CLICKS
+        ad.c ? cr.toFixed(2) + "%" : "0%",             // CR, %
+        "-",                                           // EMAILS
         leads, succ, accPct.toFixed(2) + "%",          // LEADS, SOLD, %
-        0, "0%", 0, 0, "0%", "0%",                     // APPTS%, UPSELLS group
+        0, "0%", 0, 0, "0%", "0%",                     // APPTS, UPSELLS group
         0, 0, "0%", "0%",                              // PPC group
         0, 0, "0%",                                    // THUMBTACK group
         +rev.toFixed(2),                               // TOTAL REVENUE
         +rev.toFixed(2),                               // LEADS, $
-        0, 0, 0, 0, 0,                                  // FB FORM/UPSELLS/THUMBTACK/PPC/REPOSTS $
-        +profit.toFixed(2),                            // ADJUSTMENT, $  (profit)
+        +ad.cost.toFixed(2),                           // COST, $
+        0, 0, 0, 0,                                     // UPSELLS/THUMBTACK/PPC/REPOSTS $
+        +profit.toFixed(2),                            // ADJUSTMENT, $  (Revenue - Cost)
         +avgL.toFixed(2),                              // AVG PER LEAD
         +avgS.toFixed(2),                              // AVG PER SOLD
-        0, 0                                            // EPC, EPV
+        +epc.toFixed(2),                               // EPC, $
+        0                                              // EPV, $ (no visits → cannot compute)
       ];
+    }
+
+    // Sum ad-spend records matching a predicate
+    function sumAd(predicate) {
+      let c=0, ctrW=0, cost=0;
+      for (const a of AD_SPEND) {
+        if (!predicate(a)) continue;
+        c += a[3]; cost += a[5];
+        ctrW += a[4] * a[3]; // weight CTR by clicks
+      }
+      return { c, ctr: c ? ctrW/c : 0, cost };
     }
 
     // Aggregate per-date totals
@@ -709,8 +766,9 @@
       });
     }
 
-    // Aggregate filtered leads by a key function → table rows
-    function aggBy(leads, keyFn) {
+    // Aggregate filtered leads by a key function → table rows.
+    // adKey(label): given a group label, returns predicate on AD_SPEND row.
+    function aggBy(leads, keyFn, adKey) {
       const m = new Map();
       for (const L of leads) {
         const k = keyFn(L);
@@ -724,18 +782,35 @@
       const out = [];
       for (const [k,a] of m.entries()) {
         const acc = a.l ? (a.s / a.l) * 100 : 0;
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, a.rv));
+        const ad  = adKey ? sumAd(adKey(k)) : { v:0,c:0,ctr:0,cost:0 };
+        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
       }
       out.sort((a,b) => b[6] - a[6]);
       return out;
     }
 
+    // Match AD_SPEND rows against current filter set (form/source/dates)
+    function adMatchesFilters(a) {
+      const [d,form,src] = a;
+      if (FILTERS.form  && form !== FILTERS.form) return false;
+      if (FILTERS.source&& src  !== FILTERS.source) return false;
+      if (FILTERS.from  && d < FILTERS.from) return false;
+      if (FILTERS.to    && d > FILTERS.to)   return false;
+      return true;
+    }
+
     function getTables() {
       const filtered = applyFilters();
       return [
-        { title: "Date",        label: "DATE",        rows: aggBy(filtered, L => L[0]).sort((a,b)=> a[0]<b[0]?1:-1) },
-        { title: "Form",        label: "FORM",        rows: aggBy(filtered, L => L[1]) },
-        { title: "Source",      label: "SOURCE",      rows: aggBy(filtered, L => L[2] || "(direct)") },
+        { title: "Date",        label: "DATE",
+          rows: aggBy(filtered, L => L[0],
+            date => a => a[0] === date && adMatchesFilters(a)).sort((a,b)=> a[0]<b[0]?1:-1) },
+        { title: "Form",        label: "FORM",
+          rows: aggBy(filtered, L => L[1],
+            form => a => a[1] === form && adMatchesFilters(a)) },
+        { title: "Source",      label: "SOURCE",
+          rows: aggBy(filtered, L => L[2] || "(direct)",
+            src => a => (a[2] || "(direct)") === src && adMatchesFilters(a)) },
         { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || "(no buyer)") },
         { title: "Landing",     label: "LANDING",     rows: [] },
         { title: "Widget ID",   label: "WIDGET_ID",   rows: [] },
