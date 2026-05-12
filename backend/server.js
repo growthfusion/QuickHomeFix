@@ -74,6 +74,76 @@ function normalizeZip(value) {
   return String(value || "").replace(/\D/g, "").slice(0, 5);
 }
 
+const STATE_MAP = {
+  AL: "AL", ALABAMA: "AL",
+  AK: "AK", ALASKA: "AK",
+  AZ: "AZ", ARIZONA: "AZ",
+  AR: "AR", ARKANSAS: "AR",
+  CA: "CA", CALIFORNIA: "CA", CALIF: "CA", CALI: "CA",
+  CO: "CO", COLORADO: "CO",
+  CT: "CT", CONNECTICUT: "CT", CONN: "CT",
+  DE: "DE", DELAWARE: "DE",
+  DC: "DC", "DISTRICT OF COLUMBIA": "DC", "WASHINGTON DC": "DC", "WASHINGTON D C": "DC",
+  FL: "FL", FLORIDA: "FL", FLA: "FL",
+  GA: "GA", GEORGIA: "GA",
+  HI: "HI", HAWAII: "HI",
+  ID: "ID", IDAHO: "ID",
+  IL: "IL", ILLINOIS: "IL", ILL: "IL",
+  IN: "IN", INDIANA: "IN", IND: "IN",
+  IA: "IA", IOWA: "IA",
+  KS: "KS", KANSAS: "KS",
+  KY: "KY", KENTUCKY: "KY",
+  LA: "LA", LOUISIANA: "LA",
+  ME: "ME", MAINE: "ME",
+  MD: "MD", MARYLAND: "MD",
+  MA: "MA", MASSACHUSETTS: "MA", MASS: "MA",
+  MI: "MI", MICHIGAN: "MI", MICH: "MI",
+  MN: "MN", MINNESOTA: "MN", MINN: "MN",
+  MS: "MS", MISSISSIPPI: "MS", MISS: "MS",
+  MO: "MO", MISSOURI: "MO",
+  MT: "MT", MONTANA: "MT", MONT: "MT",
+  NE: "NE", NEBRASKA: "NE", NEB: "NE", NEBR: "NE",
+  NV: "NV", NEVADA: "NV",
+  NH: "NH", "NEW HAMPSHIRE": "NH", NEWHAMPSHIRE: "NH",
+  NJ: "NJ", "NEW JERSEY": "NJ", NEWJERSEY: "NJ",
+  NM: "NM", "NEW MEXICO": "NM", NEWMEXICO: "NM",
+  NY: "NY", "NEW YORK": "NY", NEWYORK: "NY", NEWYROK: "NY",
+  NC: "NC", "NORTH CAROLINA": "NC", NORTHCAROLINA: "NC",
+  ND: "ND", "NORTH DAKOTA": "ND", NORTHDAKOTA: "ND",
+  OH: "OH", OHIO: "OH",
+  OK: "OK", OKLAHOMA: "OK", OKLA: "OK",
+  OR: "OR", OREGON: "OR", ORE: "OR", ORGAN: "OR", OREGAN: "OR",
+  PA: "PA", PENNSYLVANIA: "PA", PENN: "PA", PENNA: "PA",
+  RI: "RI", "RHODE ISLAND": "RI", RHODEISLAND: "RI",
+  SC: "SC", "SOUTH CAROLINA": "SC", SOUTHCAROLINA: "SC",
+  SD: "SD", "SOUTH DAKOTA": "SD", SOUTHDAKOTA: "SD",
+  TN: "TN", TENNESSEE: "TN", TENN: "TN",
+  TX: "TX", TEXAS: "TX", TEX: "TX",
+  UT: "UT", UTAH: "UT",
+  VT: "VT", VERMONT: "VT",
+  VA: "VA", VIRGINIA: "VA",
+  WA: "WA", WASHINGTON: "WA", WASH: "WA",
+  WV: "WV", "WEST VIRGINIA": "WV", WESTVIRGINIA: "WV",
+  WI: "WI", WISCONSIN: "WI", WISC: "WI", WIS: "WI",
+  WY: "WY", WYOMING: "WY", WYO: "WY",
+  PR: "PR", "PUERTO RICO": "PR", PUERTORICO: "PR",
+  VI: "VI", "VIRGIN ISLANDS": "VI",
+  GU: "GU", GUAM: "GU",
+  AS: "AS", "AMERICAN SAMOA": "AS",
+  MP: "MP", "NORTHERN MARIANA ISLANDS": "MP",
+};
+
+function normalizeState(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const key = raw.toUpperCase().replace(/[.\-_,]/g, " ").replace(/\s+/g, " ").trim();
+  if (STATE_MAP[key]) return STATE_MAP[key];
+  const collapsed = key.replace(/\s+/g, "");
+  if (STATE_MAP[collapsed]) return STATE_MAP[collapsed];
+  console.warn(`[normalizeState] unknown state value: "${raw}" — falling back to uppercase`);
+  return raw.toUpperCase();
+}
+
 
 function normalizeServiceForPartner(value) {
   const normalized = String(value || "").trim().toLowerCase();
@@ -353,7 +423,7 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
   const trustedFormToken = normalizeTrustedFormToken(data.trustedFormToken);
   const cleanedPhone = normalizePhone(data.phone);
   const cleanedZip = normalizeZip(data.zipcode);
-  const upperState = (data.state || "").toUpperCase();
+  const upperState = normalizeState(data.state);
   const normalizedService = resolvePartnerServiceCode(data);
 
   const campaign = resolveCampaignCredentials(normalizedService);
@@ -1190,7 +1260,7 @@ app.post("/api/leads", async (req, res) => {
       phone: normalizePhone(data.phone) || null,
       address: data.address || null,
       city: data.city || null,
-      state: (data.state || "").toUpperCase() || null,
+      state: normalizeState(data.state) || null,
       postal_code: normalizeZip(data.postalCode || data.zipcode) || null,
       own_home: normalizeOwnHome(data) || null,
       buy_timeframe: normalizeBuyTimeframe(data.buyTimeFrame || data.buyTimeframe) || null,
