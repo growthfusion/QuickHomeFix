@@ -789,6 +789,39 @@
       ["QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC | QHF-bathapril23(5)","Feed","120242837966220278","bath",1,0],
     ];
 
+    /* ── Landing-page report (per date × landing).
+       fields: [date, landing, form, clicks, lp_clicks, leads, purchases] */
+    const LANDINGS = [
+      ["2026-05-06","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof",  1,  0, 0, 0],
+      ["2026-05-07","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 13,  6, 1, 1],
+      ["2026-05-08","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 23, 10, 1, 1],
+      ["2026-05-11","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 20,  1, 1, 1],
+      ["2026-05-12","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 67, 40,16, 6],
+    ];
+
+    function aggLandings() {
+      // Landing data is Meta-only roof data right now; respect source/form/date filters.
+      if (FILTERS.source && FILTERS.source !== "meta") return [];
+      const m = new Map();
+      for (const L of LANDINGS) {
+        const [d, landing, form, clicks, lpc, leads, purch] = L;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!m.has(landing)) m.set(landing, { c:0, lpc:0, l:0, p:0 });
+        const v = m.get(landing);
+        v.c += clicks; v.lpc += lpc; v.l += leads; v.p += purch;
+      }
+      const out = [];
+      for (const [k, v] of m.entries()) {
+        const accPct = v.l ? (v.p / v.l) * 100 : 0;
+        const ctr    = v.c ? (v.lpc / v.c) * 100 : 0;
+        out.push(lpRow(k, v.l, v.p, accPct, 0, { c: v.c, ctr: ctr, cost: 0 }));
+      }
+      out.sort((a,b) => b[3] - a[3]); // CLICKS desc
+      return out;
+    }
+
     // Build a 33-metric row, optionally enriched with ad-spend metrics
     function lpRow(label, leads, succ, accPct, rev, ad) {
       ad = ad || { c:0, ctr:0, cost:0 };
@@ -952,10 +985,10 @@
           rows: aggBy(filtered, L => L[1],
             form => a => a[1] === form && adMatchesFilters(a)) },
         { title: "Source",      label: "SOURCE",
-          rows: aggBy(filtered, L => L[2] || "(direct)",
-            src => a => (a[2] || "(direct)") === src && adMatchesFilters(a)) },
-        { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || "(no buyer)") },
-        { title: "Landing",     label: "LANDING",     rows: [] },
+          rows: aggBy(filtered, L => L[2] || null,
+            src => a => a[2] === src && adMatchesFilters(a)) },
+        { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || null) },
+        { title: "Landing",     label: "LANDING",     rows: aggLandings() },
         { title: "Widget ID",   label: "WIDGET_ID",   rows: aggMeta(0) },
         { title: "Teaser ID",   label: "TEASER_ID",   rows: aggMeta(1) },
         { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMeta(4) },
