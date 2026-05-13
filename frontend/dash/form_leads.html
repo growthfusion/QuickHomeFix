@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/dash/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leads – QuickHomeFix Dashboard</title>
@@ -256,8 +257,8 @@
 
       <div class="item">Reports <span class="chev">▾</span>
         <div class="drop">
-          <a href="/dash/reports/custom">Custom report</a>
-          <a href="/dash/reports/upsells">Upsells</a>
+          <a href="/dash/form_report">Custom report</a>
+          <a href="/dash/form_upsells">Upsells</a>
           <a href="/dash/reports/reposts">Reposts</a>
           <a href="/dash/reports/transactions_lp">Transactions (LP)</a>
           <a href="/dash/reports/adjustments">Adjustments statistics</a>
@@ -406,7 +407,7 @@
       "APPTS","%","UPSELLS","SOLD","%","UPSELL_RATE, %",
       "PPC","SOLD","%","PPC_RATE, %",
       "THUMBTACK","SOLD","%",
-      "TOTAL REVENUE, $","LEADS, $","FB FORM, $","UPSELLS, $","THUMBTACK, $","PPC, $","REPOSTS, $",
+      "TOTAL REVENUE, $","LEADS, $","COST, $","UPSELLS, $","THUMBTACK, $","PPC, $","REPOSTS, $",
       "ADJUSTMENT, $","AVG PER LEAD, $","AVG PER SOLD, $","EPC, $","EPV, $"
     ];
 
@@ -636,25 +637,198 @@
       ["2026-04-16","bath",  12, 3, 25.00,    9, 75.00,  0, 28.80, 28.80],
     ];
 
-    // Build a 33-metric row from real Lead Prosper data; unknown columns left as 0 / "0%" / "-"
-    function lpRow(label, leads, succ, accPct, rev, profit) {
-      const avgL = leads ? rev / leads : 0;
-      const avgS = succ  ? rev / succ  : 0;
+    /* ── Ad-spend data (from Meta + Snap daily ad reports) ─────────────
+       fields: date, form, source, clicks, ctr%, cost                   */
+    const AD_SPEND = [
+      // Meta Bath
+      ["2026-04-15","bath","meta",  5, 3.57,   9.63],
+      ["2026-04-16","bath","meta", 37, 7.18,  62.73],
+      ["2026-04-17","bath","meta", 32, 5.20,  48.75],
+      ["2026-04-20","bath","meta", 33, 3.64,  89.23],
+      ["2026-04-21","bath","meta", 26, 3.10,  85.71],
+      ["2026-04-22","bath","meta",  9, 2.03,  28.92],
+      ["2026-04-23","bath","meta", 56, 3.41, 143.56],
+      ["2026-04-24","bath","meta",  8, 2.66,  27.12],
+      ["2026-04-27","bath","meta",  0, 0,      0.93],
+      ["2026-04-28","bath","meta", 26, 4.48,  74.58],
+      ["2026-04-29","bath","meta", 41, 4.81, 147.61],
+      ["2026-04-30","bath","meta", 29, 3.97, 120.86],
+      ["2026-05-01","bath","meta", 29, 3.97, 126.00],
+      ["2026-05-04","bath","meta", 14, 4.07,  67.14],
+      ["2026-05-05","bath","meta", 40, 4.21, 205.04],
+      ["2026-05-06","bath","meta", 30, 4.40, 130.71],
+      ["2026-05-07","bath","meta", 12, 3.93,  63.00],
+      ["2026-05-08","bath","meta", 19, 4.07,  82.24],
+      ["2026-05-11","bath","meta", 12, 2.52, 111.00],
+      // Meta Roof
+      ["2026-04-29","roof","meta",  8, 1.85,  52.12],
+      ["2026-04-30","roof","meta", 19, 2.91,  99.54],
+      ["2026-05-01","roof","meta",  5, 1.87,  49.87],
+      ["2026-05-05","roof","meta",  9, 2.79,  45.00],
+      ["2026-05-06","roof","meta",  0, 0,     22.52],
+      ["2026-05-07","roof","meta",  2, 0.74,  22.52],
+      // Snap Bath
+      ["2026-05-04","bath","snap", 54, 1.12,  27.61],
+      ["2026-05-05","bath","snap", 37, 1.37,  19.73],
+    ];
+
+    /* ── Meta Ads breakdown (campaign / adset / ad / placement / cid / form / clicks / purchases)
+       Extracted from Meta Ads report CSV (Apr 2025 – May 2026). Used to populate the
+       Widget ID (campaign), Teaser ID (adset), Campaign ID, Title (ad), and Placement tables. */
+    const META_ADS = [
+      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(1)","Feed","120243022550240278","bath",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Reels","120241730232110278","roof",14,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Stories","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Instagram Reels","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Instagram Stories","120241730232110278","roof",4,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Stories","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Reels","120241730232110278","roof",3,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Instagram Stories","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Reels","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Instagram Stories","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Feed","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Stories","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Instagram Reels","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Instagram Reels","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Reels","120241730232110278","roof",8,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Feed","120241730232110278","roof",9,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Feed","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Reels","120241730232110278","roof",14,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Stories","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Reels","120241724771640278","bath",5,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Search results","120241724771640278","bath",3,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",12,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",9,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Reels","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Stories","120241724771640278","bath",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Feed","120241730232110278","roof",4,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Reels","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",44,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Feed","120241919584330278","bath",4,0],
+      ["QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC | bathcreo(4)","Facebook Reels","120242837966220278","bath",5,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(1)","Facebook Reels","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(1)","Feed","120241919584330278","bath",2,0],
+      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Facebook Reels","120242342223790278","roof",4,0],
+      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","In-stream reels","120242342223790278","roof",1,0],
+      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Facebook Reels","120242342223790278","roof",1,0],
+      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Feed","120242342223790278","roof",1,0],
+      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Facebook Reels","120242342223790278","roof",2,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",2,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Feed","120241919584330278","bath",14,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","In-stream reels","120241919584330278","bath",12,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",16,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Feed","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",29,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",3,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Search results","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","In-stream reels","120241919584330278","bath",12,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Feed","120241919584330278","bath",10,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Instagram Reels","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Stories","120241919584330278","bath",4,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","In-stream reels","120241919584330278","bath",1,1],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Stories","120241919584330278","bath",11,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Stories","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",3,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Stories","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(1)","Instagram Stories","120243022550240278","bath",1,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",7,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(1)","Feed","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(1)","Facebook Reels","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",5,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",1,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Instagram Reels","120241314981830278","bath",1,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",15,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",31,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",9,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",3,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",3,1],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",1,1],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Stories","120241314981830278","bath",5,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Feed","120241724771640278","bath",2,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Ads on Facebook Reels","120241314981830278","bath",1,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",3,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Search results","120241314981830278","bath",1,0],
+      ["QHF | Page Like","QHF | Page Like","QHF | Page Like","Feed","120241705514000278","other",1,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Stories","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Reels","120241919584330278","bath",6,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Feed","120241919584330278","bath",5,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Feed","120241919584330278","bath",7,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Reels","120241919584330278","bath",9,0],
+      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Stories","120241919584330278","bath",1,0],
+      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(1)","Facebook Reels","120243022550240278","bath",3,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Facebook Reels","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Instagram Reels","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",34,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF_Bath(1)","Feed","120241314981830278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Reels","120241724771640278","bath",15,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(3)","Facebook Reels","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(3)","Facebook Reels","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(3)","Feed","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(3)","Facebook Reels","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(4)","Facebook Reels","120243022550240278","bath",1,0],
+      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(4)","Facebook Stories","120243022550240278","bath",1,0],
+      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(4)","Facebook Reels","120243022550240278","bath",1,0],
+      ["QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land | QFH_Windo(1) Copy","Facebook Reels","120241791017640278","windo",3,0],
+      ["QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land | QFH_Windo(1) Copy","Facebook Reels","120241791017640278","windo",1,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF_Bath(1)","Facebook Reels","120241314981830278","bath",3,0],
+      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF_Bath(1)","Facebook Reels","120241314981830278","bath",1,0],
+      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Facebook Reels","120241724771640278","bath",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Threads feed","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Stories","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Instagram Reels","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Instagram Stories","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Feed","120241730232110278","roof",3,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Feed","120241730232110278","roof",2,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Feed","120241730232110278","roof",3,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Reels","120241730232110278","roof",5,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Search results","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Stories","120241730232110278","roof",1,0],
+      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Reels","120241730232110278","roof",3,0],
+      ["QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC | QHF-bathapril23(5)","Feed","120242837966220278","bath",1,0],
+    ];
+
+    // Build a 33-metric row, optionally enriched with ad-spend metrics
+    function lpRow(label, leads, succ, accPct, rev, ad) {
+      ad = ad || { c:0, ctr:0, cost:0 };
+      const profit = rev - ad.cost;
+      const cr    = ad.c     ? (leads / ad.c) * 100   : 0;
+      const epc   = ad.c     ? rev / ad.c              : 0;
+      const avgL  = leads    ? rev / leads             : 0;
+      const avgS  = succ     ? rev / succ              : 0;
       return [
         label,
-        0, 0, 0, 0, "-",                              // VISITS, CTR%, CLICKS, CR%, EMAILS
+        0,                                             // VISITS (not tracked)
+        ad.ctr ? ad.ctr.toFixed(2) + "%" : "0%",       // CTR, %
+        ad.c,                                          // CLICKS
+        ad.c ? cr.toFixed(2) + "%" : "0%",             // CR, %
+        "-",                                           // EMAILS
         leads, succ, accPct.toFixed(2) + "%",          // LEADS, SOLD, %
-        0, "0%", 0, 0, "0%", "0%",                     // APPTS%, UPSELLS group
+        0, "0%", 0, 0, "0%", "0%",                     // APPTS, UPSELLS group
         0, 0, "0%", "0%",                              // PPC group
         0, 0, "0%",                                    // THUMBTACK group
         +rev.toFixed(2),                               // TOTAL REVENUE
         +rev.toFixed(2),                               // LEADS, $
-        0, 0, 0, 0, 0,                                  // FB FORM/UPSELLS/THUMBTACK/PPC/REPOSTS $
-        +profit.toFixed(2),                            // ADJUSTMENT, $  (profit)
+        +ad.cost.toFixed(2),                           // COST, $
+        0, 0, 0, 0,                                     // UPSELLS/THUMBTACK/PPC/REPOSTS $
+        +profit.toFixed(2),                            // ADJUSTMENT, $  (Revenue - Cost)
         +avgL.toFixed(2),                              // AVG PER LEAD
         +avgS.toFixed(2),                              // AVG PER SOLD
-        0, 0                                            // EPC, EPV
+        +epc.toFixed(2),                               // EPC, $
+        0                                              // EPV, $ (no visits → cannot compute)
       ];
+    }
+
+    // Sum ad-spend records matching a predicate
+    function sumAd(predicate) {
+      let c=0, ctrW=0, cost=0;
+      for (const a of AD_SPEND) {
+        if (!predicate(a)) continue;
+        c += a[3]; cost += a[5];
+        ctrW += a[4] * a[3]; // weight CTR by clicks
+      }
+      return { c, ctr: c ? ctrW/c : 0, cost };
     }
 
     // Aggregate per-date totals
@@ -709,8 +883,9 @@
       });
     }
 
-    // Aggregate filtered leads by a key function → table rows
-    function aggBy(leads, keyFn) {
+    // Aggregate filtered leads by a key function → table rows.
+    // adKey(label): given a group label, returns predicate on AD_SPEND row.
+    function aggBy(leads, keyFn, adKey) {
       const m = new Map();
       for (const L of leads) {
         const k = keyFn(L);
@@ -724,25 +899,68 @@
       const out = [];
       for (const [k,a] of m.entries()) {
         const acc = a.l ? (a.s / a.l) * 100 : 0;
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, a.rv));
+        const ad  = adKey ? sumAd(adKey(k)) : { v:0,c:0,ctr:0,cost:0 };
+        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
       }
       out.sort((a,b) => b[6] - a[6]);
+      return out;
+    }
+
+    // Match AD_SPEND rows against current filter set (form/source/dates)
+    function adMatchesFilters(a) {
+      const [d,form,src] = a;
+      if (FILTERS.form  && form !== FILTERS.form) return false;
+      if (FILTERS.source&& src  !== FILTERS.source) return false;
+      if (FILTERS.from  && d < FILTERS.from) return false;
+      if (FILTERS.to    && d > FILTERS.to)   return false;
+      return true;
+    }
+
+    // Aggregate META_ADS rows by a key. Returns metric rows in the same 33-col shape.
+    // META_ADS row: [campaign, adset, ad, placement, cid, form, clicks, purchases]
+    function aggMeta(keyIdx) {
+      // Apply current form/source filters where applicable.
+      // META_ADS is Meta-only data; if source filter is set to non-meta, return empty.
+      if (FILTERS.source && FILTERS.source !== "meta") return [];
+      const m = new Map();
+      for (const A of META_ADS) {
+        const [camp, adset, ad, pl, cid, form, clicks, purch] = A;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        const k = A[keyIdx];
+        if (k == null || k === "") continue;
+        if (!m.has(k)) m.set(k, { c:0, p:0 });
+        const v = m.get(k);
+        v.c += clicks; v.p += purch;
+      }
+      const out = [];
+      for (const [k, v] of m.entries()) {
+        const leads = v.p, succ = v.p;
+        const accPct = leads ? (succ / leads) * 100 : 0;
+        out.push(lpRow(k, leads, succ, accPct, 0, { c: v.c, ctr: 0, cost: 0 }));
+      }
+      out.sort((a,b) => b[3] - a[3]); // sort by CLICKS desc
       return out;
     }
 
     function getTables() {
       const filtered = applyFilters();
       return [
-        { title: "Date",        label: "DATE",        rows: aggBy(filtered, L => L[0]).sort((a,b)=> a[0]<b[0]?1:-1) },
-        { title: "Form",        label: "FORM",        rows: aggBy(filtered, L => L[1]) },
-        { title: "Source",      label: "SOURCE",      rows: aggBy(filtered, L => L[2] || "(direct)") },
+        { title: "Date",        label: "DATE",
+          rows: aggBy(filtered, L => L[0],
+            date => a => a[0] === date && adMatchesFilters(a)).sort((a,b)=> a[0]<b[0]?1:-1) },
+        { title: "Form",        label: "FORM",
+          rows: aggBy(filtered, L => L[1],
+            form => a => a[1] === form && adMatchesFilters(a)) },
+        { title: "Source",      label: "SOURCE",
+          rows: aggBy(filtered, L => L[2] || "(direct)",
+            src => a => (a[2] || "(direct)") === src && adMatchesFilters(a)) },
         { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || "(no buyer)") },
         { title: "Landing",     label: "LANDING",     rows: [] },
-        { title: "Widget ID",   label: "WIDGET_ID",   rows: [] },
-        { title: "Teaser ID",   label: "TEASER_ID",   rows: [] },
-        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: [] },
-        { title: "Title",       label: "TITLE",       rows: [] },
-        { title: "Placement",   label: "PLACEMENT",   rows: [] },
+        { title: "Widget ID",   label: "WIDGET_ID",   rows: aggMeta(0) },
+        { title: "Teaser ID",   label: "TEASER_ID",   rows: aggMeta(1) },
+        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMeta(4) },
+        { title: "Title",       label: "TITLE",       rows: aggMeta(2) },
+        { title: "Placement",   label: "PLACEMENT",   rows: aggMeta(3) },
         { title: "State",       label: "STATE",       rows: aggBy(filtered, L => L[3]) },
         { title: "Device",      label: "DEVICE",      rows: aggBy(filtered, L => L[5]) },
         { title: "OS",          label: "OS",          rows: aggBy(filtered, L => L[4]) },

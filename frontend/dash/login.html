@@ -7,13 +7,42 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .login-card { box-shadow: 0 10px 30px rgba(0,0,0,.08); }
+    .err { color:#f0506e; font-size:13px; min-height:18px; margin-bottom:8px; }
+  </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-100">
-  <div class="bg-white p-6 rounded-2xl shadow-sm w-80">
-    <h1 class="text-2xl font-semibold text-center mb-5">Login</h1>
-    <input type="text" placeholder="Email" class="w-full p-2 border rounded-md mb-3 focus:outline-none" />
-    <input type="password" placeholder="Password" class="w-full p-2 border rounded-md mb-3 focus:outline-none" />
-    <button onclick="window.location.href='/dash'" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Login</button>
-  </div>
+  <form id="login-form" class="login-card bg-white p-8 rounded-2xl w-80" autocomplete="off">
+    <h1 class="text-2xl font-semibold text-center mb-1">QuickHomeFix</h1>
+    <p class="text-center text-sm text-gray-500 mb-6">Dashboard sign-in</p>
+    <input id="u" type="text" placeholder="Username" class="w-full p-2.5 border border-gray-300 rounded-md mb-3 focus:outline-none focus:border-blue-500" required />
+    <input id="p" type="password" placeholder="Password" class="w-full p-2.5 border border-gray-300 rounded-md mb-2 focus:outline-none focus:border-blue-500" required />
+    <div id="err" class="err"></div>
+    <button type="submit" class="w-full bg-blue-600 text-white p-2.5 rounded-md hover:bg-blue-700 font-medium">Login</button>
+  </form>
+  <script>
+    // If already logged in, jump straight to dash
+    if (sessionStorage.getItem("dashAuth") === "1") {
+      location.replace("/dash");
+    }
+
+    const USER = "qhf";
+    const PASS = "qhf@9012";
+
+    document.getElementById("login-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const u = document.getElementById("u").value.trim();
+      const p = document.getElementById("p").value;
+      if (u === USER && p === PASS) {
+        sessionStorage.setItem("dashAuth", "1");
+        const next = new URLSearchParams(location.search).get("next") || "/dash";
+        location.replace(next);
+      } else {
+        document.getElementById("err").textContent = "Invalid username or password";
+      }
+    });
+  </script>
 </body>
 </html>
