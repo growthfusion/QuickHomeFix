@@ -142,7 +142,6 @@ function fireRedtrackClick(formData) {
   });
   var img = new Image();
   img.src = REDTRACK_CLICK_URL + "?" + params.toString();
-  console.log("[Redtrack click]", img.src);
 }
 
 /* ═══════════════════════════════════════════
@@ -360,18 +359,24 @@ function submitFullLead(formData) {
       fbclid: getFbclid(),
       clickid: getClickId(),
     });
+
+    // Meta Pixel — STANDARD "Lead" event (no custom events)
+    window.dataLayer.push({
+      event: "metaLead",
+      service: formData.service || "",
+      content_category: formData.service || "",
+      content_name: (formData.service || "") + " lead",
+    });
   }
 
   return submitLead(payload)
     .then(function (result) {
-      console.log("Lead submitted:", result);
       trackStepEvent("leadSubmit", { service: formData.service });
       pushLeadEvent(); // ✅ GTM fires redtrackLead → RT Lead event
       fireRedtrackClick(payload);
       return result;
     })
     .catch(function (err) {
-      console.error("Lead submission error:", err);
       trackStepEvent("leadSubmit", { service: formData.service });
       pushLeadEvent(); // ✅ GTM fires redtrackLead → RT Lead event
       fireRedtrackClick(formData);
