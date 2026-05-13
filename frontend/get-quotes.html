@@ -795,7 +795,7 @@ function startWizardFromLanding() {
 
   if (zip && zip.length === 5) {
     store.updateFormData("zipcode", zip);
-    trackMetaEvent("zipcode", "Enter Your Zip Code", zip, "zipcode");
+    trackMetaEvent("zipcode", "Enter Your Zip Code", zip, "zipcode", { service: store.formData.service || currentLandingService || "" });
     lookupZipcode(zip).then(function(loc) {
       if (loc) {
         store.updateFormData("city", loc.city);
@@ -950,7 +950,7 @@ function submitZipcode() {
     return;
   }
   store.updateFormData("zipcode", zip);
-  trackMetaEvent("zipcode", "Enter Your Zip Code", zip);
+  trackMetaEvent("zipcode", "Enter Your Zip Code", zip, "zipcode", { service: store.formData.service || "" });
   // Lookup city/state in background
   lookupZipcode(zip).then(function(loc) {
     if (loc) {
@@ -972,7 +972,7 @@ function submitRadioStep() {
       if (config.options[i].id === currentRadioValue) { selected = config.options[i]; break; }
     }
     var answer = selected ? selected.name : currentRadioValue;
-    trackMetaEvent(config.event, config.title, answer, stepName);
+    trackMetaEvent(config.event, config.title, answer, stepName, { service: store.formData.service || "" });
   }
   store.nextStep();
   renderCurrentStep();
@@ -995,7 +995,7 @@ function submitEmail(e) {
         btn.disabled = false; btn.textContent = "Next";
       } else {
         store.updateFormData("email", email);
-        trackMetaEvent("email", "Please Enter Your Email", email);
+        trackMetaEvent("email", "Please Enter Your Email", email, "email", { service: store.formData.service || "" });
         btn.disabled = false; btn.textContent = "Next";
         store.nextStep();
         renderCurrentStep();
@@ -1082,7 +1082,7 @@ function submitDetails(e) {
   store.updateFormData("state", state.toUpperCase());
   store.updateFormData("zipcode", zip);
   store.updateFormData("isOwner", true);
-  trackMetaEvent("AddressDetails", "Property Address", addr+", "+city+", "+state+" "+zip);
+  trackMetaEvent("AddressDetails", "Property Address", addr+", "+city+", "+state+" "+zip, "AddressDetails", { service: store.formData.service || "" });
   store.nextStep();
   renderCurrentStep();
 }
@@ -1113,7 +1113,7 @@ function submitName(e) {
   if (!ok) return;
   store.updateFormData("firstName", fn);
   store.updateFormData("lastName", ln);
-  trackMetaEvent("name", "Enter Your Name", fn+" "+ln);
+  trackMetaEvent("name", "Enter Your Name", fn+" "+ln, "name", { service: store.formData.service || "" });
   store.nextStep();
   renderCurrentStep();
 }
@@ -1147,9 +1147,7 @@ function submitFinal(e) {
 }
 
 function doLeadSubmit(phone, btn) {
-  trackMetaEvent("PhoneNumber", "Enter Your Phone Number", phone);
-
-  // Submit the lead to backend
+  // Submit the lead to backend — Lead fires via submitFullLead → metaLead → GTM
   submitFullLead(store.formData)
     .then(function(result) {
       if (result) store.state.leadResponse = result;
@@ -1556,7 +1554,6 @@ function firePageTracking() {
     virtualPageTitle: document.title,
     service: service,
   });
-  if (typeof window.fbq === "function") window.fbq("track", "PageView");
 }
 // Hook into renderCurrentStep
 var _origRender = renderCurrentStep;
