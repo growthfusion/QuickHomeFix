@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="/dash/auth.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upsells – QuickHomeFix Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color:#666; }
+
+
+
+
+
+    
+    /* nav bar */
+    .nav-bar { background:#fff; border-bottom:1px solid #e5e5e5; }
+    .nav-bar .nav-inner { display:flex; align-items:stretch; height:56px; padding:0 20px; }
+    .nav-bar .item {
+      position:relative; display:flex; align-items:center;
+      padding:0 18px; color:#666; font-size:14px; font-weight:500;
+      text-transform:uppercase; letter-spacing:.06em;
+      cursor:pointer; white-space:nowrap;
+      border-bottom:2px solid transparent; transition:color .15s, border-color .15s;
+    }
+    .nav-bar .item:hover { color:#1e87f0; }
+    .nav-bar .item.active { color:#1e87f0; border-bottom-color:#1e87f0; }
+    .nav-bar .item .chev { margin-left:6px; opacity:.5; font-size:9px; }
+    .nav-bar .drop {
+      display:none; position:absolute; top:100%; left:0;
+      background:#fff; border:1px solid #e5e5e5;
+      box-shadow:0 6px 20px rgba(0,0,0,.06);
+      min-width:200px; padding:6px 0; z-index:50;
+    }
+    .nav-bar .item:hover .drop { display:block; }
+    .nav-bar .drop a {
+      display:block; padding:9px 18px; color:#444; font-size:13px;
+      text-transform:none; letter-spacing:0;
+    }
+    .nav-bar .drop a:hover { background:#f6f9fd; color:#1e87f0; }
+    .nav-bar .meta {
+      margin-left:auto; display:flex; align-items:center; gap:14px;
+      color:#999; font-size:12px; padding:0 8px;
+    }
+    .nav-bar .meta .badge { background:#f3f4f6; color:#374151; padding:4px 10px; border-radius:999px; font-weight:600; }
+    .nav-bar .meta .clock { font-variant-numeric:tabular-nums; }
+    .nav-bar .tz-info { color:#888; font-size:12px; padding:0 12px; align-self:center; }
+
+    /* filters */
+    .filter-bar { padding: 24px 20px 0; }
+    .filter-row { display: flex; gap: 18px; align-items: end; }
+    .filter-cell { display: flex; flex-direction: column; }
+    .filter-cell label { color: #333; font-size: .875rem; margin-bottom: 5px; }
+    .filter-cell input[type="date"] {
+      box-sizing: border-box; margin: 0; border-radius: 0; font: inherit;
+      max-width: 100%; width: 100%;
+      padding: 0 10px; background: #fff; color: #666;
+      border: 1px solid #e5e5e5;
+      transition: .2s ease-in-out;
+      height: 40px; vertical-align: middle;
+    }
+    .filter-cell input:focus { outline: 0; border-color: #1e87f0; }
+
+    .preset-row { display: flex; align-items: center; gap: 22px; padding: 18px 20px 0; }
+    .preset-row a { color: #1e87f0; font-size: .875rem; cursor: pointer; text-decoration: none; }
+    .preset-row a:hover { color: #0f6ecd; text-decoration: underline; }
+    .preset-row a.active { color: #ffd200; }
+    .refresh-btn {
+      margin-left: 8px;
+      border: 1px solid #e5e5e5; border-radius: 0;
+      background-color: transparent; color: #333;
+      padding: 0 30px; font-size: .875rem; line-height: 38px;
+      text-transform: uppercase; text-align: center;
+      cursor: pointer; font-family: inherit;
+    }
+    .refresh-btn:hover { border-color:#b2b2b2; }
+
+    .data-for {
+      padding: 20px 20px 6px; font-size: 14px; color: #333;
+    }
+    .data-for b { color:#111; font-weight:600; }
+    .data-for .order-link { display:block; margin-top:6px; font-size:13px; color:#666; }
+    .data-for .order-link a { color:#1e87f0; }
+    .data-for .order-link a:hover { text-decoration: underline; }
+
+    /* table */
+    .table-wrap { padding: 12px 20px 60px; }
+    .upsell-scroll {
+      border: 1px solid #e5e5e5;
+      background: #fff;
+    }
+    .upsell-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      font-size: .875rem;
+    }
+    .upsell-table th {
+      padding: 14px 12px;
+      text-align: left;
+      vertical-align: bottom;
+      font-weight: 600;
+      color: #1e87f0;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      white-space: nowrap;
+      background:#fff;
+    }
+    .upsell-table th.num { text-align: right; }
+    .upsell-table td {
+      padding: 12px 12px;
+      vertical-align: middle;
+      color:#333;
+      white-space: nowrap;
+      transition: background-color .1s linear;
+    }
+    .upsell-table td.num { text-align: right; }
+    .upsell-table tbody tr { border-top: 1px solid #e5e5e5; transition: background-color .1s linear; }
+    .upsell-table tbody tr:first-child { border-top: none; }
+    .upsell-table tbody tr:hover { background: #ffd; }
+
+    /* 0–10 percent color scale (red → neutral → green) */
+    .bg_percent_0  { background:#f6b2bb; color:#e8234c; }
+    .bg_percent_1  { background:#faccd2; color:#ee2f53; }
+    .bg_percent_2  { background:#fce0e4; color:#f13b5d; }
+    .bg_percent_3  { background:#fde9ed; color:#f14364; }
+    .bg_percent_4  { background:#fef4f6; color:#f0506e; }
+    .bg_percent_5  { background:#fff;    color:#000;    }
+    .bg_percent_6  { background:#ffffff; color:#60d3a4; }
+    .bg_percent_7  { background:#f8f8f8; color:#50d29d; }
+    .bg_percent_8  { background:#eef8f3; color:#3ed099; }
+    .bg_percent_9  { background:#edfbf6; color:#32d296; }
+    .bg_percent_10 { background:#edfbf6; color:#32d296; }
+
+    /* highlight rows (alternating soft yellow like in screenshot) */
+    .upsell-table tr.highlight td { background:#fffbe6; }
+    .upsell-table tr.highlight:hover td { background: #ffd; }
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Header -->
+  <header class="nav-bar">
+    <div class="nav-inner">
+      <a href="/dash/settings" class="item">Settings</a>
+      <a href="/dash/form_leads" class="item">Leads</a>
+      <div class="item">Forms <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/forms/pre_sales">Forms / Pre-sales</a>
+          <a href="/dash/forms/form_steps">Form steps</a>
+        </div>
+      </div>
+      <div class="item">Host &amp; Post <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/host_post/partners">Partners</a>
+          <a href="/dash/host_post/white_list">White List</a>
+          <a href="/dash/host_post/statistics">Statistics</a>
+          <a href="/dash/host_post/billing">Billing</a>
+        </div>
+      </div>
+      <div class="item">Bucket Affiliate <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/bucket_affiliate_statistics">Statistics</a>
+          <a href="/dash/bucket_affiliate_settings">Settings</a>
+        </div>
+      </div>
+      <div class="item">Thumbtack <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/thumbtack/settings">Settings</a>
+          <a href="/dash/thumbtack/statistics">Statistics</a>
+          <a href="/dash/thumbtack/landings">Landings</a>
+        </div>
+      </div>
+      <div class="item active">Reports <span class="chev">▾</span>
+        <div class="drop">
+          <a href="/dash/form_report">Custom report</a>
+          <a href="/dash/form_upsells" style="color:#1e87f0;">Upsells</a>
+          <a href="/dash/reports/reposts">Reposts</a>
+          <a href="/dash/reports/transactions_lp">Transactions (LP)</a>
+          <a href="/dash/reports/adjustments">Adjustments statistics</a>
+          <a href="/dash/reports/score_april_2026">Score April 2026</a>
+        </div>
+      </div>
+      <a href="/dash/buyers" class="item">Buyers</a>
+      <a href="/dash/tools" class="item">Tools</a>
+      <div class="meta">
+        <span class="badge">dash</span>
+        <span class="clock" id="nav-now"></span>
+        <span class="tz-info">(GMT -04:00) America/New_York</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="filter-cell">
+        <label>from_date <span style="color:#999;">(data available from 2023-05-25)</span></label>
+        <input type="date" id="from-date" value="2026-05-12" />
+      </div>
+      <div class="filter-cell">
+        <label>to_date</label>
+        <input type="date" id="to-date" value="2026-05-12" />
+      </div>
+    </div>
+  </div>
+
+  <div class="preset-row">
+    <a data-preset="today" class="active">today</a>
+    <a data-preset="yesterday">yesterday</a>
+    <a data-preset="3days">3days</a>
+    <a data-preset="7days">7days</a>
+    <a data-preset="14days">14days</a>
+    <button class="refresh-btn" id="refresh-btn">REFRESH</button>
+  </div>
+
+  <div class="data-for">
+    Upsells data FOR: <b id="range-label">2026-05-12 - 2026-05-12 (GMT -04:00) America/New_York</b>
+    <span class="order-link">Current order &rarr; <a href="#" id="order-json-link">upsell_order.json</a></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="upsell-scroll">
+      <table class="upsell-table" id="upsell-table"></table>
+    </div>
+  </div>
+
+  <script>
+    /* ── columns ── */
+    const COLS = [
+      { key:"form",   label:"FORM" },
+      { key:"upsell", label:"UPSELL" },
+      { key:"views",  label:"VIEWS",              num:true },
+      { key:"ups",    label:"UPSELLS",            num:true },
+      { key:"sold",   label:"SOLD",               num:true },
+      { key:"pct",    label:"%",                  num:true, pct:true },
+      { key:"rev",    label:"REVENUE",            num:true },
+      { key:"rpv",    label:"REVENUE_PER_VIEW",   num:true },
+      { key:"rpu",    label:"REVENUE_PER_UPSELL", num:true },
+      { key:"rps",    label:"REVENUE_PER_SOLD",   num:true },
+    ];
+
+    /* ── dummy data ── */
+    const ROWS = [
+      // bath-remodel offers
+      { form:"bath-remodel",   upsell:"walk-in-tubs",      views:24, ups:1, sold:1, rev:3.27 },
+      { form:"bath-remodel",   upsell:"floor",             views:25, ups:2, sold:0 },
+      { form:"bath-remodel",   upsell:"bath-to-shower",    views:16, ups:1, sold:0 },
+      { form:"bath-remodel",   upsell:"plumbing",          views:24 },
+      { form:"bath-remodel",   upsell:"painting",          views:19 },
+      { form:"bath-remodel",   upsell:"kitchen-remodel",   views:24 },
+      { form:"bath-remodel",   upsell:"undefined",         views:8  },
+      { form:"bath-remodel",   upsell:"walk-in-shower",    views:3  },
+      { form:"bath-remodel",   upsell:"home-security",     views:3  },
+      { form:"bath-remodel",   upsell:"window",            views:3  },
+      { form:"bath-remodel",   upsell:"siding",            views:2  },
+      { form:"bath-remodel",   upsell:"home-warranty",     views:1  },
+      { form:"bath-remodel",   upsell:"solar",             views:1  },
+      { form:"bath-remodel",   upsell:"walk-in-tubs",      views:2  },
+
+      // bath-to-shower offers
+      { form:"bath-to-shower", upsell:"floor",             views:2, highlight:true },
+      { form:"bath-to-shower", upsell:"kitchen-remodel",   views:2  },
+      { form:"bath-to-shower", upsell:"bath-remodel",      views:2  },
+      { form:"bath-to-shower", upsell:"walk-in-shower",    views:1  },
+      { form:"bath-to-shower", upsell:"home-warranty",     views:1  },
+      { form:"bath-to-shower", upsell:"plumbing",          views:1  },
+      { form:"bath-to-shower", upsell:"painting",          views:1  },
+
+      // floor offers
+      { form:"floor", upsell:"bath-remodel",      views:15 },
+      { form:"floor", upsell:"walk-in-tubs",      views:15 },
+      { form:"floor", upsell:"roof",              views:15 },
+      { form:"floor", upsell:"window",            views:15 },
+      { form:"floor", upsell:"hot-tub",           views:9  },
+      { form:"floor", upsell:"solar",             views:8  },
+      { form:"floor", upsell:"hvac",              views:5  },
+      { form:"floor", upsell:"walk-in-shower",    views:3  },
+      { form:"floor", upsell:"bath-to-shower",    views:2  },
+      { form:"floor", upsell:"gutter",            views:2  },
+      { form:"floor", upsell:"painting",          views:1  },
+
+      // gutter offers
+      { form:"gutter", upsell:"solar",            views:6, highlight:true },
+      { form:"gutter", upsell:"roof",             views:6 },
+      { form:"gutter", upsell:"siding",           views:6 },
+      { form:"gutter", upsell:"window",           views:6 },
+      { form:"gutter", upsell:"hvac",             views:6 },
+      { form:"gutter", upsell:"home-security",    views:5 },
+      { form:"gutter", upsell:"hot-tub",          views:1 },
+
+      // kitchen-remodel offers
+      { form:"kitchen-remodel", upsell:"bath-remodel",     views:4, ups:1, rev:0   },
+      { form:"kitchen-remodel", upsell:"window",           views:3 },
+      { form:"kitchen-remodel", upsell:"walk-in-tubs",     views:3 },
+      { form:"kitchen-remodel", upsell:"floor",            views:3 },
+      { form:"kitchen-remodel", upsell:"walk-in-shower",   views:2 },
+      { form:"kitchen-remodel", upsell:"home-warranty",    views:2 },
+      { form:"kitchen-remodel", upsell:"sunroom",          views:1 },
+      { form:"kitchen-remodel", upsell:"roof",             views:1 },
+
+      // painting offers
+      { form:"painting", upsell:"floor",              views:1 },
+      { form:"painting", upsell:"kitchen-remodel",    views:1 },
+      { form:"painting", upsell:"bath-remodel",       views:1, highlight:true },
+      { form:"painting", upsell:"home-security",      views:1 },
+      { form:"painting", upsell:"walk-in-tubs",       views:1 },
+      { form:"painting", upsell:"sunroom",            views:1 },
+
+      // roof offers
+      { form:"roof", upsell:"gutter",          views:30, ups:4, sold:1, rev:2.53 },
+      { form:"roof", upsell:"siding",          views:29, ups:1, rev:0 },
+      { form:"roof", upsell:"solar",           views:28 },
+      { form:"roof", upsell:"painting",        views:28 },
+      { form:"roof", upsell:"bath-remodel",    views:15 },
+      { form:"roof", upsell:"bath-to-shower",  views:15 },
+      { form:"roof", upsell:"walk-in-shower",  views:7  },
+      { form:"roof", upsell:"sunroom",         views:7  },
+      { form:"roof", upsell:"floor",           views:6  },
+      { form:"roof", upsell:"hvac",            views:4  },
+      { form:"roof", upsell:"kitchen-remodel", views:2  },
+
+      // siding offers
+      { form:"siding", upsell:"hot-tub",          views:1 },
+      { form:"siding", upsell:"walk-in-shower",   views:1 },
+      { form:"siding", upsell:"roof",             views:1 },
+      { form:"siding", upsell:"window",           views:1, highlight:true },
+      { form:"siding", upsell:"solar",            views:1 },
+      { form:"siding", upsell:"gutter",           views:1 },
+
+      // walk-in-shower offers
+      { form:"walk-in-shower", upsell:"bath-remodel",   views:34, ups:1, sold:1, rev:8.91 },
+      { form:"walk-in-shower", upsell:"walk-in-tubs",   views:34 },
+      { form:"walk-in-shower", upsell:"floor",          views:34 },
+      { form:"walk-in-shower", upsell:"kitchen-remodel",views:34 },
+      { form:"walk-in-shower", upsell:"bath-to-shower", views:23 },
+      { form:"walk-in-shower", upsell:"undefined",      views:23 },
+      { form:"walk-in-shower", upsell:"gutter",         views:21 },
+      { form:"walk-in-shower", upsell:"home-security",  views:7 },
+      { form:"walk-in-shower", upsell:"plumbing",       views:7 },
+      { form:"walk-in-shower", upsell:"siding",         views:4 },
+      { form:"walk-in-shower", upsell:"roof",           views:3 },
+      { form:"walk-in-shower", upsell:"sunroom",        views:2 },
+      { form:"walk-in-shower", upsell:"hot-tub",        views:1 },
+
+      // walk-in-tubs offers
+      { form:"walk-in-tubs", upsell:"bath-to-shower",   views:7, ups:1, rev:0 },
+      { form:"walk-in-tubs", upsell:"bath-remodel",     views:8 },
+      { form:"walk-in-tubs", upsell:"walk-in-shower",   views:8 },
+      { form:"walk-in-tubs", upsell:"roof",             views:7 },
+      { form:"walk-in-tubs", upsell:"hot-tub",          views:6, highlight:true },
+      { form:"walk-in-tubs", upsell:"window",           views:6 },
+      { form:"walk-in-tubs", upsell:"undefined",        views:3 },
+      { form:"walk-in-tubs", upsell:"painting",         views:1 },
+      { form:"walk-in-tubs", upsell:"home-security",    views:1 },
+
+      // window offers
+      { form:"window", upsell:"floor",          views:2 },
+      { form:"window", upsell:"bath-remodel",   views:2 },
+      { form:"window", upsell:"walk-in-shower", views:2 },
+      { form:"window", upsell:"roof",           views:2 },
+      { form:"window", upsell:"kitchen-remodel",views:1 },
+      { form:"window", upsell:"painting",       views:1 },
+      { form:"window", upsell:"hvac",           views:1 },
+    ];
+
+    /* ── helpers ── */
+    function compute(r) {
+      const views = r.views || 0;
+      const ups   = r.ups   || 0;
+      const sold  = r.sold  || 0;
+      const rev   = r.rev   || 0;
+      return {
+        views, ups, sold, rev,
+        pct:  ups   ? (sold/ups)*100 : 0,
+        rpv:  views ? rev/views : 0,
+        rpu:  ups   ? rev/ups   : 0,
+        rps:  sold  ? rev/sold  : 0,
+      };
+    }
+
+    function fmtNum(v, col) {
+      if (v == null) return "";
+      if (col.pct) return Math.round(v) + "%";
+      if (typeof v === "number") {
+        if (Number.isInteger(v)) return v.toString();
+        return v.toFixed(2);
+      }
+      return v;
+    }
+
+    function pctClass(v) {
+      if (v == null || isNaN(v)) return "";
+      // map 0..100 → bg_percent_0..10
+      const n = Math.max(0, Math.min(100, v));
+      const idx = Math.min(10, Math.floor(n / 10));
+      return "bg_percent_" + idx;
+    }
+
+    function render() {
+      const t = document.getElementById("upsell-table");
+      const thead = "<thead><tr>" +
+        COLS.map(c => `<th class="${c.num?'num':''}">${c.label}</th>`).join("") +
+      "</tr></thead>";
+
+      const body = ROWS.map(r => {
+        const c = compute(r);
+        const tdHtml = COLS.map(col => {
+          if (col.key === "form")   return `<td>${r.form}</td>`;
+          if (col.key === "upsell") return `<td>${r.upsell}</td>`;
+          const v = c[col.key];
+          let cls = col.num ? "num" : "";
+          if (col.pct) cls += " " + pctClass(v);
+          // empty revenue cells get blank
+          const isRevEmpty = ["rev","rpv","rpu","rps"].includes(col.key) && (!r.rev && c[col.key] === 0);
+          const display = isRevEmpty ? "" : fmtNum(v, col);
+          return `<td class="${cls.trim()}">${display}</td>`;
+        }).join("");
+        return `<tr class="${r.highlight ? 'highlight' : ''}">${tdHtml}</tr>`;
+      }).join("");
+
+      t.innerHTML = thead + "<tbody>" + body + "</tbody>";
+    }
+
+    /* date presets */
+    function setRange(days) {
+      const today = new Date();
+      const to = today.toISOString().slice(0,10);
+      const from = new Date(today.getTime() - (days-1)*86400000).toISOString().slice(0,10);
+      document.getElementById("from-date").value = from;
+      document.getElementById("to-date").value = to;
+      updateRangeLabel();
+    }
+    document.querySelectorAll(".preset-row a").forEach(a => {
+      a.addEventListener("click", () => {
+        document.querySelectorAll(".preset-row a").forEach(x => x.classList.remove("active"));
+        a.classList.add("active");
+        const p = a.dataset.preset;
+        if (p === "today") setRange(1);
+        else if (p === "yesterday") {
+          const y = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+          document.getElementById("from-date").value = y;
+          document.getElementById("to-date").value = y;
+        }
+        else if (p === "3days")  setRange(3);
+        else if (p === "7days")  setRange(7);
+        else if (p === "14days") setRange(14);
+        updateRangeLabel();
+      });
+    });
+
+    function updateRangeLabel() {
+      const f = document.getElementById("from-date").value;
+      const t = document.getElementById("to-date").value;
+      document.getElementById("range-label").textContent =
+        `${f} - ${t} (GMT -04:00) America/New_York`;
+    }
+    document.getElementById("from-date").addEventListener("change", updateRangeLabel);
+    document.getElementById("to-date").addEventListener("change", updateRangeLabel);
+    document.getElementById("refresh-btn").addEventListener("click", render);
+
+    /* live clock */
+    (function () {
+      const pad = n => String(n).padStart(2, "0");
+      const fmtNow = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}  ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      };
+      const el = document.getElementById("nav-now");
+      el.textContent = fmtNow();
+      setInterval(() => { el.textContent = fmtNow(); }, 1000);
+    })();
+
+    render();
+  </script>
+</body>
+</html>
