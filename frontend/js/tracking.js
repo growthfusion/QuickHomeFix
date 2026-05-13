@@ -52,14 +52,19 @@ function trackStepEvent(eventName, data) {
   window.dataLayer.push(Object.assign({ event: eventName }, data || {}));
 }
 
-function trackMetaEvent(eventName, question, value, questionId) {
+function trackMetaEvent(eventName, question, value, questionId, extraData) {
   window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    event: eventName,
-    question_id: questionId || eventName,
-    question_text: question,
-    answer_text: value,
-  });
+  window.dataLayer.push(
+    Object.assign(
+      {
+        event: eventName,
+        question_id: questionId || eventName,
+        question_text: question,
+        answer_text: value,
+      },
+      extraData || {},
+    ),
+  );
 }
 
 function trackSnapEvent(eventName, params) {
