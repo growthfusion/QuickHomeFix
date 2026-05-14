@@ -33,35 +33,48 @@ async function fetchInsights(accountId, token, params) {
 export async function fetchMeta() {
   const token = process.env.META_ACCESS_TOKEN;
   const accountId = process.env.META_AD_ACCOUNT_ID;
-  const ch = buildClient();
-  const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-  const [placementData, deviceData, regionData] = await Promise.all([
-    fetchInsights(accountId, token, {
-      level: 'ad',
-      fields: 'campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,date_start,clicks,impressions,ctr,spend',
-      breakdowns: 'publisher_platform,platform_position',
-      date_preset: 'last_30d',
-      time_increment: 1,
-    }),
-    fetchInsights(accountId, token, {
-      level: 'campaign',
-      fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
-      breakdowns: 'device_platform,impression_device',
-      date_preset: 'last_30d',
-      time_increment: 1,
-    }),
-    fetchInsights(accountId, token, {
-      level: 'campaign',
-      fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
-      breakdowns: 'region',
-      date_preset: 'last_30d',
-      time_increment: 1,
-    }),
-  ]);
+  // Fix 1: Guard for missing env vars
+  if (!token || !accountId) {
+    console.warn('[fetchMeta] META_ACCESS_TOKEN or META_AD_ACCOUNT_ID not set — skipping');
+    return;
+  }
+
+  const ch = buildClient();
+
+  // Fix 4: Wrap Promise.all in try/catch with logging
+  let placementData, deviceData, regionData;
+  try {
+    [placementData, deviceData, regionData] = await Promise.all([
+      fetchInsights(accountId, token, {
+        level: 'ad',
+        fields: 'campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,date_start,clicks,impressions,ctr,spend',
+        breakdowns: 'publisher_platform,platform_position',
+        date_preset: 'last_30d',
+        time_increment: 1,
+      }),
+      fetchInsights(accountId, token, {
+        level: 'campaign',
+        fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
+        breakdowns: 'device_platform,impression_device',
+        date_preset: 'last_30d',
+        time_increment: 1,
+      }),
+      fetchInsights(accountId, token, {
+        level: 'campaign',
+        fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
+        breakdowns: 'region',
+        date_preset: 'last_30d',
+        time_increment: 1,
+      }),
+    ]);
+  } catch (err) {
+    console.error('[fetchMeta] API call failed:', err.message);
+    return;
+  }
 
   const placementRows = placementData.map(r => ({
-    fetched_at: fetchedAt,
+    fetched_at: '',
     date: r.date_start || '',
     campaign_id: r.campaign_id || '',
     campaign_name: r.campaign_name || '',
@@ -82,7 +95,7 @@ export async function fetchMeta() {
   }));
 
   const deviceRows = deviceData.map(r => ({
-    fetched_at: fetchedAt,
+    fetched_at: '',
     date: r.date_start || '',
     campaign_id: r.campaign_id || '',
     campaign_name: r.campaign_name || '',
@@ -98,12 +111,13 @@ export async function fetchMeta() {
     region: '',
     clicks: Number(r.clicks || 0),
     impressions: Number(r.impressions || 0),
-    ctr: 0,
+    // Fix 6: Compute ctr for device rows
+    ctr: Number(r.impressions || 0) > 0 ? Number(r.clicks || 0) / Number(r.impressions || 0) * 100 : 0,
     spend: Number(r.spend || 0),
   }));
 
   const regionRows = regionData.map(r => ({
-    fetched_at: fetchedAt,
+    fetched_at: '',
     date: r.date_start || '',
     campaign_id: r.campaign_id || '',
     campaign_name: r.campaign_name || '',
@@ -115,11 +129,13 @@ export async function fetchMeta() {
     placement: '',
     device: '',
     os: '',
-    state: r.region || '',
+    // Fix 5: state should be empty string, only populate region
+    state: '',
     region: r.region || '',
     clicks: Number(r.clicks || 0),
     impressions: Number(r.impressions || 0),
-    ctr: 0,
+    // Fix 6: Compute ctr for region rows
+    ctr: Number(r.impressions || 0) > 0 ? Number(r.clicks || 0) / Number(r.impressions || 0) * 100 : 0,
     spend: Number(r.spend || 0),
   }));
 
@@ -129,6 +145,15 @@ export async function fetchMeta() {
     return;
   }
 
-  await ch.insert({ table: 'meta_ad_stats', values: allRows, format: 'JSONEachRow' });
-  console.log(`[fetchMeta] Inserted ${allRows.length} rows`);
+  // Fix 3: Move fetchedAt to just before insert
+  const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  allRows.forEach(row => { row.fetched_at = fetchedAt; });
+
+  // Fix 2: Close ClickHouse client in finally
+  try {
+    await ch.insert({ table: 'meta_ad_stats', values: allRows, format: 'JSONEachRow' });
+    console.log(`[fetchMeta] Inserted ${allRows.length} rows`);
+  } finally {
+    await ch.close();
+  }
 }
