@@ -52,14 +52,23 @@ function trackStepEvent(eventName, data) {
   window.dataLayer.push(Object.assign({ event: eventName }, data || {}));
 }
 
-function trackMetaEvent(eventName, question, value, questionId) {
+function trackMetaEvent(eventName, question, value, questionId, extraData) {
   window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    event: eventName,
-    question_id: questionId || eventName,
-    question_text: question,
-    answer_text: value,
-  });
+  window.dataLayer.push(
+    Object.assign(
+      {
+        event: eventName,
+        question_id: questionId || eventName,
+        question_text: question,
+        answer_text: value,
+        // ── Meta Pixel-ready fields (clean data for GTM tags) ──
+        meta_content_name: window.location.pathname,
+        meta_content_category: question || eventName,
+        meta_content_ids: [window.location.href],
+      },
+      extraData || {},
+    ),
+  );
 }
 
 function trackSnapEvent(eventName, params) {
@@ -366,6 +375,9 @@ function submitFullLead(formData) {
       service: formData.service || "",
       content_category: formData.service || "",
       content_name: (formData.service || "") + " lead",
+      meta_content_name: window.location.pathname,
+      meta_content_category: formData.service || "",
+      meta_content_ids: [window.location.href],
     });
   }
 

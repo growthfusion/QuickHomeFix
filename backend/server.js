@@ -7,6 +7,10 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@clickhouse/client";
+import cron from "node-cron";
+import { fetchMeta } from "./jobs/fetchMeta.js";
+import { fetchLeadProsper } from "./jobs/fetchLeadProsper.js";
+import { fetchRedTrack } from "./jobs/fetchRedTrack.js";
 
 // Force local .env values to override any stale system env vars.
 dotenv.config({ override: true });
@@ -1357,8 +1361,10 @@ app.post("/api/dev/migrate", async (_req, res) => {
     if (!clickhouse) {
       throw new Error("ClickHouse is not configured. Set CLICKHOUSE_* values in backend/.env");
     }
-    await clickhouse.command({
-      query: `
+
+    const migrationQueries = [
+      // QuickHomeFix leads table
+      `
         CREATE TABLE IF NOT EXISTS ${CLICKHOUSE_TABLE}
         (
           id UUID DEFAULT generateUUIDv4(),
@@ -1418,7 +1424,71 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ENGINE = MergeTree
         ORDER BY (created_at, id)
       `,
-    });
+      // Meta Ads stats table
+      `
+        CREATE TABLE IF NOT EXISTS meta_ad_stats (
+          fetched_at         DateTime64(3, 'UTC') DEFAULT now64(3),
+          date               Date,
+          campaign_id        String,
+          campaign_name      String,
+          adset_id           String,
+          adset_name         String,
+          ad_id              String,
+          ad_name            String,
+          publisher_platform String,
+          placement          String,
+          device             String,
+          os                 String,
+          state              String,
+          region             String,
+          clicks             UInt32,
+          impressions        UInt32,
+          ctr                Float64,
+          spend              Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, adset_id, ad_id, placement, device, os, state)
+      `,
+      // LeadProsper stats table
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_stats (
+          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
+          date            Date,
+          campaign_id     String,
+          campaign_name   String,
+          leads_total     UInt32,
+          leads_accepted  UInt32,
+          leads_failed    UInt32,
+          leads_returned  UInt32,
+          total_buy       Float64,
+          total_sell      Float64,
+          net_profit      Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id)
+      `,
+      // RedTrack stats table
+      `
+        CREATE TABLE IF NOT EXISTS redtrack_stats (
+          fetched_at    DateTime64(3, 'UTC') DEFAULT now64(3),
+          date          Date,
+          campaign_id   String,
+          campaign_name String,
+          landing       String,
+          clicks        UInt32,
+          conversions   UInt32,
+          revenue       Float64,
+          cost          Float64,
+          epc           Float64,
+          roi           Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, landing)
+      `,
+    ];
+
+    // Execute all migrations sequentially
+    for (const query of migrationQueries) {
+      await clickhouse.command({ query });
+    }
+
     res.json({ ok: true, migrated: true });
   } catch (e) {
     console.error("Migration error:", e);
@@ -1709,6 +1779,54 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
   }
 });
 // ───────────────────────────────────────────────────────────────────────────
+
+// --- Initial API sync on startup ---
+Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack()])
+  .then(() => console.log('[startup] Initial API sync complete'));
+
+// --- Hourly cron scheduler ---
+cron.schedule('0 * * * *', () => {
+  console.log('[cron] Starting hourly API sync...');
+  Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack()])
+    .then(() => console.log('[cron] Hourly sync complete'));
+});
+
+// --- GET endpoints for latest stats snapshots ---
+app.get("/api/stats/meta", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM meta_ad_stats WHERE fetched_at = (SELECT max(fetched_at) FROM meta_ad_stats)`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/meta]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/leadprosper", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_stats WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_stats)`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/leadprosper]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/redtrack", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats)`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/redtrack]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
