@@ -41,116 +41,109 @@ export async function fetchMeta() {
   }
 
   const ch = buildClient();
-
-  // Fix 4: Wrap Promise.all in try/catch with logging
-  let placementData, deviceData, regionData;
   try {
-    [placementData, deviceData, regionData] = await Promise.all([
-      fetchInsights(accountId, token, {
-        level: 'ad',
-        fields: 'campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,date_start,clicks,impressions,ctr,spend',
-        breakdowns: 'publisher_platform,platform_position',
-        date_preset: 'last_30d',
-        time_increment: 1,
-      }),
-      fetchInsights(accountId, token, {
-        level: 'campaign',
-        fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
-        breakdowns: 'device_platform,impression_device',
-        date_preset: 'last_30d',
-        time_increment: 1,
-      }),
-      fetchInsights(accountId, token, {
-        level: 'campaign',
-        fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
-        breakdowns: 'region',
-        date_preset: 'last_30d',
-        time_increment: 1,
-      }),
-    ]);
-  } catch (err) {
-    console.error('[fetchMeta] API call failed:', err.message);
-    return;
-  }
+    let placementData, deviceData, regionData;
+    try {
+      [placementData, deviceData, regionData] = await Promise.all([
+        fetchInsights(accountId, token, {
+          level: 'ad',
+          fields: 'campaign_id,campaign_name,adset_id,adset_name,ad_id,ad_name,date_start,clicks,impressions,ctr,spend',
+          breakdowns: 'publisher_platform,platform_position',
+          date_preset: 'last_30d',
+          time_increment: 1,
+        }),
+        fetchInsights(accountId, token, {
+          level: 'campaign',
+          fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
+          breakdowns: 'device_platform,impression_device',
+          date_preset: 'last_30d',
+          time_increment: 1,
+        }),
+        fetchInsights(accountId, token, {
+          level: 'campaign',
+          fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
+          breakdowns: 'region',
+          date_preset: 'last_30d',
+          time_increment: 1,
+        }),
+      ]);
+    } catch (err) {
+      console.error('[fetchMeta] API call failed:', err.message);
+      return;
+    }
 
-  const placementRows = placementData.map(r => ({
-    fetched_at: '',
-    date: r.date_start || '',
-    campaign_id: r.campaign_id || '',
-    campaign_name: r.campaign_name || '',
-    adset_id: r.adset_id || '',
-    adset_name: r.adset_name || '',
-    ad_id: r.ad_id || '',
-    ad_name: r.ad_name || '',
-    publisher_platform: r.publisher_platform || '',
-    placement: r.platform_position || '',
-    device: '',
-    os: '',
-    state: '',
-    region: '',
-    clicks: Number(r.clicks || 0),
-    impressions: Number(r.impressions || 0),
-    ctr: Number(r.ctr || 0),
-    spend: Number(r.spend || 0),
-  }));
+    const placementRows = placementData.map(r => ({
+      fetched_at: '',
+      date: r.date_start || '',
+      campaign_id: r.campaign_id || '',
+      campaign_name: r.campaign_name || '',
+      adset_id: r.adset_id || '',
+      adset_name: r.adset_name || '',
+      ad_id: r.ad_id || '',
+      ad_name: r.ad_name || '',
+      publisher_platform: r.publisher_platform || '',
+      placement: r.platform_position || '',
+      device: '',
+      os: '',
+      state: '',
+      region: '',
+      clicks: Number(r.clicks || 0),
+      impressions: Number(r.impressions || 0),
+      ctr: Number(r.ctr || 0),
+      spend: Number(r.spend || 0),
+    }));
 
-  const deviceRows = deviceData.map(r => ({
-    fetched_at: '',
-    date: r.date_start || '',
-    campaign_id: r.campaign_id || '',
-    campaign_name: r.campaign_name || '',
-    adset_id: '',
-    adset_name: '',
-    ad_id: '',
-    ad_name: '',
-    publisher_platform: '',
-    placement: '',
-    device: r.device_platform || '',
-    os: r.impression_device || '',
-    state: '',
-    region: '',
-    clicks: Number(r.clicks || 0),
-    impressions: Number(r.impressions || 0),
-    // Fix 6: Compute ctr for device rows
-    ctr: Number(r.impressions || 0) > 0 ? Number(r.clicks || 0) / Number(r.impressions || 0) * 100 : 0,
-    spend: Number(r.spend || 0),
-  }));
+    const deviceRows = deviceData.map(r => ({
+      fetched_at: '',
+      date: r.date_start || '',
+      campaign_id: r.campaign_id || '',
+      campaign_name: r.campaign_name || '',
+      adset_id: '',
+      adset_name: '',
+      ad_id: '',
+      ad_name: '',
+      publisher_platform: '',
+      placement: '',
+      device: r.device_platform || '',
+      os: r.impression_device || '',
+      state: '',
+      region: '',
+      clicks: Number(r.clicks || 0),
+      impressions: Number(r.impressions || 0),
+      ctr: Number(r.impressions || 0) > 0 ? Number(r.clicks || 0) / Number(r.impressions || 0) * 100 : 0,
+      spend: Number(r.spend || 0),
+    }));
 
-  const regionRows = regionData.map(r => ({
-    fetched_at: '',
-    date: r.date_start || '',
-    campaign_id: r.campaign_id || '',
-    campaign_name: r.campaign_name || '',
-    adset_id: '',
-    adset_name: '',
-    ad_id: '',
-    ad_name: '',
-    publisher_platform: '',
-    placement: '',
-    device: '',
-    os: '',
-    // Fix 5: state should be empty string, only populate region
-    state: '',
-    region: r.region || '',
-    clicks: Number(r.clicks || 0),
-    impressions: Number(r.impressions || 0),
-    // Fix 6: Compute ctr for region rows
-    ctr: Number(r.impressions || 0) > 0 ? Number(r.clicks || 0) / Number(r.impressions || 0) * 100 : 0,
-    spend: Number(r.spend || 0),
-  }));
+    const regionRows = regionData.map(r => ({
+      fetched_at: '',
+      date: r.date_start || '',
+      campaign_id: r.campaign_id || '',
+      campaign_name: r.campaign_name || '',
+      adset_id: '',
+      adset_name: '',
+      ad_id: '',
+      ad_name: '',
+      publisher_platform: '',
+      placement: '',
+      device: '',
+      os: '',
+      state: '',
+      region: r.region || '',
+      clicks: Number(r.clicks || 0),
+      impressions: Number(r.impressions || 0),
+      ctr: Number(r.impressions || 0) > 0 ? Number(r.clicks || 0) / Number(r.impressions || 0) * 100 : 0,
+      spend: Number(r.spend || 0),
+    }));
 
-  const allRows = [...placementRows, ...deviceRows, ...regionRows];
-  if (allRows.length === 0) {
-    console.log('[fetchMeta] No data returned from Meta API');
-    return;
-  }
+    const allRows = [...placementRows, ...deviceRows, ...regionRows];
+    if (allRows.length === 0) {
+      console.log('[fetchMeta] No data returned from Meta API');
+      return;
+    }
 
-  // Fix 3: Move fetchedAt to just before insert
-  const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  allRows.forEach(row => { row.fetched_at = fetchedAt; });
+    const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    allRows.forEach(row => { row.fetched_at = fetchedAt; });
 
-  // Fix 2: Close ClickHouse client in finally
-  try {
     await ch.insert({ table: 'meta_ad_stats', values: allRows, format: 'JSONEachRow' });
     console.log(`[fetchMeta] Inserted ${allRows.length} rows`);
   } finally {
