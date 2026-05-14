@@ -1082,7 +1082,15 @@ function submitDetails(e) {
   store.updateFormData("state", state.toUpperCase());
   store.updateFormData("zipcode", zip);
   store.updateFormData("isOwner", true);
-  trackMetaEvent("AddressDetails", "Property Address", addr+", "+city+", "+state+" "+zip, "AddressDetails", { service: store.formData.service || "" });
+  var _svc = store.formData.service || currentLandingService || '';
+  var _path = _svc ? '/get-quotes/' + _svc : window.location.pathname;
+  var _url  = 'https://quickhomefix.pro' + _path;
+  trackMetaEvent("AddressDetails", "Property Address", addr+", "+city+", "+state+" "+zip, "AddressDetails", {
+    service:              _svc,
+    meta_content_name:    _path,
+    meta_content_category: _svc,
+    meta_content_ids:     [_url]
+  });
   store.nextStep();
   renderCurrentStep();
 }
