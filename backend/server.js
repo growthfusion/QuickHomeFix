@@ -871,6 +871,10 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
 
 // --- Static frontend ---
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 app.use(express.static(path.join(__dirname, '..', 'frontend'), { extensions: ['html'] }));
 
 // --- Security & basics ---
@@ -950,6 +954,22 @@ async function runClickhouseSelect(query) {
     format: "JSONEachRow",
   });
   return resultSet.json();
+}
+
+export function inferFormTypeFromLead(normalizedService, landingPageUrl) {
+  if (normalizedService) {
+    const s = normalizedService.toUpperCase();
+    if (s.includes('BATH') || s.includes('TUB') || s.includes('SHOWER')) return 'bath';
+    if (s.includes('ROOF')) return 'roof';
+    if (s.includes('WINDOW')) return 'windo';
+  }
+  if (landingPageUrl) {
+    const p = landingPageUrl.toLowerCase();
+    if (p.includes('/bath') || p.includes('/shower')) return 'bath';
+    if (p.includes('/roof')) return 'roof';
+    if (p.includes('/window')) return 'windo';
+  }
+  return 'other';
 }
 
 // --- Google Places proxy (your existing code) ---
@@ -1471,26 +1491,30 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id)
       `,
-      // RedTrack stats table
+      // RedTrack stats table (includes breakdown_type + group_key for per-dimension rows)
       `
         CREATE TABLE IF NOT EXISTS redtrack_stats (
-          fetched_at    DateTime64(3, 'UTC') DEFAULT now64(3),
-          date          Date,
-          campaign_id   String,
-          campaign_name String,
-          landing       String,
-          lp_views      UInt32,
-          clicks        UInt32,
-          conversions   UInt32,
-          revenue       Float64,
-          cost          Float64,
-          epc           Float64,
-          roi           Float64
+          fetched_at     DateTime64(3, 'UTC') DEFAULT now64(3),
+          date           Date,
+          breakdown_type String DEFAULT 'daily',
+          group_key      String DEFAULT '',
+          campaign_id    String,
+          campaign_name  String,
+          landing        String,
+          lp_views       UInt32,
+          clicks         UInt32,
+          conversions    UInt32,
+          revenue        Float64,
+          cost           Float64,
+          epc            Float64,
+          roi            Float64
         ) ENGINE = MergeTree()
-        ORDER BY (date, campaign_id, landing)
+        ORDER BY (date, breakdown_type, group_key, campaign_id)
       `,
-      // Add lp_views to existing tables (safe no-op if already present)
+      // Safe no-ops for existing tables that predate the new columns
       `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS lp_views UInt32 DEFAULT 0`,
+      `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS breakdown_type String DEFAULT 'daily'`,
+      `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS group_key String DEFAULT ''`,
     ];
 
     // Execute all migrations sequentially
@@ -1834,6 +1858,114 @@ app.get("/api/stats/redtrack", async (_req, res) => {
   } catch (e) {
     console.error('[/api/stats/redtrack]', e.message);
     res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+// Debug: inspect raw RT API responses (one per group dimension)
+app.get("/api/debug/rt-raw", async (_req, res) => {
+  try {
+    const apiKey = process.env.REDTRACK_API_KEY;
+    if (!apiKey) return res.status(400).json({ error: 'REDTRACK_API_KEY not set' });
+    const now = new Date();
+    const date_to = now.toISOString().slice(0, 10);
+    const date_from = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    const makeUrl = (groups) => {
+      const p = new URLSearchParams();
+      p.append('api_key', apiKey);
+      p.append('date_from', date_from);
+      p.append('date_to', date_to);
+      for (const g of (Array.isArray(groups) ? groups : [groups])) p.append('group[]', g);
+      return `https://api.redtrack.io/report?${p.toString()}`;
+    };
+
+    const results = {};
+    for (const [label, groups] of [
+      ['date', 'date'],
+      ['date+os', ['date', 'os']],
+      ['date+device', ['date', 'device']],
+      ['date+country', ['date', 'country']],
+      ['date+offer', ['date', 'offer']],
+    ]) {
+      try {
+        const r = await axios.get(makeUrl(groups));
+        const data = Array.isArray(r.data) ? r.data : [];
+        results[label] = { total: data.length, sample: data.slice(0, 2), keys: data[0] ? Object.keys(data[0]) : [] };
+      } catch (e) {
+        results[label] = { error: e.message };
+      }
+    }
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Debug: show row counts from ClickHouse stats tables
+app.get("/api/debug/stats-summary", async (_req, res) => {
+  try {
+    if (!clickhouse) return res.status(500).json({ error: 'ClickHouse not configured' });
+
+    const [rtCounts, metaCounts, lpCounts] = await Promise.all([
+      runClickhouseSelect(
+        `SELECT breakdown_type, count() as n, max(fetched_at) as latest
+         FROM redtrack_stats GROUP BY breakdown_type ORDER BY breakdown_type`
+      ).catch(e => [{ error: e.message }]),
+      runClickhouseSelect(
+        `SELECT count() as total, countIf(publisher_platform != '') as has_publisher,
+                countIf(device != '') as has_device, countIf(region != '') as has_region,
+                max(fetched_at) as latest FROM meta_ad_stats`
+      ).catch(e => [{ error: e.message }]),
+      runClickhouseSelect(
+        `SELECT count() as total, max(fetched_at) as latest FROM leadprosper_stats`
+      ).catch(e => [{ error: e.message }]),
+    ]);
+
+    res.json({ redtrack: rtCounts, meta: metaCounts, leadprosper: lpCounts });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Manually trigger all three fetch jobs and return results
+app.post("/api/dev/force-fetch", async (_req, res) => {
+  try {
+    const [metaResult, lpResult, rtResult] = await Promise.allSettled([
+      fetchMeta(),
+      fetchLeadProsper(),
+      fetchRedTrack(),
+    ]);
+    res.json({
+      meta:       metaResult.status === 'fulfilled' ? 'ok' : metaResult.reason?.message,
+      leadprosper: lpResult.status === 'fulfilled'  ? 'ok' : lpResult.reason?.message,
+      redtrack:   rtResult.status === 'fulfilled'   ? 'ok' : rtResult.reason?.message,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/stats/lp-form-map', async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(`
+      SELECT
+        lp_campaign_id,
+        any(normalized_service) AS sample_service,
+        any(landing_page_url)   AS sample_url
+      FROM leads
+      WHERE created_at >= now() - INTERVAL 90 DAY
+        AND lp_campaign_id IS NOT NULL
+        AND lp_campaign_id != ''
+      GROUP BY lp_campaign_id
+    `);
+    const result = rows.map(r => ({
+      lp_campaign_id: r.lp_campaign_id,
+      form_type: inferFormTypeFromLead(r.sample_service, r.sample_url),
+    }));
+    res.json(result);
+  } catch (e) {
+    console.error('[lp-form-map]', e.message);
+    res.json([]);
   }
 });
 
