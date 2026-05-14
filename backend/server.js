@@ -1357,8 +1357,10 @@ app.post("/api/dev/migrate", async (_req, res) => {
     if (!clickhouse) {
       throw new Error("ClickHouse is not configured. Set CLICKHOUSE_* values in backend/.env");
     }
-    await clickhouse.command({
-      query: `
+
+    const migrationQueries = [
+      // QuickHomeFix leads table
+      `
         CREATE TABLE IF NOT EXISTS ${CLICKHOUSE_TABLE}
         (
           id UUID DEFAULT generateUUIDv4(),
@@ -1418,7 +1420,71 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ENGINE = MergeTree
         ORDER BY (created_at, id)
       `,
-    });
+      // Meta Ads stats table
+      `
+        CREATE TABLE IF NOT EXISTS meta_ad_stats (
+          fetched_at         DateTime,
+          date               Date,
+          campaign_id        String,
+          campaign_name      String,
+          adset_id           String,
+          adset_name         String,
+          ad_id              String,
+          ad_name            String,
+          publisher_platform String,
+          placement          String,
+          device             String,
+          os                 String,
+          state              String,
+          region             String,
+          clicks             UInt32,
+          impressions        UInt32,
+          ctr                Float32,
+          spend              Float32
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, adset_id, ad_id, placement, device, os, state)
+      `,
+      // LeadProsper stats table
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_stats (
+          fetched_at      DateTime,
+          date            Date,
+          campaign_id     String,
+          campaign_name   String,
+          leads_total     UInt32,
+          leads_accepted  UInt32,
+          leads_failed    UInt32,
+          leads_returned  UInt32,
+          total_buy       Float32,
+          total_sell      Float32,
+          net_profit      Float32
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id)
+      `,
+      // RedTrack stats table
+      `
+        CREATE TABLE IF NOT EXISTS redtrack_stats (
+          fetched_at    DateTime,
+          date          Date,
+          campaign_id   String,
+          campaign_name String,
+          landing       String,
+          clicks        UInt32,
+          conversions   UInt32,
+          revenue       Float32,
+          cost          Float32,
+          epc           Float32,
+          roi           Float32
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, landing)
+      `,
+    ];
+
+    // Execute all migrations sequentially
+    for (const query of migrationQueries) {
+      await clickhouse.command({ query });
+    }
+
     res.json({ ok: true, migrated: true });
   } catch (e) {
     console.error("Migration error:", e);
