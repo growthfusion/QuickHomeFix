@@ -17,13 +17,32 @@ function buildClient() {
   });
 }
 
-function currentMonthRange() {
+function currentMonthDays() {
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const start = `${yyyy}-${mm}-01`;
-  const end = now.toISOString().slice(0, 10);
-  return { start_date: start, end_date: end };
+  const days = [];
+  for (let d = 1; d <= now.getDate(); d++) {
+    const dd = String(d).padStart(2, '0');
+    days.push(`${yyyy}-${mm}-${dd}`);
+  }
+  return days;
+}
+
+async function fetchDay(headers, day) {
+  const params = { start_date: day, end_date: day };
+  const [statsRes, accountingRes] = await Promise.all([
+    axios.get(`${LP_BASE}/public/stats`, { headers, params }),
+    axios.get(`${LP_BASE}/public/accounting`, {
+      headers,
+      params: { ...params, client_type: 'buyers', mode: 'granular' },
+    }),
+  ]);
+  return {
+    day,
+    stats: Array.isArray(statsRes.data) ? statsRes.data : [],
+    accounting: Array.isArray(accountingRes.data) ? accountingRes.data : [],
+  };
 }
 
 export async function fetchLeadProsper() {
@@ -38,54 +57,54 @@ export async function fetchLeadProsper() {
   const ch = buildClient();
   try {
     const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const date = new Date().toISOString().slice(0, 10);
-    const dateRange = currentMonthRange();
+    const days = currentMonthDays();
 
-    let statsRes, accountingRes;
-    try {
-      [statsRes, accountingRes] = await Promise.all([
-        axios.get(`${LP_BASE}/public/stats`, { headers, params: dateRange }),
-        axios.get(`${LP_BASE}/public/accounting`, {
-          headers,
-          params: { ...dateRange, client_type: 'buyers', mode: 'granular' },
-        }),
-      ]);
-    } catch (err) {
-      console.error('[fetchLeadProsper] API call failed:', err.message);
+    const settled = await Promise.allSettled(days.map(day => fetchDay(headers, day)));
+
+    const dayResults = settled.map((r, i) => {
+      if (r.status === 'rejected') {
+        console.warn(`[fetchLeadProsper] Failed to fetch ${days[i]}:`, r.reason?.message);
+        return null;
+      }
+      return r.value;
+    }).filter(Boolean);
+
+    if (dayResults.length === 0) {
+      console.error('[fetchLeadProsper] All daily API calls failed');
       return;
     }
 
-    const stats = Array.isArray(statsRes.data) ? statsRes.data : [];
-    const accounting = Array.isArray(accountingRes.data) ? accountingRes.data : [];
+    const allRows = [];
+    for (const { day, stats, accounting } of dayResults) {
+      if (stats.length === 0) continue;
+      const acctMap = {};
+      accounting.forEach(a => { acctMap[a.campaign_id] = a; });
+      for (const s of stats) {
+        const c = s.campaign || s;
+        const acct = acctMap[c.id] || {};
+        allRows.push({
+          fetched_at: fetchedAt,
+          date: day,
+          campaign_id: String(c.id || ''),
+          campaign_name: c.name || '',
+          leads_total: Number(c.leads_total || 0),
+          leads_accepted: Number(c.leads_accepted || 0),
+          leads_failed: Number(c.leads_failed || 0),
+          leads_returned: Number(c.leads_returned || 0),
+          total_buy: Number(acct.total_buy || 0),
+          total_sell: Number(acct.total_sell || 0),
+          net_profit: Number(acct.net_profit || 0),
+        });
+      }
+    }
 
-    if (stats.length === 0) {
-      console.log('[fetchLeadProsper] No stats returned');
+    if (allRows.length === 0) {
+      console.log('[fetchLeadProsper] No stats returned for any day this month');
       return;
     }
 
-    const acctMap = {};
-    accounting.forEach(a => { acctMap[a.campaign_id] = a; });
-
-    const rows = stats.map(s => {
-      const c = s.campaign || s;
-      const acct = acctMap[c.id] || {};
-      return {
-        fetched_at: fetchedAt,
-        date,
-        campaign_id: String(c.id || ''),
-        campaign_name: c.name || '',
-        leads_total: Number(c.leads_total || 0),
-        leads_accepted: Number(c.leads_accepted || 0),
-        leads_failed: Number(c.leads_failed || 0),
-        leads_returned: Number(c.leads_returned || 0),
-        total_buy: Number(acct.total_buy || 0),
-        total_sell: Number(acct.total_sell || 0),
-        net_profit: Number(acct.net_profit || 0),
-      };
-    });
-
-    await ch.insert({ table: 'leadprosper_stats', values: rows, format: 'JSONEachRow' });
-    console.log(`[fetchLeadProsper] Inserted ${rows.length} rows`);
+    await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
+    console.log(`[fetchLeadProsper] Inserted ${allRows.length} rows across ${days.length} days`);
   } finally {
     await ch.close();
   }

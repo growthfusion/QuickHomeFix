@@ -468,7 +468,7 @@
             r.landing,
             inferForm(r.campaign_name),
             Number(r.clicks),
-            Number(r.clicks),
+            Number(r.lp_views || 0),
             Number(r.conversions),
             0,
           ]);
@@ -575,34 +575,36 @@
       return { c, ctr: c ? ctrW/c : 0, cost };
     }
 
-    // Aggregate per-date totals
+    // Aggregate per-date totals — CTR% and CR% use that day's actual Meta clicks/impressions
     function buildDateRows() {
       const byDate = new Map();
       for (const r of LP_ROWS) {
-        if (!byDate.has(r[0])) byDate.set(r[0], { l:0, s:0, rv:0, p:0 });
+        if (!byDate.has(r[0])) byDate.set(r[0], { l:0, s:0, rv:0 });
         const a = byDate.get(r[0]);
-        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.p += r[9];
+        a.l += r[2]; a.s += r[3]; a.rv += r[8];
       }
       const dates = [...byDate.keys()].sort().reverse();
       return dates.map(d => {
         const a = byDate.get(d);
         const acc = a.l ? (a.s / a.l) * 100 : 0;
-        return lpRow(d, a.l, a.s, acc, a.rv, a.p);
+        const ad = sumAd(row => row[0] === d);
+        return lpRow(d, a.l, a.s, acc, a.rv, ad);
       });
     }
 
-    // Aggregate per-form totals (roof / bath)
+    // Aggregate per-form totals — CTR% and CR% use that form's actual Meta clicks/impressions
     function buildFormRows() {
       const byForm = new Map();
       for (const r of LP_ROWS) {
-        if (!byForm.has(r[1])) byForm.set(r[1], { l:0, s:0, rv:0, p:0 });
+        if (!byForm.has(r[1])) byForm.set(r[1], { l:0, s:0, rv:0 });
         const a = byForm.get(r[1]);
-        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.p += r[9];
+        a.l += r[2]; a.s += r[3]; a.rv += r[8];
       }
       const out = [];
       for (const [k, a] of byForm.entries()) {
         const acc = a.l ? (a.s / a.l) * 100 : 0;
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, a.p));
+        const ad = sumAd(row => row[1] === k);
+        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
       }
       out.sort((a,b) => b[6] - a[6]); // sort by LEADS desc
       return out;
