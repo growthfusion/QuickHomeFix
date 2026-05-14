@@ -560,6 +560,13 @@
             .map(r => [r.date, r.group_key, Number(r.lp_views || 0)]);
         }
 
+        if (Array.isArray(lpFormMapRes)) {
+          LP_FORM_MAP = {};
+          for (const entry of lpFormMapRes) {
+            LP_FORM_MAP[entry.lp_campaign_id] = entry.form_type;
+          }
+        }
+
         if (lpRes.ok && lpRes.rows) {
           LP_CAMPAIGNS_RAW = lpRes.rows; // keep raw for Landing table
           LP_ROWS = lpRes.rows.map(r => {
@@ -580,13 +587,6 @@
               0,
             ];
           });
-        }
-
-        if (Array.isArray(lpFormMapRes)) {
-          LP_FORM_MAP = {};
-          for (const entry of lpFormMapRes) {
-            LP_FORM_MAP[entry.lp_campaign_id] = entry.form_type;
-          }
         }
 
       } catch (err) {
