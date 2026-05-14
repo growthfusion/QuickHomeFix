@@ -6,6 +6,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { createClient } from "@clickhouse/client";
 import cron from "node-cron";
 import { fetchMeta } from "./jobs/fetchMeta.js";
@@ -866,6 +868,10 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
   }
   return delivery;
 }
+
+// --- Static frontend ---
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, '..', 'frontend'), { extensions: ['html'] }));
 
 // --- Security & basics ---
 app.set("trust proxy", 1);
