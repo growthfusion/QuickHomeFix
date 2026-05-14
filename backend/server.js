@@ -7,6 +7,10 @@ import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@clickhouse/client";
+import cron from "node-cron";
+import { fetchMeta } from "./jobs/fetchMeta.js";
+import { fetchLeadProsper } from "./jobs/fetchLeadProsper.js";
+import { fetchRedTrack } from "./jobs/fetchRedTrack.js";
 
 // Force local .env values to override any stale system env vars.
 dotenv.config({ override: true });
@@ -1775,6 +1779,54 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
   }
 });
 // ───────────────────────────────────────────────────────────────────────────
+
+// --- Initial API sync on startup ---
+Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack()])
+  .then(() => console.log('[startup] Initial API sync complete'));
+
+// --- Hourly cron scheduler ---
+cron.schedule('0 * * * *', () => {
+  console.log('[cron] Starting hourly API sync...');
+  Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack()])
+    .then(() => console.log('[cron] Hourly sync complete'));
+});
+
+// --- GET endpoints for latest stats snapshots ---
+app.get("/api/stats/meta", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM meta_ad_stats WHERE fetched_at = (SELECT max(fetched_at) FROM meta_ad_stats)`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/meta]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/leadprosper", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_stats WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_stats)`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/leadprosper]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/redtrack", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats)`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/redtrack]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
