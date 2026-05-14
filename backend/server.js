@@ -1801,7 +1801,7 @@ cron.schedule('0 * * * *', () => {
 app.get("/api/stats/meta", async (_req, res) => {
   try {
     const rows = await runClickhouseSelect(
-      `SELECT * FROM meta_ad_stats WHERE fetched_at = (SELECT max(fetched_at) FROM meta_ad_stats)`
+      `SELECT * FROM meta_ad_stats WHERE fetched_at = (SELECT max(fetched_at) FROM meta_ad_stats) ORDER BY date DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -1813,7 +1813,7 @@ app.get("/api/stats/meta", async (_req, res) => {
 app.get("/api/stats/leadprosper", async (_req, res) => {
   try {
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_stats WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_stats)`
+      `SELECT * FROM leadprosper_stats WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_stats) ORDER BY date DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -1825,7 +1825,7 @@ app.get("/api/stats/leadprosper", async (_req, res) => {
 app.get("/api/stats/redtrack", async (_req, res) => {
   try {
     const rows = await runClickhouseSelect(
-      `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats)`
+      `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats) ORDER BY date DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
