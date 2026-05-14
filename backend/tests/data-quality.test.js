@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { inferFormTypeFromLead } from '../server.js';
+import { z } from 'zod';
 
 describe('inferFormTypeFromLead', () => {
   // normalized_service priority
@@ -44,5 +45,53 @@ describe('inferFormTypeFromLead', () => {
   // normalized_service takes priority over url
   it('service wins over url when both set', () => {
     expect(inferFormTypeFromLead('ROOFING_ASPHALT', 'https://quickhomefix.com/get-quotes/bath')).toBe('roof');
+  });
+});
+
+describe('campaign_mapping POST schema', () => {
+  const CampaignMappingSchema = z.object({
+    meta_campaign_id: z.string().min(1),
+    lp_campaign_id:   z.string().min(1),
+    rt_source_id:     z.string().default(''),
+    form_type:        z.enum(['bath', 'roof', 'windo', 'other']),
+    label:            z.string().optional(),
+  });
+
+  it('accepts valid payload', () => {
+    const result = CampaignMappingSchema.safeParse({
+      meta_campaign_id: '123',
+      lp_campaign_id:   '456',
+      form_type:        'bath',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data.rt_source_id).toBe('');
+  });
+
+  it('rejects missing meta_campaign_id', () => {
+    const result = CampaignMappingSchema.safeParse({
+      lp_campaign_id: '456',
+      form_type:      'bath',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects invalid form_type', () => {
+    const result = CampaignMappingSchema.safeParse({
+      meta_campaign_id: '123',
+      lp_campaign_id:   '456',
+      form_type:        'invalid',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts label as optional', () => {
+    const result = CampaignMappingSchema.safeParse({
+      meta_campaign_id: '123',
+      lp_campaign_id:   '456',
+      form_type:        'roof',
+      label:            'My Campaign',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data.label).toBe('My Campaign');
   });
 });

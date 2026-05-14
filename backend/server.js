@@ -1515,6 +1515,18 @@ app.post("/api/dev/migrate", async (_req, res) => {
       `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS lp_views UInt32 DEFAULT 0`,
       `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS breakdown_type String DEFAULT 'daily'`,
       `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS group_key String DEFAULT ''`,
+      // campaign_mapping table (Fix B)
+      `
+        CREATE TABLE IF NOT EXISTS campaign_mapping (
+          meta_campaign_id  String,
+          lp_campaign_id    String,
+          rt_source_id      String,
+          form_type         String,
+          label             Nullable(String),
+          created_at        DateTime64(3, 'UTC') DEFAULT now64(3)
+        ) ENGINE = ReplacingMergeTree(created_at)
+        ORDER BY (meta_campaign_id)
+      `,
     ];
 
     // Execute all migrations sequentially
@@ -1966,6 +1978,64 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
   } catch (e) {
     console.error('[lp-form-map]', e.message);
     res.json([]);
+  }
+});
+
+const CampaignMappingSchema = z.object({
+  meta_campaign_id: z.string().min(1),
+  lp_campaign_id:   z.string().min(1),
+  rt_source_id:     z.string().default(''),
+  form_type:        z.enum(['bath', 'roof', 'windo', 'other']),
+  label:            z.string().optional(),
+});
+
+app.get('/api/campaign-mapping', async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(`
+      SELECT * FROM campaign_mapping FINAL
+      ORDER BY form_type, meta_campaign_id
+    `);
+    res.json(rows);
+  } catch (e) {
+    console.error('[campaign-mapping GET]', e.message);
+    res.json([]);
+  }
+});
+
+app.post('/api/campaign-mapping', async (req, res) => {
+  let data;
+  try {
+    data = CampaignMappingSchema.parse(req.body);
+  } catch (err) {
+    return res.status(400).json({ error: 'validation failed', details: err?.issues });
+  }
+  try {
+    await clickhouse.insert({
+      table: 'campaign_mapping',
+      values: [data],
+      format: 'JSONEachRow',
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[campaign-mapping POST]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/campaign-mapping/:meta_campaign_id', async (req, res) => {
+  const id = req.params.meta_campaign_id;
+  if (!id || id.trim() === '') {
+    return res.status(400).json({ error: 'meta_campaign_id is required' });
+  }
+  try {
+    await clickhouse.command({
+      query: `ALTER TABLE campaign_mapping DELETE WHERE meta_campaign_id = {id:String}`,
+      query_params: { id },
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[campaign-mapping DELETE]', e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 
