@@ -1479,6 +1479,7 @@ app.post("/api/dev/migrate", async (_req, res) => {
           campaign_id   String,
           campaign_name String,
           landing       String,
+          lp_views      UInt32,
           clicks        UInt32,
           conversions   UInt32,
           revenue       Float64,
@@ -1488,6 +1489,8 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id, landing)
       `,
+      // Add lp_views to existing tables (safe no-op if already present)
+      `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS lp_views UInt32 DEFAULT 0`,
     ];
 
     // Execute all migrations sequentially

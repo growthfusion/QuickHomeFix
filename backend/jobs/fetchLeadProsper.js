@@ -67,16 +67,17 @@ export async function fetchLeadProsper() {
     accounting.forEach(a => { acctMap[a.campaign_id] = a; });
 
     const rows = stats.map(s => {
-      const acct = acctMap[s.id] || {};
+      const c = s.campaign || s;
+      const acct = acctMap[c.id] || {};
       return {
         fetched_at: fetchedAt,
         date,
-        campaign_id: String(s.id || ''),
-        campaign_name: s.name || '',
-        leads_total: Number(s.leads_total || 0),
-        leads_accepted: Number(s.leads_accepted || 0),
-        leads_failed: Number(s.leads_failed || 0),
-        leads_returned: Number(s.leads_returned || 0),
+        campaign_id: String(c.id || ''),
+        campaign_name: c.name || '',
+        leads_total: Number(c.leads_total || 0),
+        leads_accepted: Number(c.leads_accepted || 0),
+        leads_failed: Number(c.leads_failed || 0),
+        leads_returned: Number(c.leads_returned || 0),
         total_buy: Number(acct.total_buy || 0),
         total_sell: Number(acct.total_sell || 0),
         net_profit: Number(acct.net_profit || 0),

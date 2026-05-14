@@ -27,11 +27,13 @@ describe('fetchLeadProsper', () => {
     axios.get
       .mockResolvedValueOnce({
         data: [{
-          id: 'c1', name: 'Bath Campaign',
-
-          
-          leads_total: 100, leads_accepted: 80,
-          leads_failed: 10, leads_returned: 10,
+          campaign: {
+            id: 'c1', name: 'Bath Campaign',
+            leads_total: 100, leads_accepted: 80,
+            leads_failed: 10, leads_returned: 10,
+          },
+          suppliers: [],
+          buyers: [],
         }],
       })
       .mockResolvedValueOnce({

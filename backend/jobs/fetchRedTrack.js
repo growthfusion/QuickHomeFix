@@ -3,6 +3,17 @@ import { createClient } from '@clickhouse/client';
 
 const RT_BASE = 'https://api.redtrack.io';
 
+// Only pull data for these 7 QHF traffic channel IDs
+const QHF_SOURCE_IDS = new Set([
+  '6973b115cf6f4f9efdaec963',
+  '69e726d9a4d9b51357c6304d',
+  '69e7279a3bab5180c00c1ac8',
+  '69e7279e0a796ad2584aef8e',
+  '69e8a55e37d74edb736a4d31',
+  '69e8a5bb558d8330b45fddf1',
+  '69e8a614a9384a9ddbbb4aaf',
+]);
+
 function buildClient() {
   const host = process.env.CLICKHOUSE_HOST || '';
   const url = /^https?:\/\//i.test(host)
@@ -22,14 +33,11 @@ function buildClient() {
 
 
 
-
-
-
 function last30Days() {
   const now = new Date();
-  const to = now.toISOString().slice(0, 10);
-  const from = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  return { from, to };
+  const date_to = now.toISOString().slice(0, 10);
+  const date_from = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return { date_from, date_to };
 }
 
 export async function fetchRedTrack() {
@@ -43,16 +51,16 @@ export async function fetchRedTrack() {
   const ch = buildClient();
   try {
     const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const { from, to } = last30Days();
+    const { date_from, date_to } = last30Days();
 
     let res;
     try {
       res = await axios.get(`${RT_BASE}/report`, {
         params: {
           api_key: apiKey,
-          from,
-          to,
-          'group[]': ['date', 'campaign', 'landing'],
+          date_from,
+          date_to,
+          'group[]': ['date', 'source', 'campaign', 'landing'],
         },
       });
     } catch (err) {
@@ -66,12 +74,20 @@ export async function fetchRedTrack() {
       return;
     }
 
-    const rows = data.map(r => ({
+    const filtered = data.filter(r => QHF_SOURCE_IDS.has(String(r.source_id || '')));
+
+    if (filtered.length === 0) {
+      console.log('[fetchRedTrack] No rows matched QHF source IDs');
+      return;
+    }
+
+    const rows = filtered.map(r => ({
       fetched_at: fetchedAt,
-      date: r.date || from,
+      date: r.date || date_from,
       campaign_id: String(r.campaign_id || ''),
       campaign_name: r.campaign_name || '',
       landing: r.landing || '',
+      lp_views: Number(r.lp_views || 0),
       clicks: Number(r.clicks || 0),
       conversions: Number(r.conversions || 0),
       revenue: Number(r.revenue || 0),
