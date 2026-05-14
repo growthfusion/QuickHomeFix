@@ -1025,7 +1025,9 @@
         if (!m.has(cid)) m.set(cid, { c: 0 });
         m.get(cid).c += clicks;
       }
-      const out = [];
+
+      // Collect raw data first to compute total leads for proportional visit allocation
+      const rows = [];
       for (const [cid, v] of m.entries()) {
         const mapping = CAMPAIGN_MAP[cid];
         let leads = 0, sold = 0, rev = 0;
@@ -1042,9 +1044,20 @@
             rev    += revenue;
           }
         }
-        const label  = mapping?.label || cid;
-        const acc    = leads ? (sold / leads) * 100 : 0;
-        out.push(lpRow(label, leads, sold, acc, rev, { c: v.c, ctr: 0, cost: 0 }));
+        const label = mapping?.label || cid;
+        const acc   = leads ? (sold / leads) * 100 : 0;
+        rows.push({ label, leads, sold, acc, rev, c: v.c });
+      }
+
+      // Compute total leads and RT visits for proportional allocation
+      const totalLeads  = rows.reduce((s, r) => s + r.leads, 0);
+      const totalVisits = totalRtVisitsInRange();
+
+      // Create output rows with proportionally allocated visits
+      const out = [];
+      for (const r of rows) {
+        const visits = totalLeads > 0 ? Math.round(totalVisits * (r.leads / totalLeads)) : 0;
+        out.push(lpRow(r.label, r.leads, r.sold, r.acc, r.rev, { c: r.c, ctr: 0, cost: 0 }, visits));
       }
       out.sort((a, b) => b[3] - a[3]);
       return out;
