@@ -1423,7 +1423,7 @@ app.post("/api/dev/migrate", async (_req, res) => {
       // Meta Ads stats table
       `
         CREATE TABLE IF NOT EXISTS meta_ad_stats (
-          fetched_at         DateTime,
+          fetched_at         DateTime64(3, 'UTC') DEFAULT now64(3),
           date               Date,
           campaign_id        String,
           campaign_name      String,
@@ -1439,15 +1439,15 @@ app.post("/api/dev/migrate", async (_req, res) => {
           region             String,
           clicks             UInt32,
           impressions        UInt32,
-          ctr                Float32,
-          spend              Float32
+          ctr                Float64,
+          spend              Float64
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id, adset_id, ad_id, placement, device, os, state)
       `,
       // LeadProsper stats table
       `
         CREATE TABLE IF NOT EXISTS leadprosper_stats (
-          fetched_at      DateTime,
+          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
           date            Date,
           campaign_id     String,
           campaign_name   String,
@@ -1455,26 +1455,26 @@ app.post("/api/dev/migrate", async (_req, res) => {
           leads_accepted  UInt32,
           leads_failed    UInt32,
           leads_returned  UInt32,
-          total_buy       Float32,
-          total_sell      Float32,
-          net_profit      Float32
+          total_buy       Float64,
+          total_sell      Float64,
+          net_profit      Float64
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id)
       `,
       // RedTrack stats table
       `
         CREATE TABLE IF NOT EXISTS redtrack_stats (
-          fetched_at    DateTime,
+          fetched_at    DateTime64(3, 'UTC') DEFAULT now64(3),
           date          Date,
           campaign_id   String,
           campaign_name String,
           landing       String,
           clicks        UInt32,
           conversions   UInt32,
-          revenue       Float32,
-          cost          Float32,
-          epc           Float32,
-          roi           Float32
+          revenue       Float64,
+          cost          Float64,
+          epc           Float64,
+          roi           Float64
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id, landing)
       `,
