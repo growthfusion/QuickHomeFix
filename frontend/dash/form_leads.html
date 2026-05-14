@@ -442,6 +442,7 @@
     // LP raw rows kept for fallback and for cross-referencing leads/revenue per form
     let LP_CAMPAIGNS_RAW = [];
     let LP_FORM_MAP = {}; // keyed by lp_campaign_id → form_type (Fix A)
+    let CAMPAIGN_MAP = {}; // keyed by meta_campaign_id → campaign_mapping row (Fix B)
 
     function inferForm(name) {
       const n = (name || '').toLowerCase();
@@ -458,11 +459,12 @@
 
     async function loadStats() {
       try {
-        const [metaRes, lpRes, rtRes, lpFormMapRes] = await Promise.all([
+        const [metaRes, lpRes, rtRes, lpFormMapRes, campaignMapRes] = await Promise.all([
           fetch('/api/stats/meta').then(r => r.json()),
           fetch('/api/stats/leadprosper').then(r => r.json()),
           fetch('/api/stats/redtrack').then(r => r.json()),
           fetch('/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
+          fetch('/api/campaign-mapping').then(r => r.json()).catch(() => []),
         ]);
 
         console.log('[loadStats] meta rows:', metaRes.ok, metaRes.rows?.length, 'error:', metaRes.message);
@@ -564,6 +566,13 @@
           LP_FORM_MAP = {};
           for (const entry of lpFormMapRes) {
             if (entry.lp_campaign_id) LP_FORM_MAP[entry.lp_campaign_id] = entry.form_type;
+          }
+        }
+
+        if (Array.isArray(campaignMapRes)) {
+          CAMPAIGN_MAP = {};
+          for (const row of campaignMapRes) {
+            if (row.meta_campaign_id) CAMPAIGN_MAP[row.meta_campaign_id] = row;
           }
         }
 
@@ -985,6 +994,41 @@
       return out;
     }
 
+    function aggMetaCampaign() {
+      if (FILTERS.source && FILTERS.source !== "meta") return [];
+      const m = new Map();
+      for (const A of META_ADS) {
+        const [camp, adset, ad, pl, cid, form, clicks, purch] = A;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (!cid) continue;
+        if (!m.has(cid)) m.set(cid, { c: 0 });
+        m.get(cid).c += clicks;
+      }
+      const out = [];
+      for (const [cid, v] of m.entries()) {
+        const mapping = CAMPAIGN_MAP[cid];
+        let leads = 0, sold = 0, rev = 0;
+        if (mapping) {
+          const lpCid = mapping.lp_campaign_id;
+          for (const r of LP_ROWS) {
+            const [d, form, lt, s, , , , , revenue] = r;
+            if (FILTERS.from && d < FILTERS.from) continue;
+            if (FILTERS.to   && d > FILTERS.to)   continue;
+            if (FILTERS.form && form !== FILTERS.form) continue;
+            if (form !== mapping.form_type) continue;
+            leads  += lt;
+            sold   += s;
+            rev    += revenue;
+          }
+        }
+        const label  = mapping?.label || cid;
+        const acc    = leads ? (sold / leads) * 100 : 0;
+        out.push(lpRow(label, leads, sold, acc, rev, { c: v.c, ctr: 0, cost: 0 }));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
     function getTables() {
       return [
         { title: "Date",        label: "DATE",        rows: buildDateRows() },
@@ -994,7 +1038,7 @@
         { title: "Landing",     label: "LANDING",     rows: aggLandings() },
         { title: "Widget ID",   label: "WIDGET_ID",   rows: aggMeta(0) },
         { title: "Teaser ID",   label: "TEASER_ID",   rows: aggMeta(1) },
-        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMeta(4) },
+        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMetaCampaign() },
         { title: "Title",       label: "TITLE",       rows: aggMeta(2) },
         { title: "Placement",   label: "PLACEMENT",   rows: aggMeta(3) },
         { title: "State",       label: "STATE",       rows: buildStateRows() },
