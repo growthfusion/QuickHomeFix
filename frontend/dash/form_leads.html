@@ -548,23 +548,25 @@
       for (const [k, v] of m.entries()) {
         const accPct = v.l ? (v.p / v.l) * 100 : 0;
         const ctr    = v.c ? (v.lpc / v.c) * 100 : 0;
-        out.push(lpRow(k, v.l, v.p, accPct, 0, { c: v.c, ctr: ctr, cost: 0 }));
+        out.push(lpRow(k, v.l, v.p, accPct, 0, { c: v.c, ctr: ctr, cost: 0 }, v.lpc));
       }
       out.sort((a,b) => b[3] - a[3]); // CLICKS desc
       return out;
     }
 
-    // Build a 33-metric row, optionally enriched with ad-spend metrics
-    function lpRow(label, leads, succ, accPct, rev, ad) {
+    // Build a 33-metric row, optionally enriched with ad-spend metrics and RT lp_views
+    function lpRow(label, leads, succ, accPct, rev, ad, visits) {
       ad = ad || { c:0, ctr:0, cost:0 };
+      visits = Number(visits) || 0;
       const profit = rev - ad.cost;
       const cr    = ad.c     ? (leads / ad.c) * 100   : 0;
       const epc   = ad.c     ? rev / ad.c              : 0;
+      const epv   = visits   ? rev / visits            : 0;
       const avgL  = leads    ? rev / leads             : 0;
       const avgS  = succ     ? rev / succ              : 0;
       return [
         label,
-        0,                                             // VISITS (not tracked)
+        visits,                                        // VISITS (lp_views from RedTrack)
         ad.ctr ? ad.ctr.toFixed(2) + "%" : "0%",       // CTR, %
         ad.c,                                          // CLICKS
         ad.c ? cr.toFixed(2) + "%" : "0%",             // CR, %
@@ -581,8 +583,17 @@
         +avgL.toFixed(2),                              // AVG PER LEAD
         +avgS.toFixed(2),                              // AVG PER SOLD
         +epc.toFixed(2),                               // EPC, $
-        0                                              // EPV, $ (no visits → cannot compute)
+        +epv.toFixed(2),                               // EPV, $ (rev / lp_views)
       ];
+    }
+
+    // Sum lp_views from LANDINGS rows matching a predicate
+    function sumLpViews(predicate) {
+      let total = 0;
+      for (const L of LANDINGS) {
+        if (predicate(L)) total += L[4]; // index 4 = lp_views
+      }
+      return total;
     }
 
     // Sum ad-spend records matching a predicate
@@ -613,7 +624,8 @@
         const a = byDate.get(d);
         const acc = a.l ? (a.s / a.l) * 100 : 0;
         const ad = sumAd(row => row[0] === d && (!FILTERS.form || row[1] === FILTERS.form));
-        return lpRow(d, a.l, a.s, acc, a.rv, ad);
+        const visits = sumLpViews(L => L[0] === d && (!FILTERS.form || L[2] === FILTERS.form));
+        return lpRow(d, a.l, a.s, acc, a.rv, ad, visits);
       });
     }
 
@@ -634,7 +646,10 @@
         const ad = sumAd(row => row[1] === k &&
           (!FILTERS.from || row[0] >= FILTERS.from) &&
           (!FILTERS.to   || row[0] <= FILTERS.to));
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
+        const visits = sumLpViews(L => L[2] === k &&
+          (!FILTERS.from || L[0] >= FILTERS.from) &&
+          (!FILTERS.to   || L[0] <= FILTERS.to));
+        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad, visits));
       }
       out.sort((a,b) => b[6] - a[6]); // sort by LEADS desc
       return out;
