@@ -443,6 +443,10 @@
     let LP_CAMPAIGNS_RAW = [];
     let LP_FORM_MAP = {}; // keyed by lp_campaign_id → form_type (Fix A)
     let CAMPAIGN_MAP = {}; // keyed by meta_campaign_id → campaign_mapping row (Fix B)
+    let LD_STATE  = []; // from /api/stats/leads-breakdown (Fix C)
+    let LD_DEVICE = [];
+    let LD_OS     = [];
+    let LD_DAILY  = [];
 
     function inferForm(name) {
       const n = (name || '').toLowerCase();
@@ -459,12 +463,13 @@
 
     async function loadStats() {
       try {
-        const [metaRes, lpRes, rtRes, lpFormMapRes, campaignMapRes] = await Promise.all([
+        const [metaRes, lpRes, rtRes, lpFormMapRes, campaignMapRes, ldRes] = await Promise.all([
           fetch('/api/stats/meta').then(r => r.json()),
           fetch('/api/stats/leadprosper').then(r => r.json()),
           fetch('/api/stats/redtrack').then(r => r.json()),
           fetch('/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
           fetch('/api/campaign-mapping').then(r => r.json()).catch(() => []),
+          fetch('/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({ state: [], device: [], os: [], daily: [] })),
         ]);
 
         console.log('[loadStats] meta rows:', metaRes.ok, metaRes.rows?.length, 'error:', metaRes.message);
@@ -574,6 +579,13 @@
           for (const row of campaignMapRes) {
             if (row.meta_campaign_id) CAMPAIGN_MAP[row.meta_campaign_id] = row;
           }
+        }
+
+        if (ldRes) {
+          LD_STATE  = ldRes.state  || [];
+          LD_DEVICE = ldRes.device || [];
+          LD_OS     = ldRes.os     || [];
+          LD_DAILY  = ldRes.daily  || [];
         }
 
         if (lpRes.ok && lpRes.rows) {
@@ -837,73 +849,81 @@
         .reduce((s, r) => s + r[1], 0);
     }
 
-    // State/Region rows: Meta region spend (for proportional visit allocation) + clicks.
-    // RT doesn't provide per-region breakdowns, so we distribute total RT visits
-    // proportionally by each region's share of Meta ad spend.
     function buildStateRows() {
       const m = new Map();
-      for (const [d, form, region, clicks, spend] of META_REGION) {
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        if (!region) continue;
-        if (!m.has(region)) m.set(region, { c:0, cost:0, spend:0 });
-        const v = m.get(region); v.c += clicks; v.cost += spend; v.spend += spend;
+      for (const r of LD_STATE) {
+        const { state, form_type, date, leads, sold, revenue } = r;
+        if (!state) continue;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!m.has(state)) m.set(state, { l: 0, s: 0, rv: 0 });
+        const v = m.get(state);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
       }
-      const totalSpend = [...m.values()].reduce((s, v) => s + v.spend, 0);
+      const totalLeads  = [...m.values()].reduce((s, v) => s + v.l, 0);
       const totalVisits = totalRtVisitsInRange();
       const out = [];
       for (const [k, v] of m.entries()) {
-        const visits = totalSpend > 0 ? Math.round(totalVisits * (v.spend / totalSpend)) : 0;
-        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: 0, cost: v.cost }, visits));
+        const acc    = v.l ? (v.s / v.l) * 100 : 0;
+        const visits = totalLeads > 0 ? Math.round(totalVisits * (v.l / totalLeads)) : 0;
+        out.push(lpRow(k, v.l, v.s, acc, v.rv, { c: 0, ctr: 0, cost: 0 }, visits));
       }
-      out.sort((a,b) => b[1] - a[1] || b[3] - a[3]); // visits desc, then clicks
+      out.sort((a, b) => b[6] - a[6]); // sort by LEADS desc
       return out;
     }
 
-    // Device rows: Meta device spend + proportional RT visits.
     function buildDeviceRows() {
       const m = new Map();
-      for (const [d, form, device, os, clicks, spend] of META_DEVICE) {
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
+      for (const r of LD_DEVICE) {
+        const { device, form_type, date, leads, sold, revenue } = r;
         if (!device) continue;
-        if (!m.has(device)) m.set(device, { c:0, cost:0, spend:0 });
-        const v = m.get(device); v.c += clicks; v.cost += spend; v.spend += spend;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!m.has(device)) m.set(device, { l: 0, s: 0, rv: 0 });
+        const v = m.get(device);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
       }
-      const totalSpend = [...m.values()].reduce((s, v) => s + v.spend, 0);
+      const totalLeads  = [...m.values()].reduce((s, v) => s + v.l, 0);
       const totalVisits = totalRtVisitsInRange();
       const out = [];
       for (const [k, v] of m.entries()) {
-        const visits = totalSpend > 0 ? Math.round(totalVisits * (v.spend / totalSpend)) : 0;
-        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: 0, cost: v.cost }, visits));
+        const acc    = v.l ? (v.s / v.l) * 100 : 0;
+        const visits = totalLeads > 0 ? Math.round(totalVisits * (v.l / totalLeads)) : 0;
+        out.push(lpRow(k, v.l, v.s, acc, v.rv, { c: 0, ctr: 0, cost: 0 }, visits));
       }
-      out.sort((a,b) => b[1] - a[1] || b[3] - a[3]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // OS rows: Meta impression_device (os field) spend + proportional RT visits.
-    // RT doesn't provide per-OS breakdowns, so we distribute total RT visits
-    // proportionally by each OS's share of Meta ad spend.
     function buildOsRows() {
       const m = new Map();
-      for (const [d, form, device, os, clicks, spend] of META_DEVICE) {
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        const key = os || 'unknown';
-        if (!m.has(key)) m.set(key, { c:0, cost:0, spend:0 });
-        const v = m.get(key); v.c += clicks; v.cost += spend; v.spend += spend;
+      for (const r of LD_OS) {
+        const { os, form_type, date, leads, sold, revenue } = r;
+        const key = os || 'other';
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!m.has(key)) m.set(key, { l: 0, s: 0, rv: 0 });
+        const v = m.get(key);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
       }
-      const totalSpend = [...m.values()].reduce((s, v) => s + v.spend, 0);
+      const totalLeads  = [...m.values()].reduce((s, v) => s + v.l, 0);
       const totalVisits = totalRtVisitsInRange();
       const out = [];
       for (const [k, v] of m.entries()) {
-        const visits = totalSpend > 0 ? Math.round(totalVisits * (v.spend / totalSpend)) : 0;
-        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: 0, cost: v.cost }, visits));
+        const acc    = v.l ? (v.s / v.l) * 100 : 0;
+        const visits = totalLeads > 0 ? Math.round(totalVisits * (v.l / totalLeads)) : 0;
+        out.push(lpRow(k, v.l, v.s, acc, v.rv, { c: 0, ctr: 0, cost: 0 }, visits));
       }
-      out.sort((a,b) => b[1] - a[1] || b[3] - a[3]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
