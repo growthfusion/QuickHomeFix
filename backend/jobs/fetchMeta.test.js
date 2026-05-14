@@ -63,6 +63,7 @@ describe('fetchMeta', () => {
         ]),
       })
     );
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('inserts device rows with correct shape', async () => {
@@ -94,6 +95,7 @@ describe('fetchMeta', () => {
         ]),
       })
     );
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('skips insert when all 3 calls return empty data', async () => {
@@ -105,5 +107,15 @@ describe('fetchMeta', () => {
     await fetchMeta();
 
     expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the ClickHouse client even when the API call fails', async () => {
+    axios.get.mockRejectedValueOnce(new Error('network failure'));
+
+    await fetchMeta();
+
+    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 });
