@@ -2039,6 +2039,113 @@ app.delete('/api/campaign-mapping/:meta_campaign_id', async (req, res) => {
   }
 });
 
+app.get('/api/stats/leads-breakdown', async (_req, res) => {
+  const [stateRows, deviceRows, osRows, dailyRows] = await Promise.all([
+    runClickhouseSelect(`
+      SELECT
+        state,
+        multiIf(
+          normalized_service LIKE '%BATH%' OR
+          normalized_service LIKE '%TUB%' OR
+          normalized_service LIKE '%SHOWER%', 'bath',
+          normalized_service LIKE '%ROOF%',   'roof',
+          normalized_service LIKE '%WINDOW%', 'windo',
+          'other'
+        ) AS form_type,
+        toDate(created_at) AS date,
+        count()                AS leads,
+        sum(partner_delivered) AS sold,
+        sum(partner_payout)    AS revenue
+      FROM leads
+      WHERE created_at >= now() - INTERVAL 30 DAY
+        AND state IS NOT NULL
+        AND state != ''
+      GROUP BY state, form_type, date
+      ORDER BY date DESC, leads DESC
+    `).catch(() => []),
+
+    runClickhouseSelect(`
+      SELECT
+        multiIf(
+          user_agent LIKE '%Mobile%' OR
+          user_agent LIKE '%Android%', 'mobile',
+          'desktop'
+        ) AS device,
+        multiIf(
+          normalized_service LIKE '%BATH%' OR
+          normalized_service LIKE '%TUB%' OR
+          normalized_service LIKE '%SHOWER%', 'bath',
+          normalized_service LIKE '%ROOF%',   'roof',
+          normalized_service LIKE '%WINDOW%', 'windo',
+          'other'
+        ) AS form_type,
+        toDate(created_at) AS date,
+        count()                AS leads,
+        sum(partner_delivered) AS sold,
+        sum(partner_payout)    AS revenue
+      FROM leads
+      WHERE created_at >= now() - INTERVAL 30 DAY
+        AND user_agent IS NOT NULL
+        AND user_agent != ''
+      GROUP BY device, form_type, date
+      ORDER BY date DESC, leads DESC
+    `).catch(() => []),
+
+    runClickhouseSelect(`
+      SELECT
+        multiIf(
+          user_agent LIKE '%iPhone%' OR
+          user_agent LIKE '%iPad%' OR
+          user_agent LIKE '%iPod%',    'ios',
+          user_agent LIKE '%Android%', 'android',
+          user_agent LIKE '%Windows%', 'windows',
+          user_agent LIKE '%Macintosh%', 'macos',
+          'other'
+        ) AS os,
+        multiIf(
+          normalized_service LIKE '%BATH%' OR
+          normalized_service LIKE '%TUB%' OR
+          normalized_service LIKE '%SHOWER%', 'bath',
+          normalized_service LIKE '%ROOF%',   'roof',
+          normalized_service LIKE '%WINDOW%', 'windo',
+          'other'
+        ) AS form_type,
+        toDate(created_at) AS date,
+        count()                AS leads,
+        sum(partner_delivered) AS sold,
+        sum(partner_payout)    AS revenue
+      FROM leads
+      WHERE created_at >= now() - INTERVAL 30 DAY
+        AND user_agent IS NOT NULL
+        AND user_agent != ''
+      GROUP BY os, form_type, date
+      ORDER BY date DESC, leads DESC
+    `).catch(() => []),
+
+    runClickhouseSelect(`
+      SELECT
+        toDate(created_at) AS date,
+        multiIf(
+          normalized_service LIKE '%BATH%' OR
+          normalized_service LIKE '%TUB%' OR
+          normalized_service LIKE '%SHOWER%', 'bath',
+          normalized_service LIKE '%ROOF%',   'roof',
+          normalized_service LIKE '%WINDOW%', 'windo',
+          'other'
+        ) AS form_type,
+        count()                AS leads,
+        sum(partner_delivered) AS sold,
+        sum(partner_payout)    AS revenue
+      FROM leads
+      WHERE created_at >= now() - INTERVAL 30 DAY
+      GROUP BY date, form_type
+      ORDER BY date DESC
+    `).catch(() => []),
+  ]);
+
+  res.json({ state: stateRows, device: deviceRows, os: osRows, daily: dailyRows });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

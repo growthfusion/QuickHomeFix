@@ -95,3 +95,32 @@ describe('campaign_mapping POST schema', () => {
     expect(result.data.label).toBe('My Campaign');
   });
 });
+
+describe('leads-breakdown response shape', () => {
+  it('state row has required fields', () => {
+    const row = { state: 'CA', form_type: 'bath', date: '2026-05-01', leads: '10', sold: '5', revenue: '500.00' };
+    expect(row).toHaveProperty('state');
+    expect(row).toHaveProperty('form_type');
+    expect(row).toHaveProperty('leads');
+    expect(row).toHaveProperty('sold');
+    expect(row).toHaveProperty('revenue');
+  });
+
+  it('device row has required fields', () => {
+    const row = { device: 'mobile', form_type: 'roof', date: '2026-05-01', leads: '3', sold: '1', revenue: '100.00' };
+    expect(row).toHaveProperty('device');
+    expect(row).toHaveProperty('form_type');
+  });
+
+  it('os row has required fields', () => {
+    const row = { os: 'ios', form_type: 'windo', date: '2026-05-01', leads: '2', sold: '0', revenue: '0' };
+    expect(row).toHaveProperty('os');
+    expect(row).toHaveProperty('form_type');
+  });
+
+  it('daily row has required fields', () => {
+    const row = { date: '2026-05-01', form_type: 'bath', leads: '8', sold: '4', revenue: '400.00' };
+    expect(row).toHaveProperty('date');
+    expect(row).toHaveProperty('form_type');
+  });
+});
