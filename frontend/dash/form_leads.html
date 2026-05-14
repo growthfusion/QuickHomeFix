@@ -563,7 +563,7 @@
         if (Array.isArray(lpFormMapRes)) {
           LP_FORM_MAP = {};
           for (const entry of lpFormMapRes) {
-            LP_FORM_MAP[entry.lp_campaign_id] = entry.form_type;
+            if (entry.lp_campaign_id) LP_FORM_MAP[entry.lp_campaign_id] = entry.form_type;
           }
         }
 
@@ -596,8 +596,6 @@
       // Show data status bar so it's immediately clear what loaded
       const statusEl = document.getElementById('data-status');
       if (statusEl) {
-        const rtTypes = {};
-        for (const r of (window._rtRows||[])) rtTypes[r.breakdown_type||'?']=(rtTypes[r.breakdown_type||'?']||0)+1;
         statusEl.textContent =
           `Loaded — Meta: ${AD_SPEND.length} pub | ${META_DEVICE.length} device | ${META_REGION.length} region  ·  ` +
           `RT: ${RT_DAILY.length} daily rows  ·  LP: ${LP_ROWS.length} rows  ·  ` +
