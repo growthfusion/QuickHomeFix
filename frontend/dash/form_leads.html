@@ -414,6 +414,8 @@
     let AD_SPEND = [];
     let META_ADS = [];
     let LANDINGS = [];
+    let META_DEVICE = [];   // Meta device/OS breakdown rows
+    let META_REGION = [];   // Meta region/state breakdown rows
 
     function inferForm(name) {
       const n = (name || '').toLowerCase();
@@ -459,6 +461,27 @@
               inferForm(r.campaign_name),
               Number(r.clicks),
               0,
+            ]);
+
+          META_DEVICE = metaRes.rows
+            .filter(r => r.device)
+            .map(r => [
+              r.date,
+              inferForm(r.campaign_name),
+              r.device || '',
+              r.os || '',
+              Number(r.clicks),
+              Number(r.spend),
+            ]);
+
+          META_REGION = metaRes.rows
+            .filter(r => r.region)
+            .map(r => [
+              r.date,
+              inferForm(r.campaign_name),
+              r.region || '',
+              Number(r.clicks),
+              Number(r.spend),
             ]);
         }
 
@@ -511,8 +534,6 @@
 
 
     function aggLandings() {
-      // Landing data is Meta-only roof data right now; respect source/form/date filters.
-      if (FILTERS.source && FILTERS.source !== "meta") return [];
       const m = new Map();
       for (const L of LANDINGS) {
         const [d, landing, form, clicks, lpc, leads, purch] = L;
@@ -579,15 +600,19 @@
     function buildDateRows() {
       const byDate = new Map();
       for (const r of LP_ROWS) {
-        if (!byDate.has(r[0])) byDate.set(r[0], { l:0, s:0, rv:0 });
-        const a = byDate.get(r[0]);
+        const [d, form] = r;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!byDate.has(d)) byDate.set(d, { l:0, s:0, rv:0 });
+        const a = byDate.get(d);
         a.l += r[2]; a.s += r[3]; a.rv += r[8];
       }
       const dates = [...byDate.keys()].sort().reverse();
       return dates.map(d => {
         const a = byDate.get(d);
         const acc = a.l ? (a.s / a.l) * 100 : 0;
-        const ad = sumAd(row => row[0] === d);
+        const ad = sumAd(row => row[0] === d && (!FILTERS.form || row[1] === FILTERS.form));
         return lpRow(d, a.l, a.s, acc, a.rv, ad);
       });
     }
@@ -596,17 +621,106 @@
     function buildFormRows() {
       const byForm = new Map();
       for (const r of LP_ROWS) {
-        if (!byForm.has(r[1])) byForm.set(r[1], { l:0, s:0, rv:0 });
-        const a = byForm.get(r[1]);
+        const [d, form] = r;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!byForm.has(form)) byForm.set(form, { l:0, s:0, rv:0 });
+        const a = byForm.get(form);
         a.l += r[2]; a.s += r[3]; a.rv += r[8];
       }
       const out = [];
       for (const [k, a] of byForm.entries()) {
         const acc = a.l ? (a.s / a.l) * 100 : 0;
-        const ad = sumAd(row => row[1] === k);
+        const ad = sumAd(row => row[1] === k &&
+          (!FILTERS.from || row[0] >= FILTERS.from) &&
+          (!FILTERS.to   || row[0] <= FILTERS.to));
         out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
       }
       out.sort((a,b) => b[6] - a[6]); // sort by LEADS desc
+      return out;
+    }
+
+    // Aggregate Source rows from Meta publisher_platform
+    function buildSourceRows() {
+      const m = new Map();
+      for (const a of AD_SPEND) {
+        const [d, form, src, clicks, ctr, spend] = a;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        const key = src || 'unknown';
+        if (!m.has(key)) m.set(key, { c:0, ctrW:0, cost:0 });
+        const v = m.get(key);
+        v.c += clicks; v.ctrW += ctr * clicks; v.cost += spend;
+      }
+      const out = [];
+      for (const [k, v] of m.entries()) {
+        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: v.c ? v.ctrW / v.c : 0, cost: v.cost }));
+      }
+      out.sort((a,b) => b[3] - a[3]); // sort by clicks desc
+      return out;
+    }
+
+    // Aggregate State rows from Meta region data
+    function buildStateRows() {
+      const m = new Map();
+      for (const r of META_REGION) {
+        const [d, form, region, clicks, spend] = r;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!region) continue;
+        if (!m.has(region)) m.set(region, { c:0, cost:0 });
+        const v = m.get(region);
+        v.c += clicks; v.cost += spend;
+      }
+      const out = [];
+      for (const [k, v] of m.entries()) {
+        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: 0, cost: v.cost }));
+      }
+      out.sort((a,b) => b[3] - a[3]); // sort by clicks desc
+      return out;
+    }
+
+    // Aggregate Device rows from Meta device data
+    function buildDeviceRows() {
+      const m = new Map();
+      for (const r of META_DEVICE) {
+        const [d, form, device, os, clicks, spend] = r;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!device) continue;
+        if (!m.has(device)) m.set(device, { c:0, cost:0 });
+        const v = m.get(device);
+        v.c += clicks; v.cost += spend;
+      }
+      const out = [];
+      for (const [k, v] of m.entries()) {
+        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: 0, cost: v.cost }));
+      }
+      out.sort((a,b) => b[3] - a[3]);
+      return out;
+    }
+
+    // Aggregate OS rows from Meta device data (impression_device field)
+    function buildOsRows() {
+      const m = new Map();
+      for (const r of META_DEVICE) {
+        const [d, form, device, os, clicks, spend] = r;
+        if (FILTERS.form && form !== FILTERS.form) continue;
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        const key = os || 'unknown';
+        if (!m.has(key)) m.set(key, { c:0, cost:0 });
+        const v = m.get(key);
+        v.c += clicks; v.cost += spend;
+      }
+      const out = [];
+      for (const [k, v] of m.entries()) {
+        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: 0, cost: v.cost }));
+      }
+      out.sort((a,b) => b[3] - a[3]);
       return out;
     }
 
@@ -689,27 +803,20 @@
     }
 
     function getTables() {
-      const filtered = applyFilters();
       return [
-        { title: "Date",        label: "DATE",
-          rows: aggBy(filtered, L => L[0],
-            date => a => a[0] === date && adMatchesFilters(a)).sort((a,b)=> a[0]<b[0]?1:-1) },
-        { title: "Form",        label: "FORM",
-          rows: aggBy(filtered, L => L[1],
-            form => a => a[1] === form && adMatchesFilters(a)) },
-        { title: "Source",      label: "SOURCE",
-          rows: aggBy(filtered, L => L[2] || null,
-            src => a => a[2] === src && adMatchesFilters(a)) },
-        { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || null) },
+        { title: "Date",        label: "DATE",        rows: buildDateRows() },
+        { title: "Form",        label: "FORM",        rows: buildFormRows() },
+        { title: "Source",      label: "SOURCE",      rows: buildSourceRows() },
+        { title: "Buyer",       label: "BUYER",       rows: [] },
         { title: "Landing",     label: "LANDING",     rows: aggLandings() },
         { title: "Widget ID",   label: "WIDGET_ID",   rows: aggMeta(0) },
         { title: "Teaser ID",   label: "TEASER_ID",   rows: aggMeta(1) },
         { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMeta(4) },
         { title: "Title",       label: "TITLE",       rows: aggMeta(2) },
         { title: "Placement",   label: "PLACEMENT",   rows: aggMeta(3) },
-        { title: "State",       label: "STATE",       rows: aggBy(filtered, L => L[3]) },
-        { title: "Device",      label: "DEVICE",      rows: aggBy(filtered, L => L[5]) },
-        { title: "OS",          label: "OS",          rows: aggBy(filtered, L => L[4]) },
+        { title: "State",       label: "STATE",       rows: buildStateRows() },
+        { title: "Device",      label: "DEVICE",      rows: buildDeviceRows() },
+        { title: "OS",          label: "OS",          rows: buildOsRows() },
       ];
     }
 
