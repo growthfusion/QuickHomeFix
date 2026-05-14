@@ -871,10 +871,6 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
 
 // --- Static frontend ---
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store');
-  next();
-});
 app.use(express.static(path.join(__dirname, '..', 'frontend'), { extensions: ['html'] }));
 
 // --- Security & basics ---
@@ -1873,71 +1869,6 @@ app.get("/api/stats/redtrack", async (_req, res) => {
   }
 });
 
-// Debug: inspect raw RT API responses (one per group dimension)
-app.get("/api/debug/rt-raw", async (_req, res) => {
-  try {
-    const apiKey = process.env.REDTRACK_API_KEY;
-    if (!apiKey) return res.status(400).json({ error: 'REDTRACK_API_KEY not set' });
-    const now = new Date();
-    const date_to = now.toISOString().slice(0, 10);
-    const date_from = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-
-    const makeUrl = (groups) => {
-      const p = new URLSearchParams();
-      p.append('api_key', apiKey);
-      p.append('date_from', date_from);
-      p.append('date_to', date_to);
-      for (const g of (Array.isArray(groups) ? groups : [groups])) p.append('group[]', g);
-      return `https://api.redtrack.io/report?${p.toString()}`;
-    };
-
-    const results = {};
-    for (const [label, groups] of [
-      ['date', 'date'],
-      ['date+os', ['date', 'os']],
-      ['date+device', ['date', 'device']],
-      ['date+country', ['date', 'country']],
-      ['date+offer', ['date', 'offer']],
-    ]) {
-      try {
-        const r = await axios.get(makeUrl(groups));
-        const data = Array.isArray(r.data) ? r.data : [];
-        results[label] = { total: data.length, sample: data.slice(0, 2), keys: data[0] ? Object.keys(data[0]) : [] };
-      } catch (e) {
-        results[label] = { error: e.message };
-      }
-    }
-    res.json(results);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// Debug: show row counts from ClickHouse stats tables
-app.get("/api/debug/stats-summary", async (_req, res) => {
-  try {
-    if (!clickhouse) return res.status(500).json({ error: 'ClickHouse not configured' });
-
-    const [rtCounts, metaCounts, lpCounts] = await Promise.all([
-      runClickhouseSelect(
-        `SELECT breakdown_type, count() as n, max(fetched_at) as latest
-         FROM redtrack_stats GROUP BY breakdown_type ORDER BY breakdown_type`
-      ).catch(e => [{ error: e.message }]),
-      runClickhouseSelect(
-        `SELECT count() as total, countIf(publisher_platform != '') as has_publisher,
-                countIf(device != '') as has_device, countIf(region != '') as has_region,
-                max(fetched_at) as latest FROM meta_ad_stats`
-      ).catch(e => [{ error: e.message }]),
-      runClickhouseSelect(
-        `SELECT count() as total, max(fetched_at) as latest FROM leadprosper_stats`
-      ).catch(e => [{ error: e.message }]),
-    ]);
-
-    res.json({ redtrack: rtCounts, meta: metaCounts, leadprosper: lpCounts });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 // Manually trigger all three fetch jobs and return results
 app.post("/api/dev/force-fetch", async (_req, res) => {
