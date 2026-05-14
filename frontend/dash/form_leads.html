@@ -1009,7 +1009,6 @@
         const mapping = CAMPAIGN_MAP[cid];
         let leads = 0, sold = 0, rev = 0;
         if (mapping) {
-          const lpCid = mapping.lp_campaign_id;
           for (const r of LP_ROWS) {
             const [d, form, lt, s, , , , , revenue] = r;
             if (FILTERS.from && d < FILTERS.from) continue;
@@ -1025,7 +1024,7 @@
         const acc    = leads ? (sold / leads) * 100 : 0;
         out.push(lpRow(label, leads, sold, acc, rev, { c: v.c, ctr: 0, cost: 0 }));
       }
-      out.sort((a, b) => b[6] - a[6]);
+      out.sort((a, b) => b[3] - a[3]);
       return out;
     }
 
