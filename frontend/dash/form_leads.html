@@ -606,6 +606,7 @@
               Number(r.leads_returned || 0),
               rev,
               0,
+              r.campaign_id || '',  // index 10: LP campaign ID for aggMetaCampaign join
             ];
           });
         }
@@ -1030,11 +1031,12 @@
         let leads = 0, sold = 0, rev = 0;
         if (mapping) {
           for (const r of LP_ROWS) {
-            const [d, form, lt, s, , , , , revenue] = r;
+            const [d, form, lt, s, , , , , revenue, , lpCampaignId] = r;
             if (FILTERS.from && d < FILTERS.from) continue;
             if (FILTERS.to   && d > FILTERS.to)   continue;
             if (FILTERS.form && form !== FILTERS.form) continue;
             if (form !== mapping.form_type) continue;
+            if (lpCampaignId && mapping.lp_campaign_id && lpCampaignId !== mapping.lp_campaign_id) continue;
             leads  += lt;
             sold   += s;
             rev    += revenue;

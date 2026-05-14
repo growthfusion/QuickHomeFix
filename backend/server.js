@@ -2010,6 +2010,7 @@ app.post('/api/campaign-mapping', async (req, res) => {
     return res.status(400).json({ error: 'validation failed', details: err?.issues });
   }
   try {
+    if (!clickhouse) return res.status(500).json({ error: 'ClickHouse not configured' });
     await clickhouse.insert({
       table: 'campaign_mapping',
       values: [data],
@@ -2028,8 +2029,9 @@ app.delete('/api/campaign-mapping/:meta_campaign_id', async (req, res) => {
     return res.status(400).json({ error: 'meta_campaign_id is required' });
   }
   try {
+    if (!clickhouse) return res.status(500).json({ error: 'ClickHouse not configured' });
     await clickhouse.command({
-      query: `ALTER TABLE campaign_mapping DELETE WHERE meta_campaign_id = {id:String}`,
+      query: `ALTER TABLE campaign_mapping DELETE WHERE meta_campaign_id = {id:String} SETTINGS mutations_sync=1`,
       query_params: { id },
     });
     res.json({ ok: true });
