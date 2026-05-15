@@ -512,7 +512,7 @@
         0,              // 26 THUMBTACK, $
         0,              // 27 PPC, $
         0,              // 28 REPOSTS, $
-        0,              // 29 ADJUSTMENT, $
+        fmt2(rev - cost), // 29 ADJUSTMENT, $
         fmt2(avgLead), // 30 AVG PER LEAD, $
         fmt2(avgSold), // 31 AVG PER SOLD, $
         fmt2(epc),     // 32 EPC, $
@@ -553,6 +553,38 @@
       return RT_DAILY
         .filter(r => (!FILTERS.from || r.date >= FILTERS.from) && (!FILTERS.to || r.date <= FILTERS.to))
         .reduce((s, r) => s + Number(r.lp_views || 0), 0);
+    }
+
+    // Aggregate META_ROWS (meta_ad_stats) by an arbitrary key function
+    function aggMeta(keyFn) {
+      const m = new Map();
+      for (const r of META_ROWS) {
+        const key = keyFn(r);
+        if (key == null || key === '') continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!m.has(key)) m.set(key, { impressions: 0, clicks: 0, spend: 0 });
+        const v = m.get(key);
+        v.impressions += Number(r.impressions || 0);
+        v.clicks      += Number(r.clicks      || 0);
+        v.spend       += Number(r.spend       || 0);
+      }
+      return m;
+    }
+
+    // Sum LP totals across all campaigns within the current date range
+    function lpTotalsInRange() {
+      let l = 0, s = 0, rv = 0;
+      for (const r of LP_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        l  += Number(r.leads_total    || 0);
+        s  += Number(r.leads_accepted || 0);
+        rv += Number(r.total_sell     || 0);
+      }
+      return { l, s, rv };
     }
 
     // ── Data loading ─────────────────────────────────────────────────────────
@@ -678,8 +710,150 @@
       return out;
     }
 
-    // LP — LeadProsper campaigns anchor, joined with RT_CAMPAIGN by campaign_name
-    function buildLpRows() {
+    // SOURCE — Meta publisher_platform (facebook/instagram/etc)
+    // visits = Meta impressions, clicks = Meta clicks, cost = Meta spend
+    // leads/sold/revenue allocated proportionally by spend share
+    function buildSourceRows() {
+      const metaMap = aggMeta(r => r.publisher_platform || null);
+      const totalSpend = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const out = [];
+      for (const [platform, meta] of metaMap.entries()) {
+        const share = totalSpend > 0 ? meta.spend / totalSpend : 1 / metaMap.size;
+        out.push(lpRow(platform, meta.impressions, meta.clicks,
+          Math.round(totalL * share),
+          Math.round(totalS * share),
+          +(totalRev * share).toFixed(2), meta.spend));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // WIDGET ID — Meta campaign level
+    // Row label = Meta campaign_name
+    // visits/clicks/cost = RT_CAMPAIGN joined by campaign_name
+    //                      (falls back to Meta impressions/clicks/spend when RT empty)
+    // leads/sold/revenue  = LP_ROWS joined by campaign_name
+    function buildWidgetRows() {
+      const metaMap = aggMeta(r => r.campaign_name || null);
+      const rtMap   = aggRt(RT_CAMPAIGN, r => r.campaign_name || r.group_key || null);
+      const lpMap   = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
+        const v = lpMap.get(campaign_name);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+      const allKeys = new Set([...metaMap.keys(), ...lpMap.keys(), ...rtMap.keys()]);
+      const out = [];
+      for (const name of allKeys) {
+        const meta = metaMap.get(name) || { impressions: 0, clicks: 0, spend: 0 };
+        const rt   = rtMap.get(name)   || { views: 0, clicks: 0, cost: 0 };
+        const lp   = lpMap.get(name)   || { l: 0, s: 0, rv: 0 };
+        const visits = rt.views  > 0 ? rt.views  : meta.impressions;
+        const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
+        const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
+        out.push(lpRow(name, visits, clicks, lp.l, lp.s, lp.rv, cost));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // TEASER ID — Meta adset level
+    // Row label = Meta adset_name
+    // visits/clicks/cost = RT_ADSET joined by adset_name
+    //                      (falls back to Meta when RT empty)
+    // leads/sold/revenue  = LP proportional by adset spend share
+    function buildTeaserRows() {
+      const metaMap    = aggMeta(r => r.adset_name || null);
+      const rtMap      = aggRt(RT_ADSET, r => r.adset_name || r.group_key || null);
+      const totalSpend = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const allKeys = new Set([...metaMap.keys(), ...rtMap.keys()]);
+      const out = [];
+      for (const name of allKeys) {
+        const meta   = metaMap.get(name) || { impressions: 0, clicks: 0, spend: 0 };
+        const rt     = rtMap.get(name)   || { views: 0, clicks: 0, cost: 0 };
+        const share  = totalSpend > 0 ? meta.spend / totalSpend : 0;
+        const visits = rt.views  > 0 ? rt.views  : meta.impressions;
+        const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
+        const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
+        out.push(lpRow(name, visits, clicks,
+          Math.round(totalL * share),
+          Math.round(totalS * share),
+          +(totalRev * share).toFixed(2), cost));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // TITLE — Meta ad level
+    // Row label = Meta ad_name
+    // visits/clicks/cost = RT_AD joined by ad_name
+    //                      (falls back to Meta when RT empty)
+    // leads/sold/revenue  = LD_AD joined by ad_name
+    function buildTitleRows() {
+      const metaMap = aggMeta(r => r.ad_name || null);
+      const rtMap   = aggRt(RT_AD, r => r.ad_name || r.group_key || null);
+      const ldMap   = new Map();
+      for (const r of LD_AD) {
+        const { ad_name, date, leads, sold, revenue } = r;
+        if (!ad_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!ldMap.has(ad_name)) ldMap.set(ad_name, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(ad_name);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
+      }
+      const allKeys = new Set([...metaMap.keys(), ...ldMap.keys(), ...rtMap.keys()]);
+      const out = [];
+      for (const name of allKeys) {
+        const meta = metaMap.get(name) || { impressions: 0, clicks: 0, spend: 0 };
+        const rt   = rtMap.get(name)   || { views: 0, clicks: 0, cost: 0 };
+        const ld   = ldMap.get(name)   || { l: 0, s: 0, rv: 0 };
+        const visits = rt.views  > 0 ? rt.views  : meta.impressions;
+        const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
+        const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
+        out.push(lpRow(name, visits, clicks, ld.l, ld.s, ld.rv, cost));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // PLACEMENT — Meta placement (feed/reels/story/etc.)
+    // visits proportional from RT_DAILY by impression share
+    // clicks/cost = Meta data
+    // leads/sold/revenue = LP proportional by spend share
+    function buildPlacementRows() {
+      const metaMap       = aggMeta(r => r.placement || null);
+      const totalSpend    = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
+      const totalImpress  = [...metaMap.values()].reduce((s, v) => s + v.impressions, 0);
+      const totalRtViews  = totalRtViewsInRange();
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const out = [];
+      for (const [placement, meta] of metaMap.entries()) {
+        const spendShare   = totalSpend   > 0 ? meta.spend       / totalSpend   : 0;
+        const impressShare = totalImpress > 0 ? meta.impressions / totalImpress : spendShare;
+        const visits = Math.round(totalRtViews * impressShare);
+        out.push(lpRow(placement, visits, meta.clicks,
+          Math.round(totalL * spendShare),
+          Math.round(totalS * spendShare),
+          +(totalRev * spendShare).toFixed(2), meta.spend));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // LANDING — RT_LANDER anchor; LP matched by lander name
+    function buildLandingRows() {
+      const rtMap = aggRt(RT_LANDER, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
       const lpMap = new Map();
       for (const r of LP_ROWS) {
         const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
@@ -692,127 +866,12 @@
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-      const rtMap = aggRt(RT_CAMPAIGN, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-      const allKeys = new Set([...lpMap.keys(), ...rtMap.keys()]);
       const out = [];
-      for (const cn of allKeys) {
-        const lp  = lpMap.get(cn) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(cn) || { views: 0, clicks: 0, cost: 0 };
-        if (!rtMap.has(cn) && lpMap.has(cn)) console.warn('[dashboard] LP campaign not in RT:', cn);
-        out.push(lpRow(cn, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
-      }
-      out.sort((a, b) => b[6] - a[6]);
-      return out;
-    }
-
-    // LANDING — RT_LANDER only
-    // LANDING — leads table grouped by URL path (last segment = service slug)
-    function buildLandingRows() {
-      const m = new Map();
-      for (const r of LD_LANDING) {
-        const { landing_path, date, leads, sold, revenue } = r;
-        if (!landing_path) continue;
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(landing_path)) m.set(landing_path, { l: 0, s: 0, rv: 0 });
-        const v = m.get(landing_path);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
-      }
-      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalRtViews = totalRtViewsInRange();
-      const out = [];
-      for (const [path, v] of m.entries()) {
-        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        out.push(lpRow(path, visits, 0, v.l, v.s, v.rv, 0));
-      }
-      out.sort((a, b) => b[6] - a[6]);
-      return out;
-    }
-
-    // SOURCE — Meta publisher_platform (facebook/instagram/etc) from meta_ad_stats
-    // Leads/revenue allocated proportionally by Meta spend share
-    function buildSourceRows() {
-      const m = new Map();
-      for (const r of META_ROWS) {
-        const platform = r.publisher_platform || '';
-        if (!platform) continue;
-        const date = r.date || '';
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(platform)) m.set(platform, { views: 0, clicks: 0, cost: 0 });
-        const v = m.get(platform);
-        v.views  += Number(r.impressions || 0);
-        v.clicks += Number(r.clicks      || 0);
-        v.cost   += Number(r.spend       || 0);
-      }
-      const totalCost = [...m.values()].reduce((s, v) => s + v.cost, 0);
-      let totalL = 0, totalS = 0, totalRev = 0;
-      for (const r of LP_ROWS) {
-        const date = r.date || '';
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        totalL   += Number(r.leads_total    || 0);
-        totalS   += Number(r.leads_accepted || 0);
-        totalRev += Number(r.total_sell     || 0);
-      }
-      const out = [];
-      for (const [platform, v] of m.entries()) {
-        const share = totalCost > 0 ? v.cost / totalCost : 1 / m.size;
-        out.push(lpRow(platform, v.views, v.clicks,
-          Math.round(totalL * share),
-          Math.round(totalS * share),
-          +(totalRev * share).toFixed(2), v.cost));
+      for (const [lander, rt] of rtMap.entries()) {
+        const lp = lpMap.get(lander) || { l: 0, s: 0, rv: 0 };
+        out.push(lpRow(lander, rt.views, rt.clicks, lp.l, lp.s, lp.rv, rt.cost));
       }
       out.sort((a, b) => b[1] - a[1]);
-      return out;
-    }
-
-    // WIDGET ID — Meta campaign names from leads table (campaign_name stored at lead time)
-    function buildWidgetRows() {
-      const m = new Map();
-      for (const r of LD_CAMPAIGN) {
-        const { campaign_name, date, leads, sold, revenue } = r;
-        if (!campaign_name) continue;
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(campaign_name)) m.set(campaign_name, { l: 0, s: 0, rv: 0 });
-        const v = m.get(campaign_name);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
-      }
-      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalRtViews = totalRtViewsInRange();
-      const out = [];
-      for (const [name, v] of m.entries()) {
-        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        out.push(lpRow(name, visits, 0, v.l, v.s, v.rv, 0));
-      }
-      out.sort((a, b) => b[6] - a[6]);
-      return out;
-    }
-
-    // TEASER ID — leads table ad_name anchor (Meta ad name = teaser ID)
-    function buildTeaserRows() {
-      const m = new Map();
-      for (const r of LD_AD) {
-        const { ad_name, date, leads, sold, revenue } = r;
-        if (!ad_name) continue;
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(ad_name)) m.set(ad_name, { l: 0, s: 0, rv: 0 });
-        const v = m.get(ad_name);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
-      }
-      const out = [];
-      for (const [teaserId, v] of m.entries()) {
-        out.push(lpRow(teaserId, 0, 0, v.l, v.s, v.rv, 0));
-      }
-      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
@@ -896,16 +955,17 @@
     // ── getTables ────────────────────────────────────────────────────────────
     function getTables() {
       return [
-        { title: "Date",      label: "DATE",      rows: buildDateRows()    },
-        { title: "Form",      label: "FORM",      rows: buildFormRows()    },
-        { title: "LP",        label: "LP",        rows: buildLpRows()      },
-        { title: "Landing",   label: "LANDING",   rows: buildLandingRows() },
-        { title: "Source",    label: "SOURCE",    rows: buildSourceRows()  },
-        { title: "Widget ID", label: "WIDGET ID", rows: buildWidgetRows()  },
-        { title: "Teaser ID", label: "TEASER ID", rows: buildTeaserRows()  },
-        { title: "State",     label: "STATE",     rows: buildStateRows()   },
-        { title: "Device",    label: "DEVICE",    rows: buildDeviceRows()  },
-        { title: "OS",        label: "OS",        rows: buildOsRows()      },
+        { title: "Date",      label: "DATE",      rows: buildDateRows()       },
+        { title: "Form",      label: "FORM",      rows: buildFormRows()       },
+        { title: "Source",    label: "SOURCE",    rows: buildSourceRows()     },
+        { title: "Widget ID", label: "WIDGET ID", rows: buildWidgetRows()     },
+        { title: "Teaser ID", label: "TEASER ID", rows: buildTeaserRows()     },
+        { title: "Title",     label: "TITLE",     rows: buildTitleRows()      },
+        { title: "Placement", label: "PLACEMENT", rows: buildPlacementRows()  },
+        { title: "Landing",   label: "LANDING",   rows: buildLandingRows()    },
+        { title: "State",     label: "STATE",     rows: buildStateRows()      },
+        { title: "Device",    label: "DEVICE",    rows: buildDeviceRows()     },
+        { title: "OS",        label: "OS",        rows: buildOsRows()         },
       ];
     }
 
@@ -966,7 +1026,7 @@
         return `<tr>${cells}</tr>`;
       }).join("");
 
-      const wideFirst   = t.label === "LANDING" || t.label === "TEASER ID" ? "wide-first" : "";
+      const wideFirst   = ["LANDING","TEASER ID","TITLE","WIDGET ID","PLACEMENT"].includes(t.label) ? "wide-first" : "";
       const needsExpand = t.rows.length > 5;
       const expandableCls = needsExpand ? "expandable" : "expandable no-expand";
       const overlayHtml = needsExpand
