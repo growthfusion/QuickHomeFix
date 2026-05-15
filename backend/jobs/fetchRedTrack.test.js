@@ -69,19 +69,19 @@ describe('fetchRedTrack', () => {
     expect(axios.get.mock.calls[0][0]).toContain('/traffic_sources');
   });
 
-  it('report calls target /report with correct group[] params', async () => {
+  it('report calls target /report with correct group_by[] params', async () => {
     mockRtApi();
     await fetchRedTrack();
     const calls = axios.get.mock.calls;
     // calls[0] = traffic_sources; calls[1..8] = report calls
-    expect(calls[1][0]).toMatch(/group\[\]=date/);      // daily
-    expect(calls[2][0]).toMatch(/group\[\]=os/);        // os
-    expect(calls[3][0]).toMatch(/group\[\]=device/);    // device
-    expect(calls[4][0]).toMatch(/group\[\]=country/);   // region
-    expect(calls[5][0]).toMatch(/group\[\]=campaign/);  // campaign
-    expect(calls[6][0]).toMatch(/group\[\]=offer/);     // lander
-    expect(calls[7][0]).toMatch(/group\[\]=adset/);     // adset
-    expect(calls[8][0]).toMatch(/group\[\]=ad/);        // ad (not adset)
+    expect(calls[1][0]).toMatch(/group_by\[\]=date/);      // daily
+    expect(calls[2][0]).toMatch(/group_by\[\]=os/);        // os
+    expect(calls[3][0]).toMatch(/group_by\[\]=device/);    // device
+    expect(calls[4][0]).toMatch(/group_by\[\]=country/);   // region
+    expect(calls[5][0]).toMatch(/group_by\[\]=campaign/);  // campaign
+    expect(calls[6][0]).toMatch(/group_by\[\]=offer/);     // lander
+    expect(calls[7][0]).toMatch(/group_by\[\]=adset/);     // adset
+    expect(calls[8][0]).toMatch(/group_by\[\]=ad/);        // ad (not adset)
   });
 
   it('inserts daily rows with breakdown_type=daily and empty group_key', async () => {

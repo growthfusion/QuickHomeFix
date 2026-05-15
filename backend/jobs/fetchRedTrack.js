@@ -53,13 +53,15 @@ async function fetchTrafficSources(apiKey) {
 
 function buildReportUrl(apiKey, date_from, date_to, groups) {
   const base = `${RT_BASE}/report?api_key=${encodeURIComponent(apiKey)}&date_from=${date_from}&date_to=${date_to}`;
-  const groupParams = groups.map(g => `group[]=${encodeURIComponent(g)}`).join('&');
+  const groupParams = groups.map(g => `group_by[]=${encodeURIComponent(g)}`).join('&');
   return `${base}&${groupParams}`;
 }
 
 async function fetchReport(apiKey, date_from, date_to, groups) {
   try {
-    const res = await axios.get(buildReportUrl(apiKey, date_from, date_to, groups));
+    const url = buildReportUrl(apiKey, date_from, date_to, groups);
+    console.log(`[fetchRedTrack] report URL (groups=${groups.join(',')})`, url.replace(/api_key=[^&]+/, 'api_key=***'));
+    const res = await axios.get(url);
     return Array.isArray(res.data) ? res.data : [];
   } catch (err) {
     console.warn(`[fetchRedTrack] report call failed (groups=${groups.join(',')}):`, err.message);
