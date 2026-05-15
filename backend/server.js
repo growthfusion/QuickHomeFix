@@ -1233,10 +1233,13 @@ const LeadSchema = z.object({
   sunExposure: z.string().optional().or(z.literal("")),
   trustedFormToken: z.string().optional().or(z.literal("")),
   homePhoneConsentLanguage: z.string().optional().or(z.literal("")),
-  rt_ad:     z.string().optional().or(z.literal("")),
-  fbclid:    z.string().optional().or(z.literal("")),
-  clickid:   z.string().optional().or(z.literal("")),
-  source_id: z.string().optional().or(z.literal("")),
+  rt_ad:         z.string().optional().or(z.literal("")),
+  fbclid:        z.string().optional().or(z.literal("")),
+  clickid:       z.string().optional().or(z.literal("")),
+  source_id:     z.string().optional().or(z.literal("")),
+  ad_name:       z.string().optional().or(z.literal("")),
+  adset_name:    z.string().optional().or(z.literal("")),
+  campaign_name: z.string().optional().or(z.literal("")),
 });
 
 app.post("/api/leads", async (req, res) => {
@@ -1331,9 +1334,12 @@ app.post("/api/leads", async (req, res) => {
         partnerDelivery?.postResponse?.status ||
         partnerDelivery?.reason ||
         null,
-      client_ip: clientIp,
-      user_agent: ua,
-      created_at: createdAt,
+      client_ip:     clientIp,
+      user_agent:    ua,
+      created_at:    createdAt,
+      ad_name:       data.ad_name       || null,
+      adset_name:    data.adset_name    || null,
+      campaign_name: data.campaign_name || null,
     };
 
     let dbInsert = { saved: false };
@@ -1385,7 +1391,53 @@ app.post("/api/dev/migrate", async (_req, res) => {
     }
 
     const migrationQueries = [
-      // QuickHomeFix leads table
+      // 1. Drop orphaned campaign_mapping table
+      `DROP TABLE IF EXISTS campaign_mapping`,
+      // 2. Drop and recreate redtrack_stats with new schema (must DROP to update columns)
+      `DROP TABLE IF EXISTS redtrack_stats`,
+      `
+        CREATE TABLE redtrack_stats (
+          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
+          date            Date,
+          breakdown_type  String,
+          group_key       String,
+          campaign_name   String,
+          adset_name      String,
+          ad_name         String,
+          channel         String,
+          lander_name     String,
+          lp_views        UInt32,
+          lp_clicks       UInt32,
+          lp_ctr          Float64,
+          conversions     UInt32,
+          purchases       UInt32,
+          revenue         Float64,
+          cost            Float64,
+          roi             Float64,
+          device          String,
+          os              String,
+          region          String
+        ) ENGINE = MergeTree()
+        ORDER BY (date, breakdown_type, group_key, campaign_name, adset_name, ad_name)
+      `,
+      // 3. LeadProsper stats (unchanged — CREATE IF NOT EXISTS is safe)
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_stats (
+          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
+          date            Date,
+          campaign_id     String,
+          campaign_name   String,
+          leads_total     UInt32,
+          leads_accepted  UInt32,
+          leads_failed    UInt32,
+          leads_returned  UInt32,
+          total_buy       Float64,
+          total_sell      Float64,
+          net_profit      Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id)
+      `,
+      // 4. Leads table (unchanged base schema)
       `
         CREATE TABLE IF NOT EXISTS ${CLICKHOUSE_TABLE}
         (
@@ -1446,83 +1498,10 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ENGINE = MergeTree
         ORDER BY (created_at, id)
       `,
-      // Meta Ads stats table
-      `
-        CREATE TABLE IF NOT EXISTS meta_ad_stats (
-          fetched_at         DateTime64(3, 'UTC') DEFAULT now64(3),
-          date               Date,
-          campaign_id        String,
-          campaign_name      String,
-          adset_id           String,
-          adset_name         String,
-          ad_id              String,
-          ad_name            String,
-          publisher_platform String,
-          placement          String,
-          device             String,
-          os                 String,
-          state              String,
-          region             String,
-          clicks             UInt32,
-          impressions        UInt32,
-          ctr                Float64,
-          spend              Float64
-        ) ENGINE = MergeTree()
-        ORDER BY (date, campaign_id, adset_id, ad_id, placement, device, os, state)
-      `,
-      // LeadProsper stats table
-      `
-        CREATE TABLE IF NOT EXISTS leadprosper_stats (
-          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
-          date            Date,
-          campaign_id     String,
-          campaign_name   String,
-          leads_total     UInt32,
-          leads_accepted  UInt32,
-          leads_failed    UInt32,
-          leads_returned  UInt32,
-          total_buy       Float64,
-          total_sell      Float64,
-          net_profit      Float64
-        ) ENGINE = MergeTree()
-        ORDER BY (date, campaign_id)
-      `,
-      // RedTrack stats table (includes breakdown_type + group_key for per-dimension rows)
-      `
-        CREATE TABLE IF NOT EXISTS redtrack_stats (
-          fetched_at     DateTime64(3, 'UTC') DEFAULT now64(3),
-          date           Date,
-          breakdown_type String DEFAULT 'daily',
-          group_key      String DEFAULT '',
-          campaign_id    String,
-          campaign_name  String,
-          landing        String,
-          lp_views       UInt32,
-          clicks         UInt32,
-          conversions    UInt32,
-          revenue        Float64,
-          cost           Float64,
-          epc            Float64,
-          roi            Float64
-        ) ENGINE = MergeTree()
-        ORDER BY (date, breakdown_type, group_key, campaign_id)
-      `,
-      // Safe no-ops for existing tables that predate the new columns
-      `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS lp_views UInt32 DEFAULT 0`,
-      `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS breakdown_type String DEFAULT 'daily'`,
-      `ALTER TABLE redtrack_stats ADD COLUMN IF NOT EXISTS group_key String DEFAULT ''`,
-      // campaign_mapping table (Fix B)
-      `
-        CREATE TABLE IF NOT EXISTS campaign_mapping (
-          meta_campaign_id  String,
-          lp_campaign_id    String,
-          rt_source_id      String,
-          form_type         String,
-          label             Nullable(String),
-          created_at        DateTime64(3, 'UTC') DEFAULT now64(3)
-        ) ENGINE = ReplacingMergeTree(created_at)
-        ORDER BY (meta_campaign_id)
-      `,
+      // 5-7. Add new ad attribution columns to leads table (safe if already exist)
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name       Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS adset_name    Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS campaign_name Nullable(String)`,
     ];
 
     // Execute all migrations sequentially
@@ -1862,10 +1841,15 @@ app.get("/api/stats/redtrack", async (_req, res) => {
     const rows = await runClickhouseSelect(
       `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats) ORDER BY date DESC`
     );
-    res.json({ ok: true, rows });
+    const result = { daily: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] };
+    for (const r of rows) {
+      const key = r.breakdown_type;
+      if (result[key]) result[key].push(r);
+    }
+    res.json(result);
   } catch (e) {
     console.error('[/api/stats/redtrack]', e.message);
-    res.status(500).json({ ok: false, message: e.message });
+    res.status(500).json({ daily: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] });
   }
 });
 
@@ -1912,69 +1896,10 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
   }
 });
 
-const CampaignMappingSchema = z.object({
-  meta_campaign_id: z.string().min(1),
-  lp_campaign_id:   z.string().min(1),
-  rt_source_id:     z.string().default(''),
-  form_type:        z.enum(['bath', 'roof', 'windo', 'other']),
-  label:            z.string().optional(),
-});
-
-app.get('/api/campaign-mapping', async (_req, res) => {
-  try {
-    const rows = await runClickhouseSelect(`
-      SELECT * FROM campaign_mapping FINAL
-      ORDER BY form_type, meta_campaign_id
-    `);
-    res.json(rows);
-  } catch (e) {
-    console.error('[campaign-mapping GET]', e.message);
-    res.json([]);
-  }
-});
-
-app.post('/api/campaign-mapping', async (req, res) => {
-  let data;
-  try {
-    data = CampaignMappingSchema.parse(req.body);
-  } catch (err) {
-    return res.status(400).json({ error: 'validation failed', details: err?.issues });
-  }
-  try {
-    if (!clickhouse) return res.status(500).json({ error: 'ClickHouse not configured' });
-    await clickhouse.insert({
-      table: 'campaign_mapping',
-      values: [data],
-      format: 'JSONEachRow',
-    });
-    res.json({ ok: true });
-  } catch (e) {
-    console.error('[campaign-mapping POST]', e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.delete('/api/campaign-mapping/:meta_campaign_id', async (req, res) => {
-  const id = req.params.meta_campaign_id;
-  if (!id || id.trim() === '') {
-    return res.status(400).json({ error: 'meta_campaign_id is required' });
-  }
-  try {
-    if (!clickhouse) return res.status(500).json({ error: 'ClickHouse not configured' });
-    await clickhouse.command({
-      query: `ALTER TABLE campaign_mapping DELETE WHERE meta_campaign_id = {id:String} SETTINGS mutations_sync=1`,
-      query_params: { id },
-    });
-    res.json({ ok: true });
-  } catch (e) {
-    console.error('[campaign-mapping DELETE]', e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
 
 app.get('/api/stats/leads-breakdown', async (_req, res) => {
   try {
-    const [stateRows, deviceRows, osRows, dailyRows] = await Promise.all([
+    const [stateRows, deviceRows, osRows, campaignRows, adRows] = await Promise.all([
       runClickhouseSelect(`
         SELECT
           state,
@@ -2058,26 +1983,39 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
 
       runClickhouseSelect(`
         SELECT
-          toDate(created_at) AS date,
-          multiIf(
-            normalized_service LIKE '%BATH%' OR
-            normalized_service LIKE '%TUB%' OR
-            normalized_service LIKE '%SHOWER%', 'bath',
-            normalized_service LIKE '%ROOF%',   'roof',
-            normalized_service LIKE '%WINDOW%', 'windo',
-            'other'
-          ) AS form_type,
+          campaign_name,
+          adset_name,
+          toDate(created_at)     AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
         FROM leads
         WHERE created_at >= now() - INTERVAL 30 DAY
-        GROUP BY date, form_type
+          AND campaign_name IS NOT NULL
+          AND campaign_name != ''
+        GROUP BY campaign_name, adset_name, date
+        ORDER BY date DESC
+      `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
+
+      runClickhouseSelect(`
+        SELECT
+          ad_name,
+          adset_name,
+          campaign_name,
+          toDate(created_at)     AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM leads
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND ad_name IS NOT NULL
+          AND ad_name != ''
+        GROUP BY ad_name, adset_name, campaign_name, date
         ORDER BY date DESC
       `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
     ]);
 
-    res.json({ state: stateRows, device: deviceRows, os: osRows, daily: dailyRows });
+    res.json({ state: stateRows, device: deviceRows, os: osRows, campaign: campaignRows, ad: adRows });
   } catch (e) {
     console.error('[leads-breakdown]', e.message);
     res.status(500).json({ error: e.message });
