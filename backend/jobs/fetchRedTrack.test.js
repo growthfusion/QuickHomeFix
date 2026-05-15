@@ -12,37 +12,16 @@ vi.mock('@clickhouse/client', () => ({
 import axios from 'axios';
 import { fetchRedTrack } from './fetchRedTrack.js';
 
-// Queue all 9 axios.get responses in call order:
+// Queue all 2 axios.get responses in call order:
 //   [0] traffic_sources
-//   [1] date          → daily
-//   [2] date+os       → os
-//   [3] date+device   → device
-//   [4] date+country  → region
-//   [5] date+campaign → campaign
-//   [6] date+offer    → lander
-//   [7] date+adset    → adset
-//   [8] date+ad       → ad
+//   [1] date → daily
 function mockRtApi({
-  sources  = [],
-  daily    = [],
-  os       = [],
-  device   = [],
-  country  = [],
-  campaign = [],
-  offer    = [],
-  adset    = [],
-  ad       = [],
+  sources = [],
+  daily   = [],
 } = {}) {
   axios.get
     .mockResolvedValueOnce({ data: sources })
-    .mockResolvedValueOnce({ data: daily })
-    .mockResolvedValueOnce({ data: os })
-    .mockResolvedValueOnce({ data: device })
-    .mockResolvedValueOnce({ data: country })
-    .mockResolvedValueOnce({ data: campaign })
-    .mockResolvedValueOnce({ data: offer })
-    .mockResolvedValueOnce({ data: adset })
-    .mockResolvedValueOnce({ data: ad });
+    .mockResolvedValueOnce({ data: daily });
 }
 
 describe('fetchRedTrack', () => {
@@ -57,10 +36,10 @@ describe('fetchRedTrack', () => {
     process.env.RT_CALL_DELAY_MS    = '0';
   });
 
-  it('makes exactly 9 API calls (1 traffic_sources + 8 report calls)', async () => {
+  it('makes exactly 2 API calls (1 traffic_sources + 1 daily report)', async () => {
     mockRtApi();
     await fetchRedTrack();
-    expect(axios.get).toHaveBeenCalledTimes(9);
+    expect(axios.get).toHaveBeenCalledTimes(2);
   });
 
   it('first call targets /traffic_sources', async () => {
@@ -69,19 +48,12 @@ describe('fetchRedTrack', () => {
     expect(axios.get.mock.calls[0][0]).toContain('/traffic_sources');
   });
 
-  it('report calls target /report with correct group_by[] params', async () => {
+  it('report call targets /report with group_by[]=date', async () => {
     mockRtApi();
     await fetchRedTrack();
     const calls = axios.get.mock.calls;
-    // calls[0] = traffic_sources; calls[1..8] = report calls
-    expect(calls[1][0]).toMatch(/group_by\[\]=date/);      // daily
-    expect(calls[2][0]).toMatch(/group_by\[\]=os/);        // os
-    expect(calls[3][0]).toMatch(/group_by\[\]=device/);    // device
-    expect(calls[4][0]).toMatch(/group_by\[\]=country/);   // region
-    expect(calls[5][0]).toMatch(/group_by\[\]=campaign/);  // campaign
-    expect(calls[6][0]).toMatch(/group_by\[\]=offer/);     // lander
-    expect(calls[7][0]).toMatch(/group_by\[\]=adset/);     // adset
-    expect(calls[8][0]).toMatch(/group_by\[\]=ad/);        // ad (not adset)
+    // calls[0] = traffic_sources; calls[1] = daily report
+    expect(calls[1][0]).toMatch(/group_by\[\]=date/);
   });
 
   it('inserts daily rows with breakdown_type=daily and empty group_key', async () => {
@@ -157,51 +129,12 @@ describe('fetchRedTrack', () => {
     expect(row.lander_name).toBe('');
   });
 
-  it('stores "unknown" as group_key when derived key is empty on non-daily row', async () => {
-    mockRtApi({ os: [{ date: '2026-05-01', os: '' }] });
+  it('daily row has empty string group_key', async () => {
+    mockRtApi({ daily: [{ date: '2026-05-01', lp_views: 10 }] });
     await fetchRedTrack();
     const rows = mockInsert.mock.calls[0][0].values;
-    const row = rows.find(r => r.breakdown_type === 'os');
-    expect(row.group_key).toBe('unknown');
-  });
-
-  it('assigns breakdown_type=region for country call', async () => {
-    mockRtApi({ country: [{ date: '2026-05-01', country: 'US' }] });
-    await fetchRedTrack();
-    const rows = mockInsert.mock.calls[0][0].values;
-    const row = rows.find(r => r.breakdown_type === 'region');
-    expect(row).toBeDefined();
-    expect(row.group_key).toBe('US');
-    expect(row.region).toBe('US');
-  });
-
-  it('assigns breakdown_type=lander for offer call', async () => {
-    mockRtApi({ offer: [{ date: '2026-05-01', offer: 'Bath Lander' }] });
-    await fetchRedTrack();
-    const rows = mockInsert.mock.calls[0][0].values;
-    const row = rows.find(r => r.breakdown_type === 'lander');
-    expect(row).toBeDefined();
-    expect(row.group_key).toBe('Bath Lander');
-  });
-
-  it('assigns breakdown_type=adset with adset_name filled from group_key', async () => {
-    mockRtApi({ adset: [{ date: '2026-05-01', adset: 'AdSet A' }] });
-    await fetchRedTrack();
-    const rows = mockInsert.mock.calls[0][0].values;
-    const row = rows.find(r => r.breakdown_type === 'adset');
-    expect(row).toBeDefined();
-    expect(row.group_key).toBe('AdSet A');
-    expect(row.adset_name).toBe('AdSet A');
-  });
-
-  it('assigns breakdown_type=ad with ad_name filled from group_key', async () => {
-    mockRtApi({ ad: [{ date: '2026-05-01', ad: 'Ad Alpha' }] });
-    await fetchRedTrack();
-    const rows = mockInsert.mock.calls[0][0].values;
-    const row = rows.find(r => r.breakdown_type === 'ad');
-    expect(row).toBeDefined();
-    expect(row.group_key).toBe('Ad Alpha');
-    expect(row.ad_name).toBe('Ad Alpha');
+    const row = rows.find(r => r.breakdown_type === 'daily');
+    expect(row.group_key).toBe('');
   });
 
   it('filters out rows that have no date field', async () => {
@@ -228,18 +161,18 @@ describe('fetchRedTrack', () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
-  it('issues a single ch.insert with rows from all breakdown types', async () => {
+  it('issues a single ch.insert with daily rows', async () => {
     mockRtApi({
-      daily:    [{ date: '2026-05-01', lp_views: 10 }],
-      os:       [{ date: '2026-05-01', os: 'iOS', lp_views: 5 }],
-      campaign: [{ date: '2026-05-01', campaign: 'Camp A', lp_views: 8 }],
+      daily: [
+        { date: '2026-05-01', lp_views: 10 },
+        { date: '2026-05-02', lp_views: 5 },
+      ],
     });
     await fetchRedTrack();
     expect(mockInsert).toHaveBeenCalledTimes(1);
     const rows = mockInsert.mock.calls[0][0].values;
-    expect(rows.some(r => r.breakdown_type === 'daily')).toBe(true);
-    expect(rows.some(r => r.breakdown_type === 'os')).toBe(true);
-    expect(rows.some(r => r.breakdown_type === 'campaign')).toBe(true);
+    expect(rows.every(r => r.breakdown_type === 'daily')).toBe(true);
+    expect(rows).toHaveLength(2);
   });
 
   it('closes the ClickHouse client even when all API calls fail', async () => {

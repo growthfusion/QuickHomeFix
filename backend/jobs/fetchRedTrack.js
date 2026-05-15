@@ -120,16 +120,11 @@ function makeRow(fetchedAt, type, sourceMap, row) {
   };
 }
 
-// 8 report calls in order. Call 1 is traffic_sources (handled separately).
+// 1 report call. Call 1 is traffic_sources (handled separately).
+// RT API for this account silently ignores all group_by dimensions except date,
+// so all breakdown calls return identical daily totals — only daily is kept.
 const BREAKDOWNS = [
-  { groups: ['date'],              type: 'daily'    },
-  { groups: ['date', 'os'],        type: 'os'       },
-  { groups: ['date', 'device'],    type: 'device'   },
-  { groups: ['date', 'country'],   type: 'region'   },
-  { groups: ['date', 'campaign'],  type: 'campaign' },
-  { groups: ['date', 'offer'],     type: 'lander'   },
-  { groups: ['date', 'adset'],     type: 'adset'    },
-  { groups: ['date', 'ad'],        type: 'ad'       },
+  { groups: ['date'], type: 'daily' },
 ];
 
 export async function fetchRedTrack() {
