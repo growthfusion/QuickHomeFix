@@ -851,27 +851,31 @@
       return out;
     }
 
-    // LANDING — RT_LANDER anchor; LP matched by lander name
+    // LANDING — LD_LANDING anchor (leads table landing_page_url path)
+    // Row label = URL path slug (e.g. bath-remodel, roofing-asphalt)
+    // visits estimated proportionally from RT_DAILY total
+    // leads/sold/revenue from leads table grouped by landing path
     function buildLandingRows() {
-      const rtMap = aggRt(RT_LANDER, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-      const lpMap = new Map();
-      for (const r of LP_ROWS) {
-        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
-        if (!campaign_name) continue;
+      const m = new Map();
+      for (const r of LD_LANDING) {
+        const { landing_path, date, leads, sold, revenue } = r;
+        if (!landing_path) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
-        const v = lpMap.get(campaign_name);
-        v.l  += Number(leads_total    || 0);
-        v.s  += Number(leads_accepted || 0);
-        v.rv += Number(total_sell     || 0);
+        if (!m.has(landing_path)) m.set(landing_path, { l: 0, s: 0, rv: 0 });
+        const v = m.get(landing_path);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
       }
+      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
+      const totalRtViews = totalRtViewsInRange();
       const out = [];
-      for (const [lander, rt] of rtMap.entries()) {
-        const lp = lpMap.get(lander) || { l: 0, s: 0, rv: 0 };
-        out.push(lpRow(lander, rt.views, rt.clicks, lp.l, lp.s, lp.rv, rt.cost));
+      for (const [path, v] of m.entries()) {
+        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
+        out.push(lpRow(path, visits, 0, v.l, v.s, v.rv, 0));
       }
-      out.sort((a, b) => b[1] - a[1]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
