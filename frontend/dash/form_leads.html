@@ -407,46 +407,48 @@
   <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
 
   <script>
-    // ── Metric column headers (13 columns after the label) ──────────────────
+    // ── Metric column headers (33 columns after the label) ──────────────────
+    // Row index:  0=label
+    //  1=VISITS  2=CTR,%  3=CLICKS  4=CR,%  5=EMAILS
+    //  6=LEADS  7=SOLD  8=%  9=APPTS  10=%
+    //  11=UPSELLS  12=SOLD  13=%  14=UPSELL_RATE,%
+    //  15=PPC  16=SOLD  17=%  18=PPC_RATE,%
+    //  19=THUMBTACK  20=SOLD  21=%
+    //  22=TOTAL REVENUE,$  23=LEADS,$  24=COST,$
+    //  25=UPSELLS,$  26=THUMBTACK,$  27=PPC,$  28=REPOSTS,$  29=ADJUSTMENT,$
+    //  30=AVG PER LEAD,$  31=AVG PER SOLD,$  32=EPC,$  33=EPV,$
     const METRIC_COLS = [
-      "VISITS", "LP CLICKS", "LP CTR %",
-      "LEADS", "SOLD", "ACC %",
-      "REVENUE", "COST", "PROFIT",
-      "AVG/LEAD", "AVG/SOLD", "EPV",
-      "ROI %"
+      "VISITS", "CTR, %", "CLICKS", "CR, %", "EMAILS",
+      "LEADS", "SOLD", "%", "APPTS", "%",
+      "UPSELLS", "SOLD", "%", "UPSELL_RATE, %",
+      "PPC", "SOLD", "%", "PPC_RATE, %",
+      "THUMBTACK", "SOLD", "%",
+      "TOTAL REVENUE, $", "LEADS, $", "COST, $",
+      "UPSELLS, $", "THUMBTACK, $", "PPC, $", "REPOSTS, $", "ADJUSTMENT, $",
+      "AVG PER LEAD, $", "AVG PER SOLD, $", "EPC, $", "EPV, $"
     ];
-
-    // Row indices: 0=label, 1=visits, 2=lpClicks, 3=lpCtr%, 4=leads, 5=sold,
-    //             6=acc%, 7=revenue, 8=cost, 9=profit, 10=avgLead, 11=avgSold,
-    //             12=epv, 13=roi%
 
     // ── In-memory data arrays ────────────────────────────────────────────────
 
-    // RedTrack — one object per row, keyed by breakdown_type
-    let RT_DAILY    = [];  // breakdown_type='daily'
-    let RT_CAMPAIGN = [];  // breakdown_type='campaign'
-    let RT_ADSET    = [];  // breakdown_type='adset'
-    let RT_AD       = [];  // breakdown_type='ad'
-    let RT_OS       = [];  // breakdown_type='os'
-    let RT_DEVICE   = [];  // breakdown_type='device'
-    let RT_REGION   = [];  // breakdown_type='region'
-    let RT_LANDER   = [];  // breakdown_type='lander'
+    let RT_DAILY    = [];
+    let RT_CAMPAIGN = [];
+    let RT_ADSET    = [];
+    let RT_AD       = [];
+    let RT_OS       = [];
+    let RT_DEVICE   = [];
+    let RT_REGION   = [];
+    let RT_LANDER   = [];
 
-    // LeadProsper raw stats rows (campaign-level, daily)
     let LP_ROWS = [];
 
-    // Leads-breakdown from QuickHomeFix_leads table
     let LD_STATE    = [];
     let LD_DEVICE   = [];
     let LD_OS       = [];
     let LD_CAMPAIGN = [];
     let LD_AD       = [];
 
-    // Meta hierarchy keyed by ad_name → { adset_name, campaign_name }
     let META_HIERARCHY = {};
-
-    // LP form map keyed by lp_campaign_id → form_type
-    let LP_FORM_MAP = {};
+    let LP_FORM_MAP    = {};
 
     // ── Normalisation helpers ────────────────────────────────────────────────
 
@@ -467,33 +469,56 @@
     }
 
     // ── Row builder ──────────────────────────────────────────────────────────
-    // Returns a 14-element array: [label, ...13 metric values]
-    function lpRow(label, views, clicks, ctr, leads, sold, accPct, rev, cost, roi) {
-      const profit  = rev - cost;
-      const avgLead = leads ? rev / leads : 0;
-      const avgSold = sold  ? rev / sold  : 0;
-      const epv     = views ? rev / views : 0;
+    // Returns a 34-element array: [label, ...33 metric values]
+    function lpRow(label, views, clicks, leads, sold, rev, cost) {
+      const fmt2 = n => +n.toFixed(2);
+      const fmtP = n => n > 0 ? n.toFixed(2) + '%' : '0%';
+      const ctr     = views  > 0 ? (clicks / views) * 100 : 0;
+      const cr      = views  > 0 ? (leads  / views) * 100 : 0;
+      const accPct  = leads  > 0 ? (sold   / leads) * 100 : 0;
+      const avgLead = leads  > 0 ? rev / leads : 0;
+      const avgSold = sold   > 0 ? rev / sold  : 0;
+      const epc     = clicks > 0 ? rev / clicks : 0;
+      const epv     = views  > 0 ? rev / views  : 0;
       return [
         label,
-        views,
-        clicks,
-        ctr  > 0 ? ctr.toFixed(2)    + '%' : '0%',
-        leads,
-        sold,
-        leads > 0 ? accPct.toFixed(2) + '%' : '0%',
-        +rev.toFixed(2),
-        +cost.toFixed(2),
-        +profit.toFixed(2),
-        +avgLead.toFixed(2),
-        +avgSold.toFixed(2),
-        +epv.toFixed(4),
-        roi  > 0 ? roi.toFixed(2)    + '%' : '0%',
+        views,          // 1  VISITS
+        fmtP(ctr),     // 2  CTR, %
+        clicks,         // 3  CLICKS
+        fmtP(cr),      // 4  CR, %
+        0,              // 5  EMAILS
+        leads,          // 6  LEADS
+        sold,           // 7  SOLD
+        fmtP(accPct),  // 8  %
+        0,              // 9  APPTS
+        '0%',           // 10 %
+        0,              // 11 UPSELLS
+        0,              // 12 SOLD (upsell)
+        '0%',           // 13 %
+        '0%',           // 14 UPSELL_RATE, %
+        0,              // 15 PPC
+        0,              // 16 SOLD (ppc)
+        '0%',           // 17 %
+        '0%',           // 18 PPC_RATE, %
+        0,              // 19 THUMBTACK
+        0,              // 20 SOLD (tt)
+        '0%',           // 21 %
+        fmt2(rev),     // 22 TOTAL REVENUE, $
+        fmt2(rev),     // 23 LEADS, $
+        fmt2(cost),    // 24 COST, $
+        0,              // 25 UPSELLS, $
+        0,              // 26 THUMBTACK, $
+        0,              // 27 PPC, $
+        0,              // 28 REPOSTS, $
+        0,              // 29 ADJUSTMENT, $
+        fmt2(avgLead), // 30 AVG PER LEAD, $
+        fmt2(avgSold), // 31 AVG PER SOLD, $
+        fmt2(epc),     // 32 EPC, $
+        fmt2(epv),     // 33 EPV, $
       ];
     }
 
     // ── RT aggregation helper ────────────────────────────────────────────────
-    // Aggregates an RT array by a key-extraction function within the current date range.
-    // Returns Map: key → { views, clicks, cost, rtRev, count }
     function aggRt(arr, keyFn) {
       const m = new Map();
       for (const r of arr) {
@@ -502,23 +527,16 @@
         const d = r.date || '';
         if (FILTERS.from && d < FILTERS.from) continue;
         if (FILTERS.to   && d > FILTERS.to)   continue;
-        if (!m.has(key)) m.set(key, { views: 0, clicks: 0, cost: 0, rtRev: 0, count: 0 });
+        if (!m.has(key)) m.set(key, { views: 0, clicks: 0, cost: 0, rtRev: 0 });
         const v = m.get(key);
         v.views  += Number(r.lp_views  || 0);
         v.clicks += Number(r.lp_clicks || 0);
         v.cost   += Number(r.cost      || 0);
         v.rtRev  += Number(r.revenue   || 0);
-        v.count++;
       }
       return m;
     }
 
-    // Compute ROI from aggregated RT revenue and cost
-    function computeRoi(rtRev, cost) {
-      return cost > 0 ? ((rtRev - cost) / cost) * 100 : 0;
-    }
-
-    // Total RT lp_views in current date range (from RT_DAILY)
     function totalRtViewsInRange() {
       return RT_DAILY
         .filter(r => (!FILTERS.from || r.date >= FILTERS.from) && (!FILTERS.to || r.date <= FILTERS.to))
@@ -536,7 +554,6 @@
           fetch('/api/stats/meta').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
         ]);
 
-        // Populate RT arrays from structured response
         RT_DAILY    = rtRes.daily    || [];
         RT_CAMPAIGN = rtRes.campaign || [];
         RT_ADSET    = rtRes.adset    || [];
@@ -546,19 +563,14 @@
         RT_REGION   = rtRes.region   || [];
         RT_LANDER   = rtRes.lander   || [];
 
-        // LP raw rows
-        if (lpRes.ok && lpRes.rows) {
-          LP_ROWS = lpRes.rows;
-        }
+        if (lpRes.ok && lpRes.rows) LP_ROWS = lpRes.rows;
 
-        // Leads-breakdown arrays
         LD_STATE    = ldRes.state    || [];
         LD_DEVICE   = ldRes.device   || [];
         LD_OS       = ldRes.os       || [];
         LD_CAMPAIGN = ldRes.campaign || [];
         LD_AD       = ldRes.ad       || [];
 
-        // LP_FORM_MAP keyed by lp_campaign_id → form_type
         if (Array.isArray(lpFormMapRes)) {
           LP_FORM_MAP = {};
           for (const entry of lpFormMapRes) {
@@ -566,7 +578,6 @@
           }
         }
 
-        // META_HIERARCHY keyed by ad_name → { adset_name, campaign_name }
         if (metaRes.ok && metaRes.rows) {
           META_HIERARCHY = {};
           for (const row of metaRes.rows) {
@@ -579,10 +590,8 @@
           }
         }
 
-        console.log('[loadStats] RT daily:', RT_DAILY.length, '| campaign:', RT_CAMPAIGN.length,
-                    '| adset:', RT_ADSET.length, '| ad:', RT_AD.length);
-        console.log('[loadStats] LP rows:', LP_ROWS.length);
-        console.log('[loadStats] LD_AD:', LD_AD.length, '| META_HIERARCHY ads:', Object.keys(META_HIERARCHY).length);
+        console.log('[loadStats] RT daily:', RT_DAILY.length, '| campaign:', RT_CAMPAIGN.length, '| ad:', RT_AD.length);
+        console.log('[loadStats] LP rows:', LP_ROWS.length, '| LD_AD:', LD_AD.length);
 
       } catch (err) {
         console.warn('[loadStats] fetch failed:', err.message);
@@ -604,119 +613,32 @@
 
     // ── Table builders ───────────────────────────────────────────────────────
 
-    // AD table — anchor: LD_AD. Join RT_AD and META_HIERARCHY by ad_name.
-    function buildAdRows() {
-      // Step 1: aggregate LD_AD by ad_name within date range (LP anchor)
-      const ldMap = new Map();
-      for (const r of LD_AD) {
-        const { ad_name, adset_name, campaign_name, date, leads, sold, revenue } = r;
-        if (!ad_name) continue;
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!ldMap.has(ad_name)) ldMap.set(ad_name, { adset: adset_name || '', campaign: campaign_name || '', l: 0, s: 0, rv: 0 });
-        const v = ldMap.get(ad_name);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
-      }
-
-      // Step 2: aggregate RT_AD by group_key (= ad_name)
-      const rtMap = aggRt(RT_AD, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-
-      // Step 3: build output rows — start from LP anchor
-      const out = [];
-      for (const [adName, lp] of ldMap.entries()) {
-        // Join RT
-        if (!rtMap.has(adName)) {
-          console.warn('[dashboard] ad not in RT:', adName);
-        }
-        const rt = rtMap.get(adName) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
-
-        // Join Meta hierarchy
-        const hier = META_HIERARCHY[adName];
-        if (!hier) console.warn('[dashboard] ad not in Meta:', adName);
-        const campaign = hier?.campaign_name || lp.campaign || '';
-        const adset    = hier?.adset_name    || lp.adset    || '';
-
-        const label  = campaign ? `${campaign} › ${adset || '?'} › ${adName}` : adName;
-        const ctr    = rt.views  > 0 ? (rt.clicks / rt.views) * 100 : 0;
-        const roi    = computeRoi(rt.rtRev, rt.cost);
-        const acc    = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
-        out.push(lpRow(label, rt.views, rt.clicks, ctr, lp.l, lp.s, acc, lp.rv, rt.cost, roi));
-      }
-      out.sort((a, b) => b[4] - a[4]); // by leads desc
-      return out;
-    }
-
-    // ADSET table — group LD_AD by adset_name; sum metrics for ads under same adset.
-    function buildAdsetRows() {
-      // Aggregate LD_AD by adset_name
-      const ldMap = new Map();
-      for (const r of LD_AD) {
-        const { adset_name, date, leads, sold, revenue } = r;
-        if (!adset_name) continue;
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!ldMap.has(adset_name)) ldMap.set(adset_name, { l: 0, s: 0, rv: 0 });
-        const v = ldMap.get(adset_name);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
-      }
-
-      // Aggregate RT_ADSET by group_key (= adset_name)
-      const rtMap = aggRt(RT_ADSET, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-
-      const out = [];
-      for (const [adsetName, lp] of ldMap.entries()) {
-        if (!rtMap.has(adsetName)) console.warn('[dashboard] adset not in RT:', adsetName);
-        const rt  = rtMap.get(adsetName) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
-        const ctr = rt.views > 0 ? (rt.clicks / rt.views) * 100 : 0;
-        const roi = computeRoi(rt.rtRev, rt.cost);
-        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
-        out.push(lpRow(adsetName, rt.views, rt.clicks, ctr, lp.l, lp.s, acc, lp.rv, rt.cost, roi));
-      }
-      out.sort((a, b) => b[4] - a[4]);
-      return out;
-    }
-
-    // CAMPAIGN table — LP_ROWS as anchor by campaign_name, joined with RT_CAMPAIGN.
-    function buildCampaignRows() {
-      // Aggregate LP by campaign_name
+    // DATE — RT_DAILY + LP_ROWS joined by date
+    function buildDateRows() {
       const lpMap = new Map();
       for (const r of LP_ROWS) {
-        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
-        if (!campaign_name) continue;
+        const { date, leads_total, leads_accepted, total_sell } = r;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
-        const v = lpMap.get(campaign_name);
+        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0, rv: 0 });
+        const v = lpMap.get(date);
         v.l  += Number(leads_total    || 0);
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-
-      // Aggregate RT_CAMPAIGN by group_key (= campaign_name)
-      const rtMap = aggRt(RT_CAMPAIGN, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-
-      // Union of all campaign names (LP anchor + RT supplement)
-      const allKeys = new Set([...lpMap.keys(), ...rtMap.keys()]);
+      const rtMap = aggRt(RT_DAILY, r => r.date || null);
+      const allDates = new Set([...lpMap.keys(), ...rtMap.keys()]);
       const out = [];
-      for (const cn of allKeys) {
-        const lp = lpMap.get(cn) || { l: 0, s: 0, rv: 0 };
-        const rt = rtMap.get(cn);
-        if (!rt && lpMap.has(cn)) console.warn('[dashboard] campaign not in RT:', cn);
-        const rtD = rt || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
-        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
-        const roi = computeRoi(rtD.rtRev, rtD.cost);
-        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
-        out.push(lpRow(cn, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
+      for (const d of allDates) {
+        const lp  = lpMap.get(d) || { l: 0, s: 0, rv: 0 };
+        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0 };
+        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
       }
-      out.sort((a, b) => b[4] - a[4]);
+      out.sort((a, b) => a[0] > b[0] ? -1 : 1);
       return out;
     }
 
-    // FORM table — group LP_ROWS by form_type via LP_FORM_MAP; visits proportional from RT_DAILY.
+    // FORM — LP_ROWS grouped by form_type; visits proportional from RT_DAILY
     function buildFormRows() {
       const byForm = new Map();
       for (const r of LP_ROWS) {
@@ -731,54 +653,115 @@
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-
       const totalLeads   = [...byForm.values()].reduce((s, v) => s + v.l, 0);
       const totalRtViews = totalRtViewsInRange();
-
       const out = [];
       for (const [form, v] of byForm.entries()) {
         const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        const acc    = v.l > 0 ? (v.s / v.l) * 100 : 0;
-        const profit = v.rv; // cost unknown at form level
-        out.push(lpRow(form, visits, 0, 0, v.l, v.s, acc, v.rv, 0, 0));
+        out.push(lpRow(form, visits, 0, v.l, v.s, v.rv, 0));
       }
-      out.sort((a, b) => b[4] - a[4]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // DATE table — RT_DAILY + LP_ROWS joined by date.
-    function buildDateRows() {
-      // Aggregate LP by date
+    // LP — LeadProsper campaigns anchor, joined with RT_CAMPAIGN by campaign_name
+    function buildLpRows() {
       const lpMap = new Map();
       for (const r of LP_ROWS) {
-        const { date, leads_total, leads_accepted, total_sell } = r;
+        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0, rv: 0 });
-        const v = lpMap.get(date);
+        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
+        const v = lpMap.get(campaign_name);
         v.l  += Number(leads_total    || 0);
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-
-      // Aggregate RT_DAILY by date
-      const rtMap = aggRt(RT_DAILY, r => r.date || null);
-
-      const allDates = new Set([...lpMap.keys(), ...rtMap.keys()]);
+      const rtMap = aggRt(RT_CAMPAIGN, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+      const allKeys = new Set([...lpMap.keys(), ...rtMap.keys()]);
       const out = [];
-      for (const d of allDates) {
-        const lp  = lpMap.get(d) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
-        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
-        const roi = computeRoi(rtD.rtRev, rtD.cost);
-        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
-        out.push(lpRow(d, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
+      for (const cn of allKeys) {
+        const lp  = lpMap.get(cn) || { l: 0, s: 0, rv: 0 };
+        const rtD = rtMap.get(cn) || { views: 0, clicks: 0, cost: 0 };
+        if (!rtMap.has(cn) && lpMap.has(cn)) console.warn('[dashboard] LP campaign not in RT:', cn);
+        out.push(lpRow(cn, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
       }
-      out.sort((a, b) => a[0] > b[0] ? -1 : 1); // date desc
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // STATE table — LD_STATE anchor; visits proportional from RT_DAILY total.
+    // LANDING — RT_LANDER only
+    function buildLandingRows() {
+      const rtMap = aggRt(RT_LANDER, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+      const out = [];
+      for (const [lander, rt] of rtMap.entries()) {
+        out.push(lpRow(lander, rt.views, rt.clicks, 0, 0, 0, rt.cost));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // SOURCE — RT_DAILY grouped by channel (from traffic_sources map)
+    function buildSourceRows() {
+      const rtMap = aggRt(RT_DAILY, r => r.channel || null);
+      const out = [];
+      for (const [channel, rt] of rtMap.entries()) {
+        out.push(lpRow(channel, rt.views, rt.clicks, 0, 0, 0, rt.cost));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // WIDGET ID — RT_CAMPAIGN group_key as widget ID; LP joined by campaign_name
+    function buildWidgetRows() {
+      const lpMap = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
+        const v = lpMap.get(campaign_name);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+      const rtMap = aggRt(RT_CAMPAIGN, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+      const out = [];
+      for (const [widgetId, rt] of rtMap.entries()) {
+        const lp = lpMap.get(widgetId) || { l: 0, s: 0, rv: 0 };
+        out.push(lpRow(widgetId, rt.views, rt.clicks, lp.l, lp.s, lp.rv, rt.cost));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // TEASER ID — RT_AD group_key as teaser ID; LD_AD joined by ad_name
+    function buildTeaserRows() {
+      const ldMap = new Map();
+      for (const r of LD_AD) {
+        const { ad_name, date, leads, sold, revenue } = r;
+        if (!ad_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!ldMap.has(ad_name)) ldMap.set(ad_name, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(ad_name);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
+      }
+      const rtMap = aggRt(RT_AD, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+      const out = [];
+      for (const [teaserId, rt] of rtMap.entries()) {
+        const lp = ldMap.get(teaserId) || { l: 0, s: 0, rv: 0 };
+        out.push(lpRow(teaserId, rt.views, rt.clicks, lp.l, lp.s, lp.rv, rt.cost));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // STATE — LD_STATE anchor; visits proportional from RT_DAILY total
     function buildStateRows() {
       const m = new Map();
       for (const r of LD_STATE) {
@@ -792,23 +775,19 @@
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-
       const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
       const totalRtViews = totalRtViewsInRange();
-
       const out = [];
       for (const [state, v] of m.entries()) {
         const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        const acc    = v.l > 0 ? (v.s / v.l) * 100 : 0;
-        out.push(lpRow(state, visits, 0, 0, v.l, v.s, acc, v.rv, 0, 0));
+        out.push(lpRow(state, visits, 0, v.l, v.s, v.rv, 0));
       }
-      out.sort((a, b) => b[4] - a[4]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // DEVICE table — RT_DEVICE + LD_DEVICE joined on normalized device name.
+    // DEVICE — RT_DEVICE + LD_DEVICE joined on normalized device name
     function buildDeviceRows() {
-      // LD side (already returns mobile/desktop/tablet)
       const ldMap = new Map();
       for (const r of LD_DEVICE) {
         const { device, date, leads, sold, revenue } = r;
@@ -821,27 +800,20 @@
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-
-      // RT side: normalize before aggregating
       const rtMap = aggRt(RT_DEVICE, r => normalizeDevice(r.group_key));
-
       const allKeys = new Set([...ldMap.keys(), ...rtMap.keys()]);
       const out = [];
       for (const dev of allKeys) {
         const lp  = ldMap.get(dev) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(dev) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
-        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
-        const roi = computeRoi(rtD.rtRev, rtD.cost);
-        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
-        out.push(lpRow(dev, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
+        const rtD = rtMap.get(dev) || { views: 0, clicks: 0, cost: 0 };
+        out.push(lpRow(dev, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
       }
-      out.sort((a, b) => b[4] - a[4]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // OS table — RT_OS + LD_OS joined on normalized OS name.
+    // OS — RT_OS + LD_OS joined on normalized OS name
     function buildOsRows() {
-      // LD side (already returns ios/android/windows/macos/other)
       const ldMap = new Map();
       for (const r of LD_OS) {
         const { os, date, leads, sold, revenue } = r;
@@ -854,70 +826,38 @@
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-
-      // RT side: normalize before aggregating
       const rtMap = aggRt(RT_OS, r => normalizeOs(r.group_key));
-
       const allKeys = new Set([...ldMap.keys(), ...rtMap.keys()]);
       const out = [];
       for (const os of allKeys) {
         const lp  = ldMap.get(os) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(os) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
-        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
-        const roi = computeRoi(rtD.rtRev, rtD.cost);
-        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
-        out.push(lpRow(os, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
+        const rtD = rtMap.get(os) || { views: 0, clicks: 0, cost: 0 };
+        out.push(lpRow(os, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
       }
-      out.sort((a, b) => b[4] - a[4]);
-      return out;
-    }
-
-    // REGION table — RT_REGION only (no lead-level region data).
-    function buildRegionRows() {
-      const rtMap = aggRt(RT_REGION, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-      const out = [];
-      for (const [region, rt] of rtMap.entries()) {
-        const ctr = rt.views > 0 ? (rt.clicks / rt.views) * 100 : 0;
-        const roi = computeRoi(rt.rtRev, rt.cost);
-        out.push(lpRow(region, rt.views, rt.clicks, ctr, 0, 0, 0, 0, rt.cost, roi));
-      }
-      out.sort((a, b) => b[1] - a[1]); // by visits desc
-      return out;
-    }
-
-    // LANDING table — RT_LANDER; leads matched by lander name if available.
-    function buildLandingRows() {
-      const rtMap = aggRt(RT_LANDER, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-      const out = [];
-      for (const [lander, rt] of rtMap.entries()) {
-        const ctr = rt.views > 0 ? (rt.clicks / rt.views) * 100 : 0;
-        const roi = computeRoi(rt.rtRev, rt.cost);
-        out.push(lpRow(lander, rt.views, rt.clicks, ctr, 0, 0, 0, 0, rt.cost, roi));
-      }
-      out.sort((a, b) => b[1] - a[1]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
     // ── getTables ────────────────────────────────────────────────────────────
     function getTables() {
       return [
-        { title: "Date",     label: "DATE",     rows: buildDateRows()     },
-        { title: "Form",     label: "FORM",     rows: buildFormRows()     },
-        { title: "Campaign", label: "CAMPAIGN", rows: buildCampaignRows() },
-        { title: "Adset",    label: "ADSET",    rows: buildAdsetRows()    },
-        { title: "Ad",       label: "AD",       rows: buildAdRows()       },
-        { title: "Landing",  label: "LANDING",  rows: buildLandingRows()  },
-        { title: "State",    label: "STATE",    rows: buildStateRows()    },
-        { title: "Device",   label: "DEVICE",   rows: buildDeviceRows()   },
-        { title: "OS",       label: "OS",       rows: buildOsRows()       },
-        { title: "Region",   label: "REGION",   rows: buildRegionRows()   },
+        { title: "Date",      label: "DATE",      rows: buildDateRows()    },
+        { title: "Form",      label: "FORM",      rows: buildFormRows()    },
+        { title: "LP",        label: "LP",        rows: buildLpRows()      },
+        { title: "Landing",   label: "LANDING",   rows: buildLandingRows() },
+        { title: "Source",    label: "SOURCE",    rows: buildSourceRows()  },
+        { title: "Widget ID", label: "WIDGET ID", rows: buildWidgetRows()  },
+        { title: "Teaser ID", label: "TEASER ID", rows: buildTeaserRows()  },
+        { title: "State",     label: "STATE",     rows: buildStateRows()   },
+        { title: "Device",    label: "DEVICE",    rows: buildDeviceRows()  },
+        { title: "OS",        label: "OS",        rows: buildOsRows()      },
       ];
     }
 
     // ── Coloring ─────────────────────────────────────────────────────────────
-    const PCT_HIGHER_BETTER = new Set([6]);  // ACC %
-    const ADJ_IDX = 9;   // PROFIT (can be negative)
-    const REV_IDX = 7;   // REVENUE
+    const PCT_HIGHER_BETTER = new Set([8]);  // % (acc%) — index 8
+    const ADJ_IDX = 29;  // ADJUSTMENT, $
+    const REV_IDX = 22;  // TOTAL REVENUE, $
 
     function bucket(num, thresholds) {
       for (let i = 0; i < thresholds.length; i++) {
@@ -971,7 +911,7 @@
         return `<tr>${cells}</tr>`;
       }).join("");
 
-      const wideFirst  = t.label === "LANDING" || t.label === "AD" ? "wide-first" : "";
+      const wideFirst   = t.label === "LANDING" || t.label === "TEASER ID" ? "wide-first" : "";
       const needsExpand = t.rows.length > 5;
       const expandableCls = needsExpand ? "expandable" : "expandable no-expand";
       const overlayHtml = needsExpand
