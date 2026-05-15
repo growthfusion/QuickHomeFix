@@ -1879,7 +1879,7 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
       SELECT
         lp_campaign_id,
         any(landing_page_url) AS sample_url
-      FROM leads
+      FROM ${CLICKHOUSE_TABLE}
       WHERE created_at >= now() - INTERVAL 90 DAY
         AND lp_campaign_id IS NOT NULL
         AND lp_campaign_id != ''
@@ -1907,7 +1907,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
-        FROM leads
+        FROM ${CLICKHOUSE_TABLE}
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND state IS NOT NULL
           AND state != ''
@@ -1926,7 +1926,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
-        FROM leads
+        FROM ${CLICKHOUSE_TABLE}
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND user_agent IS NOT NULL
           AND user_agent != ''
@@ -1949,7 +1949,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
-        FROM leads
+        FROM ${CLICKHOUSE_TABLE}
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND user_agent IS NOT NULL
           AND user_agent != ''
@@ -1965,7 +1965,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
-        FROM leads
+        FROM ${CLICKHOUSE_TABLE}
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND campaign_name IS NOT NULL
           AND campaign_name != ''
@@ -1982,7 +1982,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
-        FROM leads
+        FROM ${CLICKHOUSE_TABLE}
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND ad_name IS NOT NULL
           AND ad_name != ''
@@ -1999,7 +1999,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
           count()                AS leads,
           sum(partner_delivered) AS sold,
           sum(partner_payout)    AS revenue
-        FROM leads
+        FROM ${CLICKHOUSE_TABLE}
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND landing_page_url IS NOT NULL
           AND landing_page_url != ''
