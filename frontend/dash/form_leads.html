@@ -692,72 +692,113 @@
     }
 
     // LANDING — RT_LANDER only
+    // LANDING — LP campaigns anchor (each LP campaign = one landing page)
+    // Visits estimated proportionally from RT daily total
     function buildLandingRows() {
-      const rtMap = aggRt(RT_LANDER, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
-      const out = [];
-      for (const [lander, rt] of rtMap.entries()) {
-        out.push(lpRow(lander, rt.views, rt.clicks, 0, 0, 0, rt.cost));
-      }
-      out.sort((a, b) => b[1] - a[1]);
-      return out;
-    }
-
-    // SOURCE — RT_DAILY grouped by channel (from traffic_sources map)
-    function buildSourceRows() {
-      const rtMap = aggRt(RT_DAILY, r => r.channel || null);
-      const out = [];
-      for (const [channel, rt] of rtMap.entries()) {
-        out.push(lpRow(channel, rt.views, rt.clicks, 0, 0, 0, rt.cost));
-      }
-      out.sort((a, b) => b[1] - a[1]);
-      return out;
-    }
-
-    // WIDGET ID — RT_CAMPAIGN group_key as widget ID; LP joined by campaign_name
-    function buildWidgetRows() {
-      const lpMap = new Map();
+      const m = new Map();
       for (const r of LP_ROWS) {
         const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
         if (!campaign_name) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
-        const v = lpMap.get(campaign_name);
+        if (!m.has(campaign_name)) m.set(campaign_name, { l: 0, s: 0, rv: 0 });
+        const v = m.get(campaign_name);
         v.l  += Number(leads_total    || 0);
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-      const rtMap = aggRt(RT_CAMPAIGN, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
+      const totalRtViews = totalRtViewsInRange();
       const out = [];
-      for (const [widgetId, rt] of rtMap.entries()) {
-        const lp = lpMap.get(widgetId) || { l: 0, s: 0, rv: 0 };
-        out.push(lpRow(widgetId, rt.views, rt.clicks, lp.l, lp.s, lp.rv, rt.cost));
+      for (const [name, v] of m.entries()) {
+        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
+        out.push(lpRow(name, visits, 0, v.l, v.s, v.rv, 0));
       }
-      out.sort((a, b) => b[1] - a[1]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // TEASER ID — RT_AD group_key as teaser ID; LD_AD joined by ad_name
+    // SOURCE — LP campaigns grouped by inferred service type
+    // Visits estimated proportionally from RT daily total
+    function buildSourceRows() {
+      function inferService(name) {
+        const n = (name || '').toLowerCase();
+        if (n.includes('bath') || n.includes('shower') || n.includes('tub')) return 'bath';
+        if (n.includes('roof')) return 'roof';
+        if (n.includes('window')) return 'windows';
+        if (n.includes('gutter')) return 'gutters';
+        if (n.includes('solar')) return 'solar';
+        return 'other';
+      }
+      const m = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        const key = inferService(campaign_name);
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!m.has(key)) m.set(key, { l: 0, s: 0, rv: 0 });
+        const v = m.get(key);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
+      const totalRtViews = totalRtViewsInRange();
+      const out = [];
+      for (const [src, v] of m.entries()) {
+        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
+        out.push(lpRow(src, visits, 0, v.l, v.s, v.rv, 0));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // WIDGET ID — LP campaigns by campaign_id (LP campaign ID = widget ID)
+    // Visits estimated proportionally from RT daily total
+    function buildWidgetRows() {
+      const m = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_id, campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        const key = String(campaign_id || campaign_name || '');
+        if (!key) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!m.has(key)) m.set(key, { l: 0, s: 0, rv: 0 });
+        const v = m.get(key);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
+      const totalRtViews = totalRtViewsInRange();
+      const out = [];
+      for (const [widgetId, v] of m.entries()) {
+        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
+        out.push(lpRow(widgetId, visits, 0, v.l, v.s, v.rv, 0));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // TEASER ID — leads table ad_name anchor (Meta ad name = teaser ID)
     function buildTeaserRows() {
-      const ldMap = new Map();
+      const m = new Map();
       for (const r of LD_AD) {
         const { ad_name, date, leads, sold, revenue } = r;
         if (!ad_name) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!ldMap.has(ad_name)) ldMap.set(ad_name, { l: 0, s: 0, rv: 0 });
-        const v = ldMap.get(ad_name);
+        if (!m.has(ad_name)) m.set(ad_name, { l: 0, s: 0, rv: 0 });
+        const v = m.get(ad_name);
         v.l  += Number(leads   || 0);
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const rtMap = aggRt(RT_AD, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
       const out = [];
-      for (const [teaserId, rt] of rtMap.entries()) {
-        const lp = ldMap.get(teaserId) || { l: 0, s: 0, rv: 0 };
-        out.push(lpRow(teaserId, rt.views, rt.clicks, lp.l, lp.s, lp.rv, rt.cost));
+      for (const [teaserId, v] of m.entries()) {
+        out.push(lpRow(teaserId, 0, 0, v.l, v.s, v.rv, 0));
       }
-      out.sort((a, b) => b[1] - a[1]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 

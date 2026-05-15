@@ -1498,10 +1498,11 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ENGINE = MergeTree
         ORDER BY (created_at, id)
       `,
-      // 5-7. Add new ad attribution columns to leads table (safe if already exist)
-      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name       Nullable(String)`,
-      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS adset_name    Nullable(String)`,
-      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS campaign_name Nullable(String)`,
+      // 5-8. Add columns that may be absent in tables created before schema updates
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS normalized_service Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name            Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS adset_name         Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS campaign_name      Nullable(String)`,
     ];
 
     // Execute all migrations sequentially
@@ -1903,14 +1904,6 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
       runClickhouseSelect(`
         SELECT
           state,
-          multiIf(
-            normalized_service LIKE '%BATH%' OR
-            normalized_service LIKE '%TUB%' OR
-            normalized_service LIKE '%SHOWER%', 'bath',
-            normalized_service LIKE '%ROOF%',   'roof',
-            normalized_service LIKE '%WINDOW%', 'windo',
-            'other'
-          ) AS form_type,
           toDate(created_at) AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
@@ -1919,9 +1912,9 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND state IS NOT NULL
           AND state != ''
-        GROUP BY state, form_type, date
+        GROUP BY state, date
         ORDER BY date DESC, leads DESC
-      `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
+      `).catch(e => { console.error('[leads-breakdown state]', e.message); return []; }),
 
       runClickhouseSelect(`
         SELECT
@@ -1930,14 +1923,6 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
             user_agent LIKE '%Android%', 'mobile',
             'desktop'
           ) AS device,
-          multiIf(
-            normalized_service LIKE '%BATH%' OR
-            normalized_service LIKE '%TUB%' OR
-            normalized_service LIKE '%SHOWER%', 'bath',
-            normalized_service LIKE '%ROOF%',   'roof',
-            normalized_service LIKE '%WINDOW%', 'windo',
-            'other'
-          ) AS form_type,
           toDate(created_at) AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
@@ -1946,9 +1931,9 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND user_agent IS NOT NULL
           AND user_agent != ''
-        GROUP BY device, form_type, date
+        GROUP BY device, date
         ORDER BY date DESC, leads DESC
-      `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
+      `).catch(e => { console.error('[leads-breakdown device]', e.message); return []; }),
 
       runClickhouseSelect(`
         SELECT
@@ -1961,14 +1946,6 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
             user_agent LIKE '%Macintosh%', 'macos',
             'other'
           ) AS os,
-          multiIf(
-            normalized_service LIKE '%BATH%' OR
-            normalized_service LIKE '%TUB%' OR
-            normalized_service LIKE '%SHOWER%', 'bath',
-            normalized_service LIKE '%ROOF%',   'roof',
-            normalized_service LIKE '%WINDOW%', 'windo',
-            'other'
-          ) AS form_type,
           toDate(created_at) AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
@@ -1977,9 +1954,9 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND user_agent IS NOT NULL
           AND user_agent != ''
-        GROUP BY os, form_type, date
+        GROUP BY os, date
         ORDER BY date DESC, leads DESC
-      `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
+      `).catch(e => { console.error('[leads-breakdown os]', e.message); return []; }),
 
       runClickhouseSelect(`
         SELECT
