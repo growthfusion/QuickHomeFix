@@ -407,166 +407,158 @@
   <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
 
   <script>
+    // ── Metric column headers (13 columns after the label) ──────────────────
     const METRIC_COLS = [
-      "VISITS","CTR, %","CLICKS","CR, %","EMAILS","LEADS","SOLD","%",
-      "APPTS","%","UPSELLS","SOLD","%","UPSELL_RATE, %",
-      "PPC","SOLD","%","PPC_RATE, %",
-      "THUMBTACK","SOLD","%",
-      "TOTAL REVENUE, $","LEADS, $","COST, $","UPSELLS, $","THUMBTACK, $","PPC, $","REPOSTS, $",
-      "ADJUSTMENT, $","AVG PER LEAD, $","AVG PER SOLD, $","EPC, $","EPV, $"
+      "VISITS", "LP CLICKS", "LP CTR %",
+      "LEADS", "SOLD", "ACC %",
+      "REVENUE", "COST", "PROFIT",
+      "AVG/LEAD", "AVG/SOLD", "EPV",
+      "ROI %"
     ];
 
-    // Meta placement rows: [date, form, publisher_platform, clicks, ctr, spend]
-    let AD_SPEND = [];
-    // Meta ad-level rows: [campaign_name, adset_name, ad_name, placement, campaign_id, form, clicks, 0]
-    let META_ADS = [];
-    // Meta device breakdown: [date, form, device, os, clicks, spend]
-    let META_DEVICE = [];
-    // Meta region breakdown: [date, form, region, clicks, spend]
-    let META_REGION = [];
+    // Row indices: 0=label, 1=visits, 2=lpClicks, 3=lpCtr%, 4=leads, 5=sold,
+    //             6=acc%, 7=revenue, 8=cost, 9=profit, 10=avgLead, 11=avgSold,
+    //             12=epv, 13=roi%
 
-    // RedTrack daily: [[date, lp_views], ...]
-    let RT_DAILY = [];
-    // RedTrack OS daily: [[date, os_name, lp_views], ...]
-    let RT_BY_OS = [];
-    // RedTrack device daily: [[date, device, lp_views], ...]
-    let RT_BY_DEVICE = [];
-    // RedTrack country daily: [[date, country, lp_views], ...]
-    let RT_BY_COUNTRY = [];
-    // RedTrack lander/offer daily: [[date, lander_name, lp_views], ...]
-    // Each row = one RT lander (one per traffic channel) for one day.
-    // Windows lander appears here too — Visits>0 / Leads=0 reveals the
-    // inactive-but-still-tracking issue directly in the Landing table.
-    let RT_OFFERS = [];
+    // ── In-memory data arrays ────────────────────────────────────────────────
 
-    // LP raw rows kept for fallback and for cross-referencing leads/revenue per form
-    let LP_CAMPAIGNS_RAW = [];
-    let LP_FORM_MAP = {}; // keyed by lp_campaign_id → form_type (Fix A)
-    let CAMPAIGN_MAP = {}; // keyed by meta_campaign_id → campaign_mapping row (Fix B)
-    let LD_STATE  = []; // from /api/stats/leads-breakdown (Fix C)
-    let LD_DEVICE = [];
-    let LD_OS     = [];
-    let LD_DAILY  = [];
+    // RedTrack — one object per row, keyed by breakdown_type
+    let RT_DAILY    = [];  // breakdown_type='daily'
+    let RT_CAMPAIGN = [];  // breakdown_type='campaign'
+    let RT_ADSET    = [];  // breakdown_type='adset'
+    let RT_AD       = [];  // breakdown_type='ad'
+    let RT_OS       = [];  // breakdown_type='os'
+    let RT_DEVICE   = [];  // breakdown_type='device'
+    let RT_REGION   = [];  // breakdown_type='region'
+    let RT_LANDER   = [];  // breakdown_type='lander'
 
-    function inferForm(name) {
-      const n = (name || '').toLowerCase();
-      if (n.includes('bath') || n.includes('shower') || n.includes('tub')) return 'bath';
-      if (n.includes('roof')) return 'roof';
-      if (n.includes('windo')) return 'windo';
+    // LeadProsper raw stats rows (campaign-level, daily)
+    let LP_ROWS = [];
+
+    // Leads-breakdown from QuickHomeFix_leads table
+    let LD_STATE    = [];
+    let LD_DEVICE   = [];
+    let LD_OS       = [];
+    let LD_CAMPAIGN = [];
+    let LD_AD       = [];
+
+    // Meta hierarchy keyed by ad_name → { adset_name, campaign_name }
+    let META_HIERARCHY = {};
+
+    // LP form map keyed by lp_campaign_id → form_type
+    let LP_FORM_MAP = {};
+
+    // ── Normalisation helpers ────────────────────────────────────────────────
+
+    function normalizeDevice(d) {
+      const s = (d || '').toLowerCase();
+      if (s.includes('mobile') || s.includes('android') || s.includes('smartphone')) return 'mobile';
+      if (s.includes('tablet')) return 'tablet';
+      return 'desktop';
+    }
+
+    function normalizeOs(o) {
+      const s = (o || '').toLowerCase();
+      if (s.includes('ios') || s.includes('iphone') || s.includes('ipad')) return 'ios';
+      if (s.includes('android')) return 'android';
+      if (s.includes('windows')) return 'windows';
+      if (s.includes('mac')) return 'macos';
       return 'other';
     }
 
+    // ── Row builder ──────────────────────────────────────────────────────────
+    // Returns a 14-element array: [label, ...13 metric values]
+    function lpRow(label, views, clicks, ctr, leads, sold, accPct, rev, cost, roi) {
+      const profit  = rev - cost;
+      const avgLead = leads ? rev / leads : 0;
+      const avgSold = sold  ? rev / sold  : 0;
+      const epv     = views ? rev / views : 0;
+      return [
+        label,
+        views,
+        clicks,
+        ctr  > 0 ? ctr.toFixed(2)    + '%' : '0%',
+        leads,
+        sold,
+        leads > 0 ? accPct.toFixed(2) + '%' : '0%',
+        +rev.toFixed(2),
+        +cost.toFixed(2),
+        +profit.toFixed(2),
+        +avgLead.toFixed(2),
+        +avgSold.toFixed(2),
+        +epv.toFixed(4),
+        roi  > 0 ? roi.toFixed(2)    + '%' : '0%',
+      ];
+    }
 
+    // ── RT aggregation helper ────────────────────────────────────────────────
+    // Aggregates an RT array by a key-extraction function within the current date range.
+    // Returns Map: key → { views, clicks, cost, rtRev, count }
+    function aggRt(arr, keyFn) {
+      const m = new Map();
+      for (const r of arr) {
+        const key = keyFn(r);
+        if (key == null || key === '') continue;
+        const d = r.date || '';
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!m.has(key)) m.set(key, { views: 0, clicks: 0, cost: 0, rtRev: 0, count: 0 });
+        const v = m.get(key);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+        v.rtRev  += Number(r.revenue   || 0);
+        v.count++;
+      }
+      return m;
+    }
 
+    // Compute ROI from aggregated RT revenue and cost
+    function computeRoi(rtRev, cost) {
+      return cost > 0 ? ((rtRev - cost) / cost) * 100 : 0;
+    }
 
-    
+    // Total RT lp_views in current date range (from RT_DAILY)
+    function totalRtViewsInRange() {
+      return RT_DAILY
+        .filter(r => (!FILTERS.from || r.date >= FILTERS.from) && (!FILTERS.to || r.date <= FILTERS.to))
+        .reduce((s, r) => s + Number(r.lp_views || 0), 0);
+    }
 
+    // ── Data loading ─────────────────────────────────────────────────────────
     async function loadStats() {
       try {
-        const [metaRes, lpRes, rtRes, lpFormMapRes, campaignMapRes, ldRes] = await Promise.all([
-          fetch('/api/stats/meta').then(r => r.json()),
-          fetch('/api/stats/leadprosper').then(r => r.json()),
-          fetch('/api/stats/redtrack').then(r => r.json()),
+        const [rtRes, lpRes, ldRes, lpFormMapRes, metaRes] = await Promise.all([
+          fetch('/api/stats/redtrack').then(r => r.json()).catch(() => ({})),
+          fetch('/api/stats/leadprosper').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+          fetch('/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({})),
           fetch('/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
-          fetch('/api/campaign-mapping').then(r => r.json()).catch(() => []),
-          fetch('/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({ state: [], device: [], os: [], daily: [] })),
+          fetch('/api/stats/meta').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
         ]);
 
-        console.log('[loadStats] meta rows:', metaRes.ok, metaRes.rows?.length, 'error:', metaRes.message);
-        console.log('[loadStats] lp rows:', lpRes.ok, lpRes.rows?.length, 'error:', lpRes.message);
-        console.log('[loadStats] rt rows:', rtRes.ok, rtRes.rows?.length, 'error:', rtRes.message);
-        if (rtRes.ok && rtRes.rows) {
-          const byType = {};
-          for (const r of rtRes.rows) byType[r.breakdown_type || 'undefined'] = (byType[r.breakdown_type || 'undefined'] || 0) + 1;
-          console.log('[loadStats] rt breakdown_type counts:', byType);
-          if (rtRes.rows[0]) console.log('[loadStats] rt sample row keys:', Object.keys(rtRes.rows[0]));
-        }
-        if (metaRes.ok && metaRes.rows) {
-          const metaByType = { publisher: 0, device: 0, region: 0, other: 0 };
-          for (const r of metaRes.rows) {
-            if (r.publisher_platform) metaByType.publisher++;
-            if (r.device) metaByType.device++;
-            if (r.region) metaByType.region++;
-            if (!r.publisher_platform && !r.device && !r.region) metaByType.other++;
-          }
-          console.log('[loadStats] meta row type counts:', metaByType);
-          if (metaRes.rows[0]) console.log('[loadStats] meta sample row keys:', Object.keys(metaRes.rows[0]));
+        // Populate RT arrays from structured response
+        RT_DAILY    = rtRes.daily    || [];
+        RT_CAMPAIGN = rtRes.campaign || [];
+        RT_ADSET    = rtRes.adset    || [];
+        RT_AD       = rtRes.ad       || [];
+        RT_OS       = rtRes.os       || [];
+        RT_DEVICE   = rtRes.device   || [];
+        RT_REGION   = rtRes.region   || [];
+        RT_LANDER   = rtRes.lander   || [];
+
+        // LP raw rows
+        if (lpRes.ok && lpRes.rows) {
+          LP_ROWS = lpRes.rows;
         }
 
-        if (metaRes.ok && metaRes.rows) {
-          // Placement rows have publisher_platform and placement set
-          AD_SPEND = metaRes.rows
-            .filter(r => r.publisher_platform)
-            .map(r => [
-              r.date,
-              inferForm(r.campaign_name),
-              r.publisher_platform,
-              Number(r.clicks),
-              Number(r.ctr),
-              Number(r.spend),
-            ]);
+        // Leads-breakdown arrays
+        LD_STATE    = ldRes.state    || [];
+        LD_DEVICE   = ldRes.device   || [];
+        LD_OS       = ldRes.os       || [];
+        LD_CAMPAIGN = ldRes.campaign || [];
+        LD_AD       = ldRes.ad       || [];
 
-          // Ad-level rows have placement + ad_id (from the placement breakdown call)
-          META_ADS = metaRes.rows
-            .filter(r => r.placement && r.ad_id)
-            .map(r => [
-              r.campaign_name,
-              r.adset_name,
-              r.ad_name,
-              r.placement,
-              r.campaign_id,
-              inferForm(r.campaign_name),
-              Number(r.clicks),
-              0,
-            ]);
-
-          // Device rows have device set (device_platform / impression_device breakdown)
-          META_DEVICE = metaRes.rows
-            .filter(r => r.device)
-            .map(r => [
-              r.date,
-              inferForm(r.campaign_name),
-              r.device || '',
-              r.os || '',
-              Number(r.clicks),
-              Number(r.spend),
-            ]);
-
-          // Region rows have region set
-          META_REGION = metaRes.rows
-            .filter(r => r.region)
-            .map(r => [
-              r.date,
-              inferForm(r.campaign_name),
-              r.region || '',
-              Number(r.clicks),
-              Number(r.spend),
-            ]);
-        }
-
-        if (rtRes.ok && rtRes.rows) {
-          const daily = rtRes.rows.filter(r => !r.breakdown_type || r.breakdown_type === 'daily');
-          RT_DAILY = daily.map(r => [r.date, Number(r.lp_views || 0)]);
-
-          // Each breakdown type stored with real dates so date-range filters apply
-          RT_BY_OS = rtRes.rows
-            .filter(r => r.breakdown_type === 'os' && r.group_key)
-            .map(r => [r.date, r.group_key, Number(r.lp_views || 0)]);
-
-          RT_BY_DEVICE = rtRes.rows
-            .filter(r => r.breakdown_type === 'device' && r.group_key)
-            .map(r => [r.date, r.group_key, Number(r.lp_views || 0)]);
-
-          RT_BY_COUNTRY = rtRes.rows
-            .filter(r => r.breakdown_type === 'country' && r.group_key)
-            .map(r => [r.date, r.group_key, Number(r.lp_views || 0)]);
-
-          // Lander/offer rows — one row per (date × lander)
-          RT_OFFERS = rtRes.rows
-            .filter(r => r.breakdown_type === 'offer' && r.group_key)
-            .map(r => [r.date, r.group_key, Number(r.lp_views || 0)]);
-        }
-
+        // LP_FORM_MAP keyed by lp_campaign_id → form_type
         if (Array.isArray(lpFormMapRes)) {
           LP_FORM_MAP = {};
           for (const entry of lpFormMapRes) {
@@ -574,288 +566,224 @@
           }
         }
 
-        if (Array.isArray(campaignMapRes)) {
-          CAMPAIGN_MAP = {};
-          for (const row of campaignMapRes) {
-            if (row.meta_campaign_id) CAMPAIGN_MAP[row.meta_campaign_id] = row;
+        // META_HIERARCHY keyed by ad_name → { adset_name, campaign_name }
+        if (metaRes.ok && metaRes.rows) {
+          META_HIERARCHY = {};
+          for (const row of metaRes.rows) {
+            if (row.ad_name) {
+              META_HIERARCHY[row.ad_name] = {
+                adset_name:    row.adset_name    || '',
+                campaign_name: row.campaign_name || '',
+              };
+            }
           }
         }
 
-        if (ldRes) {
-          LD_STATE  = ldRes.state  || [];
-          LD_DEVICE = ldRes.device || [];
-          LD_OS     = ldRes.os     || [];
-          LD_DAILY  = ldRes.daily  || [];
-        }
-
-        if (lpRes.ok && lpRes.rows) {
-          LP_CAMPAIGNS_RAW = lpRes.rows; // keep raw for Landing table
-          LP_ROWS = lpRes.rows.map(r => {
-            const lt = Number(r.leads_total || 0);
-            const sold = Number(r.leads_accepted || 0);
-            const failed = Number(r.leads_failed || 0);
-            const rev = Number(r.total_sell || 0);
-            return [
-              r.date,
-              LP_FORM_MAP[r.campaign_id] || inferForm(r.campaign_name),
-              lt,
-              sold,
-              lt > 0 ? (sold / lt) * 100 : 0,
-              failed,
-              lt > 0 ? (failed / lt) * 100 : 0,
-              Number(r.leads_returned || 0),
-              rev,
-              0,
-              r.campaign_id || '',  // index 10: LP campaign ID for aggMetaCampaign join
-            ];
-          });
-        }
+        console.log('[loadStats] RT daily:', RT_DAILY.length, '| campaign:', RT_CAMPAIGN.length,
+                    '| adset:', RT_ADSET.length, '| ad:', RT_AD.length);
+        console.log('[loadStats] LP rows:', LP_ROWS.length);
+        console.log('[loadStats] LD_AD:', LD_AD.length, '| META_HIERARCHY ads:', Object.keys(META_HIERARCHY).length);
 
       } catch (err) {
-        console.warn('[loadStats] fetch failed, rendering with empty API data:', err.message);
+        console.warn('[loadStats] fetch failed:', err.message);
       }
 
-      // Show data status bar so it's immediately clear what loaded
       const statusEl = document.getElementById('data-status');
       if (statusEl) {
         statusEl.textContent =
-          `Loaded — Meta: ${AD_SPEND.length} pub | ${META_DEVICE.length} device | ${META_REGION.length} region  ·  ` +
-          `RT: ${RT_DAILY.length} daily rows  ·  LP: ${LP_ROWS.length} rows  ·  ` +
-          `Date range: ${FILTERS.from} → ${FILTERS.to}`;
+          `RT: ${RT_DAILY.length} daily | ${RT_AD.length} ad | ${RT_CAMPAIGN.length} campaign  ·  ` +
+          `LP: ${LP_ROWS.length} rows  ·  ` +
+          `LD_AD: ${LD_AD.length}  ·  ` +
+          `Meta hierarchy: ${Object.keys(META_HIERARCHY).length} ads  ·  ` +
+          `Range: ${FILTERS.from} → ${FILTERS.to}`;
         statusEl.classList.remove('hidden');
       }
 
       rerender();
     }
 
-    let LEADS = [];
+    // ── Table builders ───────────────────────────────────────────────────────
 
-    let LP_ROWS = [];
-
-    /* ── Meta Ads breakdown (campaign / adset / ad / placement / cid / form / clicks / purchases)
-       Extracted from Meta Ads report CSV (Apr 2025 – May 2026). Used to populate the
-       Widget ID (campaign), Teaser ID (adset), Campaign ID, Title (ad), and Placement tables. */
-
-
-    // Landing table: one row per RT lander name (= one row per traffic channel).
-    // Uses RT_OFFERS (group[]=date,offer from RT API) as the primary source —
-    // each RT lander maps to one traffic channel. Falls back to LP campaign names
-    // if RT hasn't returned offer-level data yet.
-    // Windows lander appears naturally (Visits > 0, Leads = 0), making the
-    // inactive-but-still-tracking issue visible to the user.
-    function aggLandings() {
-      // ── Primary path: RT landers ────────────────────────────────────────────
-      if (RT_OFFERS.length > 0) {
-        // Aggregate RT visits per lander
-        const visits = new Map(); // lander → total lp_views
-        for (const [d, lander, lv] of RT_OFFERS) {
-          if (!lander) continue;
-          if (FILTERS.from && d < FILTERS.from) continue;
-          if (FILTERS.to   && d > FILTERS.to)   continue;
-          visits.set(lander, (visits.get(lander) || 0) + lv);
-        }
-
-        // Aggregate LP leads per form type (to cross-reference by lander form)
-        const lpByForm = new Map(); // form → { l, s, rv }
-        for (const r of LP_CAMPAIGNS_RAW) {
-          const d    = r.date || '';
-          const form = inferForm(r.campaign_name || '');
-          if (FILTERS.form && form !== FILTERS.form) continue;
-          if (FILTERS.from && d < FILTERS.from) continue;
-          if (FILTERS.to   && d > FILTERS.to)   continue;
-          if (!lpByForm.has(form)) lpByForm.set(form, { l:0, s:0, rv:0 });
-          const v = lpByForm.get(form);
-          v.l  += Number(r.leads_total    || 0);
-          v.s  += Number(r.leads_accepted || 0);
-          v.rv += Number(r.total_sell     || 0);
-        }
-
-        const out = [];
-        for (const [lander, vis] of visits.entries()) {
-          const form = inferForm(lander);
-          if (FILTERS.form && form !== FILTERS.form) continue;
-          const lp     = lpByForm.get(form) || { l:0, s:0, rv:0 };
-          const accPct = lp.l ? (lp.s / lp.l) * 100 : 0;
-          const ad     = sumAd(a =>
-            a[1] === form &&
-            (!FILTERS.from || a[0] >= FILTERS.from) &&
-            (!FILTERS.to   || a[0] <= FILTERS.to)
-          );
-          out.push(lpRow(lander, lp.l, lp.s, accPct, lp.rv, ad, vis));
-        }
-        out.sort((a,b) => b[1] - a[1] || b[6] - a[6]); // visits desc, then leads
-        return out;
+    // AD table — anchor: LD_AD. Join RT_AD and META_HIERARCHY by ad_name.
+    function buildAdRows() {
+      // Step 1: aggregate LD_AD by ad_name within date range (LP anchor)
+      const ldMap = new Map();
+      for (const r of LD_AD) {
+        const { ad_name, adset_name, campaign_name, date, leads, sold, revenue } = r;
+        if (!ad_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!ldMap.has(ad_name)) ldMap.set(ad_name, { adset: adset_name || '', campaign: campaign_name || '', l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(ad_name);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
       }
 
-      // ── Fallback: LP campaign names ──────────────────────────────────────────
-      const m = new Map();
-      for (const r of LP_CAMPAIGNS_RAW) {
-        const d    = r.date || '';
-        const key  = r.campaign_name || 'Unknown';
-        const form = inferForm(key);
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        if (!m.has(key)) m.set(key, { l:0, s:0, rv:0 });
-        const v = m.get(key);
-        v.l  += Number(r.leads_total    || 0);
-        v.s  += Number(r.leads_accepted || 0);
-        v.rv += Number(r.total_sell     || 0);
-      }
+      // Step 2: aggregate RT_AD by group_key (= ad_name)
+      const rtMap = aggRt(RT_AD, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+
+      // Step 3: build output rows — start from LP anchor
       const out = [];
-      for (const [k, v] of m.entries()) {
-        const form   = inferForm(k);
-        const accPct = v.l ? (v.s / v.l) * 100 : 0;
-        const ad     = sumAd(a =>
-          a[1] === form &&
-          (!FILTERS.from || a[0] >= FILTERS.from) &&
-          (!FILTERS.to   || a[0] <= FILTERS.to)
-        );
-        out.push(lpRow(k, v.l, v.s, accPct, v.rv, ad, 0));
+      for (const [adName, lp] of ldMap.entries()) {
+        // Join RT
+        if (!rtMap.has(adName)) {
+          console.warn('[dashboard] ad not in RT:', adName);
+        }
+        const rt = rtMap.get(adName) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
+
+        // Join Meta hierarchy
+        const hier = META_HIERARCHY[adName];
+        if (!hier) console.warn('[dashboard] ad not in Meta:', adName);
+        const campaign = hier?.campaign_name || lp.campaign || '';
+        const adset    = hier?.adset_name    || lp.adset    || '';
+
+        const label  = campaign ? `${campaign} › ${adset || '?'} › ${adName}` : adName;
+        const ctr    = rt.views  > 0 ? (rt.clicks / rt.views) * 100 : 0;
+        const roi    = computeRoi(rt.rtRev, rt.cost);
+        const acc    = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
+        out.push(lpRow(label, rt.views, rt.clicks, ctr, lp.l, lp.s, acc, lp.rv, rt.cost, roi));
       }
-      out.sort((a,b) => b[6] - a[6]);
+      out.sort((a, b) => b[4] - a[4]); // by leads desc
       return out;
     }
 
-    // Build a 33-metric row, optionally enriched with ad-spend metrics and RT lp_views
-    function lpRow(label, leads, succ, accPct, rev, ad, visits) {
-      ad = ad || { c:0, ctr:0, cost:0 };
-      visits = Number(visits) || 0;
-      const profit = rev - ad.cost;
-      const cr    = ad.c     ? (leads / ad.c) * 100   : 0;
-      const epc   = ad.c     ? rev / ad.c              : 0;
-      const epv   = visits   ? rev / visits            : 0;
-      const avgL  = leads    ? rev / leads             : 0;
-      const avgS  = succ     ? rev / succ              : 0;
-      return [
-        label,
-        visits,                                        // VISITS (lp_views from RedTrack)
-        ad.ctr ? ad.ctr.toFixed(2) + "%" : "0%",       // CTR, %
-        ad.c,                                          // CLICKS
-        ad.c ? cr.toFixed(2) + "%" : "0%",             // CR, %
-        "-",                                           // EMAILS
-        leads, succ, accPct.toFixed(2) + "%",          // LEADS, SOLD, %
-        0, "0%", 0, 0, "0%", "0%",                     // APPTS, UPSELLS group
-        0, 0, "0%", "0%",                              // PPC group
-        0, 0, "0%",                                    // THUMBTACK group
-        +rev.toFixed(2),                               // TOTAL REVENUE
-        +rev.toFixed(2),                               // LEADS, $
-        +ad.cost.toFixed(2),                           // COST, $
-        0, 0, 0, 0,                                     // UPSELLS/THUMBTACK/PPC/REPOSTS $
-        +profit.toFixed(2),                            // ADJUSTMENT, $  (Revenue - Cost)
-        +avgL.toFixed(2),                              // AVG PER LEAD
-        +avgS.toFixed(2),                              // AVG PER SOLD
-        +epc.toFixed(2),                               // EPC, $
-        +epv.toFixed(2),                               // EPV, $ (rev / lp_views)
-      ];
-    }
-
-    // RT daily visits for a given date (total account-wide — no form breakdown available from RT)
-    function rtVisitsForDate(date) {
-      const row = RT_DAILY.find(r => r[0] === date);
-      return row ? row[1] : 0;
-    }
-
-    // Sum ad-spend records matching a predicate
-    function sumAd(predicate) {
-      let c=0, ctrW=0, cost=0;
-      for (const a of AD_SPEND) {
-        if (!predicate(a)) continue;
-        c += a[3]; cost += a[5];
-        ctrW += a[4] * a[3]; // weight CTR by clicks
+    // ADSET table — group LD_AD by adset_name; sum metrics for ads under same adset.
+    function buildAdsetRows() {
+      // Aggregate LD_AD by adset_name
+      const ldMap = new Map();
+      for (const r of LD_AD) {
+        const { adset_name, date, leads, sold, revenue } = r;
+        if (!adset_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!ldMap.has(adset_name)) ldMap.set(adset_name, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(adset_name);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
       }
-      return { c, ctr: c ? ctrW/c : 0, cost };
+
+      // Aggregate RT_ADSET by group_key (= adset_name)
+      const rtMap = aggRt(RT_ADSET, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+
+      const out = [];
+      for (const [adsetName, lp] of ldMap.entries()) {
+        if (!rtMap.has(adsetName)) console.warn('[dashboard] adset not in RT:', adsetName);
+        const rt  = rtMap.get(adsetName) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
+        const ctr = rt.views > 0 ? (rt.clicks / rt.views) * 100 : 0;
+        const roi = computeRoi(rt.rtRev, rt.cost);
+        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
+        out.push(lpRow(adsetName, rt.views, rt.clicks, ctr, lp.l, lp.s, acc, lp.rv, rt.cost, roi));
+      }
+      out.sort((a, b) => b[4] - a[4]);
+      return out;
     }
 
-    // Aggregate per-date totals — CTR% and CR% use that day's actual Meta clicks/impressions
-    function buildDateRows() {
-      const byDate = new Map();
+    // CAMPAIGN table — LP_ROWS as anchor by campaign_name, joined with RT_CAMPAIGN.
+    function buildCampaignRows() {
+      // Aggregate LP by campaign_name
+      const lpMap = new Map();
       for (const r of LP_ROWS) {
-        const [d, form] = r;
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        if (!byDate.has(d)) byDate.set(d, { l:0, s:0, rv:0 });
-        const a = byDate.get(d);
-        a.l += r[2]; a.s += r[3]; a.rv += r[8];
+        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
+        const v = lpMap.get(campaign_name);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
       }
-      const dates = [...byDate.keys()].sort().reverse();
-      return dates.map(d => {
-        const a = byDate.get(d);
-        const acc    = a.l ? (a.s / a.l) * 100 : 0;
-        const ad     = sumAd(row => row[0] === d && (!FILTERS.form || row[1] === FILTERS.form));
-        const visits = rtVisitsForDate(d);
-        return lpRow(d, a.l, a.s, acc, a.rv, ad, visits);
-      });
+
+      // Aggregate RT_CAMPAIGN by group_key (= campaign_name)
+      const rtMap = aggRt(RT_CAMPAIGN, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
+
+      // Union of all campaign names (LP anchor + RT supplement)
+      const allKeys = new Set([...lpMap.keys(), ...rtMap.keys()]);
+      const out = [];
+      for (const cn of allKeys) {
+        const lp = lpMap.get(cn) || { l: 0, s: 0, rv: 0 };
+        const rt = rtMap.get(cn);
+        if (!rt && lpMap.has(cn)) console.warn('[dashboard] campaign not in RT:', cn);
+        const rtD = rt || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
+        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
+        const roi = computeRoi(rtD.rtRev, rtD.cost);
+        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
+        out.push(lpRow(cn, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
+      }
+      out.sort((a, b) => b[4] - a[4]);
+      return out;
     }
 
-    // Aggregate per-form totals — CTR% and CR% use that form's actual Meta clicks/impressions
+    // FORM table — group LP_ROWS by form_type via LP_FORM_MAP; visits proportional from RT_DAILY.
     function buildFormRows() {
       const byForm = new Map();
-      // Also track per-form leads totals to proportionally split RT visits across forms
       for (const r of LP_ROWS) {
-        const [d, form] = r;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        if (!byForm.has(form)) byForm.set(form, { l:0, s:0, rv:0, dates: new Set() });
-        const a = byForm.get(form);
-        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.dates.add(d);
-      }
-
-      // Total leads across all forms (for proportional RT visit allocation)
-      const totalLeads = [...byForm.values()].reduce((s, a) => s + a.l, 0);
-
-      const out = [];
-      for (const [k, a] of byForm.entries()) {
-        const acc = a.l ? (a.s / a.l) * 100 : 0;
-        const ad  = sumAd(row => row[1] === k &&
-          (!FILTERS.from || row[0] >= FILTERS.from) &&
-          (!FILTERS.to   || row[0] <= FILTERS.to));
-        // Allocate RT visits proportionally by this form's lead share
-        const totalRtVisits = RT_DAILY
-          .filter(r => (!FILTERS.from || r[0] >= FILTERS.from) && (!FILTERS.to || r[0] <= FILTERS.to))
-          .reduce((s, r) => s + r[1], 0);
-        const visits = totalLeads > 0 ? Math.round(totalRtVisits * (a.l / totalLeads)) : 0;
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad, visits));
-      }
-      out.sort((a,b) => b[6] - a[6]); // sort by LEADS desc
-      return out;
-    }
-
-    // Aggregate Source rows from Meta publisher_platform
-    function buildSourceRows() {
-      const m = new Map();
-      for (const a of AD_SPEND) {
-        const [d, form, src, clicks, ctr, spend] = a;
+        const { campaign_id, date, leads_total, leads_accepted, total_sell } = r;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const form = LP_FORM_MAP[campaign_id] || 'other';
         if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        const key = src || 'unknown';
-        if (!m.has(key)) m.set(key, { c:0, ctrW:0, cost:0 });
-        const v = m.get(key);
-        v.c += clicks; v.ctrW += ctr * clicks; v.cost += spend;
+        if (!byForm.has(form)) byForm.set(form, { l: 0, s: 0, rv: 0 });
+        const v = byForm.get(form);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
       }
+
+      const totalLeads   = [...byForm.values()].reduce((s, v) => s + v.l, 0);
+      const totalRtViews = totalRtViewsInRange();
+
       const out = [];
-      for (const [k, v] of m.entries()) {
-        out.push(lpRow(k, 0, 0, 0, 0, { c: v.c, ctr: v.c ? v.ctrW / v.c : 0, cost: v.cost }));
+      for (const [form, v] of byForm.entries()) {
+        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
+        const acc    = v.l > 0 ? (v.s / v.l) * 100 : 0;
+        const profit = v.rv; // cost unknown at form level
+        out.push(lpRow(form, visits, 0, 0, v.l, v.s, acc, v.rv, 0, 0));
       }
-      out.sort((a,b) => b[3] - a[3]); // sort by clicks desc
+      out.sort((a, b) => b[4] - a[4]);
       return out;
     }
 
-    // Total RT lp_views in the active date range
-    function totalRtVisitsInRange() {
-      return RT_DAILY
-        .filter(r => (!FILTERS.from || r[0] >= FILTERS.from) && (!FILTERS.to || r[0] <= FILTERS.to))
-        .reduce((s, r) => s + r[1], 0);
+    // DATE table — RT_DAILY + LP_ROWS joined by date.
+    function buildDateRows() {
+      // Aggregate LP by date
+      const lpMap = new Map();
+      for (const r of LP_ROWS) {
+        const { date, leads_total, leads_accepted, total_sell } = r;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0, rv: 0 });
+        const v = lpMap.get(date);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+
+      // Aggregate RT_DAILY by date
+      const rtMap = aggRt(RT_DAILY, r => r.date || null);
+
+      const allDates = new Set([...lpMap.keys(), ...rtMap.keys()]);
+      const out = [];
+      for (const d of allDates) {
+        const lp  = lpMap.get(d) || { l: 0, s: 0, rv: 0 };
+        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
+        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
+        const roi = computeRoi(rtD.rtRev, rtD.cost);
+        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
+        out.push(lpRow(d, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
+      }
+      out.sort((a, b) => a[0] > b[0] ? -1 : 1); // date desc
+      return out;
     }
 
+    // STATE table — LD_STATE anchor; visits proportional from RT_DAILY total.
     function buildStateRows() {
       const m = new Map();
       for (const r of LD_STATE) {
-        const { state, form_type, date, leads, sold, revenue } = r;
+        const { state, date, leads, sold, revenue } = r;
         if (!state) continue;
-        if (FILTERS.form && form_type !== FILTERS.form) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
         if (!m.has(state)) m.set(state, { l: 0, s: 0, rv: 0 });
@@ -864,233 +792,134 @@
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const totalLeads  = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalVisits = totalRtVisitsInRange();
+
+      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
+      const totalRtViews = totalRtViewsInRange();
+
       const out = [];
-      for (const [k, v] of m.entries()) {
-        const acc    = v.l ? (v.s / v.l) * 100 : 0;
-        const visits = totalLeads > 0 ? Math.round(totalVisits * (v.l / totalLeads)) : 0;
-        out.push(lpRow(k, v.l, v.s, acc, v.rv, { c: 0, ctr: 0, cost: 0 }, visits));
+      for (const [state, v] of m.entries()) {
+        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
+        const acc    = v.l > 0 ? (v.s / v.l) * 100 : 0;
+        out.push(lpRow(state, visits, 0, 0, v.l, v.s, acc, v.rv, 0, 0));
       }
-      out.sort((a, b) => b[6] - a[6]); // sort by LEADS desc
+      out.sort((a, b) => b[4] - a[4]);
       return out;
     }
 
+    // DEVICE table — RT_DEVICE + LD_DEVICE joined on normalized device name.
     function buildDeviceRows() {
-      const m = new Map();
+      // LD side (already returns mobile/desktop/tablet)
+      const ldMap = new Map();
       for (const r of LD_DEVICE) {
-        const { device, form_type, date, leads, sold, revenue } = r;
+        const { device, date, leads, sold, revenue } = r;
         if (!device) continue;
-        if (FILTERS.form && form_type !== FILTERS.form) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(device)) m.set(device, { l: 0, s: 0, rv: 0 });
-        const v = m.get(device);
+        if (!ldMap.has(device)) ldMap.set(device, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(device);
         v.l  += Number(leads   || 0);
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const totalLeads  = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalVisits = totalRtVisitsInRange();
+
+      // RT side: normalize before aggregating
+      const rtMap = aggRt(RT_DEVICE, r => normalizeDevice(r.group_key));
+
+      const allKeys = new Set([...ldMap.keys(), ...rtMap.keys()]);
       const out = [];
-      for (const [k, v] of m.entries()) {
-        const acc    = v.l ? (v.s / v.l) * 100 : 0;
-        const visits = totalLeads > 0 ? Math.round(totalVisits * (v.l / totalLeads)) : 0;
-        out.push(lpRow(k, v.l, v.s, acc, v.rv, { c: 0, ctr: 0, cost: 0 }, visits));
+      for (const dev of allKeys) {
+        const lp  = ldMap.get(dev) || { l: 0, s: 0, rv: 0 };
+        const rtD = rtMap.get(dev) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
+        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
+        const roi = computeRoi(rtD.rtRev, rtD.cost);
+        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
+        out.push(lpRow(dev, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
       }
-      out.sort((a, b) => b[6] - a[6]);
+      out.sort((a, b) => b[4] - a[4]);
       return out;
     }
 
+    // OS table — RT_OS + LD_OS joined on normalized OS name.
     function buildOsRows() {
-      const m = new Map();
+      // LD side (already returns ios/android/windows/macos/other)
+      const ldMap = new Map();
       for (const r of LD_OS) {
-        const { os, form_type, date, leads, sold, revenue } = r;
-        const key = os || 'other';
-        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        const { os, date, leads, sold, revenue } = r;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(key)) m.set(key, { l: 0, s: 0, rv: 0 });
-        const v = m.get(key);
+        const key = os || 'other';
+        if (!ldMap.has(key)) ldMap.set(key, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(key);
         v.l  += Number(leads   || 0);
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const totalLeads  = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalVisits = totalRtVisitsInRange();
+
+      // RT side: normalize before aggregating
+      const rtMap = aggRt(RT_OS, r => normalizeOs(r.group_key));
+
+      const allKeys = new Set([...ldMap.keys(), ...rtMap.keys()]);
       const out = [];
-      for (const [k, v] of m.entries()) {
-        const acc    = v.l ? (v.s / v.l) * 100 : 0;
-        const visits = totalLeads > 0 ? Math.round(totalVisits * (v.l / totalLeads)) : 0;
-        out.push(lpRow(k, v.l, v.s, acc, v.rv, { c: 0, ctr: 0, cost: 0 }, visits));
+      for (const os of allKeys) {
+        const lp  = ldMap.get(os) || { l: 0, s: 0, rv: 0 };
+        const rtD = rtMap.get(os) || { views: 0, clicks: 0, cost: 0, rtRev: 0 };
+        const ctr = rtD.views > 0 ? (rtD.clicks / rtD.views) * 100 : 0;
+        const roi = computeRoi(rtD.rtRev, rtD.cost);
+        const acc = lp.l > 0 ? (lp.s / lp.l) * 100 : 0;
+        out.push(lpRow(os, rtD.views, rtD.clicks, ctr, lp.l, lp.s, acc, lp.rv, rtD.cost, roi));
       }
-      out.sort((a, b) => b[6] - a[6]);
+      out.sort((a, b) => b[4] - a[4]);
       return out;
     }
 
-    /* ── Filter state and lead-level builders ── */
-    // Default date range: last 30 days so all stored data is visible on load
-    const _today30     = new Date();
-    const _thirtyAgo   = new Date(_today30 - 30 * 86400000);
-    const _isoStr      = d => d.toISOString().slice(0, 10);
-    const FILTERS = {
-      form:"", source:"", buyer:"", state:"", device:"", os:"",
-      from: _isoStr(_thirtyAgo),
-      to:   _isoStr(_today30),
-      hideLow:false
-    };
-
-    function applyFilters() {
-      return LEADS.filter(L => {
-        const [d,form,src,st,os,dev,buyer,rev] = L;
-        if (FILTERS.form  && form  !== FILTERS.form)  return false;
-        if (FILTERS.source&& src   !== FILTERS.source)return false;
-        if (FILTERS.buyer && buyer !== FILTERS.buyer) return false;
-        if (FILTERS.state && st    !== FILTERS.state) return false;
-        if (FILTERS.device&& dev   !== FILTERS.device)return false;
-        if (FILTERS.os    && os    !== FILTERS.os)    return false;
-        if (FILTERS.from  && d < FILTERS.from)        return false;
-        if (FILTERS.to    && d > FILTERS.to)          return false;
-        if (FILTERS.hideLow && rev < 3)               return false;
-        return true;
-      });
-    }
-
-    // Aggregate filtered leads by a key function → table rows.
-    // adKey(label): given a group label, returns predicate on AD_SPEND row.
-    function aggBy(leads, keyFn, adKey) {
-      const m = new Map();
-      for (const L of leads) {
-        const k = keyFn(L);
-        if (k == null || k === "") continue;
-        if (!m.has(k)) m.set(k, { l:0, s:0, rv:0 });
-        const a = m.get(k);
-        a.l += 1;
-        if (L[7] > 0) a.s += 1;
-        a.rv += L[7];
-      }
+    // REGION table — RT_REGION only (no lead-level region data).
+    function buildRegionRows() {
+      const rtMap = aggRt(RT_REGION, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
       const out = [];
-      for (const [k,a] of m.entries()) {
-        const acc = a.l ? (a.s / a.l) * 100 : 0;
-        const ad  = adKey ? sumAd(adKey(k)) : { v:0,c:0,ctr:0,cost:0 };
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
+      for (const [region, rt] of rtMap.entries()) {
+        const ctr = rt.views > 0 ? (rt.clicks / rt.views) * 100 : 0;
+        const roi = computeRoi(rt.rtRev, rt.cost);
+        out.push(lpRow(region, rt.views, rt.clicks, ctr, 0, 0, 0, 0, rt.cost, roi));
       }
-      out.sort((a,b) => b[6] - a[6]);
+      out.sort((a, b) => b[1] - a[1]); // by visits desc
       return out;
     }
 
-    // Match AD_SPEND rows against current filter set (form/source/dates)
-    function adMatchesFilters(a) {
-      const [d,form,src] = a;
-      if (FILTERS.form  && form !== FILTERS.form) return false;
-      if (FILTERS.source&& src  !== FILTERS.source) return false;
-      if (FILTERS.from  && d < FILTERS.from) return false;
-      if (FILTERS.to    && d > FILTERS.to)   return false;
-      return true;
-    }
-
-    // Aggregate META_ADS rows by a key. Returns metric rows in the same 33-col shape.
-    // META_ADS row: [campaign, adset, ad, placement, cid, form, clicks, purchases]
-    function aggMeta(keyIdx) {
-      // Apply current form/source filters where applicable.
-      // META_ADS is Meta-only data; if source filter is set to non-meta, return empty.
-      if (FILTERS.source && FILTERS.source !== "meta") return [];
-      const m = new Map();
-      for (const A of META_ADS) {
-        const [camp, adset, ad, pl, cid, form, clicks, purch] = A;
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        const k = A[keyIdx];
-        if (k == null || k === "") continue;
-        if (!m.has(k)) m.set(k, { c:0, p:0 });
-        const v = m.get(k);
-        v.c += clicks; v.p += purch;
-      }
+    // LANDING table — RT_LANDER; leads matched by lander name if available.
+    function buildLandingRows() {
+      const rtMap = aggRt(RT_LANDER, r => r.group_key && r.group_key !== 'unknown' ? r.group_key : null);
       const out = [];
-      for (const [k, v] of m.entries()) {
-        const leads = v.p, succ = v.p;
-        const accPct = leads ? (succ / leads) * 100 : 0;
-        out.push(lpRow(k, leads, succ, accPct, 0, { c: v.c, ctr: 0, cost: 0 }));
+      for (const [lander, rt] of rtMap.entries()) {
+        const ctr = rt.views > 0 ? (rt.clicks / rt.views) * 100 : 0;
+        const roi = computeRoi(rt.rtRev, rt.cost);
+        out.push(lpRow(lander, rt.views, rt.clicks, ctr, 0, 0, 0, 0, rt.cost, roi));
       }
-      out.sort((a,b) => b[3] - a[3]); // sort by CLICKS desc
+      out.sort((a, b) => b[1] - a[1]);
       return out;
     }
 
-    function aggMetaCampaign() {
-      if (FILTERS.source && FILTERS.source !== "meta") return [];
-      const m = new Map();
-      for (const A of META_ADS) {
-        const [camp, adset, ad, pl, cid, form, clicks, purch] = A;
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (!cid) continue;
-        if (!m.has(cid)) m.set(cid, { c: 0 });
-        m.get(cid).c += clicks;
-      }
-
-      // Collect raw data first to compute total leads for proportional visit allocation
-      const rows = [];
-      for (const [cid, v] of m.entries()) {
-        const mapping = CAMPAIGN_MAP[cid];
-        let leads = 0, sold = 0, rev = 0;
-        if (mapping) {
-          for (const r of LP_ROWS) {
-            const [d, form, lt, s, , , , , revenue, , lpCampaignId] = r;
-            if (FILTERS.from && d < FILTERS.from) continue;
-            if (FILTERS.to   && d > FILTERS.to)   continue;
-            if (FILTERS.form && form !== FILTERS.form) continue;
-            if (form !== mapping.form_type) continue;
-            if (lpCampaignId && mapping.lp_campaign_id && lpCampaignId !== mapping.lp_campaign_id) continue;
-            leads  += lt;
-            sold   += s;
-            rev    += revenue;
-          }
-        }
-        const label = mapping?.label || cid;
-        const acc   = leads ? (sold / leads) * 100 : 0;
-        rows.push({ label, leads, sold, acc, rev, c: v.c });
-      }
-
-      // Compute total leads and RT visits for proportional allocation
-      const totalLeads  = rows.reduce((s, r) => s + r.leads, 0);
-      const totalVisits = totalRtVisitsInRange();
-
-      // Create output rows with proportionally allocated visits
-      const out = [];
-      for (const r of rows) {
-        const visits = totalLeads > 0 ? Math.round(totalVisits * (r.leads / totalLeads)) : 0;
-        out.push(lpRow(r.label, r.leads, r.sold, r.acc, r.rev, { c: r.c, ctr: 0, cost: 0 }, visits));
-      }
-      out.sort((a, b) => b[3] - a[3]);
-      return out;
-    }
-
+    // ── getTables ────────────────────────────────────────────────────────────
     function getTables() {
       return [
-        { title: "Date",        label: "DATE",        rows: buildDateRows() },
-        { title: "Form",        label: "FORM",        rows: buildFormRows() },
-        { title: "Source",      label: "SOURCE",      rows: buildSourceRows() },
-        { title: "Buyer",       label: "BUYER",       rows: [] },
-        { title: "Landing",     label: "LANDING",     rows: aggLandings() },
-        { title: "Widget ID",   label: "WIDGET_ID",   rows: aggMeta(0) },
-        { title: "Teaser ID",   label: "TEASER_ID",   rows: aggMeta(1) },
-        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMetaCampaign() },
-        { title: "Title",       label: "TITLE",       rows: aggMeta(2) },
-        { title: "Placement",   label: "PLACEMENT",   rows: aggMeta(3) },
-        { title: "State",       label: "STATE",       rows: buildStateRows() },
-        { title: "Device",      label: "DEVICE",      rows: buildDeviceRows() },
-        { title: "OS",          label: "OS",          rows: buildOsRows() },
+        { title: "Date",     label: "DATE",     rows: buildDateRows()     },
+        { title: "Form",     label: "FORM",     rows: buildFormRows()     },
+        { title: "Campaign", label: "CAMPAIGN", rows: buildCampaignRows() },
+        { title: "Adset",    label: "ADSET",    rows: buildAdsetRows()    },
+        { title: "Ad",       label: "AD",       rows: buildAdRows()       },
+        { title: "Landing",  label: "LANDING",  rows: buildLandingRows()  },
+        { title: "State",    label: "STATE",    rows: buildStateRows()    },
+        { title: "Device",   label: "DEVICE",   rows: buildDeviceRows()   },
+        { title: "OS",       label: "OS",       rows: buildOsRows()       },
+        { title: "Region",   label: "REGION",   rows: buildRegionRows()   },
       ];
     }
 
-
-    // Columns that should be colored as "higher = better" (green high, red low)
-    const PCT_HIGHER_BETTER = new Set([7]);                 // SOLD %
-    // Columns that should be colored as "lower = worse" but small/zero is bad
-    const PCT_LOWER_WORSE   = new Set([8,10,12,13,16,17,20]); // appt/upsell/ppc/thumbtack %
-    const ADJ_IDX = 28;   // ADJUSTMENT, $
-    const REV_IDX = 21;   // TOTAL REVENUE, $
+    // ── Coloring ─────────────────────────────────────────────────────────────
+    const PCT_HIGHER_BETTER = new Set([6]);  // ACC %
+    const ADJ_IDX = 9;   // PROFIT (can be negative)
+    const REV_IDX = 7;   // REVENUE
 
     function bucket(num, thresholds) {
-      // thresholds: array of 10 ascending values; returns 0..10 bucket
       for (let i = 0; i < thresholds.length; i++) {
         if (num <= thresholds[i]) return i;
       }
@@ -1101,12 +930,7 @@
       const n = parseFloat(v);
       if (isNaN(n)) return "";
       if (PCT_HIGHER_BETTER.has(i)) {
-        // 0..100 mapped to bg_percent_0..10
         return "bg_percent_" + bucket(n, [10,20,30,40,50,60,70,80,90,99]);
-      }
-      if (PCT_LOWER_WORSE.has(i)) {
-        if (n === 0) return "bg_percent_0";
-        return "bg_percent_" + bucket(n, [2,5,10,15,20,30,40,50,70,90]);
       }
       return "";
     }
@@ -1115,12 +939,10 @@
       const n = Number(v);
       if (!isFinite(n) || n === 0) return "bg_percent_5";
       if (n > 0) {
-        // positive: green tones (6..10)
-        const idx = 6 + bucket(n, [50,150,350,700]); // 6..10
+        const idx = 6 + bucket(n, [50,150,350,700]);
         return "bg_percent_" + Math.min(10, idx);
       }
       const a = Math.abs(n);
-      // negative: red tones (4..0) — bigger loss -> redder
       const idx = 4 - bucket(a, [50,150,350,700]);
       return "bg_percent_" + Math.max(0, idx);
     }
@@ -1131,12 +953,13 @@
       return "bg_percent_" + bucket(n, [100,300,600,1000,2000,4000,7000,10000,15000,25000]);
     }
 
-    function renderTable(t, tIdx) {
+    // ── Render ───────────────────────────────────────────────────────────────
+    function renderTable(t) {
       const headers = [t.label, ...METRIC_COLS]
-        .map((h,i) => `<th class="${i===0?'text-left':'text-right'}">${h}</th>`).join("");
+        .map((h, i) => `<th class="${i === 0 ? 'text-left' : 'text-right'}">${h}</th>`).join("");
 
       const rowsHtml = t.rows.map(r => {
-        const cells = r.map((v,i) => {
+        const cells = r.map((v, i) => {
           if (i === 0) return `<td class="label">${v}</td>`;
           let cls = "num";
           const isPct = typeof v === "string" && v.endsWith("%");
@@ -1148,11 +971,12 @@
         return `<tr>${cells}</tr>`;
       }).join("");
 
-      const wideFirst = t.label === "LANDING" ? "wide-first" : "";
+      const wideFirst  = t.label === "LANDING" || t.label === "AD" ? "wide-first" : "";
       const needsExpand = t.rows.length > 5;
       const expandableCls = needsExpand ? "expandable" : "expandable no-expand";
-      const overlayHtml = needsExpand ? `<div class="expand-overlay"></div>
-            <button type="button" class="expand-btn">EXPAND</button>` : "";
+      const overlayHtml = needsExpand
+        ? `<div class="expand-overlay"></div><button type="button" class="expand-btn">EXPAND</button>`
+        : "";
 
       return `
         <div class="pt-4">
@@ -1170,14 +994,12 @@
     function rerender() {
       const tables = getTables();
       document.getElementById("tables-container").innerHTML =
-        tables.map((t,i) => renderTable(t,i)).join("");
+        tables.map(t => renderTable(t)).join("");
       document.querySelectorAll(".expandable").forEach(wrap => {
         const open = (e) => {
           if (e) { e.preventDefault(); e.stopPropagation(); }
-          const btn = wrap.querySelector(".expand-btn");
-          const ovl = wrap.querySelector(".expand-overlay");
-          if (btn) btn.remove();
-          if (ovl) ovl.remove();
+          wrap.querySelector(".expand-btn")?.remove();
+          wrap.querySelector(".expand-overlay")?.remove();
           wrap.classList.add("expanded");
         };
         wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
@@ -1185,42 +1007,41 @@
       });
     }
 
-    // Populate State dropdown dynamically from leads
-    (function populateStates() {
-      const states = [...new Set(LEADS.map(L => L[3]))].sort();
-      const sel = document.getElementById("state-filter");
-      states.forEach(s => {
-        const o = document.createElement("option");
-        o.value = s; o.textContent = s;
-        sel.appendChild(o);
-      });
-    })();
+    // ── Filter state ─────────────────────────────────────────────────────────
+    const _today30   = new Date();
+    const _thirtyAgo = new Date(_today30 - 30 * 86400000);
+    const _isoStr    = d => d.toISOString().slice(0, 10);
+    const FILTERS = {
+      form: "", source: "", buyer: "", state: "", device: "", os: "",
+      from: _isoStr(_thirtyAgo),
+      to:   _isoStr(_today30),
+      hideLow: false
+    };
 
-    // Wire all filter dropdowns to rerender
     function bindFilter(id, key) {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener("change", () => { FILTERS[key] = el.value; rerender(); });
     }
-    bindFilter("form-filter",  "form");
-    bindFilter("source-filter","source");
-    bindFilter("buyer-filter", "buyer");
-    bindFilter("state-filter", "state");
-    bindFilter("device-filter","device");
-    bindFilter("os-filter",    "os");
+    bindFilter("form-filter",   "form");
+    bindFilter("source-filter", "source");
+    bindFilter("buyer-filter",  "buyer");
+    bindFilter("state-filter",  "state");
+    bindFilter("device-filter", "device");
+    bindFilter("os-filter",     "os");
 
     document.getElementById("hide-low-rev")?.addEventListener("change", e => {
       FILTERS.hideLow = e.target.checked; rerender();
     });
-    document.getElementById("refresh-btn")?.addEventListener("click", rerender);
+    document.getElementById("refresh-btn")?.addEventListener("click", loadStats);
 
     loadStats();
 
     /* ── Litepicker date range with presets ── */
     const today = new Date();
-    const fmt = d => d.toLocaleDateString("en-GB").replace(/\//g, "-");  // dd-mm-yyyy
+    const fmt   = d => d.toLocaleDateString("en-GB").replace(/\//g, "-");
     const dayMs = 86400000;
-    const start = new Date(today.getTime() - 30 * dayMs); // default: last 30 days
+    const start = new Date(today.getTime() - 30 * dayMs);
     document.getElementById("date-range").value = `${fmt(start)}  →  ${fmt(today)}`;
 
     new Litepicker({
@@ -1237,18 +1058,18 @@
       ranges: {
         position: "left",
         customRanges: {
-          "Today":       [new Date(), new Date()],
-          "Yesterday":   [new Date(Date.now() - dayMs), new Date(Date.now() - dayMs)],
-          "Last 3 days": [new Date(Date.now() - 3*dayMs), new Date()],
-          "Last 7 days": [new Date(Date.now() - 7*dayMs), new Date()],
-          "Last 30 days":[new Date(Date.now() - 30*dayMs), new Date()],
-          "This Month":  [new Date(today.getFullYear(), today.getMonth(), 1), new Date()],
-          "Last Month":  [
+          "Today":        [new Date(), new Date()],
+          "Yesterday":    [new Date(Date.now() - dayMs), new Date(Date.now() - dayMs)],
+          "Last 3 days":  [new Date(Date.now() - 3*dayMs), new Date()],
+          "Last 7 days":  [new Date(Date.now() - 7*dayMs), new Date()],
+          "Last 30 days": [new Date(Date.now() - 30*dayMs), new Date()],
+          "This Month":   [new Date(today.getFullYear(), today.getMonth(), 1), new Date()],
+          "Last Month":   [
             new Date(today.getFullYear(), today.getMonth() - 1, 1),
             new Date(today.getFullYear(), today.getMonth(), 0)
           ],
-          "This Year":   [new Date(today.getFullYear(), 0, 1), new Date()],
-          "Last Year":   [
+          "This Year":    [new Date(today.getFullYear(), 0, 1), new Date()],
+          "Last Year":    [
             new Date(today.getFullYear() - 1, 0, 1),
             new Date(today.getFullYear() - 1, 11, 31)
           ],
@@ -1257,7 +1078,7 @@
       buttonText: { apply: "Apply", cancel: "Cancel" },
       setup: (picker) => {
         picker.on("selected", (s, e) => {
-          const iso = d => d.toISOString().slice(0,10);
+          const iso = d => d.toISOString().slice(0, 10);
           FILTERS.from = iso(s.dateInstance);
           FILTERS.to   = iso(e.dateInstance);
           rerender();
