@@ -1878,8 +1878,7 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
     const rows = await runClickhouseSelect(`
       SELECT
         lp_campaign_id,
-        any(normalized_service) AS sample_service,
-        any(landing_page_url)   AS sample_url
+        any(landing_page_url) AS sample_url
       FROM leads
       WHERE created_at >= now() - INTERVAL 90 DAY
         AND lp_campaign_id IS NOT NULL
@@ -1888,7 +1887,7 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
     `);
     const result = rows.map(r => ({
       lp_campaign_id: r.lp_campaign_id,
-      form_type: inferFormTypeFromLead(r.sample_service, r.sample_url),
+      form_type: inferFormTypeFromLead(null, r.sample_url),
     }));
     res.json(result);
   } catch (e) {
@@ -1992,7 +1991,24 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
       `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
     ]);
 
-    res.json({ state: stateRows, device: deviceRows, os: osRows, campaign: campaignRows, ad: adRows });
+    const [landingRows] = await Promise.all([
+      runClickhouseSelect(`
+        SELECT
+          replaceRegexpOne(path(landing_page_url), '^.+/', '') AS landing_path,
+          toDate(created_at) AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM leads
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND landing_page_url IS NOT NULL
+          AND landing_page_url != ''
+        GROUP BY landing_path, date
+        ORDER BY date DESC, leads DESC
+      `).catch(e => { console.error('[leads-breakdown landing]', e.message); return []; }),
+    ]);
+
+    res.json({ state: stateRows, device: deviceRows, os: osRows, campaign: campaignRows, ad: adRows, landing: landingRows });
   } catch (e) {
     console.error('[leads-breakdown]', e.message);
     res.status(500).json({ error: e.message });
