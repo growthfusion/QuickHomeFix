@@ -751,12 +751,11 @@
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-      const allKeys = new Set([...metaMap.keys(), ...lpMap.keys(), ...rtMap.keys()]);
+      // Anchor on Meta campaign names only — LP/RT join where names match
       const out = [];
-      for (const name of allKeys) {
-        const meta = metaMap.get(name) || { impressions: 0, clicks: 0, spend: 0 };
-        const rt   = rtMap.get(name)   || { views: 0, clicks: 0, cost: 0 };
-        const lp   = lpMap.get(name)   || { l: 0, s: 0, rv: 0 };
+      for (const [name, meta] of metaMap.entries()) {
+        const rt = rtMap.get(name) || { views: 0, clicks: 0, cost: 0 };
+        const lp = lpMap.get(name) || { l: 0, s: 0, rv: 0 };
         const visits = rt.views  > 0 ? rt.views  : meta.impressions;
         const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
         const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
@@ -814,12 +813,11 @@
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const allKeys = new Set([...metaMap.keys(), ...ldMap.keys(), ...rtMap.keys()]);
+      // Anchor on Meta ad names only — LD_AD joins where ad_name matches
       const out = [];
-      for (const name of allKeys) {
-        const meta = metaMap.get(name) || { impressions: 0, clicks: 0, spend: 0 };
-        const rt   = rtMap.get(name)   || { views: 0, clicks: 0, cost: 0 };
-        const ld   = ldMap.get(name)   || { l: 0, s: 0, rv: 0 };
+      for (const [name, meta] of metaMap.entries()) {
+        const rt = rtMap.get(name) || { views: 0, clicks: 0, cost: 0 };
+        const ld = ldMap.get(name) || { l: 0, s: 0, rv: 0 };
         const visits = rt.views  > 0 ? rt.views  : meta.impressions;
         const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
         const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
