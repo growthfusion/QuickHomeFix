@@ -31,7 +31,9 @@ function delay(ms) {
 // Returns map: source_id → { channel_name, lander_name }
 async function fetchTrafficSources(apiKey) {
   try {
-    const res = await axios.get(`${RT_BASE}/traffic_sources?api_key=${encodeURIComponent(apiKey)}&limit=200`);
+    const url = `${RT_BASE}/traffic_sources?api_key=${encodeURIComponent(apiKey)}&limit=200`;
+    console.log('[fetchRedTrack] traffic_sources URL:', url);
+    const res = await axios.get(url);
     const rows = Array.isArray(res.data) ? res.data : [];
     const sourceMap = {};
     for (const row of rows) {
@@ -150,6 +152,11 @@ export async function fetchRedTrack() {
     for (let i = 0; i < BREAKDOWNS.length; i++) {
       const { groups, type } = BREAKDOWNS[i];
       const rows = await fetchReport(apiKey, date_from, date_to, groups);
+      if (rows.length > 0) {
+        console.log(`[fetchRedTrack] first row sample for ${type}:`, JSON.stringify(rows[0]));
+      } else {
+        console.log(`[fetchRedTrack] no rows returned for ${type}`);
+      }
       for (const row of rows) {
         if (!row.date) continue;
         allRows.push(makeRow(fetchedAt, type, sourceMap, row));
