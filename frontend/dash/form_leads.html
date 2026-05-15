@@ -710,23 +710,25 @@
       return out;
     }
 
-    // SOURCE — Meta publisher_platform (facebook/instagram/etc)
-    // visits = Meta impressions, clicks = Meta clicks, cost = Meta spend
-    // leads/sold/revenue allocated proportionally by spend share
+    // SOURCE — one row per ad network
+    // meta = all Meta platforms aggregated; snap = placeholder (no data yet)
     function buildSourceRows() {
-      const metaMap = aggMeta(r => r.publisher_platform || null);
-      const totalSpend = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
-      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
-      const out = [];
-      for (const [platform, meta] of metaMap.entries()) {
-        const share = totalSpend > 0 ? meta.spend / totalSpend : 1 / metaMap.size;
-        out.push(lpRow(platform, meta.impressions, meta.clicks,
-          Math.round(totalL * share),
-          Math.round(totalS * share),
-          +(totalRev * share).toFixed(2), meta.spend));
+      // Aggregate all Meta rows (any publisher_platform) into a single "meta" row
+      let metaImpressions = 0, metaClicks = 0, metaSpend = 0;
+      for (const r of META_ROWS) {
+        if (!r.publisher_platform) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        metaImpressions += Number(r.impressions || 0);
+        metaClicks      += Number(r.clicks      || 0);
+        metaSpend       += Number(r.spend       || 0);
       }
-      out.sort((a, b) => b[1] - a[1]);
-      return out;
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      return [
+        lpRow('meta', metaImpressions, metaClicks, totalL, totalS, totalRev, metaSpend),
+        lpRow('snap', 0, 0, 0, 0, 0, 0),
+      ];
     }
 
     // WIDGET ID — Meta campaign level
