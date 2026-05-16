@@ -28,84 +28,104 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Returns map: source_id → { channel_name, lander_name }
-async function fetchTrafficSources(apiKey) {
+// Fetch QHF-specific source IDs from the /sources endpoint.
+// Falls back to the hardcoded list if the API call fails.
+const QHF_SOURCE_IDS_FALLBACK = [
+  '6973b115cf6f4f9efdaec963', // QuickHomeFix | Meta | Purchase
+  '69d5f3af8c110c9036eb014e', // QHF Meta
+  '69dd2c224aed14986dd1bde8', // QHF Snap
+  '69e726d9a4d9b51357c6304d', // QuickHomeFix | Meta | Roof | Karigouda
+  '69e7279a3bab5180c00c1ac8', // QuickHomeFix | Meta | Bath | Karigouda
+  '69e7279e0a796ad2584aef8e', // QuickHomeFix | Meta | Windows | Karigouda
+  '69e8a55e37d74edb736a4d31', // QuickHomeFix | Snap | Roof
+  '69e8a5bb558d8330b45fddf1', // QuickHomeFix | Snap | Bath
+  '69e8a614a9384a9ddbbb4aaf', // QuickHomeFix | Snap | Windows
+  '6a06ebe3493e29d568fb16e8', // QuickHomeFix | Google | Roof
+  '6a06ec25493e29d568fb25cc', // QuickHomeFix | Google | Bath
+  '6a06ec3e65debd90096398d5', // QuickHomeFix | Google | windows
+  '6a06ee1b5d73f05db6c5b040', // QuickHomeFix | Meta | Bath | Ankith
+  '6a06ee1b36a33020ed173d89', // QuickHomeFix | Meta | Roof | Ankith
+  '6a06ee2065debd900963ee10', // QuickHomeFix | Meta | Windows | Ankith
+];
+
+async function fetchQhfSourceIds(apiKey) {
   try {
-    const url = `${RT_BASE}/traffic_sources?api_key=${encodeURIComponent(apiKey)}&limit=200`;
-    console.log('[fetchRedTrack] traffic_sources URL:', url);
-    const res = await axios.get(url);
+    const res = await axios.get(`${RT_BASE}/sources?api_key=${encodeURIComponent(apiKey)}&per=500`);
     const rows = Array.isArray(res.data) ? res.data : [];
-    const sourceMap = {};
-    for (const row of rows) {
-      if (row.id) {
-        sourceMap[String(row.id)] = {
-          channel_name: row.name || row.title || '',
-          lander_name:  row.lander?.name || row.offer?.name || row.landing?.name || '',
-        };
-      }
+    const qhfIds = rows
+      .filter(s => /quickhomefix|qhf/i.test(s.title || s.name || ''))
+      .map(s => s.id)
+      .filter(Boolean);
+    if (qhfIds.length > 0) {
+      console.log(`[fetchRedTrack] Found ${qhfIds.length} QHF sources from API`);
+      return qhfIds;
     }
-    return sourceMap;
+    console.warn('[fetchRedTrack] No QHF sources found via API — using fallback list');
+    return QHF_SOURCE_IDS_FALLBACK;
   } catch (err) {
-    console.warn('[fetchRedTrack] traffic_sources call failed:', err.message);
-    return {};
+    console.warn('[fetchRedTrack] /sources call failed — using fallback list:', err.message);
+    return QHF_SOURCE_IDS_FALLBACK;
   }
 }
 
-function buildReportUrl(apiKey, date_from, date_to, groups) {
-  const base = `${RT_BASE}/report?api_key=${encodeURIComponent(apiKey)}&date_from=${date_from}&date_to=${date_to}`;
-  const groupParams = groups.map(g => `group_by[]=${encodeURIComponent(g)}`).join('&');
-  return `${base}&${groupParams}`;
-}
-
-async function fetchReport(apiKey, date_from, date_to, groups) {
+// Call the RT /report endpoint with correct parameter format.
+// group: comma-separated e.g. 'date' or 'date,source'
+// sourceIds: array of source ID strings to filter
+async function fetchReport(apiKey, date_from, date_to, group, sourceIds) {
   try {
-    const url = buildReportUrl(apiKey, date_from, date_to, groups);
-    console.log(`[fetchRedTrack] report URL (groups=${groups.join(',')})`, url.replace(/api_key=[^&]+/, 'api_key=***'));
+    const srcParam = sourceIds.join(',');
+    const url = `${RT_BASE}/report?api_key=${encodeURIComponent(apiKey)}&date_from=${date_from}&date_to=${date_to}&group=${encodeURIComponent(group)}&source_id=${encodeURIComponent(srcParam)}`;
+    console.log(`[fetchRedTrack] report URL (group=${group})`, url.replace(/api_key=[^&]+/, 'api_key=***'));
     const res = await axios.get(url);
     return Array.isArray(res.data) ? res.data : [];
   } catch (err) {
-    console.warn(`[fetchRedTrack] report call failed (groups=${groups.join(',')}):`, err.message);
+    console.warn(`[fetchRedTrack] report call failed (group=${group}):`, err.message);
     return [];
   }
 }
 
-function deriveGroupKey(type, row) {
-  switch (type) {
-    case 'daily':    return '';
-    case 'os':       return row.os       || row.os_family    || '';
-    case 'device':   return row.device   || row.device_type  || '';
-    case 'region':   return row.country  || row.country_name || row.region || '';
-    case 'campaign': return row.campaign || row.campaign_name || row.name  || row.title || '';
-    case 'lander':   return row.offer    || row.offer_name   || row.lander || '';
-    case 'adset':    return row.adset    || row.adset_name   || '';
-    case 'ad':       return row.ad       || row.ad_name      || '';
-    default:         return '';
-  }
+function parseSourceTitle(title) {
+  const src = (title || '').toLowerCase();
+  const parts = src.split('|').map(p => p.trim());
+
+  const platform = src.includes('google') ? 'google'
+    : src.includes('meta') ? 'meta'
+    : src.includes('snap') ? 'snap'
+    : '';
+
+  const service = src.includes('bath') || src.includes('shower') || src.includes('tub') ? 'bath'
+    : src.includes('roof') ? 'roof'
+    : src.includes('window') || src.includes('windo') ? 'windo'
+    : src.includes('gutter') ? 'gutters'
+    : src.includes('solar') ? 'solar'
+    : '';
+
+  const owner = src.includes('karigouda') || parts.includes('kg') ? 'kg'
+    : src.includes('ankith') || parts.includes('ak') || parts.includes('anki') ? 'ak'
+    : src.includes('viknesh') || src.includes('google') ? 'viknesh'
+    : 'unknown';
+
+  return { platform, service, owner };
 }
 
-function makeRow(fetchedAt, type, sourceMap, row) {
-  let groupKey = deriveGroupKey(type, row);
-  if (!groupKey && type !== 'daily') {
-    console.warn(`[fetchRedTrack] empty group_key for type=${type}, storing as 'unknown'`);
-    groupKey = 'unknown';
-  }
+function makeRow(fetchedAt, type, row) {
+  const sourceTitle = row.source || '';
+  const { platform: rt_platform, service: rt_service, owner: rt_owner } = parseSourceTitle(sourceTitle);
 
-  const lp_views  = Number(row.lp_views)   || 0;
-  const lp_clicks = Number(row.lp_clicks)  || Number(row.landing_clicks) || 0;
+  const lp_views  = Number(row.lp_views)  || 0;
+  const lp_clicks = Number(row.lp_clicks) || 0;
   const lp_ctr    = lp_views > 0 ? (lp_clicks / lp_views) * 100 : 0;
-
-  const src = sourceMap[String(row.source_id || '')] || {};
 
   return {
     fetched_at:     fetchedAt,
-    date:           row.date,
+    date:           row.date || '',
     breakdown_type: type,
-    group_key:      groupKey,
-    campaign_name:  row.campaign      || row.campaign_name || row.name  || row.title || '',
-    adset_name:     row.adset         || row.adset_name    || '',
-    ad_name:        row.ad            || row.ad_name       || '',
-    channel:        src.channel_name  || '',
-    lander_name:    src.lander_name   || '',
+    group_key:      type === 'daily' ? '' : sourceTitle,
+    campaign_name:  '',
+    adset_name:     '',
+    ad_name:        '',
+    channel:        sourceTitle,
+    lander_name:    '',
     lp_views,
     lp_clicks,
     lp_ctr,
@@ -114,18 +134,14 @@ function makeRow(fetchedAt, type, sourceMap, row) {
     revenue:        Number(row.revenue)     || 0,
     cost:           Number(row.cost)        || 0,
     roi:            Number(row.roi)         || 0,
-    device:         type === 'device' ? groupKey : '',
-    os:             type === 'os'     ? groupKey : '',
-    region:         type === 'region' ? groupKey : '',
+    device:         '',
+    os:             '',
+    region:         '',
+    rt_platform,
+    rt_service,
+    rt_owner,
   };
 }
-
-// 1 report call. Call 1 is traffic_sources (handled separately).
-// RT API for this account silently ignores all group_by dimensions except date,
-// so all breakdown calls return identical daily totals — only daily is kept.
-const BREAKDOWNS = [
-  { groups: ['date'], type: 'daily' },
-];
 
 export async function fetchRedTrack() {
   const apiKey = process.env.REDTRACK_API_KEY;
@@ -140,27 +156,29 @@ export async function fetchRedTrack() {
   const ch = buildClient();
 
   try {
-    // Call 1: traffic sources to build source → channel/lander map
-    const sourceMap = await fetchTrafficSources(apiKey);
+    // Step 1: get QHF source IDs
+    const sourceIds = await fetchQhfSourceIds(apiKey);
     await delay(delayMs);
+
+    // Step 2: fetch QHF daily totals (group=date)
+    const dailyRows = await fetchReport(apiKey, date_from, date_to, 'date', sourceIds);
+    console.log(`[fetchRedTrack] daily: ${dailyRows.length} rows`);
+    await delay(delayMs);
+
+    // Step 3: fetch QHF per-source breakdown (group=date,source)
+    const sourceRows = await fetchReport(apiKey, date_from, date_to, 'date,source', sourceIds);
+    console.log(`[fetchRedTrack] source: ${sourceRows.length} rows`);
 
     const allRows = [];
 
-    for (let i = 0; i < BREAKDOWNS.length; i++) {
-      const { groups, type } = BREAKDOWNS[i];
-      const rows = await fetchReport(apiKey, date_from, date_to, groups);
-      if (rows.length > 0) {
-        console.log(`[fetchRedTrack] first row sample for ${type}:`, JSON.stringify(rows[0]));
-      } else {
-        console.log(`[fetchRedTrack] no rows returned for ${type}`);
-      }
-      for (const row of rows) {
-        if (!row.date) continue;
-        allRows.push(makeRow(fetchedAt, type, sourceMap, row));
-      }
-      if (i < BREAKDOWNS.length - 1) {
-        await delay(delayMs);
-      }
+    for (const row of dailyRows) {
+      if (!row.date) continue;
+      allRows.push(makeRow(fetchedAt, 'daily', row));
+    }
+
+    for (const row of sourceRows) {
+      if (!row.date) continue;
+      allRows.push(makeRow(fetchedAt, 'source', row));
     }
 
     if (allRows.length === 0) {
@@ -168,8 +186,10 @@ export async function fetchRedTrack() {
       return;
     }
 
+    // Truncate before insert so each scheduled run replaces all data (no duplicate accumulation).
+    await ch.command({ query: 'TRUNCATE TABLE redtrack_stats' });
     await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
-    console.log(`[fetchRedTrack] Inserted ${allRows.length} rows`);
+    console.log(`[fetchRedTrack] Inserted ${allRows.length} rows (${dailyRows.length} daily + ${sourceRows.length} source)`);
   } finally {
     await ch.close();
   }

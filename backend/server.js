@@ -958,12 +958,16 @@ export function inferFormTypeFromLead(normalizedService, landingPageUrl) {
     if (s.includes('BATH') || s.includes('TUB') || s.includes('SHOWER')) return 'bath';
     if (s.includes('ROOF')) return 'roof';
     if (s.includes('WINDOW')) return 'windo';
+    if (s.includes('GUTTER')) return 'gutters';
+    if (s.includes('SOLAR')) return 'solar';
   }
   if (landingPageUrl) {
     const p = landingPageUrl.toLowerCase();
     if (p.includes('/bath') || p.includes('/shower')) return 'bath';
     if (p.includes('/roof')) return 'roof';
     if (p.includes('/window')) return 'windo';
+    if (p.includes('/gutter')) return 'gutters';
+    if (p.includes('/solar')) return 'solar';
   }
   return 'other';
 }
@@ -1337,7 +1341,7 @@ app.post("/api/leads", async (req, res) => {
       client_ip:     clientIp,
       user_agent:    ua,
       created_at:    createdAt,
-      ad_name:       data.ad_name       || null,
+      ad_name:       data.ad_name       || data.rt_ad      || null,
       adset_name:    data.adset_name    || null,
       campaign_name: data.campaign_name || null,
     };
@@ -1416,7 +1420,10 @@ app.post("/api/dev/migrate", async (_req, res) => {
           roi             Float64,
           device          String,
           os              String,
-          region          String
+          region          String,
+          rt_platform     String DEFAULT '',
+          rt_service      String DEFAULT '',
+          rt_owner        String DEFAULT ''
         ) ENGINE = MergeTree()
         ORDER BY (date, breakdown_type, group_key, campaign_name, adset_name, ad_name)
       `,
@@ -1842,7 +1849,7 @@ app.get("/api/stats/redtrack", async (_req, res) => {
     const rows = await runClickhouseSelect(
       `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats) ORDER BY date DESC`
     );
-    const result = { daily: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] };
+    const result = { daily: [], source: [], channel: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] };
     for (const r of rows) {
       const key = r.breakdown_type;
       if (result[key]) result[key].push(r);
@@ -1850,7 +1857,7 @@ app.get("/api/stats/redtrack", async (_req, res) => {
     res.json(result);
   } catch (e) {
     console.error('[/api/stats/redtrack]', e.message);
-    res.status(500).json({ daily: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] });
+    res.status(500).json({ daily: [], source: [], channel: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] });
   }
 });
 
@@ -1878,7 +1885,8 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
     const rows = await runClickhouseSelect(`
       SELECT
         lp_campaign_id,
-        any(landing_page_url) AS sample_url
+        any(normalized_service) AS sample_service,
+        any(landing_page_url)   AS sample_url
       FROM ${CLICKHOUSE_TABLE}
       WHERE created_at >= now() - INTERVAL 90 DAY
         AND lp_campaign_id IS NOT NULL
@@ -1887,7 +1895,7 @@ app.get('/api/stats/lp-form-map', async (_req, res) => {
     `);
     const result = rows.map(r => ({
       lp_campaign_id: r.lp_campaign_id,
-      form_type: inferFormTypeFromLead(null, r.sample_url),
+      form_type: inferFormTypeFromLead(r.sample_service, r.sample_url),
     }));
     res.json(result);
   } catch (e) {
@@ -1903,6 +1911,15 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
       runClickhouseSelect(`
         SELECT
           state,
+          multiIf(
+            normalized_service LIKE '%BATH%' OR normalized_service LIKE '%TUB%' OR normalized_service LIKE '%SHOWER%'
+              OR landing_page_url LIKE '%/bath%' OR landing_page_url LIKE '%/shower%', 'bath',
+            normalized_service LIKE '%ROOF%' OR landing_page_url LIKE '%/roof%', 'roof',
+            normalized_service LIKE '%WINDOW%' OR landing_page_url LIKE '%/window%', 'windo',
+            normalized_service LIKE '%GUTTER%' OR landing_page_url LIKE '%/gutter%', 'gutters',
+            normalized_service LIKE '%SOLAR%' OR landing_page_url LIKE '%/solar%', 'solar',
+            'other'
+          ) AS form_type,
           toDate(created_at) AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
@@ -1911,17 +1928,25 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND state IS NOT NULL
           AND state != ''
-        GROUP BY state, date
+        GROUP BY state, form_type, date
         ORDER BY date DESC, leads DESC
       `).catch(e => { console.error('[leads-breakdown state]', e.message); return []; }),
 
       runClickhouseSelect(`
         SELECT
           multiIf(
-            user_agent LIKE '%Mobile%' OR
-            user_agent LIKE '%Android%', 'mobile',
+            user_agent LIKE '%Mobile%' OR user_agent LIKE '%Android%', 'mobile',
             'desktop'
           ) AS device,
+          multiIf(
+            normalized_service LIKE '%BATH%' OR normalized_service LIKE '%TUB%' OR normalized_service LIKE '%SHOWER%'
+              OR landing_page_url LIKE '%/bath%' OR landing_page_url LIKE '%/shower%', 'bath',
+            normalized_service LIKE '%ROOF%' OR landing_page_url LIKE '%/roof%', 'roof',
+            normalized_service LIKE '%WINDOW%' OR landing_page_url LIKE '%/window%', 'windo',
+            normalized_service LIKE '%GUTTER%' OR landing_page_url LIKE '%/gutter%', 'gutters',
+            normalized_service LIKE '%SOLAR%' OR landing_page_url LIKE '%/solar%', 'solar',
+            'other'
+          ) AS form_type,
           toDate(created_at) AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
@@ -1930,21 +1955,28 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND user_agent IS NOT NULL
           AND user_agent != ''
-        GROUP BY device, date
+        GROUP BY device, form_type, date
         ORDER BY date DESC, leads DESC
       `).catch(e => { console.error('[leads-breakdown device]', e.message); return []; }),
 
       runClickhouseSelect(`
         SELECT
           multiIf(
-            user_agent LIKE '%iPhone%' OR
-            user_agent LIKE '%iPad%' OR
-            user_agent LIKE '%iPod%',    'ios',
+            user_agent LIKE '%iPhone%' OR user_agent LIKE '%iPad%' OR user_agent LIKE '%iPod%', 'ios',
             user_agent LIKE '%Android%', 'android',
             user_agent LIKE '%Windows%', 'windows',
             user_agent LIKE '%Macintosh%', 'macos',
             'other'
           ) AS os,
+          multiIf(
+            normalized_service LIKE '%BATH%' OR normalized_service LIKE '%TUB%' OR normalized_service LIKE '%SHOWER%'
+              OR landing_page_url LIKE '%/bath%' OR landing_page_url LIKE '%/shower%', 'bath',
+            normalized_service LIKE '%ROOF%' OR landing_page_url LIKE '%/roof%', 'roof',
+            normalized_service LIKE '%WINDOW%' OR landing_page_url LIKE '%/window%', 'windo',
+            normalized_service LIKE '%GUTTER%' OR landing_page_url LIKE '%/gutter%', 'gutters',
+            normalized_service LIKE '%SOLAR%' OR landing_page_url LIKE '%/solar%', 'solar',
+            'other'
+          ) AS form_type,
           toDate(created_at) AS date,
           count()                AS leads,
           sum(partner_delivered) AS sold,
@@ -1953,7 +1985,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
         WHERE created_at >= now() - INTERVAL 30 DAY
           AND user_agent IS NOT NULL
           AND user_agent != ''
-        GROUP BY os, date
+        GROUP BY os, form_type, date
         ORDER BY date DESC, leads DESC
       `).catch(e => { console.error('[leads-breakdown os]', e.message); return []; }),
 
@@ -1991,7 +2023,19 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
       `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
     ]);
 
-    const [landingRows] = await Promise.all([
+    const [dateRows, landingRows] = await Promise.all([
+      runClickhouseSelect(`
+        SELECT
+          toDate(created_at) AS date,
+          count() AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout) AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+        GROUP BY date
+        ORDER BY date DESC
+      `).catch(e => { console.error('[leads-breakdown date]', e.message); return []; }),
+
       runClickhouseSelect(`
         SELECT
           replaceRegexpOne(path(landing_page_url), '^.+/', '') AS landing_path,
@@ -2008,7 +2052,7 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
       `).catch(e => { console.error('[leads-breakdown landing]', e.message); return []; }),
     ]);
 
-    res.json({ state: stateRows, device: deviceRows, os: osRows, campaign: campaignRows, ad: adRows, landing: landingRows });
+    res.json({ date: dateRows, state: stateRows, device: deviceRows, os: osRows, campaign: campaignRows, ad: adRows, landing: landingRows });
   } catch (e) {
     console.error('[leads-breakdown]', e.message);
     res.status(500).json({ error: e.message });

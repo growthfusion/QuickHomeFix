@@ -299,10 +299,13 @@
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">form</label>
-          <select id="form-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+              <select id="form-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="roof">roof</option>
-            <option value="bath">bath</option>
+            <option value="bath">Bath</option>
+            <option value="roof">Roofing</option>
+            <option value="windo">Windows</option>
+            <option value="gutters">Gutters</option>
+            <option value="solar">Solar</option>
           </select>
         </div>
         <div class="flex flex-col">
@@ -311,13 +314,16 @@
             <option value="">all</option>
             <option value="meta">Meta</option>
             <option value="snap">Snap</option>
+            <option value="google">Google</option>
           </select>
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">buyer</label>
           <select id="buyer-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="Karigouda">Karigouda</option>
+            <option value="kg">Karigouda</option>
+            <option value="ak">Ankith</option>
+            <option value="viknesh">Viknesh</option>
           </select>
         </div>
         <div class="flex flex-col">
@@ -428,19 +434,35 @@
       "AVG PER LEAD, $", "AVG PER SOLD, $", "EPC, $", "EPV, $"
     ];
 
+    // ── Hidden columns (comment a line out to show that column) ─────────────
+    const HIDDEN_COLS = new Set([
+      9,  // APPTS
+      10, // %
+      11, // UPSELLS
+      12, // SOLD (upsell)
+      13, // %
+      14, // UPSELL_RATE, %
+      15, // PPC
+      16, // SOLD (ppc)
+      17, // %
+      18, // PPC_RATE, %
+    ]);
+
     // ── In-memory data arrays ────────────────────────────────────────────────
 
     let RT_DAILY    = [];
+    let RT_SOURCE   = [];  // breakdown_type='source': per-day per-QHF-source rows (correct QHF-only data)
+    let RT_LANDER   = [];
     let RT_CAMPAIGN = [];
     let RT_ADSET    = [];
     let RT_AD       = [];
     let RT_OS       = [];
     let RT_DEVICE   = [];
     let RT_REGION   = [];
-    let RT_LANDER   = [];
 
     let LP_ROWS = [];
 
+    let LD_DATE     = [];
     let LD_STATE    = [];
     let LD_DEVICE   = [];
     let LD_OS       = [];
@@ -465,8 +487,8 @@
       const s = (o || '').toLowerCase();
       if (s.includes('ios') || s.includes('iphone') || s.includes('ipad')) return 'ios';
       if (s.includes('android')) return 'android';
-      if (s.includes('windows')) return 'windows';
-      if (s.includes('mac')) return 'macos';
+      // Meta uses 'desktop' for all desktop OS; LD_OS has 'windows'/'macos' — unify as 'desktop'
+      if (s.includes('desktop') || s.includes('windows') || s.includes('mac')) return 'desktop';
       return 'other';
     }
 
@@ -520,14 +542,50 @@
       ];
     }
 
+    // Maps normalized_service from the leads table to a filter form type
+    function inferFormTypeFromService(svc) {
+      if (!svc) return 'other';
+      const s = svc.toUpperCase();
+      if (s.includes('BATH') || s.includes('TUB') || s.includes('SHOWER')) return 'bath';
+      if (s.includes('ROOF')) return 'roof';
+      if (s.includes('WINDOW')) return 'windo';
+      if (s.includes('GUTTER')) return 'gutters';
+      if (s.includes('SOLAR')) return 'solar';
+      return 'other';
+    }
+
+    // LP_FORM_MAP (from real leads data) takes precedence over keyword guessing
+    function getFormType(name, campaignId) {
+      if (campaignId && LP_FORM_MAP[campaignId]) return LP_FORM_MAP[campaignId];
+      return inferFormFromCampaign(name);
+    }
+
     function inferFormFromCampaign(name) {
       const n = (name || '').toLowerCase();
       if (n.includes('bath') || n.includes('shower') || n.includes('tub')) return 'bath';
       if (n.includes('roof')) return 'roof';
-      if (n.includes('window')) return 'windo';
+      if (n.includes('window') || n.includes('windo')) return 'windo';
       if (n.includes('gutter')) return 'gutters';
       if (n.includes('solar')) return 'solar';
       return 'other';
+    }
+
+    // RT account is a multi-client agency account. QHF campaigns contain "QHF" in the name.
+    function isQhfCampaign(name) {
+      return /qhf/i.test(name || '');
+    }
+
+    function inferOwnerFromCampaign(name) {
+      const n = (name || '').toLowerCase();
+      // full names
+      if (n.includes('karigouda')) return 'kg';
+      if (n.includes('ankith'))    return 'ak';
+      if (n.includes('viknesh'))   return 'viknesh';
+      // abbreviations used in Meta campaign names (e.g. "QHF | KG | Meta | Bath")
+      if (/[|\s]kg[|\s]/.test(n) || n.startsWith('kg') || n.endsWith('kg')) return 'kg';
+      if (/[|\s]ak[|\s]/.test(n) || n.startsWith('ak') || n.endsWith('ak')) return 'ak';
+      if (/[|\s]vk[|\s]/.test(n) || /[|\s]vn[|\s]/.test(n))                return 'viknesh';
+      return 'unknown';
     }
 
     // ── RT aggregation helper ────────────────────────────────────────────────
@@ -550,7 +608,7 @@
     }
 
     function totalRtViewsInRange() {
-      return RT_DAILY
+      return filteredRtSource()
         .filter(r => (!FILTERS.from || r.date >= FILTERS.from) && (!FILTERS.to || r.date <= FILTERS.to))
         .reduce((s, r) => s + Number(r.lp_views || 0), 0);
     }
@@ -558,12 +616,15 @@
     // Aggregate META_ROWS (meta_ad_stats) by an arbitrary key function
     function aggMeta(keyFn) {
       const m = new Map();
+      // If source filter is set to a non-meta platform, Meta tables show nothing
+      if (FILTERS.source && FILTERS.source !== 'meta') return m;
       for (const r of META_ROWS) {
         const key = keyFn(r);
         if (key == null || key === '') continue;
         const date = r.date || '';
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(r.campaign_name) !== FILTERS.buyer) continue;
         if (!m.has(key)) m.set(key, { impressions: 0, clicks: 0, spend: 0 });
         const v = m.get(key);
         v.impressions += Number(r.impressions || 0);
@@ -573,16 +634,24 @@
       return m;
     }
 
-    // Sum LP totals across all campaigns within the current date range
+    // Sum totals within the current date range
+    // leads/sold from LP_ROWS (LP ground truth); revenue from RT_DAILY
     function lpTotalsInRange() {
       let l = 0, s = 0, rv = 0;
       for (const r of LP_ROWS) {
         const date = r.date || '';
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        l  += Number(r.leads_total    || 0);
-        s  += Number(r.leads_accepted || 0);
-        rv += Number(r.total_sell     || 0);
+        if (FILTERS.form  && getFormType(r.campaign_name, r.campaign_id) !== FILTERS.form)  continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(r.campaign_name)     !== FILTERS.buyer) continue;
+        l += Number(r.leads_total    || 0);
+        s += Number(r.leads_accepted || 0);
+      }
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        rv += Number(r.revenue || 0);
       }
       return { l, s, rv };
     }
@@ -599,16 +668,18 @@
         ]);
 
         RT_DAILY    = rtRes.daily    || [];
+        RT_SOURCE   = rtRes.source   || [];
+        RT_LANDER   = rtRes.lander   || [];
         RT_CAMPAIGN = rtRes.campaign || [];
         RT_ADSET    = rtRes.adset    || [];
         RT_AD       = rtRes.ad       || [];
         RT_OS       = rtRes.os       || [];
         RT_DEVICE   = rtRes.device   || [];
         RT_REGION   = rtRes.region   || [];
-        RT_LANDER   = rtRes.lander   || [];
 
         if (lpRes.ok && lpRes.rows) LP_ROWS = lpRes.rows;
 
+        LD_DATE     = ldRes.date     || [];
         LD_STATE    = ldRes.state    || [];
         LD_DEVICE   = ldRes.device   || [];
         LD_OS       = ldRes.os       || [];
@@ -636,7 +707,16 @@
           }
         }
 
-        console.log('[loadStats] RT daily:', RT_DAILY.length, '| campaign:', RT_CAMPAIGN.length, '| ad:', RT_AD.length);
+        // Populate state dropdown from LD_STATE data
+        const stateEl = document.getElementById('state-filter');
+        if (stateEl && LD_STATE.length) {
+          const states = [...new Set(LD_STATE.map(r => r.state).filter(Boolean))].sort();
+          const current = stateEl.value;
+          stateEl.innerHTML = '<option value="">all</option>' +
+            states.map(s => `<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('');
+        }
+
+        console.log('[loadStats] RT daily:', RT_DAILY.length, '| source:', RT_SOURCE.length, '| campaign:', RT_CAMPAIGN.length, '| ad:', RT_AD.length);
         console.log('[loadStats] LP rows:', LP_ROWS.length, '| LD_AD:', LD_AD.length);
 
       } catch (err) {
@@ -646,9 +726,9 @@
       const statusEl = document.getElementById('data-status');
       if (statusEl) {
         statusEl.textContent =
-          `RT: ${RT_DAILY.length} daily  ·  ` +
+          `RT: ${RT_DAILY.length} daily / ${RT_SOURCE.length} source  ·  ` +
           `LP: ${LP_ROWS.length} rows  ·  ` +
-          `LD: state=${LD_STATE.length} device=${LD_DEVICE.length} os=${LD_OS.length} camp=${LD_CAMPAIGN.length} ad=${LD_AD.length} landing=${LD_LANDING.length}  ·  ` +
+          `LD: date=${LD_DATE.length} state=${LD_STATE.length} device=${LD_DEVICE.length} os=${LD_OS.length} camp=${LD_CAMPAIGN.length} ad=${LD_AD.length} landing=${LD_LANDING.length}  ·  ` +
           `Meta: ${META_ROWS.length} rows / ${Object.keys(META_HIERARCHY).length} ads  ·  ` +
           `Range: ${FILTERS.from} → ${FILTERS.to}`;
         statusEl.classList.remove('hidden');
@@ -659,169 +739,417 @@
 
     // ── Table builders ───────────────────────────────────────────────────────
 
-    // DATE — RT_DAILY + LP_ROWS joined by date
+    // DATE — RT_DAILY (visits/clicks/cost/revenue) + LP_ROWS (leads/sold — LP ground truth)
     function buildDateRows() {
+      // LP leads/sold grouped by date
       const lpMap = new Map();
       for (const r of LP_ROWS) {
-        const { date, leads_total, leads_accepted, total_sell } = r;
+        const { date, campaign_name, campaign_id, leads_total, leads_accepted } = r;
+        if (!date) continue;
+        if (FILTERS.from  && date < FILTERS.from) continue;
+        if (FILTERS.to    && date > FILTERS.to)   continue;
+        if (FILTERS.form  && getFormType(campaign_name, campaign_id) !== FILTERS.form)  continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name)   !== FILTERS.buyer) continue;
+        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0 });
+        const v = lpMap.get(date);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
+      }
+      // RT visits/clicks/cost/revenue grouped by date — always use RT_SOURCE so all filters apply
+      const rtSource = filteredRtSource();
+      const rtMap = new Map();
+      for (const r of rtSource) {
+        const { date } = r;
+        if (!date) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0, rv: 0 });
-        const v = lpMap.get(date);
-        v.l  += Number(leads_total    || 0);
-        v.s  += Number(leads_accepted || 0);
-        v.rv += Number(total_sell     || 0);
+        if (!rtMap.has(date)) rtMap.set(date, { views: 0, clicks: 0, cost: 0, rv: 0 });
+        const v = rtMap.get(date);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+        v.rv     += Number(r.revenue   || 0);
       }
-      const rtMap = aggRt(RT_DAILY, r => r.date || null);
       const allDates = new Set([...lpMap.keys(), ...rtMap.keys()]);
       const out = [];
       for (const d of allDates) {
-        const lp  = lpMap.get(d) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0 };
-        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
+        const lp  = lpMap.get(d) || { l: 0, s: 0 };
+        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
+        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, rtD.rv, rtD.cost));
       }
       out.sort((a, b) => a[0] > b[0] ? -1 : 1);
       return out;
     }
 
-    // FORM — LP_ROWS grouped by vertical (bath/roof/windows); visits proportional
+    // FORM — one row per LP campaign name
+    // visits/clicks/cost = RT totals proportioned by each campaign's lead share
+    // leads/sold/revenue = LP ground truth (total_sell is 0 until LP pays out)
     function buildFormRows() {
-      const byForm = new Map();
+      // Step 1: LP totals per campaign (unfiltered by form for correct proportioning)
+      const allByCamp = new Map();
       for (const r of LP_ROWS) {
-        const { campaign_id, campaign_name, date, leads_total, leads_accepted, total_sell } = r;
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        const form = LP_FORM_MAP[campaign_id] || inferFormFromCampaign(campaign_name);
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (!byForm.has(form)) byForm.set(form, { l: 0, s: 0, rv: 0 });
-        const v = byForm.get(form);
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from  && date < FILTERS.from) continue;
+        if (FILTERS.to    && date > FILTERS.to)   continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name) !== FILTERS.buyer) continue;
+        if (!allByCamp.has(campaign_name)) allByCamp.set(campaign_name, { l: 0, s: 0, rv: 0, id: campaign_id });
+        const v = allByCamp.get(campaign_name);
         v.l  += Number(leads_total    || 0);
         v.s  += Number(leads_accepted || 0);
         v.rv += Number(total_sell     || 0);
       }
-      const totalLeads   = [...byForm.values()].reduce((s, v) => s + v.l, 0);
-      const totalRtViews = totalRtViewsInRange();
+
+      // Step 2: RT LP views/clicks/cost/revenue per service (respects source/buyer filters)
+      const rtByService = new Map();
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const svc = r.rt_service || 'other';
+        if (!rtByService.has(svc)) rtByService.set(svc, { views: 0, clicks: 0, cost: 0, revenue: 0 });
+        const v = rtByService.get(svc);
+        v.views   += Number(r.lp_views  || 0);
+        v.clicks  += Number(r.lp_clicks || 0);
+        v.cost    += Number(r.cost      || 0);
+        v.revenue += Number(r.revenue   || 0);
+      }
+
+      // Step 3: LP lead totals per service for proportioning within a service
+      const leadsPerService = new Map();
+      for (const [name, v] of allByCamp.entries()) {
+        const svc = getFormType(name, v.id);
+        leadsPerService.set(svc, (leadsPerService.get(svc) || 0) + v.l);
+      }
+
+      // Step 4: build output — apply FILTERS.form for display only
       const out = [];
-      for (const [form, v] of byForm.entries()) {
-        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        out.push(lpRow(form, visits, 0, v.l, v.s, v.rv, 0));
+      for (const [name, v] of allByCamp.entries()) {
+        const svc = getFormType(name, v.id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const rtSvc     = rtByService.get(svc) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const svcLeads  = leadsPerService.get(svc) || 0;
+        // Proportion RT service total by this campaign's lead share within the service
+        const campShare = svcLeads > 0 ? v.l / svcLeads : 0;
+        const visits    = Math.round(rtSvc.views  * campShare);
+        const clicks    = Math.round(rtSvc.clicks * campShare);
+        const cost      = +(rtSvc.cost    * campShare).toFixed(2);
+        const rev       = +(rtSvc.revenue * campShare).toFixed(2);
+        out.push(lpRow(name, visits, clicks, v.l, v.s, rev, cost));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
     // SOURCE — one row per ad network
-    // meta = all Meta platforms aggregated; snap = placeholder (no data yet)
+    // LP views/clicks = RT lp_views/lp_clicks (RT tracks actual landing page activity)
+    // cost = Meta spend (actual ad platform spend)
+    // leads/sold = LP ground truth
     function buildSourceRows() {
-      // Aggregate all Meta rows (any publisher_platform) into a single "meta" row
-      let metaImpressions = 0, metaClicks = 0, metaSpend = 0;
+      let metaSpend = 0;
       for (const r of META_ROWS) {
         if (!r.publisher_platform) continue;
         const date = r.date || '';
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        metaImpressions += Number(r.impressions || 0);
-        metaClicks      += Number(r.clicks      || 0);
-        metaSpend       += Number(r.spend       || 0);
+        metaSpend += Number(r.spend || 0);
+      }
+      // Use RT_SOURCE for accurate per-platform LP views/clicks/cost
+      const rtByPlatform = new Map();
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const plat = r.rt_platform || 'other';
+        if (!rtByPlatform.has(plat)) rtByPlatform.set(plat, { views: 0, clicks: 0, cost: 0, revenue: 0 });
+        const v = rtByPlatform.get(plat);
+        v.views   += Number(r.lp_views  || 0);
+        v.clicks  += Number(r.lp_clicks || 0);
+        v.cost    += Number(r.cost      || 0);
+        v.revenue += Number(r.revenue   || 0);
       }
       const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
-      return [
-        lpRow('meta', metaImpressions, metaClicks, totalL, totalS, totalRev, metaSpend),
-        lpRow('snap', 0, 0, 0, 0, 0, 0),
+      const totalRtCost = [...rtByPlatform.values()].reduce((s, v) => s + v.cost, 0);
+      const out = [];
+      for (const [plat, rt] of rtByPlatform.entries()) {
+        const share = totalRtCost > 0 ? rt.cost / totalRtCost : 0;
+        out.push(lpRow(plat, rt.views, rt.clicks,
+          Math.round(totalL * share), Math.round(totalS * share),
+          +(totalRev * share).toFixed(2), rt.cost));
+      }
+      if (out.length === 0) {
+        out.push(lpRow('meta', 0, 0, totalL, totalS, totalRev, metaSpend));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // BUYER — one row per owner (Karigouda, Ankith, Viknesh)
+    // visits/clicks/cost come directly from RT channel rows (group_by=ts)
+    // leads/sold/revenue = LP total proportioned by each owner's RT cost share
+    function buildBuyerRows() {
+      const OWNERS = [
+        { key: 'kg',      label: 'Karigouda' },
+        { key: 'ak',      label: 'Ankith'    },
+        { key: 'viknesh', label: 'Viknesh'   },
       ];
+
+      // Aggregate RT channel rows by rt_owner
+      const rtByOwner = new Map();
+      for (const o of OWNERS) rtByOwner.set(o.key, { views: 0, clicks: 0, cost: 0 });
+
+      // Use RT_SOURCE (breakdown_type='source') — real per-source QHF data
+      const KNOWN_OWNERS = new Set(['kg', 'ak', 'viknesh']);
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const owner = r.rt_owner || 'unknown';
+        if (!rtByOwner.has(owner)) continue;
+        const v = rtByOwner.get(owner);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+      }
+
+      const totalCost = [...rtByOwner.values()].reduce((s, v) => s + v.cost, 0);
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+
+      const out = [];
+      for (const { key, label } of OWNERS) {
+        const rt    = rtByOwner.get(key);
+        const share = totalCost > 0 ? rt.cost / totalCost : 0;
+        const l     = Math.round(totalL  * share);
+        const s     = Math.round(totalS  * share);
+        const rv    = +(totalRev * share).toFixed(2);
+        out.push(lpRow(label, rt.views, rt.clicks, l, s, rv, rt.cost));
+      }
+      return out;
     }
 
     // WIDGET ID — Meta campaign level
     // Row label = Meta campaign_name
-    // visits/clicks/cost = RT_CAMPAIGN joined by campaign_name
-    //                      (falls back to Meta impressions/clicks/spend when RT empty)
-    // leads/sold/revenue  = LP_ROWS joined by campaign_name
+    // visits/clicks/cost = RT_CAMPAIGN joined by campaign_name (falls back to Meta)
+    // leads/sold/revenue  = LP_ROWS proportioned by Meta spend share within each service type
+    //   (LP uses short names "Bath"/"Roofing" which never match long Meta names directly)
+    // Returns RT_SOURCE rows filtered by the active source/buyer dropdowns.
+    function filteredRtSource() {
+      return RT_SOURCE.filter(r => {
+        if (FILTERS.source && r.rt_platform !== FILTERS.source) return false;
+        if (FILTERS.buyer  && r.rt_owner    !== FILTERS.buyer)  return false;
+        if (FILTERS.form   && r.rt_service  !== FILTERS.form)   return false;
+        return true;
+      });
+    }
+
+    // Build RT aggregation keyed by "owner|service" for finer buckets.
+    // Used by Widget/Teaser/Title so RT cost is authoritative; Meta spend
+    // is only used as a weight to split within the same owner+service pool.
+    function buildRtByOwnerSvc() {
+      const m = new Map();
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const key = `${r.rt_owner || 'unknown'}|${r.rt_service || 'other'}`;
+        if (!m.has(key)) m.set(key, { views: 0, clicks: 0, cost: 0, revenue: 0 });
+        const v = m.get(key);
+        v.views   += Number(r.lp_views  || 0);
+        v.clicks  += Number(r.lp_clicks || 0);
+        v.cost    += Number(r.cost      || 0);
+        v.revenue += Number(r.revenue   || 0);
+      }
+      return m;
+    }
+
     function buildWidgetRows() {
-      const metaMap = aggMeta(r => r.campaign_name || null);
-      const rtMap   = aggRt(RT_CAMPAIGN, r => r.campaign_name || r.group_key || null);
-      const lpMap   = new Map();
+      const metaMap      = aggMeta(r => r.campaign_name || null);
+      const rtByOwnerSvc = buildRtByOwnerSvc();
+
+      // LP totals per service — LP uses short names so owner is unknown; group by service only
+      const lpBySvc = new Map();
       for (const r of LP_ROWS) {
-        const { campaign_name, date, leads_total, leads_accepted, total_sell } = r;
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted } = r;
         if (!campaign_name) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!lpMap.has(campaign_name)) lpMap.set(campaign_name, { l: 0, s: 0, rv: 0 });
-        const v = lpMap.get(campaign_name);
-        v.l  += Number(leads_total    || 0);
-        v.s  += Number(leads_accepted || 0);
-        v.rv += Number(total_sell     || 0);
+        const svc = getFormType(campaign_name, campaign_id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        if (!lpBySvc.has(svc)) lpBySvc.set(svc, { l: 0, s: 0 });
+        const v = lpBySvc.get(svc);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
       }
-      // Anchor on Meta campaign names only — LP/RT join where names match
+
+      // Meta spend per owner+service (for RT proportioning) and per service (for leads proportioning)
+      const metaSpendByOwnerSvc = new Map();
+      const metaSpendBySvc      = new Map();
+      for (const [name, meta] of metaMap.entries()) {
+        if (!isQhfCampaign(name)) continue;
+        const svc = inferFormFromCampaign(name);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey = `${inferOwnerFromCampaign(name)}|${svc}`;
+        metaSpendByOwnerSvc.set(ownerSvcKey, (metaSpendByOwnerSvc.get(ownerSvcKey) || 0) + meta.spend);
+        metaSpendBySvc.set(svc, (metaSpendBySvc.get(svc) || 0) + meta.spend);
+      }
+
       const out = [];
       for (const [name, meta] of metaMap.entries()) {
-        const rt = rtMap.get(name) || { views: 0, clicks: 0, cost: 0 };
-        const lp = lpMap.get(name) || { l: 0, s: 0, rv: 0 };
-        const visits = rt.views  > 0 ? rt.views  : meta.impressions;
-        const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
-        const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
-        out.push(lpRow(name, visits, clicks, lp.l, lp.s, lp.rv, cost));
+        if (!isQhfCampaign(name)) continue;
+        const svc = inferFormFromCampaign(name);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey   = `${inferOwnerFromCampaign(name)}|${svc}`;
+        const rtBucketSpend = metaSpendByOwnerSvc.get(ownerSvcKey) || 0;
+        const svcSpend      = metaSpendBySvc.get(svc) || 0;
+        const rtShare       = rtBucketSpend > 0 ? meta.spend / rtBucketSpend : 0;
+        const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
+        const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        out.push(lpRow(name,
+          Math.round(rt.views   * rtShare),
+          Math.round(rt.clicks  * rtShare),
+          Math.round(lp.l * lpShare),
+          Math.round(lp.s * lpShare),
+          +(rt.revenue * rtShare).toFixed(2),
+          +(rt.cost    * rtShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
     // TEASER ID — Meta adset level
-    // Row label = Meta adset_name
-    // visits/clicks/cost = RT_ADSET joined by adset_name
-    //                      (falls back to Meta when RT empty)
-    // leads/sold/revenue  = LP proportional by adset spend share
+    // Row labels = Meta adset_name; all performance from RT_SOURCE via owner+service bucket
     function buildTeaserRows() {
-      const metaMap    = aggMeta(r => r.adset_name || null);
-      const rtMap      = aggRt(RT_ADSET, r => r.adset_name || r.group_key || null);
-      const totalSpend = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
-      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
-      const allKeys = new Set([...metaMap.keys(), ...rtMap.keys()]);
+      const metaMap      = aggMeta(r => r.adset_name || null);
+      const rtByOwnerSvc = buildRtByOwnerSvc();
+
+      // Map adset_name → owner+service key, service, and QHF flag via parent campaign_name
+      const adsetOwnerSvcKey = new Map();
+      const adsetSvc         = new Map();
+      const adsetIsQhf       = new Map();
+      for (const r of META_ROWS) {
+        const adset = r.adset_name;
+        if (!adset || adsetOwnerSvcKey.has(adset)) continue;
+        const camp = r.campaign_name || '';
+        adsetOwnerSvcKey.set(adset, `${inferOwnerFromCampaign(camp)}|${inferFormFromCampaign(camp)}`);
+        adsetSvc.set(adset, inferFormFromCampaign(camp));
+        adsetIsQhf.set(adset, isQhfCampaign(camp));
+      }
+
+      // Meta spend per owner+service (RT proportioning) and per service (leads proportioning)
+      const metaSpendByOwnerSvc = new Map();
+      const metaSpendBySvc      = new Map();
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adsetIsQhf.get(name)) continue;
+        const ownerSvcKey = adsetOwnerSvcKey.get(name) || 'unknown|other';
+        const svc         = adsetSvc.get(name) || 'other';
+        metaSpendByOwnerSvc.set(ownerSvcKey, (metaSpendByOwnerSvc.get(ownerSvcKey) || 0) + meta.spend);
+        metaSpendBySvc.set(svc, (metaSpendBySvc.get(svc) || 0) + meta.spend);
+      }
+
+      // LP totals per service (LP has no owner/adset info)
+      const lpBySvc = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const svc = getFormType(campaign_name, campaign_id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        if (!lpBySvc.has(svc)) lpBySvc.set(svc, { l: 0, s: 0 });
+        const v = lpBySvc.get(svc);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
+      }
+
       const out = [];
-      for (const name of allKeys) {
-        const meta   = metaMap.get(name) || { impressions: 0, clicks: 0, spend: 0 };
-        const rt     = rtMap.get(name)   || { views: 0, clicks: 0, cost: 0 };
-        const share  = totalSpend > 0 ? meta.spend / totalSpend : 0;
-        const visits = rt.views  > 0 ? rt.views  : meta.impressions;
-        const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
-        const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
-        out.push(lpRow(name, visits, clicks,
-          Math.round(totalL * share),
-          Math.round(totalS * share),
-          +(totalRev * share).toFixed(2), cost));
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adsetIsQhf.get(name)) continue;
+        const svc           = adsetSvc.get(name) || 'other';
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey   = adsetOwnerSvcKey.get(name) || 'unknown|other';
+        const rtBucketSpend = metaSpendByOwnerSvc.get(ownerSvcKey) || 0;
+        const svcSpend      = metaSpendBySvc.get(svc) || 0;
+        const rtShare       = rtBucketSpend > 0 ? meta.spend / rtBucketSpend : 0;
+        const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
+        const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        out.push(lpRow(name,
+          Math.round(rt.views   * rtShare),
+          Math.round(rt.clicks  * rtShare),
+          Math.round(lp.l * lpShare),
+          Math.round(lp.s * lpShare),
+          +(rt.revenue * rtShare).toFixed(2),
+          +(rt.cost    * rtShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
     // TITLE — Meta ad level
-    // Row label = Meta ad_name
-    // visits/clicks/cost = RT_AD joined by ad_name
-    //                      (falls back to Meta when RT empty)
-    // leads/sold/revenue  = LD_AD joined by ad_name
+    // Row labels = Meta ad_name; all performance from RT_SOURCE via owner+service bucket
     function buildTitleRows() {
-      const metaMap = aggMeta(r => r.ad_name || null);
-      const rtMap   = aggRt(RT_AD, r => r.ad_name || r.group_key || null);
-      const ldMap   = new Map();
-      for (const r of LD_AD) {
-        const { ad_name, date, leads, sold, revenue } = r;
-        if (!ad_name) continue;
+      const metaMap      = aggMeta(r => r.ad_name || null);
+      const rtByOwnerSvc = buildRtByOwnerSvc();
+
+      // Map ad_name → owner+service key, service, and QHF flag via parent campaign_name
+      const adOwnerSvcKey = new Map();
+      const adSvc         = new Map();
+      const adIsQhf       = new Map();
+      for (const r of META_ROWS) {
+        const ad = r.ad_name;
+        if (!ad || adOwnerSvcKey.has(ad)) continue;
+        const camp = r.campaign_name || '';
+        adOwnerSvcKey.set(ad, `${inferOwnerFromCampaign(camp)}|${inferFormFromCampaign(camp)}`);
+        adSvc.set(ad, inferFormFromCampaign(camp));
+        adIsQhf.set(ad, isQhfCampaign(camp));
+      }
+
+      // Meta spend per owner+service (RT proportioning) and per service (leads proportioning)
+      const metaSpendByOwnerSvc = new Map();
+      const metaSpendBySvc      = new Map();
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adIsQhf.get(name)) continue;
+        const ownerSvcKey = adOwnerSvcKey.get(name) || 'unknown|other';
+        const svc         = adSvc.get(name) || 'other';
+        metaSpendByOwnerSvc.set(ownerSvcKey, (metaSpendByOwnerSvc.get(ownerSvcKey) || 0) + meta.spend);
+        metaSpendBySvc.set(svc, (metaSpendBySvc.get(svc) || 0) + meta.spend);
+      }
+
+      // LP totals per service (LP has no owner/ad info)
+      const lpBySvc = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted } = r;
+        if (!campaign_name) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!ldMap.has(ad_name)) ldMap.set(ad_name, { l: 0, s: 0, rv: 0 });
-        const v = ldMap.get(ad_name);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
+        const svc = getFormType(campaign_name, campaign_id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        if (!lpBySvc.has(svc)) lpBySvc.set(svc, { l: 0, s: 0 });
+        const v = lpBySvc.get(svc);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
       }
-      // Anchor on Meta ad names only — LD_AD joins where ad_name matches
+
       const out = [];
       for (const [name, meta] of metaMap.entries()) {
-        const rt = rtMap.get(name) || { views: 0, clicks: 0, cost: 0 };
-        const ld = ldMap.get(name) || { l: 0, s: 0, rv: 0 };
-        const visits = rt.views  > 0 ? rt.views  : meta.impressions;
-        const clicks = rt.clicks > 0 ? rt.clicks : meta.clicks;
-        const cost   = rt.cost   > 0 ? rt.cost   : meta.spend;
-        out.push(lpRow(name, visits, clicks, ld.l, ld.s, ld.rv, cost));
+        if (!adIsQhf.get(name)) continue;
+        const svc           = adSvc.get(name) || 'other';
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey   = adOwnerSvcKey.get(name) || 'unknown|other';
+        const rtBucketSpend = metaSpendByOwnerSvc.get(ownerSvcKey) || 0;
+        const svcSpend      = metaSpendBySvc.get(svc) || 0;
+        const rtShare       = rtBucketSpend > 0 ? meta.spend / rtBucketSpend : 0;
+        const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
+        const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        out.push(lpRow(name,
+          Math.round(rt.views   * rtShare),
+          Math.round(rt.clicks  * rtShare),
+          Math.round(lp.l * lpShare),
+          Math.round(lp.s * lpShare),
+          +(rt.revenue * rtShare).toFixed(2),
+          +(rt.cost    * rtShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -832,7 +1160,11 @@
     // clicks/cost = Meta data
     // leads/sold/revenue = LP proportional by spend share
     function buildPlacementRows() {
-      const metaMap       = aggMeta(r => r.placement || null);
+      const metaMap       = aggMeta(r => {
+        if (!r.placement) return null;
+        if (FILTERS.form && inferFormFromCampaign(r.campaign_name) !== FILTERS.form) return null;
+        return r.placement;
+      });
       const totalSpend    = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
       const totalImpress  = [...metaMap.values()].reduce((s, v) => s + v.impressions, 0);
       const totalRtViews  = totalRtViewsInRange();
@@ -851,106 +1183,313 @@
       return out;
     }
 
-    // LANDING — LD_LANDING anchor (leads table landing_page_url path)
-    // Row label = URL path slug (e.g. bath-remodel, roofing-asphalt)
-    // visits estimated proportionally from RT_DAILY total
-    // leads/sold/revenue from leads table grouped by landing path
+    // LANDING — LP_ROWS as source for leads/sold (full LP lead counts, not LD_LANDING
+    // which is incomplete because most leads have null landing_page_url in our table).
+    // Row label = landing path inferred from LP campaign name.
+    // LP campaign → landing path: Bath→bath, Roofing→roof, Windows→windows, Tub→tub
+    // visits/clicks = RT total × Meta impression/click share per service type
+    // cost = RT cost × Meta spend share per service type
     function buildLandingRows() {
+      // Map LP campaign name to landing path label
+      function lpCampToPath(name) {
+        const n = (name || '').toLowerCase();
+        if (n === 'tub' || n.includes('tub')) return 'tub';
+        if (n.includes('bath') || n.includes('shower')) return 'bath';
+        if (n.includes('roof')) return 'roof';
+        if (n.includes('window') || n.includes('windo')) return 'windows';
+        if (n.includes('gutter')) return 'gutter';
+        if (n.includes('solar')) return 'solar';
+        return null;
+      }
+
+      // Step 1: LP_ROWS → leads/sold per landing path
       const m = new Map();
-      for (const r of LD_LANDING) {
-        const { landing_path, date, leads, sold, revenue } = r;
-        if (!landing_path) continue;
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from  && date < FILTERS.from) continue;
+        if (FILTERS.to    && date > FILTERS.to)   continue;
+        if (FILTERS.form  && getFormType(campaign_name, campaign_id) !== FILTERS.form)  continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name)   !== FILTERS.buyer) continue;
+        const path = lpCampToPath(campaign_name);
+        if (!path) continue;
+        if (!m.has(path)) m.set(path, { l: 0, s: 0, rv: 0 });
+        const v = m.get(path);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0, totalRtRevenue = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews   += Number(r.lp_views  || 0);
+        totalRtClicks  += Number(r.lp_clicks || 0);
+        totalRtCost    += Number(r.cost      || 0);
+        totalRtRevenue += Number(r.revenue   || 0);
+      }
+
+      // Step 3: Meta impressions/clicks/spend per service type — QHF campaigns only
+      const metaByService = new Map();
+      for (const r of META_ROWS) {
+        const date = r.date || '';
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (!m.has(landing_path)) m.set(landing_path, { l: 0, s: 0, rv: 0 });
-        const v = m.get(landing_path);
-        v.l  += Number(leads   || 0);
-        v.s  += Number(sold    || 0);
-        v.rv += Number(revenue || 0);
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const svc = inferFormFromCampaign(r.campaign_name);
+        if (!metaByService.has(svc)) metaByService.set(svc, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByService.get(svc);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
       }
-      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalRtViews = totalRtViewsInRange();
+      const totalMetaImp   = [...metaByService.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByService.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByService.values()].reduce((s, v) => s + v.spend, 0);
+      const totalLeads     = [...m.values()].reduce((s, v) => s + v.l, 0);
+
       const out = [];
       for (const [path, v] of m.entries()) {
-        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        out.push(lpRow(path, visits, 0, v.l, v.s, v.rv, 0));
+        const svc       = inferFormFromCampaign(path);
+        const meta      = metaByService.get(svc) || { imp: 0, clk: 0, spend: 0 };
+        const leadShare = totalLeads > 0 ? v.l / totalLeads : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : leadShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : leadShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : leadShare;
+        const visits = Math.round(totalRtViews  * impShare);
+        const clicks = Math.round(totalRtClicks * clkShare);
+        const cost   = +(totalRtCost    * costShare).toFixed(2);
+        const rev    = +(totalRtRevenue * costShare).toFixed(2);
+        out.push(lpRow(path, visits, clicks, v.l, v.s, rev, cost));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // STATE — LD_STATE anchor; visits proportional from RT_DAILY total
+    // STATE — LD_STATE for leads/sold; RT views/clicks proportioned by Meta region share
+    // Meta uses full state names ("Texas"), leads table uses 2-letter codes ("TX")
+    const STATE_CODE_TO_NAME = {
+      AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
+      CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',
+      HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',
+      KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',
+      MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+      MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',
+      NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',
+      OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',
+      SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',
+      VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
+    };
     function buildStateRows() {
+      // Step 1: LD_STATE leads/sold by state code
       const m = new Map();
       for (const r of LD_STATE) {
-        const { state, date, leads, sold, revenue } = r;
+        const { state, form_type, date, leads, sold, revenue } = r;
         if (!state) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
         if (!m.has(state)) m.set(state, { l: 0, s: 0, rv: 0 });
         const v = m.get(state);
         v.l  += Number(leads   || 0);
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const totalLeads   = [...m.values()].reduce((s, v) => s + v.l, 0);
-      const totalRtViews = totalRtViewsInRange();
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews  += Number(r.lp_views  || 0);
+        totalRtClicks += Number(r.lp_clicks || 0);
+        totalRtCost   += Number(r.cost      || 0);
+      }
+
+      // Step 3: Meta impressions/clicks by region — QHF campaigns only (excludes non-QHF like HC|Fence)
+      const metaByRegion = new Map();
+      for (const r of META_ROWS) {
+        const region = (r.region || '').trim();
+        if (!region) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const key = region.toLowerCase();
+        if (!metaByRegion.has(key)) metaByRegion.set(key, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByRegion.get(key);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByRegion.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByRegion.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByRegion.values()].reduce((s, v) => s + v.spend, 0);
+      const ldTotal        = [...m.values()].reduce((s, v) => s + v.l, 0);
+      // Scale to LP ground truth — LD table over-counts (260 vs LP 122)
+      const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+
       const out = [];
-      for (const [state, v] of m.entries()) {
-        const visits = totalLeads > 0 ? Math.round(totalRtViews * (v.l / totalLeads)) : 0;
-        out.push(lpRow(state, visits, 0, v.l, v.s, v.rv, 0));
+      for (const [code, v] of m.entries()) {
+        if (FILTERS.state && code !== FILTERS.state) continue;
+        const fullName  = (STATE_CODE_TO_NAME[code] || code).toLowerCase();
+        const meta      = metaByRegion.get(fullName) || { imp: 0, clk: 0, spend: 0 };
+        const ldShare   = ldTotal > 0 ? v.l / ldTotal : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : ldShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : ldShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : ldShare;
+        const visits = Math.round(totalRtViews  * impShare);
+        const clicks = Math.round(totalRtClicks * clkShare);
+        const cost   = +(totalRtCost  * costShare).toFixed(2);
+        const rev    = +(lpTotalRev   * ldShare).toFixed(2);
+        const l = Math.round(lpTotal * ldShare);
+        const s = Math.round(lpSold  * ldShare);
+        out.push(lpRow(code, visits, clicks, l, s, rev, cost));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // DEVICE — RT_DEVICE + LD_DEVICE joined on normalized device name
+    // DEVICE — LD_DEVICE for leads/sold; RT views/clicks proportioned by Meta device share
+    // RT_DEVICE is empty (RT ignores group_by for this account).
+    // Meta device_platform: mobile_app/mobile_web → "mobile", desktop → "desktop"
     function buildDeviceRows() {
+      // Step 1: LD_DEVICE leads/sold
       const ldMap = new Map();
       for (const r of LD_DEVICE) {
-        const { device, date, leads, sold, revenue } = r;
+        const { device, form_type, date, leads, sold, revenue } = r;
         if (!device) continue;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
         if (!ldMap.has(device)) ldMap.set(device, { l: 0, s: 0, rv: 0 });
         const v = ldMap.get(device);
         v.l  += Number(leads   || 0);
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const rtMap = aggRt(RT_DEVICE, r => normalizeDevice(r.group_key));
-      const allKeys = new Set([...ldMap.keys(), ...rtMap.keys()]);
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews  += Number(r.lp_views  || 0);
+        totalRtClicks += Number(r.lp_clicks || 0);
+        totalRtCost   += Number(r.cost      || 0);
+      }
+
+      // Step 3: Meta impressions/clicks by normalized device — QHF campaigns only
+      const metaByDevice = new Map();
+      for (const r of META_ROWS) {
+        if (!r.device) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const key = normalizeDevice(r.device);
+        if (!metaByDevice.has(key)) metaByDevice.set(key, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByDevice.get(key);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByDevice.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByDevice.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByDevice.values()].reduce((s, v) => s + v.spend, 0);
+      const ldTotal        = [...ldMap.values()].reduce((s, v) => s + v.l, 0);
+      const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const allKeys = new Set([...ldMap.keys(), ...metaByDevice.keys()]);
       const out = [];
       for (const dev of allKeys) {
-        const lp  = ldMap.get(dev) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(dev) || { views: 0, clicks: 0, cost: 0 };
-        out.push(lpRow(dev, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
+        if (FILTERS.device && dev !== FILTERS.device) continue;
+        const lp       = ldMap.get(dev)        || { l: 0, s: 0, rv: 0 };
+        const meta     = metaByDevice.get(dev) || { imp: 0, clk: 0, spend: 0 };
+        const ldShare   = ldTotal > 0 ? lp.l / ldTotal : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : ldShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : ldShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : ldShare;
+        out.push(lpRow(dev,
+          Math.round(totalRtViews  * impShare),
+          Math.round(totalRtClicks * clkShare),
+          Math.round(lpTotal * ldShare),
+          Math.round(lpSold  * ldShare),
+          +(lpTotalRev * ldShare).toFixed(2),
+          +(totalRtCost * costShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // OS — RT_OS + LD_OS joined on normalized OS name
+    // OS — LD_OS for leads/sold; RT views/clicks proportioned by Meta impression_device share
+    // RT_OS is empty (RT ignores group_by for this account).
+    // Meta impression_device: iphone/ipad → "ios", android_* → "android", desktop → "windows"
     function buildOsRows() {
+      // Step 1: LD_OS leads/sold — normalize key so 'windows'/'macos' → 'desktop' (matches Meta)
       const ldMap = new Map();
       for (const r of LD_OS) {
-        const { os, date, leads, sold, revenue } = r;
+        const { os, form_type, date, leads, sold, revenue } = r;
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        const key = os || 'other';
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        const key = normalizeOs(os || 'other');
         if (!ldMap.has(key)) ldMap.set(key, { l: 0, s: 0, rv: 0 });
         const v = ldMap.get(key);
         v.l  += Number(leads   || 0);
         v.s  += Number(sold    || 0);
         v.rv += Number(revenue || 0);
       }
-      const rtMap = aggRt(RT_OS, r => normalizeOs(r.group_key));
-      const allKeys = new Set([...ldMap.keys(), ...rtMap.keys()]);
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews  += Number(r.lp_views  || 0);
+        totalRtClicks += Number(r.lp_clicks || 0);
+        totalRtCost   += Number(r.cost      || 0);
+      }
+
+      // Step 3: Meta impressions/clicks by normalized OS — QHF campaigns only
+      const metaByOs = new Map();
+      for (const r of META_ROWS) {
+        if (!r.os) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const key = normalizeOs(r.os);
+        if (!metaByOs.has(key)) metaByOs.set(key, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByOs.get(key);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByOs.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByOs.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByOs.values()].reduce((s, v) => s + v.spend, 0);
+      const ldTotal        = [...ldMap.values()].reduce((s, v) => s + v.l, 0);
+      const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+
+      const allKeys = new Set([...ldMap.keys(), ...metaByOs.keys()]);
       const out = [];
       for (const os of allKeys) {
-        const lp  = ldMap.get(os) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(os) || { views: 0, clicks: 0, cost: 0 };
-        out.push(lpRow(os, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost));
+        if (FILTERS.os && os.toLowerCase() !== FILTERS.os.toLowerCase()) continue;
+        const lp       = ldMap.get(os)    || { l: 0, s: 0, rv: 0 };
+        const meta     = metaByOs.get(os) || { imp: 0, clk: 0, spend: 0 };
+        const ldShare   = ldTotal > 0 ? lp.l / ldTotal : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : ldShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : ldShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : ldShare;
+        out.push(lpRow(os,
+          Math.round(totalRtViews  * impShare),
+          Math.round(totalRtClicks * clkShare),
+          Math.round(lpTotal * ldShare),
+          Math.round(lpSold  * ldShare),
+          +(lpTotalRev * ldShare).toFixed(2),
+          +(totalRtCost * costShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -962,6 +1501,7 @@
         { title: "Date",      label: "DATE",      rows: buildDateRows()       },
         { title: "Form",      label: "FORM",      rows: buildFormRows()       },
         { title: "Source",    label: "SOURCE",    rows: buildSourceRows()     },
+        { title: "Buyer",     label: "BUYER",     rows: buildBuyerRows()      },
         { title: "Widget ID", label: "WIDGET ID", rows: buildWidgetRows()     },
         { title: "Teaser ID", label: "TEASER ID", rows: buildTeaserRows()     },
         { title: "Title",     label: "TITLE",     rows: buildTitleRows()      },
@@ -1015,18 +1555,22 @@
     // ── Render ───────────────────────────────────────────────────────────────
     function renderTable(t) {
       const headers = [t.label, ...METRIC_COLS]
+        .filter((_, i) => !HIDDEN_COLS.has(i))
         .map((h, i) => `<th class="${i === 0 ? 'text-left' : 'text-right'}">${h}</th>`).join("");
 
       const rowsHtml = t.rows.map(r => {
-        const cells = r.map((v, i) => {
-          if (i === 0) return `<td class="label">${v}</td>`;
-          let cls = "num";
-          const isPct = typeof v === "string" && v.endsWith("%");
-          if (isPct) cls += " " + pctClass(i, v);
-          else if (i === ADJ_IDX) cls += " " + adjustmentClass(v);
-          else if (i === REV_IDX) cls += " " + revenueClass(v);
-          return `<td class="${cls.trim()}">${v}</td>`;
-        }).join("");
+        const cells = r
+          .map((v, origIdx) => ({ v, origIdx }))
+          .filter(({ origIdx }) => !HIDDEN_COLS.has(origIdx))
+          .map(({ v, origIdx }) => {
+            if (origIdx === 0) return `<td class="label">${v}</td>`;
+            let cls = "num";
+            const isPct = typeof v === "string" && v.endsWith("%");
+            if (isPct) cls += " " + pctClass(origIdx, v);
+            else if (origIdx === ADJ_IDX) cls += " " + adjustmentClass(v);
+            else if (origIdx === REV_IDX) cls += " " + revenueClass(v);
+            return `<td class="${cls.trim()}">${v}</td>`;
+          }).join("");
         return `<tr>${cells}</tr>`;
       }).join("");
 
@@ -1067,13 +1611,14 @@
     }
 
     // ── Filter state ─────────────────────────────────────────────────────────
+    // Use local date parts (not toISOString which is UTC and shifts date in +5:30 timezone)
+    const _localISO  = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const _today30   = new Date();
     const _thirtyAgo = new Date(_today30 - 30 * 86400000);
-    const _isoStr    = d => d.toISOString().slice(0, 10);
     const FILTERS = {
       form: "", source: "", buyer: "", state: "", device: "", os: "",
-      from: _isoStr(_thirtyAgo),
-      to:   _isoStr(_today30),
+      from: _localISO(_thirtyAgo),
+      to:   _localISO(_today30),
       hideLow: false
     };
 
@@ -1112,7 +1657,7 @@
       endDate: today,
       format: "DD-MM-YYYY",
       delimiter: "  →  ",
-      autoApply: false,
+      autoApply: true,
       plugins: ["ranges"],
       ranges: {
         position: "left",
@@ -1134,12 +1679,10 @@
           ],
         }
       },
-      buttonText: { apply: "Apply", cancel: "Cancel" },
       setup: (picker) => {
         picker.on("selected", (s, e) => {
-          const iso = d => d.toISOString().slice(0, 10);
-          FILTERS.from = iso(s.dateInstance);
-          FILTERS.to   = iso(e.dateInstance);
+          FILTERS.from = _localISO(s.dateInstance);
+          FILTERS.to   = _localISO(e.dateInstance);
           rerender();
         });
       },
