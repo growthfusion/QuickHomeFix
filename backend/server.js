@@ -6,7 +6,14 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { createClient } from "@clickhouse/client";
+import cron from "node-cron";
+import { fetchMeta } from "./jobs/fetchMeta.js";
+import { fetchLeadProsper } from "./jobs/fetchLeadProsper.js";
+import { fetchRedTrack } from "./jobs/fetchRedTrack.js";
+import { fetchThumbTack } from "./jobs/fetchThumbTack.js";
 
 // Force local .env values to override any stale system env vars.
 dotenv.config({ override: true });
@@ -863,6 +870,10 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
   return delivery;
 }
 
+// --- Static frontend ---
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, '..', 'frontend'), { extensions: ['html'] }));
+
 // --- Security & basics ---
 app.set("trust proxy", 1);
 app.use(helmet());
@@ -940,6 +951,26 @@ async function runClickhouseSelect(query) {
     format: "JSONEachRow",
   });
   return resultSet.json();
+}
+
+export function inferFormTypeFromLead(normalizedService, landingPageUrl) {
+  if (normalizedService) {
+    const s = normalizedService.toUpperCase();
+    if (s.includes('BATH') || s.includes('TUB') || s.includes('SHOWER')) return 'bath';
+    if (s.includes('ROOF')) return 'roof';
+    if (s.includes('WINDOW')) return 'windo';
+    if (s.includes('GUTTER')) return 'gutters';
+    if (s.includes('SOLAR')) return 'solar';
+  }
+  if (landingPageUrl) {
+    const p = landingPageUrl.toLowerCase();
+    if (p.includes('/bath') || p.includes('/shower')) return 'bath';
+    if (p.includes('/roof')) return 'roof';
+    if (p.includes('/window')) return 'windo';
+    if (p.includes('/gutter')) return 'gutters';
+    if (p.includes('/solar')) return 'solar';
+  }
+  return 'other';
 }
 
 // --- Google Places proxy (your existing code) ---
@@ -1207,10 +1238,13 @@ const LeadSchema = z.object({
   sunExposure: z.string().optional().or(z.literal("")),
   trustedFormToken: z.string().optional().or(z.literal("")),
   homePhoneConsentLanguage: z.string().optional().or(z.literal("")),
-  rt_ad:     z.string().optional().or(z.literal("")),
-  fbclid:    z.string().optional().or(z.literal("")),
-  clickid:   z.string().optional().or(z.literal("")),
-  source_id: z.string().optional().or(z.literal("")),
+  rt_ad:         z.string().optional().or(z.literal("")),
+  fbclid:        z.string().optional().or(z.literal("")),
+  clickid:       z.string().optional().or(z.literal("")),
+  source_id:     z.string().optional().or(z.literal("")),
+  ad_name:       z.string().optional().or(z.literal("")),
+  adset_name:    z.string().optional().or(z.literal("")),
+  campaign_name: z.string().optional().or(z.literal("")),
 });
 
 app.post("/api/leads", async (req, res) => {
@@ -1305,9 +1339,12 @@ app.post("/api/leads", async (req, res) => {
         partnerDelivery?.postResponse?.status ||
         partnerDelivery?.reason ||
         null,
-      client_ip: clientIp,
-      user_agent: ua,
-      created_at: createdAt,
+      client_ip:     clientIp,
+      user_agent:    ua,
+      created_at:    createdAt,
+      ad_name:       data.ad_name       || data.rt_ad      || null,
+      adset_name:    data.adset_name    || null,
+      campaign_name: data.campaign_name || null,
     };
 
     let dbInsert = { saved: false };
@@ -1357,8 +1394,59 @@ app.post("/api/dev/migrate", async (_req, res) => {
     if (!clickhouse) {
       throw new Error("ClickHouse is not configured. Set CLICKHOUSE_* values in backend/.env");
     }
-    await clickhouse.command({
-      query: `
+
+    const migrationQueries = [
+      // 1. Drop orphaned campaign_mapping table
+      `DROP TABLE IF EXISTS campaign_mapping`,
+      // 2. Drop and recreate redtrack_stats with new schema (must DROP to update columns)
+      `DROP TABLE IF EXISTS redtrack_stats`,
+      `
+        CREATE TABLE redtrack_stats (
+          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
+          date            Date,
+          breakdown_type  String,
+          group_key       String,
+          campaign_name   String,
+          adset_name      String,
+          ad_name         String,
+          channel         String,
+          lander_name     String,
+          lp_views        UInt32,
+          lp_clicks       UInt32,
+          lp_ctr          Float64,
+          conversions     UInt32,
+          purchases       UInt32,
+          revenue         Float64,
+          cost            Float64,
+          roi             Float64,
+          device          String,
+          os              String,
+          region          String,
+          rt_platform     String DEFAULT '',
+          rt_service      String DEFAULT '',
+          rt_owner        String DEFAULT ''
+        ) ENGINE = MergeTree()
+        ORDER BY (date, breakdown_type, group_key, campaign_name, adset_name, ad_name)
+      `,
+      // 3. LeadProsper stats (unchanged — CREATE IF NOT EXISTS is safe)
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_stats (
+          fetched_at      DateTime64(3, 'UTC') DEFAULT now64(3),
+          date            Date,
+          campaign_id     String,
+          campaign_name   String,
+          leads_total     UInt32,
+          leads_accepted  UInt32,
+          leads_failed    UInt32,
+          leads_returned  UInt32,
+          total_buy       Float64,
+          total_sell      Float64,
+          net_profit      Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id)
+      `,
+      // 4. Leads table (unchanged base schema)
+      `
         CREATE TABLE IF NOT EXISTS ${CLICKHOUSE_TABLE}
         (
           id UUID DEFAULT generateUUIDv4(),
@@ -1418,7 +1506,36 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ENGINE = MergeTree
         ORDER BY (created_at, id)
       `,
-    });
+      // 5. Thumbtack stats from Google Sheets
+      `
+        CREATE TABLE IF NOT EXISTS thumbtack_stats (
+          fetched_at        DateTime64(3, 'UTC') DEFAULT now64(3),
+          date              Date,
+          campaign_id       String,
+          category          String,
+          form_type         String,
+          sessions          UInt32,
+          visitors          UInt32,
+          contacts_created  UInt32,
+          pros_contacted    UInt32,
+          revenue           Float64,
+          net_revenue       Float64,
+          owed_revenue      Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, category)
+      `,
+      // 6-9. Add columns that may be absent in tables created before schema updates
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS normalized_service Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name            Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS adset_name         Nullable(String)`,
+      `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS campaign_name      Nullable(String)`,
+    ];
+
+    // Execute all migrations sequentially
+    for (const query of migrationQueries) {
+      await clickhouse.command({ query });
+    }
+
     res.json({ ok: true, migrated: true });
   } catch (e) {
     console.error("Migration error:", e);
@@ -1655,11 +1772,18 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
     return res.status(400).json({ error: "zipCode must be a 5-digit US ZIP code" });
   }
 
+
+
   // Whitelist of UTM keys Thumbtack accepts.
   // utm_medium and utm_tt_session are explicitly disallowed by Thumbtack.
   const ALLOWED_UTM_KEYS = [
+
     "utm_source",
     "utm_campaign",
+
+
+
+    
     "utm_content",
     "utm_subid",
     "utm_user_hash",
@@ -1709,6 +1833,271 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
   }
 });
 // ───────────────────────────────────────────────────────────────────────────
+
+// --- Initial API sync on startup ---
+Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
+  .then(() => console.log('[startup] Initial API sync complete'));
+
+// --- Hourly cron scheduler ---
+cron.schedule('0 * * * *', () => {
+  console.log('[cron] Starting hourly API sync...');
+  Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
+    .then(() => console.log('[cron] Hourly sync complete'));
+});
+
+// --- GET endpoints for latest stats snapshots ---
+app.get("/api/stats/thumbtack", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM thumbtack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM thumbtack_stats) ORDER BY date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/thumbtack]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/meta", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM meta_ad_stats WHERE fetched_at = (SELECT max(fetched_at) FROM meta_ad_stats) ORDER BY date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/meta]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/leadprosper", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_stats WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_stats) ORDER BY date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/leadprosper]', e.message);
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/redtrack", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM redtrack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM redtrack_stats) ORDER BY date DESC`
+    );
+    const result = { daily: [], source: [], channel: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] };
+    for (const r of rows) {
+      const key = r.breakdown_type;
+      if (result[key]) result[key].push(r);
+    }
+    res.json(result);
+  } catch (e) {
+    console.error('[/api/stats/redtrack]', e.message);
+    res.status(500).json({ daily: [], source: [], channel: [], campaign: [], adset: [], ad: [], os: [], device: [], region: [], lander: [] });
+  }
+});
+
+
+// Manually trigger all fetch jobs and return results
+app.post("/api/dev/force-fetch", async (_req, res) => {
+  try {
+    const [metaResult, lpResult, rtResult, ttResult] = await Promise.allSettled([
+      fetchMeta(),
+      fetchLeadProsper(),
+      fetchRedTrack(),
+      fetchThumbTack(),
+    ]);
+    res.json({
+      meta:        metaResult.status === 'fulfilled' ? 'ok' : metaResult.reason?.message,
+      leadprosper: lpResult.status === 'fulfilled'   ? 'ok' : lpResult.reason?.message,
+      redtrack:    rtResult.status === 'fulfilled'   ? 'ok' : rtResult.reason?.message,
+      thumbtack:   ttResult.status === 'fulfilled'   ? 'ok' : ttResult.reason?.message,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/stats/lp-form-map', async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(`
+      SELECT
+        lp_campaign_id,
+        any(normalized_service) AS sample_service,
+        any(landing_page_url)   AS sample_url
+      FROM ${CLICKHOUSE_TABLE}
+      WHERE created_at >= now() - INTERVAL 90 DAY
+        AND lp_campaign_id IS NOT NULL
+        AND lp_campaign_id != ''
+      GROUP BY lp_campaign_id
+    `);
+    const result = rows.map(r => ({
+      lp_campaign_id: r.lp_campaign_id,
+      form_type: inferFormTypeFromLead(r.sample_service, r.sample_url),
+    }));
+    res.json(result);
+  } catch (e) {
+    console.error('[lp-form-map]', e.message);
+    res.json([]);
+  }
+});
+
+
+app.get('/api/stats/leads-breakdown', async (_req, res) => {
+  try {
+    const [stateRows, deviceRows, osRows, campaignRows, adRows] = await Promise.all([
+      runClickhouseSelect(`
+        SELECT
+          state,
+          multiIf(
+            normalized_service LIKE '%BATH%' OR normalized_service LIKE '%TUB%' OR normalized_service LIKE '%SHOWER%'
+              OR landing_page_url LIKE '%/bath%' OR landing_page_url LIKE '%/shower%', 'bath',
+            normalized_service LIKE '%ROOF%' OR landing_page_url LIKE '%/roof%', 'roof',
+            normalized_service LIKE '%WINDOW%' OR landing_page_url LIKE '%/window%', 'windo',
+            normalized_service LIKE '%GUTTER%' OR landing_page_url LIKE '%/gutter%', 'gutters',
+            normalized_service LIKE '%SOLAR%' OR landing_page_url LIKE '%/solar%', 'solar',
+            'other'
+          ) AS form_type,
+          toDate(created_at) AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND state IS NOT NULL
+          AND state != ''
+        GROUP BY state, form_type, date
+        ORDER BY date DESC, leads DESC
+      `).catch(e => { console.error('[leads-breakdown state]', e.message); return []; }),
+
+      runClickhouseSelect(`
+        SELECT
+          multiIf(
+            user_agent LIKE '%Mobile%' OR user_agent LIKE '%Android%', 'mobile',
+            'desktop'
+          ) AS device,
+          multiIf(
+            normalized_service LIKE '%BATH%' OR normalized_service LIKE '%TUB%' OR normalized_service LIKE '%SHOWER%'
+              OR landing_page_url LIKE '%/bath%' OR landing_page_url LIKE '%/shower%', 'bath',
+            normalized_service LIKE '%ROOF%' OR landing_page_url LIKE '%/roof%', 'roof',
+            normalized_service LIKE '%WINDOW%' OR landing_page_url LIKE '%/window%', 'windo',
+            normalized_service LIKE '%GUTTER%' OR landing_page_url LIKE '%/gutter%', 'gutters',
+            normalized_service LIKE '%SOLAR%' OR landing_page_url LIKE '%/solar%', 'solar',
+            'other'
+          ) AS form_type,
+          toDate(created_at) AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND user_agent IS NOT NULL
+          AND user_agent != ''
+        GROUP BY device, form_type, date
+        ORDER BY date DESC, leads DESC
+      `).catch(e => { console.error('[leads-breakdown device]', e.message); return []; }),
+
+      runClickhouseSelect(`
+        SELECT
+          multiIf(
+            user_agent LIKE '%iPhone%' OR user_agent LIKE '%iPad%' OR user_agent LIKE '%iPod%', 'ios',
+            user_agent LIKE '%Android%', 'android',
+            user_agent LIKE '%Windows%', 'windows',
+            user_agent LIKE '%Macintosh%', 'macos',
+            'other'
+          ) AS os,
+          multiIf(
+            normalized_service LIKE '%BATH%' OR normalized_service LIKE '%TUB%' OR normalized_service LIKE '%SHOWER%'
+              OR landing_page_url LIKE '%/bath%' OR landing_page_url LIKE '%/shower%', 'bath',
+            normalized_service LIKE '%ROOF%' OR landing_page_url LIKE '%/roof%', 'roof',
+            normalized_service LIKE '%WINDOW%' OR landing_page_url LIKE '%/window%', 'windo',
+            normalized_service LIKE '%GUTTER%' OR landing_page_url LIKE '%/gutter%', 'gutters',
+            normalized_service LIKE '%SOLAR%' OR landing_page_url LIKE '%/solar%', 'solar',
+            'other'
+          ) AS form_type,
+          toDate(created_at) AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND user_agent IS NOT NULL
+          AND user_agent != ''
+        GROUP BY os, form_type, date
+        ORDER BY date DESC, leads DESC
+      `).catch(e => { console.error('[leads-breakdown os]', e.message); return []; }),
+
+      runClickhouseSelect(`
+        SELECT
+          campaign_name,
+          adset_name,
+          toDate(created_at)     AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND campaign_name IS NOT NULL
+          AND campaign_name != ''
+        GROUP BY campaign_name, adset_name, date
+        ORDER BY date DESC
+      `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
+
+      runClickhouseSelect(`
+        SELECT
+          ad_name,
+          adset_name,
+          campaign_name,
+          toDate(created_at)     AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND ad_name IS NOT NULL
+          AND ad_name != ''
+        GROUP BY ad_name, adset_name, campaign_name, date
+        ORDER BY date DESC
+      `).catch(e => { console.error('[leads-breakdown query]', e.message); return []; }),
+    ]);
+
+    const [dateRows, landingRows] = await Promise.all([
+      runClickhouseSelect(`
+        SELECT
+          toDate(created_at) AS date,
+          count() AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout) AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+        GROUP BY date
+        ORDER BY date DESC
+      `).catch(e => { console.error('[leads-breakdown date]', e.message); return []; }),
+
+      runClickhouseSelect(`
+        SELECT
+          replaceRegexpOne(path(landing_page_url), '^.+/', '') AS landing_path,
+          toDate(created_at) AS date,
+          count()                AS leads,
+          sum(partner_delivered) AS sold,
+          sum(partner_payout)    AS revenue
+        FROM ${CLICKHOUSE_TABLE}
+        WHERE created_at >= now() - INTERVAL 30 DAY
+          AND landing_page_url IS NOT NULL
+          AND landing_page_url != ''
+        GROUP BY landing_path, date
+        ORDER BY date DESC, leads DESC
+      `).catch(e => { console.error('[leads-breakdown landing]', e.message); return []; }),
+    ]);
+
+    res.json({ date: dateRows, state: stateRows, device: deviceRows, os: osRows, campaign: campaignRows, ad: adRows, landing: landingRows });
+  } catch (e) {
+    console.error('[leads-breakdown]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

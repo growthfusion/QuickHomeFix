@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Set to backend Cloud Run URL when frontend and backend are separate services.
+    // Leave as empty string '' for same-origin (local dev / single-service deploy).
+    window.BACKEND_URL = 'https://quickhomefix-backend-test-1087056959880.us-central1.run.app';
+  </script>
   <script src="/dash/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -299,10 +304,13 @@
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">form</label>
-          <select id="form-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
+              <select id="form-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="roof">roof</option>
-            <option value="bath">bath</option>
+            <option value="bath">Bath</option>
+            <option value="roof">Roofing</option>
+            <option value="windo">Windows</option>
+            <option value="gutters">Gutters</option>
+            <option value="solar">Solar</option>
           </select>
         </div>
         <div class="flex flex-col">
@@ -311,13 +319,13 @@
             <option value="">all</option>
             <option value="meta">Meta</option>
             <option value="snap">Snap</option>
+            <option value="google">Google</option>
           </select>
         </div>
         <div class="flex flex-col">
           <label class="text-xs text-gray-500 mb-1">buyer</label>
           <select id="buyer-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="Karigouda">Karigouda</option>
           </select>
         </div>
         <div class="flex flex-col">
@@ -398,618 +406,1245 @@
     </div>
   </div>
 
+
   <!-- Tables container -->
   <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
 
   <script>
+    // ── Metric column headers (33 columns after the label) ──────────────────
+    // Row index:  0=label
+    //  1=VISITS  2=CTR,%  3=CLICKS  4=CR,%  5=EMAILS
+    //  6=LEADS  7=SOLD  8=%  9=APPTS  10=%
+    //  11=UPSELLS  12=SOLD  13=%  14=UPSELL_RATE,%
+    //  15=PPC  16=SOLD  17=%  18=PPC_RATE,%
+    //  19=THUMBTACK  20=SOLD  21=%
+    //  22=TOTAL REVENUE,$  23=LEADS,$  24=COST,$
+    //  25=UPSELLS,$  26=THUMBTACK,$  27=PPC,$  28=REPOSTS,$  29=ADJUSTMENT,$
+    //  30=AVG PER LEAD,$  31=AVG PER SOLD,$  32=EPC,$  33=EPV,$
+    // Backend URL — empty string means same origin (local dev).
+    // On production set window.BACKEND_URL via a separate config or just hardcode here.
+    const API_BASE = (window.BACKEND_URL || '').replace(/\/$/, '');
+
+    // ── Buyer config ─────────────────────────────────────────────────────────
+    // To add a new buyer: add one entry here. key = short slug used everywhere
+    // internally; label = display name; keywords = strings that appear in their
+    // RedTrack source titles or Meta campaign names (all lowercased).
+    const BUYERS = [
+      { key: 'kg',      label: 'Karigouda', keywords: ['karigouda', 'kg'] },
+      { key: 'ak',      label: 'Ankith',    keywords: ['ankith', 'ak', 'anki'] },
+      { key: 'viknesh', label: 'Viknesh',   keywords: ['viknesh', 'vk', 'vn', 'google'] },
+    ];
+
     const METRIC_COLS = [
-      "VISITS","CTR, %","CLICKS","CR, %","EMAILS","LEADS","SOLD","%",
-      "APPTS","%","UPSELLS","SOLD","%","UPSELL_RATE, %",
-      "PPC","SOLD","%","PPC_RATE, %",
-      "THUMBTACK","SOLD","%",
-      "TOTAL REVENUE, $","LEADS, $","COST, $","UPSELLS, $","THUMBTACK, $","PPC, $","REPOSTS, $",
-      "ADJUSTMENT, $","AVG PER LEAD, $","AVG PER SOLD, $","EPC, $","EPV, $"
+      "VISITS", "CTR, %", "CLICKS", "CR, %", "EMAILS",
+      "LEADS", "SOLD", "%", "APPTS", "%",
+      "UPSELLS", "SOLD", "%", "UPSELL_RATE, %",
+      "PPC", "SOLD", "%", "PPC_RATE, %",
+      "THUMBTACK", "SOLD", "%",
+      "TOTAL REVENUE, $", "LEADS, $", "COST, $",
+      "UPSELLS, $", "THUMBTACK, $", "PPC, $", "REPOSTS, $", "ADJUSTMENT, $",
+      "AVG PER LEAD, $", "AVG PER SOLD, $", "EPC, $", "EPV, $"
     ];
 
-    /* ── Lead-level dataset (Bath only, from LP_leads_33966_bath CSV — deduped) ── */
-    /* fields: date, form, source, state, os, device, buyer, rev */
-    const LEADS = [
-      ["2026-05-11","bath","meta","NY","iOS","smartphone","",          0],
-      ["2026-05-08","bath","meta","MO","Android","smartphone","",      0],
-      ["2026-05-08","bath","meta","MO","Android","smartphone","",      0],
-      ["2026-05-07","bath","meta","FL","iOS","smartphone","",          0],
-      ["2026-05-07","bath","meta","FL","iOS","smartphone","",          0],
-      ["2026-05-07","bath","",    "NC","Windows","desktop","Karigouda",40],
-      ["2026-05-07","bath","",    "TX","Windows","desktop","",         0],
-      ["2026-05-06","bath","meta","TX","Android","smartphone","",      0],
-      ["2026-05-06","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-05-06","bath","meta","ME","Android","smartphone","",      0],
-      ["2026-05-06","bath","meta","GA","iOS","smartphone","",          0],
-      ["2026-05-06","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-05-06","bath","meta","NC","Mac","desktop","",             0],
-      ["2026-05-06","bath","meta","TX","Windows","desktop","",         0],
-      ["2026-05-06","bath","meta","WI","iOS","smartphone","Karigouda", 9.13],
-      ["2026-05-06","bath","meta","MT","Android","smartphone","",      0],
-      ["2026-05-06","bath","meta","IL","Android","smartphone","",      0],
-      ["2026-05-06","bath","meta","NV","Windows","desktop","",         0],
-      ["2026-05-05","bath","meta","AK","Android","smartphone","Karigouda", 1],
-      ["2026-05-05","bath","meta","CA","iOS","smartphone","",          0],
-      ["2026-05-05","bath","meta","FL","Android","smartphone","Karigouda", 5.03],
-      ["2026-05-05","bath","meta","TX","Android","smartphone","",      0],
-      ["2026-05-05","bath","meta","OR","iOS","smartphone","",          0],
-      ["2026-05-05","bath","meta","ME","Android","smartphone","Karigouda", 0.46],
-      ["2026-05-05","bath","meta","IL","Android","smartphone","",      0],
-      ["2026-05-05","bath","meta","AR","iOS","smartphone","",          0],
-      ["2026-05-05","bath","meta","NM","iOS","smartphone","",          0],
-      ["2026-05-05","bath","meta","IN","Android","smartphone","",      0],
-      ["2026-05-05","bath","meta","SC","Android","smartphone","",      0],
-      ["2026-05-05","bath","snap","TX","iOS","smartphone","Karigouda", 3.67],
-      ["2026-05-05","bath","meta","FL","Android","smartphone","Karigouda", 4.65],
-      ["2026-05-05","bath","meta","NY","iOS","smartphone","Karigouda", 4.31],
-      ["2026-05-05","bath","snap","UT","iOS","smartphone","Karigouda", 5.27],
-      ["2026-05-05","bath","meta","TX","Android","smartphone","",      0],
-      ["2026-05-05","bath","meta","LA","iOS","smartphone","",          0],
-      ["2026-05-05","bath","meta","FL","iOS","smartphone","",          0],
-      ["2026-05-04","bath","snap","SC","iOS","smartphone","Karigouda", 6.85],
-      ["2026-05-04","bath","meta","NY","iOS","smartphone","Karigouda", 4.5],
-      ["2026-05-04","bath","meta","FL","iOS","smartphone","Karigouda", 4.5],
-      ["2026-05-04","bath","meta","FL","iOS","smartphone","Karigouda", 4.5],
-      ["2026-05-04","bath","meta","FL","iOS","smartphone","Karigouda", 39],
-      ["2026-05-01","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-05-01","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-05-01","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-05-01","bath","meta","OH","Android","smartphone","",      0],
-      ["2026-05-01","bath","meta","FL","iOS","smartphone","",          0],
-      ["2026-05-01","bath","meta","NC","iOS","smartphone","",          0],
-      ["2026-05-01","bath","meta","FL","iOS","smartphone","",          0],
-      ["2026-05-01","bath","meta","FL","Android","smartphone","",      0],
-      ["2026-05-01","bath","meta","FL","Android","smartphone","Karigouda", 17.88],
-      ["2026-05-01","bath","meta","OH","Android","smartphone","",      0],
-      ["2026-05-01","bath","meta","NM","Android","smartphone","",      0],
+    // ── Hidden columns (comment a line out to show that column) ─────────────
+    const HIDDEN_COLS = new Set([
+      9,  // APPTS
+      10, // %
+      11, // UPSELLS
+      12, // SOLD (upsell)
+      13, // %
+      14, // UPSELL_RATE, %
+      15, // PPC
+      16, // SOLD (ppc)
+      17, // %
+      18, // PPC_RATE, %
+      24, // COST, $
+    ]);
 
-      // 2026-04-30
-      ["2026-04-30","bath","meta","SC","iOS","smartphone","",          0],
-      ["2026-04-30","bath","meta","FL","Android","smartphone","",      0],
-      ["2026-04-30","bath","meta","OR","iOS","smartphone","",          0],
-      ["2026-04-30","bath","meta","PA","iOS","smartphone","",          0],
-      ["2026-04-30","bath","meta","IN","iOS","smartphone","",          0],
-      ["2026-04-30","bath","meta","VA","Android","smartphone","",      0],
-      ["2026-04-30","bath","meta","UT","Android","smartphone","",      0],
-      ["2026-04-30","bath","meta","MO","Android","smartphone","Karigouda", 17.88],
-      ["2026-04-30","bath","meta","SC","iOS","smartphone","Karigouda", 0.01],
-      ["2026-04-30","bath","",    "NC","Windows","desktop","Karigouda",1],
+    // ── In-memory data arrays ────────────────────────────────────────────────
 
-      // 2026-04-29
-      ["2026-04-29","bath","meta","PA","iOS","smartphone","",          0],
-      ["2026-04-29","bath","meta","NC","Android","smartphone","",      0],
-      ["2026-04-29","bath","meta","FL","iPadOS","tablet","",           0],
-      ["2026-04-29","bath","meta","OH","Android","smartphone","",      0],
-      ["2026-04-29","bath","meta","NC","iOS","smartphone","",          0],
-      ["2026-04-29","bath","meta","NC","Android","smartphone","Karigouda", 0.01],
-      ["2026-04-29","bath","meta","OR","Windows","desktop","",         0],
-      ["2026-04-29","bath","meta","FL","iOS","smartphone","Karigouda", 0.01],
-      ["2026-04-29","bath","",    "CA","Windows","desktop","",         0],
-      ["2026-04-29","bath","meta","GA","Android","smartphone","Karigouda", 0.01],
-      ["2026-04-29","bath","meta","FL","iOS","smartphone","Karigouda", 0.01],
-      ["2026-04-29","bath","meta","OH","Android","smartphone","Karigouda", 0.01],
-      ["2026-04-29","bath","",    "TX","Windows","desktop","Karigouda",0.01],
-      ["2026-04-29","bath","",    "IN","Windows","desktop","",         0],
+    let RT_DAILY    = [];
+    let RT_SOURCE   = [];  // breakdown_type='source': per-day per-QHF-source rows (correct QHF-only data)
+    let RT_LANDER   = [];
+    let RT_CAMPAIGN = [];
+    let RT_ADSET    = [];
+    let RT_AD       = [];
+    let RT_OS       = [];
+    let RT_DEVICE   = [];
+    let RT_REGION   = [];
+    let TT_ROWS     = [];  // thumbtack_stats rows from Google Sheets
 
-      // 2026-04-28
-      ["2026-04-28","bath","meta","WY","iOS","smartphone","",          0],
-      ["2026-04-28","bath","meta","FL","iOS","smartphone","",          0],
+    let LP_ROWS = [];
 
-      // 2026-04-23
-      ["2026-04-23","bath","meta","MI","iOS","smartphone","Karigouda", 0.01],
-      ["2026-04-23","bath","meta","MD","Android","smartphone","Karigouda", 0.01],
-      ["2026-04-23","bath","meta","FL","iPadOS","tablet","Karigouda",  0.01],
-      ["2026-04-23","bath","meta","FL","Android","smartphone","Karigouda", 0.01],
-      ["2026-04-23","bath","meta","FL","iPadOS","tablet","Karigouda",  0.01],
-      ["2026-04-23","bath","meta","TX","Android","smartphone","",      0],
+    let LD_DATE     = [];
+    let LD_STATE    = [];
+    let LD_DEVICE   = [];
+    let LD_OS       = [];
+    let LD_CAMPAIGN = [];
+    let LD_AD       = [];
+    let LD_LANDING  = [];
 
-      // 2026-04-22
-      ["2026-04-22","bath","",    "KY","Windows","desktop","",         0],
-      ["2026-04-22","bath","",    "FL","Windows","desktop","",         0],
-      ["2026-04-22","bath","",    "CA","Windows","desktop","",         0],
-      ["2026-04-22","bath","",    "",  "Windows","desktop","",         0],
+    let META_ROWS      = [];
+    let META_HIERARCHY = {};
+    let LP_FORM_MAP    = {};
 
-      // 2026-04-20
-      ["2026-04-20","bath","meta","PA","Android","smartphone","Karigouda", 19.63],
-      ["2026-04-20","bath","meta","MS","Android","smartphone","",      0],
+    // ── Normalisation helpers ────────────────────────────────────────────────
 
-      // 2026-04-18
-      ["2026-04-18","bath","meta","TX","Android","smartphone","",      0],
-
-      // 2026-04-17
-      ["2026-04-17","bath","meta","WV","Android","smartphone","",      0],
-      ["2026-04-17","bath","meta","TX","Android","smartphone","",      0],
-      ["2026-04-17","bath","meta","FL","iPadOS","tablet","",           0],
-      ["2026-04-17","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-04-17","bath","meta","IN","Android","smartphone","",      0],
-      ["2026-04-17","bath","meta","AL","iOS","smartphone","",          0],
-      ["2026-04-17","bath","meta","IN","Android","smartphone","",      0],
-      ["2026-04-17","bath","meta","IN","Android","smartphone","",      0],
-
-      // 2026-04-16
-      ["2026-04-16","bath","meta","AL","Android","smartphone","",      0],
-      ["2026-04-16","bath","meta","MN","Android","smartphone","",      0],
-      ["2026-04-16","bath","meta","KY","Android","smartphone","",      0],
-      ["2026-04-16","bath","meta","VA","iOS","smartphone","",          0],
-      ["2026-04-16","bath","meta","VA","iOS","smartphone","Karigouda", 17.86],
-      ["2026-04-16","bath","meta","TN","Android","smartphone","Karigouda", 10.94],
-      ["2026-04-16","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-04-16","bath","meta","IN","Android","smartphone","",      0],
-      ["2026-04-16","bath","meta","TX","iOS","smartphone","",          0],
-      ["2026-04-16","bath","meta","IN","Android","smartphone","",      0],
-      ["2026-04-16","bath","",    "CA","Windows","desktop","",         0],
-      ["2026-04-16","bath","",    "TX","Windows","desktop","Karigouda",0],
-
-      /* ─────── ROOF LEADS (Test=Yes removed) ─────── */
-      // 2026-05-09
-      ["2026-05-09","roof","snap","FL","Android","smartphone","",          0],
-      ["2026-05-09","roof","snap","DE","iOS","smartphone","Karigouda", 34.13],
-      // 2026-05-08
-      ["2026-05-08","roof","snap","TX","iOS","smartphone","",              0],
-      ["2026-05-08","roof","snap","OR","Android","smartphone","",          0],
-      // 2026-05-07
-      ["2026-05-07","roof","snap","OR","Android","smartphone","",          0],
-      // 2026-05-05
-      ["2026-05-05","roof","snap","WA","iOS","smartphone","",              0],
-      ["2026-05-05","roof","snap","PA","Android","smartphone","",          0],
-      ["2026-05-05","roof","snap","AR","iOS","smartphone","",              0],
-      ["2026-05-05","roof","snap","MI","Windows","desktop","Karigouda", 24.98],
-      // 2026-05-04
-      ["2026-05-04","roof","",    "MS","Windows","desktop","Karigouda", 4.5],
-      ["2026-05-04","roof","",    "MS","Windows","desktop","",             0],
-      ["2026-05-04","roof","",    "VA","Windows","desktop","",             0],
-      ["2026-05-04","roof","",    "CA","Windows","desktop","",             0],
-      ["2026-05-04","roof","",    "CA","",       "desktop","",             0],
-      // 2026-04-30
-      ["2026-04-30","roof","snap","PA","Android","smartphone","",          0],
-      ["2026-04-30","roof","snap","MN","iOS","smartphone","",              0],
-      ["2026-04-30","roof","snap","MN","iOS","smartphone","",              0],
-      ["2026-04-30","roof","snap","MN","iOS","smartphone","",              0],
-      ["2026-04-30","roof","snap","OR","Android","smartphone","Karigouda", 9.82],
-      ["2026-04-30","roof","",    "NC","Windows","desktop","Karigouda", 0.5],
-      ["2026-04-30","roof","",    "AK","Windows","desktop","",             0],
-      // 2026-04-29
-      ["2026-04-29","roof","",    "GA","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "AZ","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "AZ","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "IL","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "IL","Windows","desktop","Karigouda", 0.01],
-      ["2026-04-29","roof","",    "NY","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "TX","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "FL","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "FL","Windows","desktop","",             0],
-      ["2026-04-29","roof","snap","GA","iOS","smartphone","Karigouda", 21.8],
-      ["2026-04-29","roof","",    "IL","Windows","desktop","Karigouda", 0.01],
-      ["2026-04-29","roof","",    "NV","Windows","desktop","",             0],
-      ["2026-04-29","roof","",    "NV","Windows","desktop","",             0],
-      // 2026-04-22
-      ["2026-04-22","roof","",    "CA","",       "desktop","",             0],
-      ["2026-04-22","roof","",    "",  "",       "desktop","",             0],
-      // 2026-04-21
-      ["2026-04-21","roof","",    "NM","Android","smartphone","Karigouda", 10.14],
-      ["2026-04-21","roof","",    "LA","iOS","smartphone","Karigouda", 0.01],
-      ["2026-04-21","roof","",    "LA","iOS","smartphone","",              0],
-      ["2026-04-21","roof","",    "LA","iOS","smartphone","Karigouda", 7.97],
-      // 2026-04-20
-      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
-      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
-      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
-      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
-      ["2026-04-20","roof","",    "MO","Android","smartphone","Karigouda", 8.2],
-      ["2026-04-20","roof","",    "LA","Android","smartphone","",          0],
-      ["2026-04-20","roof","",    "CA","Windows","desktop","",             0],
-      ["2026-04-20","roof","",    "AL","Windows","desktop","",             0],
-      ["2026-04-20","roof","",    "NV","Windows","desktop","",             0],
-      // 2026-04-15 / 04-14 were all Test=Yes — REMOVED
-    ];
-
-    /* ── Aggregated daily LP report (used for Date & Form tables when no granular filter is applied) ── */
-    const LP_ROWS = [
-      ["2026-05-11","bath",   1, 0,  0.00,    1,100.00,  0,  0.00,  0.00],
-      ["2026-05-09","roof",   2, 1, 50.00,    1, 50.00,  0, 34.13, 34.13],
-      ["2026-05-08","roof",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
-      ["2026-05-08","bath",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
-      ["2026-05-07","roof",   1, 0,  0.00,    1,100.00,  0,  0.00,  0.00],
-      ["2026-05-07","bath",   4, 1, 25.00,    3, 75.00,  0, 40.00, 40.00],
-      ["2026-05-06","bath",  11, 1,  9.09,   10, 90.91,  0,  9.13,  9.13],
-      ["2026-05-05","roof",   4, 1, 25.00,    3, 75.00,  0, 24.98, 24.98],
-      ["2026-05-05","bath",  18, 7, 38.89,   11, 61.11,  0, 24.39, 24.39],
-      ["2026-05-04","roof",   5, 1, 20.00,    4, 80.00,  0,  4.50,  4.50],
-      ["2026-05-04","bath",   5, 5,100.00,    0,  0.00,  0, 59.35, 59.35],
-      ["2026-05-01","bath",  11, 1,  9.09,   10, 90.91,  0, 17.88, 17.88],
-      ["2026-04-30","roof",   7, 2, 28.57,    5, 71.43,  0, 10.32, 10.32],
-      ["2026-04-30","bath",  10, 3, 30.00,    7, 70.00,  0, 18.89, 18.89],
-      ["2026-04-29","roof",  13, 3, 23.08,   10, 76.92,  0, 21.82, 21.82],
-      ["2026-04-29","bath",  14, 6, 42.86,    8, 57.14,  0,  0.06,  0.06],
-      ["2026-04-28","bath",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
-      ["2026-04-23","bath",   6, 5, 83.33,    1, 16.67,  0,  0.05,  0.05],
-      ["2026-04-22","roof",   2, 0,  0.00,    2,100.00,  0,  0.00,  0.00],
-      ["2026-04-22","bath",   4, 0,  0.00,    4,100.00,  0,  0.00,  0.00],
-      ["2026-04-21","roof",   4, 3, 75.00,    1, 25.00,  0, 18.12, 18.12],
-      ["2026-04-20","roof",   9, 1, 11.11,    8, 88.89,  0,  8.20,  8.20],
-      ["2026-04-20","bath",   2, 1, 50.00,    1, 50.00,  0, 19.63, 19.63],
-      ["2026-04-18","bath",   1, 0,  0.00,    1,100.00,  0,  0.00,  0.00],
-      ["2026-04-17","bath",   8, 0,  0.00,    8,100.00,  0,  0.00,  0.00],
-      ["2026-04-16","bath",  12, 3, 25.00,    9, 75.00,  0, 28.80, 28.80],
-    ];
-
-    /* ── Ad-spend data (from Meta + Snap daily ad reports) ─────────────
-       fields: date, form, source, clicks, ctr%, cost                   */
-    const AD_SPEND = [
-      // Meta Bath
-      ["2026-04-15","bath","meta",  5, 3.57,   9.63],
-      ["2026-04-16","bath","meta", 37, 7.18,  62.73],
-      ["2026-04-17","bath","meta", 32, 5.20,  48.75],
-      ["2026-04-20","bath","meta", 33, 3.64,  89.23],
-      ["2026-04-21","bath","meta", 26, 3.10,  85.71],
-      ["2026-04-22","bath","meta",  9, 2.03,  28.92],
-      ["2026-04-23","bath","meta", 56, 3.41, 143.56],
-      ["2026-04-24","bath","meta",  8, 2.66,  27.12],
-      ["2026-04-27","bath","meta",  0, 0,      0.93],
-      ["2026-04-28","bath","meta", 26, 4.48,  74.58],
-      ["2026-04-29","bath","meta", 41, 4.81, 147.61],
-      ["2026-04-30","bath","meta", 29, 3.97, 120.86],
-      ["2026-05-01","bath","meta", 29, 3.97, 126.00],
-      ["2026-05-04","bath","meta", 14, 4.07,  67.14],
-      ["2026-05-05","bath","meta", 40, 4.21, 205.04],
-      ["2026-05-06","bath","meta", 30, 4.40, 130.71],
-      ["2026-05-07","bath","meta", 12, 3.93,  63.00],
-      ["2026-05-08","bath","meta", 19, 4.07,  82.24],
-      ["2026-05-11","bath","meta", 12, 2.52, 111.00],
-      // Meta Roof
-      ["2026-04-29","roof","meta",  8, 1.85,  52.12],
-      ["2026-04-30","roof","meta", 19, 2.91,  99.54],
-      ["2026-05-01","roof","meta",  5, 1.87,  49.87],
-      ["2026-05-05","roof","meta",  9, 2.79,  45.00],
-      ["2026-05-06","roof","meta",  0, 0,     22.52],
-      ["2026-05-07","roof","meta",  2, 0.74,  22.52],
-      // Snap Bath
-      ["2026-05-04","bath","snap", 54, 1.12,  27.61],
-      ["2026-05-05","bath","snap", 37, 1.37,  19.73],
-    ];
-
-    /* ── Meta Ads breakdown (campaign / adset / ad / placement / cid / form / clicks / purchases)
-       Extracted from Meta Ads report CSV (Apr 2025 – May 2026). Used to populate the
-       Widget ID (campaign), Teaser ID (adset), Campaign ID, Title (ad), and Placement tables. */
-    const META_ADS = [
-      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(1)","Feed","120243022550240278","bath",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Reels","120241730232110278","roof",14,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Stories","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Instagram Reels","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Instagram Stories","120241730232110278","roof",4,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Stories","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Reels","120241730232110278","roof",3,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Instagram Stories","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Reels","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Instagram Stories","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Feed","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Stories","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Instagram Reels","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Instagram Reels","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Reels","120241730232110278","roof",8,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Feed","120241730232110278","roof",9,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Feed","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Reels","120241730232110278","roof",14,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(2)","Facebook Stories","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Reels","120241724771640278","bath",5,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Search results","120241724771640278","bath",3,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",12,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",9,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Reels","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Stories","120241724771640278","bath",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Feed","120241730232110278","roof",4,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Facebook Reels","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",44,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Feed","120241919584330278","bath",4,0],
-      ["QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC | bathcreo(4)","Facebook Reels","120242837966220278","bath",5,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(1)","Facebook Reels","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(1)","Feed","120241919584330278","bath",2,0],
-      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Facebook Reels","120242342223790278","roof",4,0],
-      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","In-stream reels","120242342223790278","roof",1,0],
-      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Facebook Reels","120242342223790278","roof",1,0],
-      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Feed","120242342223790278","roof",1,0],
-      ["QHF | KG | Meta | Roof","QHF | KG | Meta | Roof | as1 | nandcreo","QHF | KG | Meta | Roof | as1 | stormdamage","Facebook Reels","120242342223790278","roof",2,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",2,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Feed","120241919584330278","bath",14,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","In-stream reels","120241919584330278","bath",12,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",16,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(7)","Feed","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",29,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",3,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Reels","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Search results","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","In-stream reels","120241919584330278","bath",12,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Feed","120241919584330278","bath",10,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Instagram Reels","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Stories","120241919584330278","bath",4,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","In-stream reels","120241919584330278","bath",1,1],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Stories","120241919584330278","bath",11,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(4)","Facebook Stories","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",3,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Stories","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(1)","Instagram Stories","120243022550240278","bath",1,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",7,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(1)","Feed","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(1)","Facebook Reels","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",5,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",1,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Instagram Reels","120241314981830278","bath",1,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",15,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",31,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",9,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",3,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",3,1],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Feed","120241314981830278","bath",1,1],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Stories","120241314981830278","bath",5,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Feed","120241724771640278","bath",2,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Ads on Facebook Reels","120241314981830278","bath",1,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Facebook Reels","120241314981830278","bath",3,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF-bath-senimg","Search results","120241314981830278","bath",1,0],
-      ["QHF | Page Like","QHF | Page Like","QHF | Page Like","Feed","120241705514000278","other",1,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Stories","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Reels","120241919584330278","bath",6,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Feed","120241919584330278","bath",5,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Feed","120241919584330278","bath",7,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Reels","120241919584330278","bath",9,0],
-      ["QHF | KG | Meta | Bath | apr23 | C1 | CC | land","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | vldtop10states","QHF | KG | Meta | Bath | apr23 | C1 | CC | land | QHF-bathapril23(5)","Facebook Stories","120241919584330278","bath",1,0],
-      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(1)","Facebook Reels","120243022550240278","bath",3,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Facebook Reels","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Instagram Reels","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Feed","120241724771640278","bath",34,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF_Bath(1)","Feed","120241314981830278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(4)","Facebook Reels","120241724771640278","bath",15,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(3)","Facebook Reels","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(3)","Facebook Reels","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(3)","Feed","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land | Roof-Apr4(3)","Facebook Reels","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(4)","Facebook Reels","120243022550240278","bath",1,0],
-      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(4)","Facebook Stories","120243022550240278","bath",1,0],
-      ["QHF | KG | Meta | Bath | land | vladcreo to Bathexperts","QHF | KG | Meta | Bath | land | vladcreo","vladcreo(4)","Facebook Reels","120243022550240278","bath",1,0],
-      ["QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land | QFH_Windo(1) Copy","Facebook Reels","120241791017640278","windo",3,0],
-      ["QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land","QHF | KG | Meta | Windo | apr21 | C1 | HV | land | QFH_Windo(1) Copy","Facebook Reels","120241791017640278","windo",1,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF_Bath(1)","Facebook Reels","120241314981830278","bath",3,0],
-      ["QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV","QHF | KG | Meta | apr15 | C1 - HV | QHF_Bath(1)","Facebook Reels","120241314981830278","bath",1,0],
-      ["QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land","QHF | KG | Meta | Bath | apr20 | C1 | HV | land | QHF-BathApr20(2)","Facebook Reels","120241724771640278","bath",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Threads feed","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Stories","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Instagram Reels","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Instagram Stories","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Feed","120241730232110278","roof",3,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Feed","120241730232110278","roof",2,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Feed","120241730232110278","roof",3,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Reels","120241730232110278","roof",5,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Search results","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Stories","120241730232110278","roof",1,0],
-      ["QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | apr20 | C2 | HV | land","QHF | KG | Meta | Roof | Roof-nandcreo(6)","Facebook Reels","120241730232110278","roof",3,0],
-      ["QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC","QHF | KG | Meta | Bath  | C1 | CC | QHF-bathapril23(5)","Feed","120242837966220278","bath",1,0],
-    ];
-
-    /* ── Landing-page report (per date × landing).
-       fields: [date, landing, form, clicks, lp_clicks, leads, purchases] */
-    const LANDINGS = [
-      ["2026-05-06","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof",  1,  0, 0, 0],
-      ["2026-05-07","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 13,  6, 1, 1],
-      ["2026-05-08","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 23, 10, 1, 1],
-      ["2026-05-11","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 20,  1, 1, 1],
-      ["2026-05-12","Home | Meta | Securelowrate | 20 APR 26 | Roof","roof", 67, 40,16, 6],
-    ];
-
-    function aggLandings() {
-      // Landing data is Meta-only roof data right now; respect source/form/date filters.
-      if (FILTERS.source && FILTERS.source !== "meta") return [];
-      const m = new Map();
-      for (const L of LANDINGS) {
-        const [d, landing, form, clicks, lpc, leads, purch] = L;
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        if (FILTERS.from && d < FILTERS.from) continue;
-        if (FILTERS.to   && d > FILTERS.to)   continue;
-        if (!m.has(landing)) m.set(landing, { c:0, lpc:0, l:0, p:0 });
-        const v = m.get(landing);
-        v.c += clicks; v.lpc += lpc; v.l += leads; v.p += purch;
-      }
-      const out = [];
-      for (const [k, v] of m.entries()) {
-        const accPct = v.l ? (v.p / v.l) * 100 : 0;
-        const ctr    = v.c ? (v.lpc / v.c) * 100 : 0;
-        out.push(lpRow(k, v.l, v.p, accPct, 0, { c: v.c, ctr: ctr, cost: 0 }));
-      }
-      out.sort((a,b) => b[3] - a[3]); // CLICKS desc
-      return out;
+    function normalizeDevice(d) {
+      const s = (d || '').toLowerCase();
+      if (s.includes('mobile') || s.includes('android') || s.includes('smartphone')) return 'mobile';
+      if (s.includes('tablet')) return 'tablet';
+      return 'desktop';
     }
 
-    // Build a 33-metric row, optionally enriched with ad-spend metrics
-    function lpRow(label, leads, succ, accPct, rev, ad) {
-      ad = ad || { c:0, ctr:0, cost:0 };
-      const profit = rev - ad.cost;
-      const cr    = ad.c     ? (leads / ad.c) * 100   : 0;
-      const epc   = ad.c     ? rev / ad.c              : 0;
-      const avgL  = leads    ? rev / leads             : 0;
-      const avgS  = succ     ? rev / succ              : 0;
+    function normalizeOs(o) {
+      const s = (o || '').toLowerCase();
+      if (s.includes('ios') || s.includes('iphone') || s.includes('ipad')) return 'ios';
+      if (s.includes('android')) return 'android';
+      // Meta uses 'desktop' for all desktop OS; LD_OS has 'windows'/'macos' — unify as 'desktop'
+      if (s.includes('desktop') || s.includes('windows') || s.includes('mac')) return 'desktop';
+      return 'other';
+    }
+
+    // ── Row builder ──────────────────────────────────────────────────────────
+    // Returns a 34-element array: [label, ...33 metric values]
+    function lpRow(label, views, clicks, leads, sold, rev, cost, ttContacts=0, ttSold=0, ttRev=0) {
+      const fmt2 = n => +n.toFixed(2);
+      const fmtP = n => n > 0 ? n.toFixed(2) + '%' : '0%';
+      const ctr     = views      > 0 ? (clicks     / views)      * 100 : 0;
+      const cr      = views      > 0 ? (leads      / views)      * 100 : 0;
+      const accPct  = leads      > 0 ? (sold       / leads)      * 100 : 0;
+      const ttPct   = ttContacts > 0 ? (ttSold     / ttContacts) * 100 : 0;
+      const avgLead = leads      > 0 ? rev / leads : 0;
+      const avgSold = sold       > 0 ? rev / sold  : 0;
+      const epc     = clicks     > 0 ? rev / clicks : 0;
+      const epv     = views      > 0 ? rev / views  : 0;
+      const totalRev = rev + ttRev;
       return [
         label,
-        0,                                             // VISITS (not tracked)
-        ad.ctr ? ad.ctr.toFixed(2) + "%" : "0%",       // CTR, %
-        ad.c,                                          // CLICKS
-        ad.c ? cr.toFixed(2) + "%" : "0%",             // CR, %
-        "-",                                           // EMAILS
-        leads, succ, accPct.toFixed(2) + "%",          // LEADS, SOLD, %
-        0, "0%", 0, 0, "0%", "0%",                     // APPTS, UPSELLS group
-        0, 0, "0%", "0%",                              // PPC group
-        0, 0, "0%",                                    // THUMBTACK group
-        +rev.toFixed(2),                               // TOTAL REVENUE
-        +rev.toFixed(2),                               // LEADS, $
-        +ad.cost.toFixed(2),                           // COST, $
-        0, 0, 0, 0,                                     // UPSELLS/THUMBTACK/PPC/REPOSTS $
-        +profit.toFixed(2),                            // ADJUSTMENT, $  (Revenue - Cost)
-        +avgL.toFixed(2),                              // AVG PER LEAD
-        +avgS.toFixed(2),                              // AVG PER SOLD
-        +epc.toFixed(2),                               // EPC, $
-        0                                              // EPV, $ (no visits → cannot compute)
+        views,              // 1  VISITS
+        fmtP(ctr),         // 2  CTR, %
+        clicks,             // 3  CLICKS
+        fmtP(cr),          // 4  CR, %
+        0,                  // 5  EMAILS
+        leads,              // 6  LEADS
+        sold,               // 7  SOLD
+        fmtP(accPct),      // 8  %
+        0,                  // 9  APPTS
+        '0%',               // 10 %
+        0,                  // 11 UPSELLS
+        0,                  // 12 SOLD (upsell)
+        '0%',               // 13 %
+        '0%',               // 14 UPSELL_RATE, %
+        0,                  // 15 PPC
+        0,                  // 16 SOLD (ppc)
+        '0%',               // 17 %
+        '0%',               // 18 PPC_RATE, %
+        ttContacts,         // 19 THUMBTACK
+        ttSold,             // 20 SOLD (tt)
+        fmtP(ttPct),       // 21 %
+        fmt2(totalRev),    // 22 TOTAL REVENUE, $
+        fmt2(rev),         // 23 LEADS, $
+        fmt2(cost),        // 24 COST, $
+        0,                  // 25 UPSELLS, $
+        fmt2(ttRev),       // 26 THUMBTACK, $
+        0,                  // 27 PPC, $
+        0,                  // 28 REPOSTS, $
+        fmt2(totalRev - cost), // 29 ADJUSTMENT, $
+        fmt2(avgLead),     // 30 AVG PER LEAD, $
+        fmt2(avgSold),     // 31 AVG PER SOLD, $
+        fmt2(epc),         // 32 EPC, $
+        fmt2(epv),         // 33 EPV, $
       ];
     }
 
-    // Sum ad-spend records matching a predicate
-    function sumAd(predicate) {
-      let c=0, ctrW=0, cost=0;
-      for (const a of AD_SPEND) {
-        if (!predicate(a)) continue;
-        c += a[3]; cost += a[5];
-        ctrW += a[4] * a[3]; // weight CTR by clicks
-      }
-      return { c, ctr: c ? ctrW/c : 0, cost };
+    // Maps normalized_service from the leads table to a filter form type
+    function inferFormTypeFromService(svc) {
+      if (!svc) return 'other';
+      const s = svc.toUpperCase();
+      if (s.includes('BATH') || s.includes('TUB') || s.includes('SHOWER')) return 'bath';
+      if (s.includes('ROOF')) return 'roof';
+      if (s.includes('WINDOW')) return 'windo';
+      if (s.includes('GUTTER')) return 'gutters';
+      if (s.includes('SOLAR')) return 'solar';
+      return 'other';
     }
 
-    // Aggregate per-date totals
+    // LP_FORM_MAP (from real leads data) takes precedence over keyword guessing
+    function getFormType(name, campaignId) {
+      if (campaignId && LP_FORM_MAP[campaignId]) return LP_FORM_MAP[campaignId];
+      return inferFormFromCampaign(name);
+    }
+
+    function inferFormFromCampaign(name) {
+      const n = (name || '').toLowerCase();
+      if (n.includes('bath') || n.includes('shower') || n.includes('tub')) return 'bath';
+      if (n.includes('roof')) return 'roof';
+      if (n.includes('window') || n.includes('windo')) return 'windo';
+      if (n.includes('gutter')) return 'gutters';
+      if (n.includes('solar')) return 'solar';
+      return 'other';
+    }
+
+    // RT account is a multi-client agency account. QHF campaigns contain "QHF" in the name.
+    function isQhfCampaign(name) {
+      return /qhf|quickhomefix/i.test(name || '');
+    }
+
+    function inferOwnerFromCampaign(name) {
+      const n = (name || '').toLowerCase();
+      for (const b of BUYERS) {
+        for (const kw of b.keywords) {
+          if (kw.length <= 2) {
+            // Short keys: only match as whole word/segment to avoid false positives
+            if (new RegExp(`(?:^|[|\\s])${kw}(?:[|\\s]|$)`).test(n)) return b.key;
+          } else {
+            if (n.includes(kw)) return b.key;
+          }
+        }
+      }
+      return 'unknown';
+    }
+
+    // ── RT aggregation helper ────────────────────────────────────────────────
+    function aggRt(arr, keyFn) {
+      const m = new Map();
+      for (const r of arr) {
+        const key = keyFn(r);
+        if (key == null || key === '') continue;
+        const d = r.date || '';
+        if (FILTERS.from && d < FILTERS.from) continue;
+        if (FILTERS.to   && d > FILTERS.to)   continue;
+        if (!m.has(key)) m.set(key, { views: 0, clicks: 0, cost: 0, rtRev: 0 });
+        const v = m.get(key);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+        v.rtRev  += Number(r.revenue   || 0);
+      }
+      return m;
+    }
+
+    function totalRtViewsInRange() {
+      return filteredRtSource()
+        .filter(r => (!FILTERS.from || r.date >= FILTERS.from) && (!FILTERS.to || r.date <= FILTERS.to))
+        .reduce((s, r) => s + Number(r.lp_views || 0), 0);
+    }
+
+    // Aggregate META_ROWS (meta_ad_stats) by an arbitrary key function
+    function aggMeta(keyFn) {
+      const m = new Map();
+      // If source filter is set to a non-meta platform, Meta tables show nothing
+      if (FILTERS.source && FILTERS.source !== 'meta') return m;
+      for (const r of META_ROWS) {
+        const key = keyFn(r);
+        if (key == null || key === '') continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(r.campaign_name) !== FILTERS.buyer) continue;
+        if (!m.has(key)) m.set(key, { impressions: 0, clicks: 0, spend: 0 });
+        const v = m.get(key);
+        v.impressions += Number(r.impressions || 0);
+        v.clicks      += Number(r.clicks      || 0);
+        v.spend       += Number(r.spend       || 0);
+      }
+      return m;
+    }
+
+    // Sum totals within the current date range
+    // leads/sold from LP_ROWS (LP ground truth); revenue from RT_DAILY
+    function lpTotalsInRange() {
+      let l = 0, s = 0, rv = 0;
+      for (const r of LP_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form  && getFormType(r.campaign_name, r.campaign_id) !== FILTERS.form)  continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(r.campaign_name)     !== FILTERS.buyer) continue;
+        l += Number(r.leads_total    || 0);
+        s += Number(r.leads_accepted || 0);
+      }
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        rv += Number(r.revenue || 0);
+      }
+      return { l, s, rv };
+    }
+
+    // Build two TT aggregation maps for use across all table builders:
+    //   byCampaignId — keyed by Thumbtack utm_campaign (= Meta campaign_id)
+    //   bySvc        — keyed by form_type (bath/windo/roof) for proportional distribution
+    function buildTtMaps() {
+      const byCampaignId = new Map();
+      const bySvc        = new Map();
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && r.form_type !== FILTERS.form) continue;
+        const add = (map, key) => {
+          if (!map.has(key)) map.set(key, { sessions: 0, pros: 0, rev: 0 });
+          const v = map.get(key);
+          v.sessions += Number(r.sessions       || 0);
+          v.pros     += Number(r.pros_contacted || 0);
+          v.rev      += Number(r.net_revenue    || 0);
+        };
+        if (r.campaign_id) add(byCampaignId, r.campaign_id);
+        add(bySvc, r.form_type);
+      }
+      return { byCampaignId, bySvc };
+    }
+
+    // ── Data loading ─────────────────────────────────────────────────────────
+    async function loadStats() {
+      try {
+        const [rtRes, lpRes, ldRes, lpFormMapRes, metaRes, ttRes] = await Promise.all([
+          fetch(API_BASE + '/api/stats/redtrack').then(r => r.json()).catch(() => ({})),
+          fetch(API_BASE + '/api/stats/leadprosper').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+          fetch(API_BASE + '/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({})),
+          fetch(API_BASE + '/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
+          fetch(API_BASE + '/api/stats/meta').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+          fetch(API_BASE + '/api/stats/thumbtack').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+        ]);
+
+        RT_DAILY    = rtRes.daily    || [];
+        RT_SOURCE   = rtRes.source   || [];
+        RT_LANDER   = rtRes.lander   || [];
+        RT_CAMPAIGN = rtRes.campaign || [];
+        RT_ADSET    = rtRes.adset    || [];
+        RT_AD       = rtRes.ad       || [];
+        RT_OS       = rtRes.os       || [];
+        RT_DEVICE   = rtRes.device   || [];
+        RT_REGION   = rtRes.region   || [];
+
+        if (lpRes.ok && lpRes.rows) LP_ROWS = lpRes.rows;
+
+        LD_DATE     = ldRes.date     || [];
+        LD_STATE    = ldRes.state    || [];
+        LD_DEVICE   = ldRes.device   || [];
+        LD_OS       = ldRes.os       || [];
+        LD_CAMPAIGN = ldRes.campaign || [];
+        LD_AD       = ldRes.ad       || [];
+        LD_LANDING  = ldRes.landing  || [];
+
+        if (Array.isArray(lpFormMapRes)) {
+          LP_FORM_MAP = {};
+          for (const entry of lpFormMapRes) {
+            if (entry.lp_campaign_id) LP_FORM_MAP[entry.lp_campaign_id] = entry.form_type;
+          }
+        }
+
+        if (metaRes.ok && metaRes.rows) {
+          META_ROWS = metaRes.rows;
+          META_HIERARCHY = {};
+          for (const row of metaRes.rows) {
+            if (row.ad_name) {
+              META_HIERARCHY[row.ad_name] = {
+                adset_name:    row.adset_name    || '',
+                campaign_name: row.campaign_name || '',
+              };
+            }
+          }
+        }
+        if (ttRes.ok && ttRes.rows) TT_ROWS = ttRes.rows;
+
+        // Populate state dropdown from LD_STATE data
+        const stateEl = document.getElementById('state-filter');
+        if (stateEl && LD_STATE.length) {
+          const states = [...new Set(LD_STATE.map(r => r.state).filter(Boolean))].sort();
+          const current = stateEl.value;
+          stateEl.innerHTML = '<option value="">all</option>' +
+            states.map(s => `<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('');
+        }
+
+        console.log('[loadStats] RT daily:', RT_DAILY.length, '| source:', RT_SOURCE.length, '| campaign:', RT_CAMPAIGN.length, '| ad:', RT_AD.length);
+        console.log('[loadStats] LP rows:', LP_ROWS.length, '| LD_AD:', LD_AD.length);
+
+      } catch (err) {
+        console.warn('[loadStats] fetch failed:', err.message);
+      }
+
+      rerender();
+    }
+
+    // ── Table builders ───────────────────────────────────────────────────────
+
+    // DATE — RT_DAILY (visits/clicks/cost/revenue) + LP_ROWS (leads/sold — LP ground truth)
     function buildDateRows() {
-      const byDate = new Map();
+      // LP leads/sold grouped by date
+      const lpMap = new Map();
       for (const r of LP_ROWS) {
-        if (!byDate.has(r[0])) byDate.set(r[0], { l:0, s:0, rv:0, p:0 });
-        const a = byDate.get(r[0]);
-        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.p += r[9];
+        const { date, campaign_name, campaign_id, leads_total, leads_accepted } = r;
+        if (!date) continue;
+        if (FILTERS.from  && date < FILTERS.from) continue;
+        if (FILTERS.to    && date > FILTERS.to)   continue;
+        if (FILTERS.form  && getFormType(campaign_name, campaign_id) !== FILTERS.form)  continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name)   !== FILTERS.buyer) continue;
+        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0 });
+        const v = lpMap.get(date);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
       }
-      const dates = [...byDate.keys()].sort().reverse();
-      return dates.map(d => {
-        const a = byDate.get(d);
-        const acc = a.l ? (a.s / a.l) * 100 : 0;
-        return lpRow(d, a.l, a.s, acc, a.rv, a.p);
-      });
-    }
-
-    // Aggregate per-form totals (roof / bath)
-    function buildFormRows() {
-      const byForm = new Map();
-      for (const r of LP_ROWS) {
-        if (!byForm.has(r[1])) byForm.set(r[1], { l:0, s:0, rv:0, p:0 });
-        const a = byForm.get(r[1]);
-        a.l += r[2]; a.s += r[3]; a.rv += r[8]; a.p += r[9];
+      // RT visits/clicks/cost/revenue grouped by date — always use RT_SOURCE so all filters apply
+      const rtSource = filteredRtSource();
+      const rtMap = new Map();
+      for (const r of rtSource) {
+        const { date } = r;
+        if (!date) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!rtMap.has(date)) rtMap.set(date, { views: 0, clicks: 0, cost: 0, rv: 0 });
+        const v = rtMap.get(date);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+        v.rv     += Number(r.revenue   || 0);
       }
+      // Thumbtack totals by date
+      const ttMap = new Map();
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && r.form_type !== FILTERS.form) continue;
+        if (!ttMap.has(date)) ttMap.set(date, { contacts: 0, pros: 0, rev: 0 });
+        const v = ttMap.get(date);
+        v.contacts += Number(r.sessions        || 0);
+        v.pros     += Number(r.pros_contacted  || 0);
+        v.rev      += Number(r.net_revenue      || 0);
+      }
+      const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...ttMap.keys()]);
       const out = [];
-      for (const [k, a] of byForm.entries()) {
-        const acc = a.l ? (a.s / a.l) * 100 : 0;
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, a.p));
+      for (const d of allDates) {
+        const lp  = lpMap.get(d) || { l: 0, s: 0 };
+        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
+        const tt  = ttMap.get(d) || { contacts: 0, pros: 0, rev: 0 };
+        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, rtD.rv, rtD.cost, tt.contacts, tt.pros, tt.rev));
       }
-      out.sort((a,b) => b[6] - a[6]); // sort by LEADS desc
+      out.sort((a, b) => a[0] > b[0] ? -1 : 1);
       return out;
     }
 
-    /* ── Filter state and lead-level builders ── */
-    const FILTERS = { form:"", source:"", buyer:"", state:"", device:"", os:"", from:null, to:null, hideLow:false };
+    // FORM — one row per LP campaign name
+    // visits/clicks/cost = RT totals proportioned by each campaign's lead share
+    // leads/sold/revenue = LP ground truth (total_sell is 0 until LP pays out)
+    function buildFormRows() {
+      // Step 1: LP totals per campaign (unfiltered by form for correct proportioning)
+      const allByCamp = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from  && date < FILTERS.from) continue;
+        if (FILTERS.to    && date > FILTERS.to)   continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name) !== FILTERS.buyer) continue;
+        if (!allByCamp.has(campaign_name)) allByCamp.set(campaign_name, { l: 0, s: 0, rv: 0, id: campaign_id });
+        const v = allByCamp.get(campaign_name);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
 
-    function applyFilters() {
-      return LEADS.filter(L => {
-        const [d,form,src,st,os,dev,buyer,rev] = L;
-        if (FILTERS.form  && form  !== FILTERS.form)  return false;
-        if (FILTERS.source&& src   !== FILTERS.source)return false;
-        if (FILTERS.buyer && buyer !== FILTERS.buyer) return false;
-        if (FILTERS.state && st    !== FILTERS.state) return false;
-        if (FILTERS.device&& dev   !== FILTERS.device)return false;
-        if (FILTERS.os    && os    !== FILTERS.os)    return false;
-        if (FILTERS.from  && d < FILTERS.from)        return false;
-        if (FILTERS.to    && d > FILTERS.to)          return false;
-        if (FILTERS.hideLow && rev < 3)               return false;
+      // Step 2: RT LP views/clicks/cost/revenue per service (respects source/buyer filters)
+      const rtByService = new Map();
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const svc = r.rt_service || 'other';
+        if (!rtByService.has(svc)) rtByService.set(svc, { views: 0, clicks: 0, cost: 0, revenue: 0 });
+        const v = rtByService.get(svc);
+        v.views   += Number(r.lp_views  || 0);
+        v.clicks  += Number(r.lp_clicks || 0);
+        v.cost    += Number(r.cost      || 0);
+        v.revenue += Number(r.revenue   || 0);
+      }
+
+      // Step 3: LP lead totals per service for proportioning within a service
+      const leadsPerService = new Map();
+      for (const [name, v] of allByCamp.entries()) {
+        const svc = getFormType(name, v.id);
+        leadsPerService.set(svc, (leadsPerService.get(svc) || 0) + v.l);
+      }
+
+      // Thumbtack totals per service
+      const ttBySvc = new Map();
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!ttBySvc.has(r.form_type)) ttBySvc.set(r.form_type, { contacts: 0, pros: 0, rev: 0 });
+        const v = ttBySvc.get(r.form_type);
+        v.contacts += Number(r.sessions        || 0);
+        v.pros     += Number(r.pros_contacted  || 0);
+        v.rev      += Number(r.net_revenue      || 0);
+      }
+
+      // Step 4: build output — apply FILTERS.form for display only
+      const out = [];
+      for (const [name, v] of allByCamp.entries()) {
+        const svc = getFormType(name, v.id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const rtSvc     = rtByService.get(svc) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const svcLeads  = leadsPerService.get(svc) || 0;
+        const campShare = svcLeads > 0 ? v.l / svcLeads : 0;
+        const visits    = Math.round(rtSvc.views  * campShare);
+        const clicks    = Math.round(rtSvc.clicks * campShare);
+        const cost      = +(rtSvc.cost    * campShare).toFixed(2);
+        const rev       = +(rtSvc.revenue * campShare).toFixed(2);
+        const tt        = ttBySvc.get(svc) || { contacts: 0, pros: 0, rev: 0 };
+        const ttContacts = Math.round(tt.contacts * campShare);
+        const ttPros     = Math.round(tt.pros     * campShare);
+        const ttRev      = +(tt.rev * campShare).toFixed(2);
+        out.push(lpRow(name, visits, clicks, v.l, v.s, rev, cost, ttContacts, ttPros, ttRev));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // SOURCE — one row per ad network
+    // LP views/clicks = RT lp_views/lp_clicks (RT tracks actual landing page activity)
+    // cost = Meta spend (actual ad platform spend)
+    // leads/sold = LP ground truth
+    function buildSourceRows() {
+      let metaSpend = 0;
+      for (const r of META_ROWS) {
+        if (!r.publisher_platform) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        metaSpend += Number(r.spend || 0);
+      }
+      // Use RT_SOURCE for accurate per-platform LP views/clicks/cost
+      const rtByPlatform = new Map();
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const plat = r.rt_platform || 'other';
+        if (!rtByPlatform.has(plat)) rtByPlatform.set(plat, { views: 0, clicks: 0, cost: 0, revenue: 0 });
+        const v = rtByPlatform.get(plat);
+        v.views   += Number(r.lp_views  || 0);
+        v.clicks  += Number(r.lp_clicks || 0);
+        v.cost    += Number(r.cost      || 0);
+        v.revenue += Number(r.revenue   || 0);
+      }
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const totalRtCost = [...rtByPlatform.values()].reduce((s, v) => s + v.cost, 0);
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+      const out = [];
+      for (const [plat, rt] of rtByPlatform.entries()) {
+        const share = totalRtCost > 0 ? rt.cost / totalRtCost : 0;
+        out.push(lpRow(plat, rt.views, rt.clicks,
+          Math.round(totalL * share), Math.round(totalS * share),
+          +(totalRev * share).toFixed(2), rt.cost,
+          Math.round(ttTotal * share),
+          Math.round(ttProsTotal * share),
+          +(ttRevTotal * share).toFixed(2)));
+      }
+      if (out.length === 0) {
+        out.push(lpRow('meta', 0, 0, totalL, totalS, totalRev, metaSpend,
+          ttTotal, ttProsTotal, ttRevTotal));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // BUYER — one row per owner (Karigouda, Ankith, Viknesh)
+    // visits/clicks/cost come directly from RT channel rows (group_by=ts)
+    // leads/sold/revenue = LP total proportioned by each owner's RT cost share
+    function buildBuyerRows() {
+      const rtByOwner = new Map();
+      for (const b of BUYERS) rtByOwner.set(b.key, { views: 0, clicks: 0, cost: 0 });
+
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const owner = r.rt_owner || 'unknown';
+        if (!rtByOwner.has(owner)) continue;
+        const v = rtByOwner.get(owner);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+      }
+
+      const totalCost = [...rtByOwner.values()].reduce((s, v) => s + v.cost, 0);
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+
+      const out = [];
+      for (const { key, label } of BUYERS) {
+        const rt    = rtByOwner.get(key) || { views: 0, clicks: 0, cost: 0 };
+        const share = totalCost > 0 ? rt.cost / totalCost : 0;
+        out.push(lpRow(label, rt.views, rt.clicks,
+          Math.round(totalL * share), Math.round(totalS * share),
+          +(totalRev * share).toFixed(2), rt.cost,
+          Math.round(ttTotal * share),
+          Math.round(ttProsTotal * share),
+          +(ttRevTotal * share).toFixed(2)));
+      }
+      return out;
+    }
+
+    // WIDGET ID — Meta campaign level
+    // Row label = Meta campaign_name
+    // visits/clicks/cost = RT_CAMPAIGN joined by campaign_name (falls back to Meta)
+    // leads/sold/revenue  = LP_ROWS proportioned by Meta spend share within each service type
+    //   (LP uses short names "Bath"/"Roofing" which never match long Meta names directly)
+    // Returns RT_SOURCE rows filtered by the active source/buyer dropdowns.
+    function filteredRtSource() {
+      return RT_SOURCE.filter(r => {
+        if (FILTERS.source && r.rt_platform !== FILTERS.source) return false;
+        if (FILTERS.buyer  && r.rt_owner    !== FILTERS.buyer)  return false;
+        if (FILTERS.form   && r.rt_service  !== FILTERS.form)   return false;
         return true;
       });
     }
 
-    // Aggregate filtered leads by a key function → table rows.
-    // adKey(label): given a group label, returns predicate on AD_SPEND row.
-    function aggBy(leads, keyFn, adKey) {
+    // Build RT aggregation keyed by "owner|service" for finer buckets.
+    // Used by Widget/Teaser/Title so RT cost is authoritative; Meta spend
+    // is only used as a weight to split within the same owner+service pool.
+    function buildRtByOwnerSvc() {
       const m = new Map();
-      for (const L of leads) {
-        const k = keyFn(L);
-        if (k == null || k === "") continue;
-        if (!m.has(k)) m.set(k, { l:0, s:0, rv:0 });
-        const a = m.get(k);
-        a.l += 1;
-        if (L[7] > 0) a.s += 1;
-        a.rv += L[7];
+      for (const r of filteredRtSource()) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const key = `${r.rt_owner || 'unknown'}|${r.rt_service || 'other'}`;
+        if (!m.has(key)) m.set(key, { views: 0, clicks: 0, cost: 0, revenue: 0 });
+        const v = m.get(key);
+        v.views   += Number(r.lp_views  || 0);
+        v.clicks  += Number(r.lp_clicks || 0);
+        v.cost    += Number(r.cost      || 0);
+        v.revenue += Number(r.revenue   || 0);
       }
+      return m;
+    }
+
+    function buildWidgetRows() {
+      const metaMap      = aggMeta(r => r.campaign_name || null);
+      const rtByOwnerSvc = buildRtByOwnerSvc();
+      const { byCampaignId } = buildTtMaps();
+      // campaign_name → campaign_id (first occurrence wins)
+      const campNameToId = new Map();
+      for (const r of META_ROWS) {
+        if (r.campaign_name && r.campaign_id && !campNameToId.has(r.campaign_name))
+          campNameToId.set(r.campaign_name, r.campaign_id);
+      }
+
+      // LP totals per service — LP uses short names so owner is unknown; group by service only
+      const lpBySvc = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const svc = getFormType(campaign_name, campaign_id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        if (!lpBySvc.has(svc)) lpBySvc.set(svc, { l: 0, s: 0 });
+        const v = lpBySvc.get(svc);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
+      }
+
+      // Meta spend per owner+service (for RT proportioning) and per service (for leads proportioning)
+      const metaSpendByOwnerSvc = new Map();
+      const metaSpendBySvc      = new Map();
+      for (const [name, meta] of metaMap.entries()) {
+        if (!isQhfCampaign(name)) continue;
+        const svc = inferFormFromCampaign(name);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey = `${inferOwnerFromCampaign(name)}|${svc}`;
+        metaSpendByOwnerSvc.set(ownerSvcKey, (metaSpendByOwnerSvc.get(ownerSvcKey) || 0) + meta.spend);
+        metaSpendBySvc.set(svc, (metaSpendBySvc.get(svc) || 0) + meta.spend);
+      }
+
       const out = [];
-      for (const [k,a] of m.entries()) {
-        const acc = a.l ? (a.s / a.l) * 100 : 0;
-        const ad  = adKey ? sumAd(adKey(k)) : { v:0,c:0,ctr:0,cost:0 };
-        out.push(lpRow(k, a.l, a.s, acc, a.rv, ad));
+      for (const [name, meta] of metaMap.entries()) {
+        if (!isQhfCampaign(name)) continue;
+        const svc = inferFormFromCampaign(name);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey   = `${inferOwnerFromCampaign(name)}|${svc}`;
+        const rtBucketSpend = metaSpendByOwnerSvc.get(ownerSvcKey) || 0;
+        const svcSpend      = metaSpendBySvc.get(svc) || 0;
+        const rtShare       = rtBucketSpend > 0 ? meta.spend / rtBucketSpend : 0;
+        const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
+        const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        const campId        = campNameToId.get(name) || '';
+        const tt            = byCampaignId.get(campId) || { sessions: 0, pros: 0, rev: 0 };
+        out.push(lpRow(name,
+          Math.round(rt.views   * rtShare),
+          Math.round(rt.clicks  * rtShare),
+          Math.round(lp.l * lpShare),
+          Math.round(lp.s * lpShare),
+          +(rt.revenue * rtShare).toFixed(2),
+          +(rt.cost    * rtShare).toFixed(2),
+          tt.sessions, tt.pros, tt.rev));
       }
-      out.sort((a,b) => b[6] - a[6]);
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
-    // Match AD_SPEND rows against current filter set (form/source/dates)
-    function adMatchesFilters(a) {
-      const [d,form,src] = a;
-      if (FILTERS.form  && form !== FILTERS.form) return false;
-      if (FILTERS.source&& src  !== FILTERS.source) return false;
-      if (FILTERS.from  && d < FILTERS.from) return false;
-      if (FILTERS.to    && d > FILTERS.to)   return false;
-      return true;
-    }
+    // TEASER ID — Meta adset level
+    // Row labels = Meta adset_name; all performance from RT_SOURCE via owner+service bucket
+    function buildTeaserRows() {
+      const metaMap      = aggMeta(r => r.adset_name || null);
+      const rtByOwnerSvc = buildRtByOwnerSvc();
+      const { byCampaignId } = buildTtMaps();
 
-    // Aggregate META_ADS rows by a key. Returns metric rows in the same 33-col shape.
-    // META_ADS row: [campaign, adset, ad, placement, cid, form, clicks, purchases]
-    function aggMeta(keyIdx) {
-      // Apply current form/source filters where applicable.
-      // META_ADS is Meta-only data; if source filter is set to non-meta, return empty.
-      if (FILTERS.source && FILTERS.source !== "meta") return [];
-      const m = new Map();
-      for (const A of META_ADS) {
-        const [camp, adset, ad, pl, cid, form, clicks, purch] = A;
-        if (FILTERS.form && form !== FILTERS.form) continue;
-        const k = A[keyIdx];
-        if (k == null || k === "") continue;
-        if (!m.has(k)) m.set(k, { c:0, p:0 });
-        const v = m.get(k);
-        v.c += clicks; v.p += purch;
+      // Map adset_name → owner+service key, service, QHF flag, and campaign_id via parent campaign_name
+      const adsetOwnerSvcKey = new Map();
+      const adsetSvc         = new Map();
+      const adsetIsQhf       = new Map();
+      const adsetCampaignId  = new Map();
+      for (const r of META_ROWS) {
+        const adset = r.adset_name;
+        if (!adset || adsetOwnerSvcKey.has(adset)) continue;
+        const camp = r.campaign_name || '';
+        adsetOwnerSvcKey.set(adset, `${inferOwnerFromCampaign(camp)}|${inferFormFromCampaign(camp)}`);
+        adsetSvc.set(adset, inferFormFromCampaign(camp));
+        adsetIsQhf.set(adset, isQhfCampaign(camp));
+        adsetCampaignId.set(adset, r.campaign_id || '');
       }
+
+      // Meta spend per owner+service (RT proportioning) and per service (leads proportioning)
+      const metaSpendByOwnerSvc = new Map();
+      const metaSpendBySvc      = new Map();
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adsetIsQhf.get(name)) continue;
+        const ownerSvcKey = adsetOwnerSvcKey.get(name) || 'unknown|other';
+        const svc         = adsetSvc.get(name) || 'other';
+        metaSpendByOwnerSvc.set(ownerSvcKey, (metaSpendByOwnerSvc.get(ownerSvcKey) || 0) + meta.spend);
+        metaSpendBySvc.set(svc, (metaSpendBySvc.get(svc) || 0) + meta.spend);
+      }
+
+      // LP totals per service (LP has no owner/adset info)
+      const lpBySvc = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const svc = getFormType(campaign_name, campaign_id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        if (!lpBySvc.has(svc)) lpBySvc.set(svc, { l: 0, s: 0 });
+        const v = lpBySvc.get(svc);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
+      }
+
       const out = [];
-      for (const [k, v] of m.entries()) {
-        const leads = v.p, succ = v.p;
-        const accPct = leads ? (succ / leads) * 100 : 0;
-        out.push(lpRow(k, leads, succ, accPct, 0, { c: v.c, ctr: 0, cost: 0 }));
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adsetIsQhf.get(name)) continue;
+        const svc           = adsetSvc.get(name) || 'other';
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey   = adsetOwnerSvcKey.get(name) || 'unknown|other';
+        const rtBucketSpend = metaSpendByOwnerSvc.get(ownerSvcKey) || 0;
+        const svcSpend      = metaSpendBySvc.get(svc) || 0;
+        const rtShare       = rtBucketSpend > 0 ? meta.spend / rtBucketSpend : 0;
+        const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
+        const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        const campId        = adsetCampaignId.get(name) || '';
+        const tt            = byCampaignId.get(campId) || { sessions: 0, pros: 0, rev: 0 };
+        out.push(lpRow(name,
+          Math.round(rt.views   * rtShare),
+          Math.round(rt.clicks  * rtShare),
+          Math.round(lp.l * lpShare),
+          Math.round(lp.s * lpShare),
+          +(rt.revenue * rtShare).toFixed(2),
+          +(rt.cost    * rtShare).toFixed(2),
+          tt.sessions, tt.pros, tt.rev));
       }
-      out.sort((a,b) => b[3] - a[3]); // sort by CLICKS desc
+      out.sort((a, b) => b[6] - a[6]);
       return out;
     }
 
+    // TITLE — Meta ad level
+    // Row labels = Meta ad_name; all performance from RT_SOURCE via owner+service bucket
+    function buildTitleRows() {
+      const metaMap      = aggMeta(r => r.ad_name || null);
+      const rtByOwnerSvc = buildRtByOwnerSvc();
+      const { byCampaignId } = buildTtMaps();
+
+      // Map ad_name → owner+service key, service, QHF flag, and campaign_id via parent campaign_name
+      const adOwnerSvcKey = new Map();
+      const adSvc         = new Map();
+      const adIsQhf       = new Map();
+      const adCampaignId  = new Map();
+      for (const r of META_ROWS) {
+        const ad = r.ad_name;
+        if (!ad || adOwnerSvcKey.has(ad)) continue;
+        const camp = r.campaign_name || '';
+        adOwnerSvcKey.set(ad, `${inferOwnerFromCampaign(camp)}|${inferFormFromCampaign(camp)}`);
+        adSvc.set(ad, inferFormFromCampaign(camp));
+        adIsQhf.set(ad, isQhfCampaign(camp));
+        adCampaignId.set(ad, r.campaign_id || '');
+      }
+
+      // Meta spend per owner+service (RT proportioning) and per service (leads proportioning)
+      const metaSpendByOwnerSvc = new Map();
+      const metaSpendBySvc      = new Map();
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adIsQhf.get(name)) continue;
+        const ownerSvcKey = adOwnerSvcKey.get(name) || 'unknown|other';
+        const svc         = adSvc.get(name) || 'other';
+        metaSpendByOwnerSvc.set(ownerSvcKey, (metaSpendByOwnerSvc.get(ownerSvcKey) || 0) + meta.spend);
+        metaSpendBySvc.set(svc, (metaSpendBySvc.get(svc) || 0) + meta.spend);
+      }
+
+      // LP totals per service (LP has no owner/ad info)
+      const lpBySvc = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        const svc = getFormType(campaign_name, campaign_id);
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        if (!lpBySvc.has(svc)) lpBySvc.set(svc, { l: 0, s: 0 });
+        const v = lpBySvc.get(svc);
+        v.l += Number(leads_total    || 0);
+        v.s += Number(leads_accepted || 0);
+      }
+
+      const out = [];
+      for (const [name, meta] of metaMap.entries()) {
+        if (!adIsQhf.get(name)) continue;
+        const svc           = adSvc.get(name) || 'other';
+        if (FILTERS.form && svc !== FILTERS.form) continue;
+        const ownerSvcKey   = adOwnerSvcKey.get(name) || 'unknown|other';
+        const rtBucketSpend = metaSpendByOwnerSvc.get(ownerSvcKey) || 0;
+        const svcSpend      = metaSpendBySvc.get(svc) || 0;
+        const rtShare       = rtBucketSpend > 0 ? meta.spend / rtBucketSpend : 0;
+        const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
+        const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
+        const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        const campId        = adCampaignId.get(name) || '';
+        const tt            = byCampaignId.get(campId) || { sessions: 0, pros: 0, rev: 0 };
+        out.push(lpRow(name,
+          Math.round(rt.views   * rtShare),
+          Math.round(rt.clicks  * rtShare),
+          Math.round(lp.l * lpShare),
+          Math.round(lp.s * lpShare),
+          +(rt.revenue * rtShare).toFixed(2),
+          +(rt.cost    * rtShare).toFixed(2),
+          tt.sessions, tt.pros, tt.rev));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // PLACEMENT — Meta placement (feed/reels/story/etc.)
+    // visits proportional from RT_DAILY by impression share
+    // clicks/cost = Meta data
+    // leads/sold/revenue = LP proportional by spend share
+    function buildPlacementRows() {
+      const metaMap       = aggMeta(r => {
+        if (!r.placement) return null;
+        if (FILTERS.form && inferFormFromCampaign(r.campaign_name) !== FILTERS.form) return null;
+        return r.placement;
+      });
+      const totalSpend    = [...metaMap.values()].reduce((s, v) => s + v.spend, 0);
+      const totalImpress  = [...metaMap.values()].reduce((s, v) => s + v.impressions, 0);
+      const totalRtViews  = totalRtViewsInRange();
+      const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+      const out = [];
+      for (const [placement, meta] of metaMap.entries()) {
+        const spendShare   = totalSpend   > 0 ? meta.spend       / totalSpend   : 0;
+        const impressShare = totalImpress > 0 ? meta.impressions / totalImpress : spendShare;
+        const visits = Math.round(totalRtViews * impressShare);
+        out.push(lpRow(placement, visits, meta.clicks,
+          Math.round(totalL * spendShare),
+          Math.round(totalS * spendShare),
+          +(totalRev * spendShare).toFixed(2), meta.spend,
+          Math.round(ttTotal * spendShare),
+          Math.round(ttProsTotal * spendShare),
+          +(ttRevTotal * spendShare).toFixed(2)));
+      }
+      out.sort((a, b) => b[1] - a[1]);
+      return out;
+    }
+
+    // LANDING — LP_ROWS as source for leads/sold (full LP lead counts, not LD_LANDING
+    // which is incomplete because most leads have null landing_page_url in our table).
+    // Row label = landing path inferred from LP campaign name.
+    // LP campaign → landing path: Bath→bath, Roofing→roof, Windows→windows, Tub→tub
+    // visits/clicks = RT total × Meta impression/click share per service type
+    // cost = RT cost × Meta spend share per service type
+    function buildLandingRows() {
+      // Map LP campaign name to landing path label
+      function lpCampToPath(name) {
+        const n = (name || '').toLowerCase();
+        if (n === 'tub' || n.includes('tub')) return 'tub';
+        if (n.includes('bath') || n.includes('shower')) return 'bath';
+        if (n.includes('roof')) return 'roof';
+        if (n.includes('window') || n.includes('windo')) return 'windows';
+        if (n.includes('gutter')) return 'gutter';
+        if (n.includes('solar')) return 'solar';
+        return null;
+      }
+
+      // Step 1: LP_ROWS → leads/sold per landing path
+      const m = new Map();
+      for (const r of LP_ROWS) {
+        const { campaign_name, campaign_id, date, leads_total, leads_accepted, total_sell } = r;
+        if (!campaign_name) continue;
+        if (FILTERS.from  && date < FILTERS.from) continue;
+        if (FILTERS.to    && date > FILTERS.to)   continue;
+        if (FILTERS.form  && getFormType(campaign_name, campaign_id) !== FILTERS.form)  continue;
+        if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name)   !== FILTERS.buyer) continue;
+        const path = lpCampToPath(campaign_name);
+        if (!path) continue;
+        if (!m.has(path)) m.set(path, { l: 0, s: 0, rv: 0 });
+        const v = m.get(path);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
+      }
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0, totalRtRevenue = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews   += Number(r.lp_views  || 0);
+        totalRtClicks  += Number(r.lp_clicks || 0);
+        totalRtCost    += Number(r.cost      || 0);
+        totalRtRevenue += Number(r.revenue   || 0);
+      }
+
+      // Step 3: Meta impressions/clicks/spend per service type — QHF campaigns only
+      const metaByService = new Map();
+      for (const r of META_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const svc = inferFormFromCampaign(r.campaign_name);
+        if (!metaByService.has(svc)) metaByService.set(svc, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByService.get(svc);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByService.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByService.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByService.values()].reduce((s, v) => s + v.spend, 0);
+      const totalLeads     = [...m.values()].reduce((s, v) => s + v.l, 0);
+
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+
+      const out = [];
+      for (const [path, v] of m.entries()) {
+        const svc       = inferFormFromCampaign(path);
+        const meta      = metaByService.get(svc) || { imp: 0, clk: 0, spend: 0 };
+        const leadShare = totalLeads > 0 ? v.l / totalLeads : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : leadShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : leadShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : leadShare;
+        const visits = Math.round(totalRtViews  * impShare);
+        const clicks = Math.round(totalRtClicks * clkShare);
+        const cost   = +(totalRtCost    * costShare).toFixed(2);
+        const rev    = +(totalRtRevenue * costShare).toFixed(2);
+        out.push(lpRow(path, visits, clicks, v.l, v.s, rev, cost,
+          Math.round(ttTotal * leadShare),
+          Math.round(ttProsTotal * leadShare),
+          +(ttRevTotal * leadShare).toFixed(2)));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // STATE — LD_STATE for leads/sold; RT views/clicks proportioned by Meta region share
+    // Meta uses full state names ("Texas"), leads table uses 2-letter codes ("TX")
+    const STATE_CODE_TO_NAME = {
+      AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
+      CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',
+      HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',
+      KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',
+      MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+      MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',
+      NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',
+      OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',
+      SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',
+      VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
+    };
+    function buildStateRows() {
+      // Step 1: LD_STATE leads/sold by state code
+      const m = new Map();
+      for (const r of LD_STATE) {
+        const { state, form_type, date, leads, sold, revenue } = r;
+        if (!state) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        if (!m.has(state)) m.set(state, { l: 0, s: 0, rv: 0 });
+        const v = m.get(state);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
+      }
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews  += Number(r.lp_views  || 0);
+        totalRtClicks += Number(r.lp_clicks || 0);
+        totalRtCost   += Number(r.cost      || 0);
+      }
+
+      // Step 3: Meta impressions/clicks by region — QHF campaigns only (excludes non-QHF like HC|Fence)
+      const metaByRegion = new Map();
+      for (const r of META_ROWS) {
+        const region = (r.region || '').trim();
+        if (!region) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const key = region.toLowerCase();
+        if (!metaByRegion.has(key)) metaByRegion.set(key, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByRegion.get(key);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByRegion.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByRegion.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByRegion.values()].reduce((s, v) => s + v.spend, 0);
+      const ldTotal        = [...m.values()].reduce((s, v) => s + v.l, 0);
+      // Scale to LP ground truth — LD table over-counts (260 vs LP 122)
+      const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+
+      const out = [];
+      for (const [code, v] of m.entries()) {
+        if (FILTERS.state && code !== FILTERS.state) continue;
+        const fullName  = (STATE_CODE_TO_NAME[code] || code).toLowerCase();
+        const meta      = metaByRegion.get(fullName) || { imp: 0, clk: 0, spend: 0 };
+        const ldShare   = ldTotal > 0 ? v.l / ldTotal : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : ldShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : ldShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : ldShare;
+        const visits = Math.round(totalRtViews  * impShare);
+        const clicks = Math.round(totalRtClicks * clkShare);
+        const cost   = +(totalRtCost  * costShare).toFixed(2);
+        const rev    = +(lpTotalRev   * ldShare).toFixed(2);
+        const l = Math.round(lpTotal * ldShare);
+        const s = Math.round(lpSold  * ldShare);
+        out.push(lpRow(code, visits, clicks, l, s, rev, cost,
+          Math.round(ttTotal * ldShare),
+          Math.round(ttProsTotal * ldShare),
+          +(ttRevTotal * ldShare).toFixed(2)));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // DEVICE — LD_DEVICE for leads/sold; RT views/clicks proportioned by Meta device share
+    // RT_DEVICE is empty (RT ignores group_by for this account).
+    // Meta device_platform: mobile_app/mobile_web → "mobile", desktop → "desktop"
+    function buildDeviceRows() {
+      // Step 1: LD_DEVICE leads/sold
+      const ldMap = new Map();
+      for (const r of LD_DEVICE) {
+        const { device, form_type, date, leads, sold, revenue } = r;
+        if (!device) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        if (!ldMap.has(device)) ldMap.set(device, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(device);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
+      }
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews  += Number(r.lp_views  || 0);
+        totalRtClicks += Number(r.lp_clicks || 0);
+        totalRtCost   += Number(r.cost      || 0);
+      }
+
+      // Step 3: Meta impressions/clicks by normalized device — QHF campaigns only
+      const metaByDevice = new Map();
+      for (const r of META_ROWS) {
+        if (!r.device) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const key = normalizeDevice(r.device);
+        if (!metaByDevice.has(key)) metaByDevice.set(key, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByDevice.get(key);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByDevice.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByDevice.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByDevice.values()].reduce((s, v) => s + v.spend, 0);
+      const ldTotal        = [...ldMap.values()].reduce((s, v) => s + v.l, 0);
+      const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+      const allKeys = new Set([...ldMap.keys(), ...metaByDevice.keys()]);
+      const out = [];
+      for (const dev of allKeys) {
+        if (FILTERS.device && dev !== FILTERS.device) continue;
+        const lp       = ldMap.get(dev)        || { l: 0, s: 0, rv: 0 };
+        const meta     = metaByDevice.get(dev) || { imp: 0, clk: 0, spend: 0 };
+        const ldShare   = ldTotal > 0 ? lp.l / ldTotal : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : ldShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : ldShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : ldShare;
+        out.push(lpRow(dev,
+          Math.round(totalRtViews  * impShare),
+          Math.round(totalRtClicks * clkShare),
+          Math.round(lpTotal * ldShare),
+          Math.round(lpSold  * ldShare),
+          +(lpTotalRev * ldShare).toFixed(2),
+          +(totalRtCost * costShare).toFixed(2),
+          Math.round(ttTotal * ldShare),
+          Math.round(ttProsTotal * ldShare),
+          +(ttRevTotal * ldShare).toFixed(2)));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // OS — LD_OS for leads/sold; RT views/clicks proportioned by Meta impression_device share
+    // RT_OS is empty (RT ignores group_by for this account).
+    // Meta impression_device: iphone/ipad → "ios", android_* → "android", desktop → "windows"
+    function buildOsRows() {
+      // Step 1: LD_OS leads/sold — normalize key so 'windows'/'macos' → 'desktop' (matches Meta)
+      const ldMap = new Map();
+      for (const r of LD_OS) {
+        const { os, form_type, date, leads, sold, revenue } = r;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && form_type !== FILTERS.form) continue;
+        const key = normalizeOs(os || 'other');
+        if (!ldMap.has(key)) ldMap.set(key, { l: 0, s: 0, rv: 0 });
+        const v = ldMap.get(key);
+        v.l  += Number(leads   || 0);
+        v.s  += Number(sold    || 0);
+        v.rv += Number(revenue || 0);
+      }
+
+      // Step 2: RT totals in range — use RT_SOURCE (always populated) not RT_DAILY
+      let totalRtViews = 0, totalRtClicks = 0, totalRtCost = 0;
+      for (const r of filteredRtSource()) {
+        if (FILTERS.from && r.date < FILTERS.from) continue;
+        if (FILTERS.to   && r.date > FILTERS.to)   continue;
+        totalRtViews  += Number(r.lp_views  || 0);
+        totalRtClicks += Number(r.lp_clicks || 0);
+        totalRtCost   += Number(r.cost      || 0);
+      }
+
+      // Step 3: Meta impressions/clicks by normalized OS — QHF campaigns only
+      const metaByOs = new Map();
+      for (const r of META_ROWS) {
+        if (!r.os) continue;
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!isQhfCampaign(r.campaign_name)) continue;
+        const key = normalizeOs(r.os);
+        if (!metaByOs.has(key)) metaByOs.set(key, { imp: 0, clk: 0, spend: 0 });
+        const v = metaByOs.get(key);
+        v.imp   += Number(r.impressions || 0);
+        v.clk   += Number(r.clicks      || 0);
+        v.spend += Number(r.spend       || 0);
+      }
+      const totalMetaImp   = [...metaByOs.values()].reduce((s, v) => s + v.imp,   0);
+      const totalMetaClk   = [...metaByOs.values()].reduce((s, v) => s + v.clk,   0);
+      const totalMetaSpend = [...metaByOs.values()].reduce((s, v) => s + v.spend, 0);
+      const ldTotal        = [...ldMap.values()].reduce((s, v) => s + v.l, 0);
+      const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+
+      const allKeys = new Set([...ldMap.keys(), ...metaByOs.keys()]);
+      const out = [];
+      for (const os of allKeys) {
+        if (FILTERS.os && os.toLowerCase() !== FILTERS.os.toLowerCase()) continue;
+        const lp       = ldMap.get(os)    || { l: 0, s: 0, rv: 0 };
+        const meta     = metaByOs.get(os) || { imp: 0, clk: 0, spend: 0 };
+        const ldShare   = ldTotal > 0 ? lp.l / ldTotal : 0;
+        const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : ldShare;
+        const clkShare  = totalMetaClk   > 0 ? meta.clk   / totalMetaClk   : ldShare;
+        const costShare = totalMetaSpend > 0 ? meta.spend / totalMetaSpend : ldShare;
+        out.push(lpRow(os,
+          Math.round(totalRtViews  * impShare),
+          Math.round(totalRtClicks * clkShare),
+          Math.round(lpTotal * ldShare),
+          Math.round(lpSold  * ldShare),
+          +(lpTotalRev * ldShare).toFixed(2),
+          +(totalRtCost * costShare).toFixed(2),
+          Math.round(ttTotal * ldShare),
+          Math.round(ttProsTotal * ldShare),
+          +(ttRevTotal * ldShare).toFixed(2)));
+      }
+      out.sort((a, b) => b[6] - a[6]);
+      return out;
+    }
+
+    // ── getTables ────────────────────────────────────────────────────────────
     function getTables() {
-      const filtered = applyFilters();
       return [
-        { title: "Date",        label: "DATE",
-          rows: aggBy(filtered, L => L[0],
-            date => a => a[0] === date && adMatchesFilters(a)).sort((a,b)=> a[0]<b[0]?1:-1) },
-        { title: "Form",        label: "FORM",
-          rows: aggBy(filtered, L => L[1],
-            form => a => a[1] === form && adMatchesFilters(a)) },
-        { title: "Source",      label: "SOURCE",
-          rows: aggBy(filtered, L => L[2] || null,
-            src => a => a[2] === src && adMatchesFilters(a)) },
-        { title: "Buyer",       label: "BUYER",       rows: aggBy(filtered, L => L[6] || null) },
-        { title: "Landing",     label: "LANDING",     rows: aggLandings() },
-        { title: "Widget ID",   label: "WIDGET_ID",   rows: aggMeta(0) },
-        { title: "Teaser ID",   label: "TEASER_ID",   rows: aggMeta(1) },
-        { title: "Campaign ID", label: "CAMPAIGN_ID", rows: aggMeta(4) },
-        { title: "Title",       label: "TITLE",       rows: aggMeta(2) },
-        { title: "Placement",   label: "PLACEMENT",   rows: aggMeta(3) },
-        { title: "State",       label: "STATE",       rows: aggBy(filtered, L => L[3]) },
-        { title: "Device",      label: "DEVICE",      rows: aggBy(filtered, L => L[5]) },
-        { title: "OS",          label: "OS",          rows: aggBy(filtered, L => L[4]) },
+        { title: "Date",      label: "DATE",      rows: buildDateRows()       },
+        { title: "Form",      label: "FORM",      rows: buildFormRows()       },
+        { title: "Source",    label: "SOURCE",    rows: buildSourceRows()     },
+        { title: "Buyer",     label: "BUYER",     rows: buildBuyerRows()      },
+        { title: "Widget ID", label: "WIDGET ID", rows: buildWidgetRows()     },
+        { title: "Teaser ID", label: "TEASER ID", rows: buildTeaserRows()     },
+        { title: "Title",     label: "TITLE",     rows: buildTitleRows()      },
+        { title: "Placement", label: "PLACEMENT", rows: buildPlacementRows()  },
+        { title: "Landing",   label: "LANDING",   rows: buildLandingRows()    },
+        { title: "State",     label: "STATE",     rows: buildStateRows()      },
+        { title: "Device",    label: "DEVICE",    rows: buildDeviceRows()     },
+        { title: "OS",        label: "OS",        rows: buildOsRows()         },
       ];
     }
 
-
-    // Columns that should be colored as "higher = better" (green high, red low)
-    const PCT_HIGHER_BETTER = new Set([7]);                 // SOLD %
-    // Columns that should be colored as "lower = worse" but small/zero is bad
-    const PCT_LOWER_WORSE   = new Set([8,10,12,13,16,17,20]); // appt/upsell/ppc/thumbtack %
-    const ADJ_IDX = 28;   // ADJUSTMENT, $
-    const REV_IDX = 21;   // TOTAL REVENUE, $
+    // ── Coloring ─────────────────────────────────────────────────────────────
+    const PCT_HIGHER_BETTER = new Set([8]);  // % (acc%) — index 8
+    const ADJ_IDX = 29;  // ADJUSTMENT, $
+    const REV_IDX = 22;  // TOTAL REVENUE, $
 
     function bucket(num, thresholds) {
-      // thresholds: array of 10 ascending values; returns 0..10 bucket
       for (let i = 0; i < thresholds.length; i++) {
         if (num <= thresholds[i]) return i;
       }
@@ -1017,15 +1652,13 @@
     }
 
     function pctClass(i, v) {
+
+
+      
       const n = parseFloat(v);
       if (isNaN(n)) return "";
       if (PCT_HIGHER_BETTER.has(i)) {
-        // 0..100 mapped to bg_percent_0..10
         return "bg_percent_" + bucket(n, [10,20,30,40,50,60,70,80,90,99]);
-      }
-      if (PCT_LOWER_WORSE.has(i)) {
-        if (n === 0) return "bg_percent_0";
-        return "bg_percent_" + bucket(n, [2,5,10,15,20,30,40,50,70,90]);
       }
       return "";
     }
@@ -1034,12 +1667,10 @@
       const n = Number(v);
       if (!isFinite(n) || n === 0) return "bg_percent_5";
       if (n > 0) {
-        // positive: green tones (6..10)
-        const idx = 6 + bucket(n, [50,150,350,700]); // 6..10
+        const idx = 6 + bucket(n, [50,150,350,700]);
         return "bg_percent_" + Math.min(10, idx);
       }
       const a = Math.abs(n);
-      // negative: red tones (4..0) — bigger loss -> redder
       const idx = 4 - bucket(a, [50,150,350,700]);
       return "bg_percent_" + Math.max(0, idx);
     }
@@ -1050,28 +1681,34 @@
       return "bg_percent_" + bucket(n, [100,300,600,1000,2000,4000,7000,10000,15000,25000]);
     }
 
-    function renderTable(t, tIdx) {
+    // ── Render ───────────────────────────────────────────────────────────────
+    function renderTable(t) {
       const headers = [t.label, ...METRIC_COLS]
-        .map((h,i) => `<th class="${i===0?'text-left':'text-right'}">${h}</th>`).join("");
+        .filter((_, i) => !HIDDEN_COLS.has(i))
+        .map((h, i) => `<th class="${i === 0 ? 'text-left' : 'text-right'}">${h}</th>`).join("");
 
       const rowsHtml = t.rows.map(r => {
-        const cells = r.map((v,i) => {
-          if (i === 0) return `<td class="label">${v}</td>`;
-          let cls = "num";
-          const isPct = typeof v === "string" && v.endsWith("%");
-          if (isPct) cls += " " + pctClass(i, v);
-          else if (i === ADJ_IDX) cls += " " + adjustmentClass(v);
-          else if (i === REV_IDX) cls += " " + revenueClass(v);
-          return `<td class="${cls.trim()}">${v}</td>`;
-        }).join("");
+        const cells = r
+          .map((v, origIdx) => ({ v, origIdx }))
+          .filter(({ origIdx }) => !HIDDEN_COLS.has(origIdx))
+          .map(({ v, origIdx }) => {
+            if (origIdx === 0) return `<td class="label">${v}</td>`;
+            let cls = "num";
+            const isPct = typeof v === "string" && v.endsWith("%");
+            if (isPct) cls += " " + pctClass(origIdx, v);
+            else if (origIdx === ADJ_IDX) cls += " " + adjustmentClass(v);
+            else if (origIdx === REV_IDX) cls += " " + revenueClass(v);
+            return `<td class="${cls.trim()}">${v}</td>`;
+          }).join("");
         return `<tr>${cells}</tr>`;
       }).join("");
 
-      const wideFirst = t.label === "LANDING" ? "wide-first" : "";
+      const wideFirst   = ["LANDING","TEASER ID","TITLE","WIDGET ID","PLACEMENT"].includes(t.label) ? "wide-first" : "";
       const needsExpand = t.rows.length > 5;
       const expandableCls = needsExpand ? "expandable" : "expandable no-expand";
-      const overlayHtml = needsExpand ? `<div class="expand-overlay"></div>
-            <button type="button" class="expand-btn">EXPAND</button>` : "";
+      const overlayHtml = needsExpand
+        ? `<div class="expand-overlay"></div><button type="button" class="expand-btn">EXPAND</button>`
+        : "";
 
       return `
         <div class="pt-4">
@@ -1089,14 +1726,12 @@
     function rerender() {
       const tables = getTables();
       document.getElementById("tables-container").innerHTML =
-        tables.map((t,i) => renderTable(t,i)).join("");
+        tables.map(t => renderTable(t)).join("");
       document.querySelectorAll(".expandable").forEach(wrap => {
         const open = (e) => {
           if (e) { e.preventDefault(); e.stopPropagation(); }
-          const btn = wrap.querySelector(".expand-btn");
-          const ovl = wrap.querySelector(".expand-overlay");
-          if (btn) btn.remove();
-          if (ovl) ovl.remove();
+          wrap.querySelector(".expand-btn")?.remove();
+          wrap.querySelector(".expand-overlay")?.remove();
           wrap.classList.add("expanded");
         };
         wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
@@ -1104,42 +1739,54 @@
       });
     }
 
-    // Populate State dropdown dynamically from leads
-    (function populateStates() {
-      const states = [...new Set(LEADS.map(L => L[3]))].sort();
-      const sel = document.getElementById("state-filter");
-      states.forEach(s => {
-        const o = document.createElement("option");
-        o.value = s; o.textContent = s;
-        sel.appendChild(o);
+    // ── Filter state ─────────────────────────────────────────────────────────
+    // Use local date parts (not toISOString which is UTC and shifts date in +5:30 timezone)
+    const _localISO  = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const _today30   = new Date();
+    const _thirtyAgo = new Date(_today30 - 30 * 86400000);
+    const FILTERS = {
+      form: "", source: "", buyer: "", state: "", device: "", os: "",
+      from: _localISO(_thirtyAgo),
+      to:   _localISO(_today30),
+      hideLow: false
+    };
+
+    // Populate buyer dropdown from BUYERS config
+    (function populateBuyerDropdown() {
+      const sel = document.getElementById("buyer-filter");
+      if (!sel) return;
+      BUYERS.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b.key;
+        opt.textContent = b.label;
+        sel.appendChild(opt);
       });
     })();
 
-    // Wire all filter dropdowns to rerender
     function bindFilter(id, key) {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener("change", () => { FILTERS[key] = el.value; rerender(); });
     }
-    bindFilter("form-filter",  "form");
-    bindFilter("source-filter","source");
-    bindFilter("buyer-filter", "buyer");
-    bindFilter("state-filter", "state");
-    bindFilter("device-filter","device");
-    bindFilter("os-filter",    "os");
+    bindFilter("form-filter",   "form");
+    bindFilter("source-filter", "source");
+    bindFilter("buyer-filter",  "buyer");
+    bindFilter("state-filter",  "state");
+    bindFilter("device-filter", "device");
+    bindFilter("os-filter",     "os");
 
     document.getElementById("hide-low-rev")?.addEventListener("change", e => {
       FILTERS.hideLow = e.target.checked; rerender();
     });
-    document.getElementById("refresh-btn")?.addEventListener("click", rerender);
+    document.getElementById("refresh-btn")?.addEventListener("click", loadStats);
 
-    rerender();
+    loadStats();
 
     /* ── Litepicker date range with presets ── */
     const today = new Date();
-    const fmt = d => d.toLocaleDateString("en-GB").replace(/\//g, "-");  // dd-mm-yyyy
+    const fmt   = d => d.toLocaleDateString("en-GB").replace(/\//g, "-");
     const dayMs = 86400000;
-    const start = new Date(today.getTime() - dayMs);
+    const start = new Date(today.getTime() - 30 * dayMs);
     document.getElementById("date-range").value = `${fmt(start)}  →  ${fmt(today)}`;
 
     new Litepicker({
@@ -1151,34 +1798,32 @@
       endDate: today,
       format: "DD-MM-YYYY",
       delimiter: "  →  ",
-      autoApply: false,
+      autoApply: true,
       plugins: ["ranges"],
       ranges: {
         position: "left",
         customRanges: {
-          "Today":       [new Date(), new Date()],
-          "Yesterday":   [new Date(Date.now() - dayMs), new Date(Date.now() - dayMs)],
-          "Last 3 days": [new Date(Date.now() - 3*dayMs), new Date()],
-          "Last 7 days": [new Date(Date.now() - 7*dayMs), new Date()],
-          "Last 30 days":[new Date(Date.now() - 30*dayMs), new Date()],
-          "This Month":  [new Date(today.getFullYear(), today.getMonth(), 1), new Date()],
-          "Last Month":  [
+          "Today":        [new Date(), new Date()],
+          "Yesterday":    [new Date(Date.now() - dayMs), new Date(Date.now() - dayMs)],
+          "Last 3 days":  [new Date(Date.now() - 3*dayMs), new Date()],
+          "Last 7 days":  [new Date(Date.now() - 7*dayMs), new Date()],
+          "Last 30 days": [new Date(Date.now() - 30*dayMs), new Date()],
+          "This Month":   [new Date(today.getFullYear(), today.getMonth(), 1), new Date()],
+          "Last Month":   [
             new Date(today.getFullYear(), today.getMonth() - 1, 1),
             new Date(today.getFullYear(), today.getMonth(), 0)
           ],
-          "This Year":   [new Date(today.getFullYear(), 0, 1), new Date()],
-          "Last Year":   [
+          "This Year":    [new Date(today.getFullYear(), 0, 1), new Date()],
+          "Last Year":    [
             new Date(today.getFullYear() - 1, 0, 1),
             new Date(today.getFullYear() - 1, 11, 31)
           ],
         }
       },
-      buttonText: { apply: "Apply", cancel: "Cancel" },
       setup: (picker) => {
         picker.on("selected", (s, e) => {
-          const iso = d => d.toISOString().slice(0,10);
-          FILTERS.from = iso(s.dateInstance);
-          FILTERS.to   = iso(e.dateInstance);
+          FILTERS.from = _localISO(s.dateInstance);
+          FILTERS.to   = _localISO(e.dateInstance);
           rerender();
         });
       },
