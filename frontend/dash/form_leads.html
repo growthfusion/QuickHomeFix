@@ -674,22 +674,6 @@
       return { l, s, rv };
     }
 
-    // Sum Thumbtack totals within current date range, optionally filtered by form_type
-    function ttTotalsInRange(formType) {
-      let contacts = 0, prosContacted = 0, revenue = 0;
-      for (const r of TT_ROWS) {
-        const date = r.date || '';
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        if (formType && r.form_type !== formType) continue;
-        if (FILTERS.form && r.form_type !== FILTERS.form) continue;
-        contacts      += Number(r.sessions       || 0);
-        prosContacted += Number(r.pros_contacted || 0);
-        revenue       += Number(r.net_revenue    || 0);
-      }
-      return { contacts, prosContacted, revenue };
-    }
-
     // Build two TT aggregation maps for use across all table builders:
     //   byCampaignId — keyed by Thumbtack utm_campaign (= Meta campaign_id)
     //   bySvc        — keyed by form_type (bath/windo/roof) for proportional distribution
@@ -1363,6 +1347,11 @@
       const totalMetaSpend = [...metaByService.values()].reduce((s, v) => s + v.spend, 0);
       const totalLeads     = [...m.values()].reduce((s, v) => s + v.l, 0);
 
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
+
       const out = [];
       for (const [path, v] of m.entries()) {
         const svc       = inferFormFromCampaign(path);
@@ -1375,7 +1364,10 @@
         const clicks = Math.round(totalRtClicks * clkShare);
         const cost   = +(totalRtCost    * costShare).toFixed(2);
         const rev    = +(totalRtRevenue * costShare).toFixed(2);
-        out.push(lpRow(path, visits, clicks, v.l, v.s, rev, cost));
+        out.push(lpRow(path, visits, clicks, v.l, v.s, rev, cost,
+          Math.round(ttTotal * leadShare),
+          Math.round(ttProsTotal * leadShare),
+          +(ttRevTotal * leadShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
