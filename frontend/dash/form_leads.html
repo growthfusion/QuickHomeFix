@@ -444,7 +444,7 @@
       "LEADS", "SOLD", "%", "APPTS", "%",
       "UPSELLS", "SOLD", "%", "UPSELL_RATE, %",
       "PPC", "SOLD", "%", "PPC_RATE, %",
-      "THUMBTACK", "SOLD", "%",
+      "TT SESSIONS", "SOLD", "%",
       "TOTAL REVENUE, $", "LEADS, $", "COST, $",
       "UPSELLS, $", "THUMBTACK, $", "PPC, $", "REPOSTS, $", "ADJUSTMENT, $",
       "AVG PER LEAD, $", "AVG PER SOLD, $", "EPC, $", "EPV, $"
@@ -462,6 +462,8 @@
       16, // SOLD (ppc)
       17, // %
       18, // PPC_RATE, %
+      20, // SOLD (thumbtack)
+      21, // % (thumbtack)
     ]);
 
     // ── In-memory data arrays ────────────────────────────────────────────────
@@ -818,8 +820,8 @@
         if (FILTERS.form && r.form_type !== FILTERS.form) continue;
         if (!ttMap.has(date)) ttMap.set(date, { contacts: 0, pros: 0, rev: 0 });
         const v = ttMap.get(date);
-        v.contacts += Number(r.contacts_created || 0);
-        v.pros     += Number(r.pros_contacted   || 0);
+        v.contacts += Number(r.sessions        || 0);
+        v.pros     += Number(r.pros_contacted  || 0);
         v.rev      += Number(r.net_revenue      || 0);
       }
       const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...ttMap.keys()]);
@@ -883,8 +885,8 @@
         if (FILTERS.to   && date > FILTERS.to)   continue;
         if (!ttBySvc.has(r.form_type)) ttBySvc.set(r.form_type, { contacts: 0, pros: 0, rev: 0 });
         const v = ttBySvc.get(r.form_type);
-        v.contacts += Number(r.contacts_created || 0);
-        v.pros     += Number(r.pros_contacted   || 0);
+        v.contacts += Number(r.sessions        || 0);
+        v.pros     += Number(r.pros_contacted  || 0);
         v.rev      += Number(r.net_revenue      || 0);
       }
 
