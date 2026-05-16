@@ -581,7 +581,7 @@
 
     // RT account is a multi-client agency account. QHF campaigns contain "QHF" in the name.
     function isQhfCampaign(name) {
-      return /qhf/i.test(name || '');
+      return /qhf|quickhomefix/i.test(name || '');
     }
 
     function inferOwnerFromCampaign(name) {
