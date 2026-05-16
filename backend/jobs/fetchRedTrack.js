@@ -84,8 +84,29 @@ async function fetchReport(apiKey, date_from, date_to, group, sourceIds) {
   }
 }
 
+// ── Buyer config (keep in sync with frontend/dash/form_leads.html BUYERS const) ──
+// To add a new buyer: add one entry here AND in the frontend BUYERS array.
+const BUYERS = [
+  { key: 'kg',      keywords: ['karigouda', 'kg'] },
+  { key: 'ak',      keywords: ['ankith', 'ak', 'anki'] },
+  { key: 'viknesh', keywords: ['viknesh', 'vk', 'vn', 'google'] },
+];
+
+function inferOwner(src, parts) {
+  for (const b of BUYERS) {
+    for (const kw of b.keywords) {
+      if (kw.length <= 2) {
+        if (parts.includes(kw)) return b.key;
+      } else {
+        if (src.includes(kw)) return b.key;
+      }
+    }
+  }
+  return 'unknown';
+}
+
 function parseSourceTitle(title) {
-  const src = (title || '').toLowerCase();
+  const src   = (title || '').toLowerCase();
   const parts = src.split('|').map(p => p.trim());
 
   const platform = src.includes('google') ? 'google'
@@ -100,10 +121,7 @@ function parseSourceTitle(title) {
     : src.includes('solar') ? 'solar'
     : '';
 
-  const owner = src.includes('karigouda') || parts.includes('kg') ? 'kg'
-    : src.includes('ankith') || parts.includes('ak') || parts.includes('anki') ? 'ak'
-    : src.includes('viknesh') || src.includes('google') ? 'viknesh'
-    : 'unknown';
+  const owner = inferOwner(src, parts);
 
   return { platform, service, owner };
 }

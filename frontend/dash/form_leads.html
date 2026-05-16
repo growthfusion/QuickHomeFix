@@ -326,9 +326,6 @@
           <label class="text-xs text-gray-500 mb-1">buyer</label>
           <select id="buyer-filter" class="border border-gray-300 rounded px-2 py-1.5 text-sm min-w-[110px]">
             <option value="">all</option>
-            <option value="kg">Karigouda</option>
-            <option value="ak">Ankith</option>
-            <option value="viknesh">Viknesh</option>
           </select>
         </div>
         <div class="flex flex-col">
@@ -431,6 +428,16 @@
     // Backend URL — empty string means same origin (local dev).
     // On production set window.BACKEND_URL via a separate config or just hardcode here.
     const API_BASE = (window.BACKEND_URL || '').replace(/\/$/, '');
+
+    // ── Buyer config ─────────────────────────────────────────────────────────
+    // To add a new buyer: add one entry here. key = short slug used everywhere
+    // internally; label = display name; keywords = strings that appear in their
+    // RedTrack source titles or Meta campaign names (all lowercased).
+    const BUYERS = [
+      { key: 'kg',      label: 'Karigouda', keywords: ['karigouda', 'kg'] },
+      { key: 'ak',      label: 'Ankith',    keywords: ['ankith', 'ak', 'anki'] },
+      { key: 'viknesh', label: 'Viknesh',   keywords: ['viknesh', 'vk', 'vn', 'google'] },
+    ];
 
     const METRIC_COLS = [
       "VISITS", "CTR, %", "CLICKS", "CR, %", "EMAILS",
@@ -586,14 +593,16 @@
 
     function inferOwnerFromCampaign(name) {
       const n = (name || '').toLowerCase();
-      // full names
-      if (n.includes('karigouda')) return 'kg';
-      if (n.includes('ankith'))    return 'ak';
-      if (n.includes('viknesh'))   return 'viknesh';
-      // abbreviations used in Meta campaign names (e.g. "QHF | KG | Meta | Bath")
-      if (/[|\s]kg[|\s]/.test(n) || n.startsWith('kg') || n.endsWith('kg')) return 'kg';
-      if (/[|\s]ak[|\s]/.test(n) || n.startsWith('ak') || n.endsWith('ak')) return 'ak';
-      if (/[|\s]vk[|\s]/.test(n) || /[|\s]vn[|\s]/.test(n))                return 'viknesh';
+      for (const b of BUYERS) {
+        for (const kw of b.keywords) {
+          if (kw.length <= 2) {
+            // Short keys: only match as whole word/segment to avoid false positives
+            if (new RegExp(`(?:^|[|\\s])${kw}(?:[|\\s]|$)`).test(n)) return b.key;
+          } else {
+            if (n.includes(kw)) return b.key;
+          }
+        }
+      }
       return 'unknown';
     }
 
@@ -897,18 +906,9 @@
     // visits/clicks/cost come directly from RT channel rows (group_by=ts)
     // leads/sold/revenue = LP total proportioned by each owner's RT cost share
     function buildBuyerRows() {
-      const OWNERS = [
-        { key: 'kg',      label: 'Karigouda' },
-        { key: 'ak',      label: 'Ankith'    },
-        { key: 'viknesh', label: 'Viknesh'   },
-      ];
-
-      // Aggregate RT channel rows by rt_owner
       const rtByOwner = new Map();
-      for (const o of OWNERS) rtByOwner.set(o.key, { views: 0, clicks: 0, cost: 0 });
+      for (const b of BUYERS) rtByOwner.set(b.key, { views: 0, clicks: 0, cost: 0 });
 
-      // Use RT_SOURCE (breakdown_type='source') — real per-source QHF data
-      const KNOWN_OWNERS = new Set(['kg', 'ak', 'viknesh']);
       for (const r of filteredRtSource()) {
         const date = r.date || '';
         if (FILTERS.from && date < FILTERS.from) continue;
@@ -925,13 +925,12 @@
       const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
 
       const out = [];
-      for (const { key, label } of OWNERS) {
-        const rt    = rtByOwner.get(key);
+      for (const { key, label } of BUYERS) {
+        const rt    = rtByOwner.get(key) || { views: 0, clicks: 0, cost: 0 };
         const share = totalCost > 0 ? rt.cost / totalCost : 0;
-        const l     = Math.round(totalL  * share);
-        const s     = Math.round(totalS  * share);
-        const rv    = +(totalRev * share).toFixed(2);
-        out.push(lpRow(label, rt.views, rt.clicks, l, s, rv, rt.cost));
+        out.push(lpRow(label, rt.views, rt.clicks,
+          Math.round(totalL * share), Math.round(totalS * share),
+          +(totalRev * share).toFixed(2), rt.cost));
       }
       return out;
     }
@@ -1633,6 +1632,18 @@
       to:   _localISO(_today30),
       hideLow: false
     };
+
+    // Populate buyer dropdown from BUYERS config
+    (function populateBuyerDropdown() {
+      const sel = document.getElementById("buyer-filter");
+      if (!sel) return;
+      BUYERS.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b.key;
+        opt.textContent = b.label;
+        sel.appendChild(opt);
+      });
+    })();
 
     function bindFilter(id, key) {
       const el = document.getElementById(id);
