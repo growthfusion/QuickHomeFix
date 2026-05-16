@@ -686,11 +686,35 @@
         if (FILTERS.to   && date > FILTERS.to)   continue;
         if (formType && r.form_type !== formType) continue;
         if (FILTERS.form && r.form_type !== FILTERS.form) continue;
-        contacts     += Number(r.contacts_created || 0);
-        prosContacted += Number(r.pros_contacted  || 0);
-        revenue      += Number(r.net_revenue      || 0);
+        contacts      += Number(r.sessions       || 0);
+        prosContacted += Number(r.pros_contacted || 0);
+        revenue       += Number(r.net_revenue    || 0);
       }
       return { contacts, prosContacted, revenue };
+    }
+
+    // Build two TT aggregation maps for use across all table builders:
+    //   byCampaignId — keyed by Thumbtack utm_campaign (= Meta campaign_id)
+    //   bySvc        — keyed by form_type (bath/windo/roof) for proportional distribution
+    function buildTtMaps() {
+      const byCampaignId = new Map();
+      const bySvc        = new Map();
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && r.form_type !== FILTERS.form) continue;
+        const add = (map, key) => {
+          if (!map.has(key)) map.set(key, { sessions: 0, pros: 0, rev: 0 });
+          const v = map.get(key);
+          v.sessions += Number(r.sessions       || 0);
+          v.pros     += Number(r.pros_contacted || 0);
+          v.rev      += Number(r.net_revenue    || 0);
+        };
+        if (r.campaign_id) add(byCampaignId, r.campaign_id);
+        add(bySvc, r.form_type);
+      }
+      return { byCampaignId, bySvc };
     }
 
     // ── Data loading ─────────────────────────────────────────────────────────
@@ -939,15 +963,23 @@
       }
       const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
       const totalRtCost = [...rtByPlatform.values()].reduce((s, v) => s + v.cost, 0);
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
       const out = [];
       for (const [plat, rt] of rtByPlatform.entries()) {
         const share = totalRtCost > 0 ? rt.cost / totalRtCost : 0;
         out.push(lpRow(plat, rt.views, rt.clicks,
           Math.round(totalL * share), Math.round(totalS * share),
-          +(totalRev * share).toFixed(2), rt.cost));
+          +(totalRev * share).toFixed(2), rt.cost,
+          Math.round(ttTotal * share),
+          Math.round(ttProsTotal * share),
+          +(ttRevTotal * share).toFixed(2)));
       }
       if (out.length === 0) {
-        out.push(lpRow('meta', 0, 0, totalL, totalS, totalRev, metaSpend));
+        out.push(lpRow('meta', 0, 0, totalL, totalS, totalRev, metaSpend,
+          ttTotal, ttProsTotal, ttRevTotal));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -974,6 +1006,10 @@
 
       const totalCost = [...rtByOwner.values()].reduce((s, v) => s + v.cost, 0);
       const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
 
       const out = [];
       for (const { key, label } of BUYERS) {
@@ -981,7 +1017,10 @@
         const share = totalCost > 0 ? rt.cost / totalCost : 0;
         out.push(lpRow(label, rt.views, rt.clicks,
           Math.round(totalL * share), Math.round(totalS * share),
-          +(totalRev * share).toFixed(2), rt.cost));
+          +(totalRev * share).toFixed(2), rt.cost,
+          Math.round(ttTotal * share),
+          Math.round(ttProsTotal * share),
+          +(ttRevTotal * share).toFixed(2)));
       }
       return out;
     }
@@ -1024,6 +1063,13 @@
     function buildWidgetRows() {
       const metaMap      = aggMeta(r => r.campaign_name || null);
       const rtByOwnerSvc = buildRtByOwnerSvc();
+      const { byCampaignId } = buildTtMaps();
+      // campaign_name → campaign_id (first occurrence wins)
+      const campNameToId = new Map();
+      for (const r of META_ROWS) {
+        if (r.campaign_name && r.campaign_id && !campNameToId.has(r.campaign_name))
+          campNameToId.set(r.campaign_name, r.campaign_id);
+      }
 
       // LP totals per service — LP uses short names so owner is unknown; group by service only
       const lpBySvc = new Map();
@@ -1064,13 +1110,16 @@
         const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
         const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
         const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        const campId        = campNameToId.get(name) || '';
+        const tt            = byCampaignId.get(campId) || { sessions: 0, pros: 0, rev: 0 };
         out.push(lpRow(name,
           Math.round(rt.views   * rtShare),
           Math.round(rt.clicks  * rtShare),
           Math.round(lp.l * lpShare),
           Math.round(lp.s * lpShare),
           +(rt.revenue * rtShare).toFixed(2),
-          +(rt.cost    * rtShare).toFixed(2)));
+          +(rt.cost    * rtShare).toFixed(2),
+          tt.sessions, tt.pros, tt.rev));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -1081,11 +1130,13 @@
     function buildTeaserRows() {
       const metaMap      = aggMeta(r => r.adset_name || null);
       const rtByOwnerSvc = buildRtByOwnerSvc();
+      const { byCampaignId } = buildTtMaps();
 
-      // Map adset_name → owner+service key, service, and QHF flag via parent campaign_name
+      // Map adset_name → owner+service key, service, QHF flag, and campaign_id via parent campaign_name
       const adsetOwnerSvcKey = new Map();
       const adsetSvc         = new Map();
       const adsetIsQhf       = new Map();
+      const adsetCampaignId  = new Map();
       for (const r of META_ROWS) {
         const adset = r.adset_name;
         if (!adset || adsetOwnerSvcKey.has(adset)) continue;
@@ -1093,6 +1144,7 @@
         adsetOwnerSvcKey.set(adset, `${inferOwnerFromCampaign(camp)}|${inferFormFromCampaign(camp)}`);
         adsetSvc.set(adset, inferFormFromCampaign(camp));
         adsetIsQhf.set(adset, isQhfCampaign(camp));
+        adsetCampaignId.set(adset, r.campaign_id || '');
       }
 
       // Meta spend per owner+service (RT proportioning) and per service (leads proportioning)
@@ -1133,13 +1185,16 @@
         const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
         const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
         const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        const campId        = adsetCampaignId.get(name) || '';
+        const tt            = byCampaignId.get(campId) || { sessions: 0, pros: 0, rev: 0 };
         out.push(lpRow(name,
           Math.round(rt.views   * rtShare),
           Math.round(rt.clicks  * rtShare),
           Math.round(lp.l * lpShare),
           Math.round(lp.s * lpShare),
           +(rt.revenue * rtShare).toFixed(2),
-          +(rt.cost    * rtShare).toFixed(2)));
+          +(rt.cost    * rtShare).toFixed(2),
+          tt.sessions, tt.pros, tt.rev));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -1150,11 +1205,13 @@
     function buildTitleRows() {
       const metaMap      = aggMeta(r => r.ad_name || null);
       const rtByOwnerSvc = buildRtByOwnerSvc();
+      const { byCampaignId } = buildTtMaps();
 
-      // Map ad_name → owner+service key, service, and QHF flag via parent campaign_name
+      // Map ad_name → owner+service key, service, QHF flag, and campaign_id via parent campaign_name
       const adOwnerSvcKey = new Map();
       const adSvc         = new Map();
       const adIsQhf       = new Map();
+      const adCampaignId  = new Map();
       for (const r of META_ROWS) {
         const ad = r.ad_name;
         if (!ad || adOwnerSvcKey.has(ad)) continue;
@@ -1162,6 +1219,7 @@
         adOwnerSvcKey.set(ad, `${inferOwnerFromCampaign(camp)}|${inferFormFromCampaign(camp)}`);
         adSvc.set(ad, inferFormFromCampaign(camp));
         adIsQhf.set(ad, isQhfCampaign(camp));
+        adCampaignId.set(ad, r.campaign_id || '');
       }
 
       // Meta spend per owner+service (RT proportioning) and per service (leads proportioning)
@@ -1202,13 +1260,16 @@
         const lpShare       = svcSpend      > 0 ? meta.spend / svcSpend      : 0;
         const rt            = rtByOwnerSvc.get(ownerSvcKey) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
         const lp            = lpBySvc.get(svc) || { l: 0, s: 0 };
+        const campId        = adCampaignId.get(name) || '';
+        const tt            = byCampaignId.get(campId) || { sessions: 0, pros: 0, rev: 0 };
         out.push(lpRow(name,
           Math.round(rt.views   * rtShare),
           Math.round(rt.clicks  * rtShare),
           Math.round(lp.l * lpShare),
           Math.round(lp.s * lpShare),
           +(rt.revenue * rtShare).toFixed(2),
-          +(rt.cost    * rtShare).toFixed(2)));
+          +(rt.cost    * rtShare).toFixed(2),
+          tt.sessions, tt.pros, tt.rev));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -1228,6 +1289,10 @@
       const totalImpress  = [...metaMap.values()].reduce((s, v) => s + v.impressions, 0);
       const totalRtViews  = totalRtViewsInRange();
       const { l: totalL, s: totalS, rv: totalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
       const out = [];
       for (const [placement, meta] of metaMap.entries()) {
         const spendShare   = totalSpend   > 0 ? meta.spend       / totalSpend   : 0;
@@ -1236,7 +1301,10 @@
         out.push(lpRow(placement, visits, meta.clicks,
           Math.round(totalL * spendShare),
           Math.round(totalS * spendShare),
-          +(totalRev * spendShare).toFixed(2), meta.spend));
+          +(totalRev * spendShare).toFixed(2), meta.spend,
+          Math.round(ttTotal * spendShare),
+          Math.round(ttProsTotal * spendShare),
+          +(ttRevTotal * spendShare).toFixed(2)));
       }
       out.sort((a, b) => b[1] - a[1]);
       return out;
@@ -1389,6 +1457,10 @@
       const ldTotal        = [...m.values()].reduce((s, v) => s + v.l, 0);
       // Scale to LP ground truth — LD table over-counts (260 vs LP 122)
       const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
 
       const out = [];
       for (const [code, v] of m.entries()) {
@@ -1405,7 +1477,10 @@
         const rev    = +(lpTotalRev   * ldShare).toFixed(2);
         const l = Math.round(lpTotal * ldShare);
         const s = Math.round(lpSold  * ldShare);
-        out.push(lpRow(code, visits, clicks, l, s, rev, cost));
+        out.push(lpRow(code, visits, clicks, l, s, rev, cost,
+          Math.round(ttTotal * ldShare),
+          Math.round(ttProsTotal * ldShare),
+          +(ttRevTotal * ldShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -1460,6 +1535,10 @@
       const totalMetaSpend = [...metaByDevice.values()].reduce((s, v) => s + v.spend, 0);
       const ldTotal        = [...ldMap.values()].reduce((s, v) => s + v.l, 0);
       const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
       const allKeys = new Set([...ldMap.keys(), ...metaByDevice.keys()]);
       const out = [];
       for (const dev of allKeys) {
@@ -1476,7 +1555,10 @@
           Math.round(lpTotal * ldShare),
           Math.round(lpSold  * ldShare),
           +(lpTotalRev * ldShare).toFixed(2),
-          +(totalRtCost * costShare).toFixed(2)));
+          +(totalRtCost * costShare).toFixed(2),
+          Math.round(ttTotal * ldShare),
+          Math.round(ttProsTotal * ldShare),
+          +(ttRevTotal * ldShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
@@ -1531,6 +1613,10 @@
       const totalMetaSpend = [...metaByOs.values()].reduce((s, v) => s + v.spend, 0);
       const ldTotal        = [...ldMap.values()].reduce((s, v) => s + v.l, 0);
       const { l: lpTotal, s: lpSold, rv: lpTotalRev } = lpTotalsInRange();
+      const { bySvc: ttBySvc } = buildTtMaps();
+      const ttTotal     = [...ttBySvc.values()].reduce((s, v) => s + v.sessions, 0);
+      const ttProsTotal = [...ttBySvc.values()].reduce((s, v) => s + v.pros, 0);
+      const ttRevTotal  = [...ttBySvc.values()].reduce((s, v) => s + v.rev, 0);
 
       const allKeys = new Set([...ldMap.keys(), ...metaByOs.keys()]);
       const out = [];
@@ -1548,7 +1634,10 @@
           Math.round(lpTotal * ldShare),
           Math.round(lpSold  * ldShare),
           +(lpTotalRev * ldShare).toFixed(2),
-          +(totalRtCost * costShare).toFixed(2)));
+          +(totalRtCost * costShare).toFixed(2),
+          Math.round(ttTotal * ldShare),
+          Math.round(ttProsTotal * ldShare),
+          +(ttRevTotal * ldShare).toFixed(2)));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;
