@@ -475,6 +475,7 @@
     let RT_OS       = [];
     let RT_DEVICE   = [];
     let RT_REGION   = [];
+    let TT_ROWS     = [];  // thumbtack_stats rows from Google Sheets
 
     let LP_ROWS = [];
 
@@ -510,51 +511,53 @@
 
     // ── Row builder ──────────────────────────────────────────────────────────
     // Returns a 34-element array: [label, ...33 metric values]
-    function lpRow(label, views, clicks, leads, sold, rev, cost) {
+    function lpRow(label, views, clicks, leads, sold, rev, cost, ttContacts=0, ttSold=0, ttRev=0) {
       const fmt2 = n => +n.toFixed(2);
       const fmtP = n => n > 0 ? n.toFixed(2) + '%' : '0%';
-      const ctr     = views  > 0 ? (clicks / views) * 100 : 0;
-      const cr      = views  > 0 ? (leads  / views) * 100 : 0;
-      const accPct  = leads  > 0 ? (sold   / leads) * 100 : 0;
-      const avgLead = leads  > 0 ? rev / leads : 0;
-      const avgSold = sold   > 0 ? rev / sold  : 0;
-      const epc     = clicks > 0 ? rev / clicks : 0;
-      const epv     = views  > 0 ? rev / views  : 0;
+      const ctr     = views      > 0 ? (clicks     / views)      * 100 : 0;
+      const cr      = views      > 0 ? (leads      / views)      * 100 : 0;
+      const accPct  = leads      > 0 ? (sold       / leads)      * 100 : 0;
+      const ttPct   = ttContacts > 0 ? (ttSold     / ttContacts) * 100 : 0;
+      const avgLead = leads      > 0 ? rev / leads : 0;
+      const avgSold = sold       > 0 ? rev / sold  : 0;
+      const epc     = clicks     > 0 ? rev / clicks : 0;
+      const epv     = views      > 0 ? rev / views  : 0;
+      const totalRev = rev + ttRev;
       return [
         label,
-        views,          // 1  VISITS
-        fmtP(ctr),     // 2  CTR, %
-        clicks,         // 3  CLICKS
-        fmtP(cr),      // 4  CR, %
-        0,              // 5  EMAILS
-        leads,          // 6  LEADS
-        sold,           // 7  SOLD
-        fmtP(accPct),  // 8  %
-        0,              // 9  APPTS
-        '0%',           // 10 %
-        0,              // 11 UPSELLS
-        0,              // 12 SOLD (upsell)
-        '0%',           // 13 %
-        '0%',           // 14 UPSELL_RATE, %
-        0,              // 15 PPC
-        0,              // 16 SOLD (ppc)
-        '0%',           // 17 %
-        '0%',           // 18 PPC_RATE, %
-        0,              // 19 THUMBTACK
-        0,              // 20 SOLD (tt)
-        '0%',           // 21 %
-        fmt2(rev),     // 22 TOTAL REVENUE, $
-        fmt2(rev),     // 23 LEADS, $
-        fmt2(cost),    // 24 COST, $
-        0,              // 25 UPSELLS, $
-        0,              // 26 THUMBTACK, $
-        0,              // 27 PPC, $
-        0,              // 28 REPOSTS, $
-        fmt2(rev - cost), // 29 ADJUSTMENT, $
-        fmt2(avgLead), // 30 AVG PER LEAD, $
-        fmt2(avgSold), // 31 AVG PER SOLD, $
-        fmt2(epc),     // 32 EPC, $
-        fmt2(epv),     // 33 EPV, $
+        views,              // 1  VISITS
+        fmtP(ctr),         // 2  CTR, %
+        clicks,             // 3  CLICKS
+        fmtP(cr),          // 4  CR, %
+        0,                  // 5  EMAILS
+        leads,              // 6  LEADS
+        sold,               // 7  SOLD
+        fmtP(accPct),      // 8  %
+        0,                  // 9  APPTS
+        '0%',               // 10 %
+        0,                  // 11 UPSELLS
+        0,                  // 12 SOLD (upsell)
+        '0%',               // 13 %
+        '0%',               // 14 UPSELL_RATE, %
+        0,                  // 15 PPC
+        0,                  // 16 SOLD (ppc)
+        '0%',               // 17 %
+        '0%',               // 18 PPC_RATE, %
+        ttContacts,         // 19 THUMBTACK
+        ttSold,             // 20 SOLD (tt)
+        fmtP(ttPct),       // 21 %
+        fmt2(totalRev),    // 22 TOTAL REVENUE, $
+        fmt2(rev),         // 23 LEADS, $
+        fmt2(cost),        // 24 COST, $
+        0,                  // 25 UPSELLS, $
+        fmt2(ttRev),       // 26 THUMBTACK, $
+        0,                  // 27 PPC, $
+        0,                  // 28 REPOSTS, $
+        fmt2(totalRev - cost), // 29 ADJUSTMENT, $
+        fmt2(avgLead),     // 30 AVG PER LEAD, $
+        fmt2(avgSold),     // 31 AVG PER SOLD, $
+        fmt2(epc),         // 32 EPC, $
+        fmt2(epv),         // 33 EPV, $
       ];
     }
 
@@ -674,15 +677,32 @@
       return { l, s, rv };
     }
 
+    // Sum Thumbtack totals within current date range, optionally filtered by form_type
+    function ttTotalsInRange(formType) {
+      let contacts = 0, prosContacted = 0, revenue = 0;
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (formType && r.form_type !== formType) continue;
+        if (FILTERS.form && r.form_type !== FILTERS.form) continue;
+        contacts     += Number(r.contacts_created || 0);
+        prosContacted += Number(r.pros_contacted  || 0);
+        revenue      += Number(r.net_revenue      || 0);
+      }
+      return { contacts, prosContacted, revenue };
+    }
+
     // ── Data loading ─────────────────────────────────────────────────────────
     async function loadStats() {
       try {
-        const [rtRes, lpRes, ldRes, lpFormMapRes, metaRes] = await Promise.all([
+        const [rtRes, lpRes, ldRes, lpFormMapRes, metaRes, ttRes] = await Promise.all([
           fetch(API_BASE + '/api/stats/redtrack').then(r => r.json()).catch(() => ({})),
           fetch(API_BASE + '/api/stats/leadprosper').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
           fetch(API_BASE + '/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({})),
           fetch(API_BASE + '/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
           fetch(API_BASE + '/api/stats/meta').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+          fetch(API_BASE + '/api/stats/thumbtack').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
         ]);
 
         RT_DAILY    = rtRes.daily    || [];
@@ -724,6 +744,7 @@
             }
           }
         }
+        if (ttRes.ok && ttRes.rows) TT_ROWS = ttRes.rows;
 
         // Populate state dropdown from LD_STATE data
         const stateEl = document.getElementById('state-filter');
@@ -788,12 +809,26 @@
         v.cost   += Number(r.cost      || 0);
         v.rv     += Number(r.revenue   || 0);
       }
-      const allDates = new Set([...lpMap.keys(), ...rtMap.keys()]);
+      // Thumbtack totals by date
+      const ttMap = new Map();
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (FILTERS.form && r.form_type !== FILTERS.form) continue;
+        if (!ttMap.has(date)) ttMap.set(date, { contacts: 0, pros: 0, rev: 0 });
+        const v = ttMap.get(date);
+        v.contacts += Number(r.contacts_created || 0);
+        v.pros     += Number(r.pros_contacted   || 0);
+        v.rev      += Number(r.net_revenue      || 0);
+      }
+      const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...ttMap.keys()]);
       const out = [];
       for (const d of allDates) {
         const lp  = lpMap.get(d) || { l: 0, s: 0 };
         const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
-        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, rtD.rv, rtD.cost));
+        const tt  = ttMap.get(d) || { contacts: 0, pros: 0, rev: 0 };
+        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, rtD.rv, rtD.cost, tt.contacts, tt.pros, tt.rev));
       }
       out.sort((a, b) => a[0] > b[0] ? -1 : 1);
       return out;
@@ -840,6 +875,19 @@
         leadsPerService.set(svc, (leadsPerService.get(svc) || 0) + v.l);
       }
 
+      // Thumbtack totals per service
+      const ttBySvc = new Map();
+      for (const r of TT_ROWS) {
+        const date = r.date || '';
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!ttBySvc.has(r.form_type)) ttBySvc.set(r.form_type, { contacts: 0, pros: 0, rev: 0 });
+        const v = ttBySvc.get(r.form_type);
+        v.contacts += Number(r.contacts_created || 0);
+        v.pros     += Number(r.pros_contacted   || 0);
+        v.rev      += Number(r.net_revenue      || 0);
+      }
+
       // Step 4: build output — apply FILTERS.form for display only
       const out = [];
       for (const [name, v] of allByCamp.entries()) {
@@ -847,13 +895,16 @@
         if (FILTERS.form && svc !== FILTERS.form) continue;
         const rtSvc     = rtByService.get(svc) || { views: 0, clicks: 0, cost: 0, revenue: 0 };
         const svcLeads  = leadsPerService.get(svc) || 0;
-        // Proportion RT service total by this campaign's lead share within the service
         const campShare = svcLeads > 0 ? v.l / svcLeads : 0;
         const visits    = Math.round(rtSvc.views  * campShare);
         const clicks    = Math.round(rtSvc.clicks * campShare);
         const cost      = +(rtSvc.cost    * campShare).toFixed(2);
         const rev       = +(rtSvc.revenue * campShare).toFixed(2);
-        out.push(lpRow(name, visits, clicks, v.l, v.s, rev, cost));
+        const tt        = ttBySvc.get(svc) || { contacts: 0, pros: 0, rev: 0 };
+        const ttContacts = Math.round(tt.contacts * campShare);
+        const ttPros     = Math.round(tt.pros     * campShare);
+        const ttRev      = +(tt.rev * campShare).toFixed(2);
+        out.push(lpRow(name, visits, clicks, v.l, v.s, rev, cost, ttContacts, ttPros, ttRev));
       }
       out.sort((a, b) => b[6] - a[6]);
       return out;

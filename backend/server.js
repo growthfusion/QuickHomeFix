@@ -13,6 +13,7 @@ import cron from "node-cron";
 import { fetchMeta } from "./jobs/fetchMeta.js";
 import { fetchLeadProsper } from "./jobs/fetchLeadProsper.js";
 import { fetchRedTrack } from "./jobs/fetchRedTrack.js";
+import { fetchThumbTack } from "./jobs/fetchThumbTack.js";
 
 // Force local .env values to override any stale system env vars.
 dotenv.config({ override: true });
@@ -1505,7 +1506,25 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ENGINE = MergeTree
         ORDER BY (created_at, id)
       `,
-      // 5-8. Add columns that may be absent in tables created before schema updates
+      // 5. Thumbtack stats from Google Sheets
+      `
+        CREATE TABLE IF NOT EXISTS thumbtack_stats (
+          fetched_at        DateTime64(3, 'UTC') DEFAULT now64(3),
+          date              Date,
+          campaign_id       String,
+          category          String,
+          form_type         String,
+          sessions          UInt32,
+          visitors          UInt32,
+          contacts_created  UInt32,
+          pros_contacted    UInt32,
+          revenue           Float64,
+          net_revenue       Float64,
+          owed_revenue      Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, category)
+      `,
+      // 6-9. Add columns that may be absent in tables created before schema updates
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS normalized_service Nullable(String)`,
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name            Nullable(String)`,
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS adset_name         Nullable(String)`,
@@ -1816,17 +1835,29 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
 // ───────────────────────────────────────────────────────────────────────────
 
 // --- Initial API sync on startup ---
-Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack()])
+Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
   .then(() => console.log('[startup] Initial API sync complete'));
 
 // --- Hourly cron scheduler ---
 cron.schedule('0 * * * *', () => {
   console.log('[cron] Starting hourly API sync...');
-  Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack()])
+  Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
     .then(() => console.log('[cron] Hourly sync complete'));
 });
 
 // --- GET endpoints for latest stats snapshots ---
+app.get("/api/stats/thumbtack", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM thumbtack_stats WHERE fetched_at = (SELECT max(fetched_at) FROM thumbtack_stats) ORDER BY date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/thumbtack]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
 app.get("/api/stats/meta", async (_req, res) => {
   try {
     const rows = await runClickhouseSelect(
@@ -1869,13 +1900,14 @@ app.get("/api/stats/redtrack", async (_req, res) => {
 });
 
 
-// Manually trigger all three fetch jobs and return results
+// Manually trigger all fetch jobs and return results
 app.post("/api/dev/force-fetch", async (_req, res) => {
   try {
-    const [metaResult, lpResult, rtResult] = await Promise.allSettled([
+    const [metaResult, lpResult, rtResult, ttResult] = await Promise.allSettled([
       fetchMeta(),
       fetchLeadProsper(),
       fetchRedTrack(),
+      fetchThumbTack(),
     ]);
     res.json({
       meta:       metaResult.status === 'fulfilled' ? 'ok' : metaResult.reason?.message,
