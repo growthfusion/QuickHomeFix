@@ -406,10 +406,6 @@
     </div>
   </div>
 
-  <!-- Data status bar (shows after load) -->
-  <div id="data-status" class="w-full px-4 sm:px-6 py-2 text-xs text-gray-500 font-mono hidden">
-    Loading data…
-  </div>
 
   <!-- Tables container -->
   <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
@@ -785,17 +781,6 @@
 
       } catch (err) {
         console.warn('[loadStats] fetch failed:', err.message);
-      }
-
-      const statusEl = document.getElementById('data-status');
-      if (statusEl) {
-        statusEl.textContent =
-          `RT: ${RT_DAILY.length} daily / ${RT_SOURCE.length} source  ·  ` +
-          `LP: ${LP_ROWS.length} rows  ·  ` +
-          `LD: date=${LD_DATE.length} state=${LD_STATE.length} device=${LD_DEVICE.length} os=${LD_OS.length} camp=${LD_CAMPAIGN.length} ad=${LD_AD.length} landing=${LD_LANDING.length}  ·  ` +
-          `Meta: ${META_ROWS.length} rows / ${Object.keys(META_HIERARCHY).length} ads  ·  ` +
-          `Range: ${FILTERS.from} → ${FILTERS.to}`;
-        statusEl.classList.remove('hidden');
       }
 
       rerender();
