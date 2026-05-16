@@ -1,14 +1,12 @@
 FROM node:20-alpine
 
-WORKDIR /app/backend
+WORKDIR /app
 
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --production
 
-COPY backend/server.js ./
-COPY backend/jobs/ ./jobs/
-
-COPY frontend/ /app/frontend/
+COPY server.js ./
+COPY jobs/ ./jobs/
 
 EXPOSE 8080
 
