@@ -6,10 +6,11 @@ import { createClient } from '@clickhouse/client';
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1mu5MHTa0WeYcLonQ49Xw5rqamqB7qbCfikR1bDCvmeA/export?format=csv&gid=804697822';
 
 // Map Thumbtack category names → dashboard form_type keys
+// Category names must match exactly what appears in the Google Sheet
 const CATEGORY_MAP = {
   'Bathroom Remodel':    'bath',
   'Window Installation': 'windo',
-  'Roofing':             'roof',
+  // 'Roofing' not present in sheet — add here when Thumbtack tracks it
 };
 
 function buildClient() {

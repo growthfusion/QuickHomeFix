@@ -1910,9 +1910,10 @@ app.post("/api/dev/force-fetch", async (_req, res) => {
       fetchThumbTack(),
     ]);
     res.json({
-      meta:       metaResult.status === 'fulfilled' ? 'ok' : metaResult.reason?.message,
-      leadprosper: lpResult.status === 'fulfilled'  ? 'ok' : lpResult.reason?.message,
-      redtrack:   rtResult.status === 'fulfilled'   ? 'ok' : rtResult.reason?.message,
+      meta:        metaResult.status === 'fulfilled' ? 'ok' : metaResult.reason?.message,
+      leadprosper: lpResult.status === 'fulfilled'   ? 'ok' : lpResult.reason?.message,
+      redtrack:    rtResult.status === 'fulfilled'   ? 'ok' : rtResult.reason?.message,
+      thumbtack:   ttResult.status === 'fulfilled'   ? 'ok' : ttResult.reason?.message,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
