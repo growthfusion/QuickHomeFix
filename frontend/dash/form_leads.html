@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Set to backend Cloud Run URL when frontend and backend are separate services.
+    // Leave as empty string '' for same-origin (local dev / single-service deploy).
+    window.BACKEND_URL = 'https://quickhomefix-backend-test-1087056959880.us-central1.run.app';
+  </script>
   <script src="/dash/auth.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -423,6 +428,10 @@
     //  22=TOTAL REVENUE,$  23=LEADS,$  24=COST,$
     //  25=UPSELLS,$  26=THUMBTACK,$  27=PPC,$  28=REPOSTS,$  29=ADJUSTMENT,$
     //  30=AVG PER LEAD,$  31=AVG PER SOLD,$  32=EPC,$  33=EPV,$
+    // Backend URL — empty string means same origin (local dev).
+    // On production set window.BACKEND_URL via a separate config or just hardcode here.
+    const API_BASE = (window.BACKEND_URL || '').replace(/\/$/, '');
+
     const METRIC_COLS = [
       "VISITS", "CTR, %", "CLICKS", "CR, %", "EMAILS",
       "LEADS", "SOLD", "%", "APPTS", "%",
@@ -660,11 +669,11 @@
     async function loadStats() {
       try {
         const [rtRes, lpRes, ldRes, lpFormMapRes, metaRes] = await Promise.all([
-          fetch('/api/stats/redtrack').then(r => r.json()).catch(() => ({})),
-          fetch('/api/stats/leadprosper').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
-          fetch('/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({})),
-          fetch('/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
-          fetch('/api/stats/meta').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+          fetch(API_BASE + '/api/stats/redtrack').then(r => r.json()).catch(() => ({})),
+          fetch(API_BASE + '/api/stats/leadprosper').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
+          fetch(API_BASE + '/api/stats/leads-breakdown').then(r => r.json()).catch(() => ({})),
+          fetch(API_BASE + '/api/stats/lp-form-map').then(r => r.json()).catch(() => []),
+          fetch(API_BASE + '/api/stats/meta').then(r => r.json()).catch(() => ({ ok: false, rows: [] })),
         ]);
 
         RT_DAILY    = rtRes.daily    || [];
