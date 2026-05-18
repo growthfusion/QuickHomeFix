@@ -591,7 +591,12 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("trustDate").textContent = new Date().toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});
 
   var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)(?:\/tt)?\/?$/);
-  var isTTVariant = /^\/get-quotes\/[a-zA-Z0-9_-]+\/tt\/?$/.test(window.location.pathname);
+  // Store TT variant flag in sessionStorage so it survives URL changes during wizard navigation
+  if (/^\/get-quotes\/[a-zA-Z0-9_-]+\/tt\/?$/.test(window.location.pathname)) {
+    sessionStorage.setItem("qhf_tt_variant", "1");
+  } else {
+    sessionStorage.removeItem("qhf_tt_variant");
+  }
   var params = new URLSearchParams(window.location.search);
   var svc = (pathMatch && pathMatch[1]) || params.get("service");
   if (!svc || !isValidService(svc)) {
@@ -856,10 +861,11 @@ function renderCurrentStep() {
     var label = svcMap[store.formData.service] || "Home project";
 
     // ── A/B: /service/tt → new design, /service → old design ──
-    var abVariant = isTTVariant ? "tt" : "standard";
+    var isTT = !!sessionStorage.getItem("qhf_tt_variant");
+    var abVariant = isTT ? "tt" : "standard";
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: "abVariantAssigned", abTest: "tq_page_v1", abVariant: abVariant });
-    if (!isTTVariant) {
+    if (!isTT) {
       document.getElementById("step-complete").innerHTML = TQ_VARIANT_OLD_HTML;
     }
 
@@ -1203,6 +1209,10 @@ function buildThumbTackContractors() {
   if (!keyword || !zipCode) return;
 
   section.style.display = "block";
+  // Override animation so section is immediately visible
+  section.style.opacity = "1";
+  section.style.transform = "none";
+  section.style.animation = "none";
 
   // Skeleton grid (matches final card layout)
   var skeletonHtml = '<div class="' + TT_GRID_CLASS + '">';
