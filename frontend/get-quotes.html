@@ -1254,10 +1254,10 @@ function buildBizCard(biz) {
   var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
   var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
 
-  // Intro: 95 chars then Read More
+  // Intro: 95 chars then inline Read More (expands in place)
   var introText = rawIntro.length > 95 ? _esc(rawIntro.slice(0, 95)) : _esc(rawIntro);
-  var introMore = rawIntro.length > 95 && safeCta
-    ? ' <a href="' + safeCta + '" target="_blank" rel="noopener" class="ttc-readmore js-tt-cta" data-biz-name="' + name + '">Read More +</a>'
+  var introMore = rawIntro.length > 95
+    ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawIntro) + '">Read More +</button>'
     : '';
 
   // Avatar
@@ -1306,8 +1306,8 @@ function buildBizCard(biz) {
       (rating > 0
         ? (function() {
             var quoteShort = rawQuote.length > 110 ? _esc(rawQuote.slice(0, 110)) : _esc(rawQuote);
-            var quoteMore  = rawQuote.length > 110 && safeCta
-              ? ' <a href="' + safeCta + '" target="_blank" rel="noopener" class="ttc-readmore js-tt-cta" data-biz-name="' + name + '">Read More +</a>'
+            var quoteMore  = rawQuote.length > 110
+              ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawQuote) + '">Read More +</button>'
               : '';
             return '<div class="ttc-review-box">' +
               '<div class="ttc-stars-row">' +
@@ -1635,7 +1635,8 @@ var _allowNavigation = true;
 
 <!-- ═══ Thumbtack Request Flow Widget — Popup ═══ -->
 <div id="tt-popup-backdrop" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;">
-  <div id="tt-popup-card" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;">
+  <div id="tt-popup-card" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;position:relative;">
+    <button id="tt-popup-close" aria-label="Close" onclick="document.getElementById('tt-popup-backdrop').style.display='none';document.body.style.overflow='';document.getElementById('tt-popup-iframe').src='';" style="position:absolute;top:10px;right:10px;z-index:1;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
     <iframe id="tt-popup-iframe"
       width="860" height="760"
       style="width:860px;height:760px;max-width:100%;display:block;border:none;"
@@ -1696,8 +1697,8 @@ var _allowNavigation = true;
 .qhf-more-section { padding:16px; }
 
 /* ── Contractor card ── */
-.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .2s,transform .2s; }
-.ttc-card:hover { box-shadow:0 8px 24px rgba(0,0,0,.1); transform:translateY(-2px); }
+.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .2s; }
+.ttc-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.09); }
 
 /* Avatar */
 .ttc-avatar-wrap { display:flex; justify-content:center; padding:22px 16px 0; }
@@ -1707,18 +1708,19 @@ var _allowNavigation = true;
 /* Body */
 .ttc-body { padding:16px 18px 12px; flex:1; display:flex; flex-direction:column; }
 .ttc-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-.ttc-name { font-weight:700; font-size:17px; color:#111827; line-height:1.2; }
-.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:3px 8px; font-size:11px; font-weight:700; white-space:nowrap; }
+.ttc-name { font-weight:700; font-size:19px; color:#111827; line-height:1.2; }
+.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:3px 8px; font-size:12px; font-weight:700; white-space:nowrap; }
 .ttc-toppro-star { width:11px; height:11px; fill:#F59E0B; }
 
 /* Intro */
-.ttc-intro { font-size:13.5px; color:#6b7280; line-height:1.65; margin-bottom:14px; }
-.ttc-readmore { color:#1e40af; font-weight:600; font-size:13.5px; text-decoration:none; white-space:nowrap; }
+.ttc-intro { font-size:15px; color:#6b7280; line-height:1.65; margin-bottom:14px; }
+.ttc-readmore { color:#1e40af; font-weight:600; font-size:15px; text-decoration:none; white-space:nowrap; }
 .ttc-readmore:hover { text-decoration:underline; }
+.ttc-expand-btn { background:none; border:none; padding:0; cursor:pointer; }
 
 /* Meta */
 .ttc-meta { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; }
-.ttc-meta-row { display:flex; align-items:center; gap:10px; font-size:14px; color:#374151; font-weight:500; }
+.ttc-meta-row { display:flex; align-items:center; gap:10px; font-size:15px; color:#374151; font-weight:500; }
 .ttc-meta-icon { width:18px; height:18px; flex-shrink:0; color:#9ca3af; }
 
 /* Review box */
@@ -1728,13 +1730,13 @@ var _allowNavigation = true;
 .ttc-star { width:18px; height:18px; }
 .ttc-star-on  { fill:#F59E0B; }
 .ttc-star-off { fill:#E5E7EB; }
-.ttc-rating { font-weight:700; font-size:15px; color:#111827; }
-.ttc-reviews { font-size:13.5px; color:#9ca3af; }
-.ttc-quote { font-size:13px; color:#3b5fc0; line-height:1.6; margin-top:9px; font-style:italic; }
-.ttc-reviewer { font-size:12px; color:#9ca3af; margin-top:4px; font-style:normal; }
+.ttc-rating { font-weight:700; font-size:16px; color:#111827; }
+.ttc-reviews { font-size:14.5px; color:#9ca3af; }
+.ttc-quote { font-size:14px; color:#6b7280; line-height:1.6; margin-top:9px; font-style:italic; }
+.ttc-reviewer { font-size:13px; color:#9ca3af; margin-top:4px; font-style:normal; }
 
 /* CTA */
-.ttc-cta { display:block; margin:0 16px 16px; padding:15px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:15px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
+.ttc-cta { display:block; margin:0 16px 16px; padding:15px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:16px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
 .ttc-cta:hover { background:#1d3a9f; box-shadow:0 5px 16px rgba(30,64,175,.4); }
 </style>
 
@@ -1789,6 +1791,22 @@ var _allowNavigation = true;
   // Close on backdrop click / Escape
   backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closePopup(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePopup(); });
+
+  // Inline "Read More" expand — replaces truncated text with full text
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".ttc-expand-btn");
+    if (btn) {
+      var full = btn.dataset.full || "";
+      var parent = btn.parentNode;
+      if (parent) {
+        // Replace the last text node + the button with the full text
+        var nodes = Array.prototype.slice.call(parent.childNodes);
+        nodes.forEach(function(n) { if (n.nodeType === 3 || n === btn) parent.removeChild(n); });
+        parent.appendChild(document.createTextNode(full));
+      }
+      return;
+    }
+  });
 
   // Delegated click on dynamically rendered CTA buttons
   document.addEventListener("click", function (e) {
