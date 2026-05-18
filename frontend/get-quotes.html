@@ -432,19 +432,26 @@
     <div id="step-complete" class="wizard-step">
       <div class="qhf-complete-wrapper">
 
-        <!-- ① Green success banner — peak-end rule -->
+        <!-- ① Success banner with animated checkmark -->
         <div class="qhf-success-banner">
-          <div class="qhf-banner-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <!-- Animated SVG circle + checkmark -->
+          <div class="qhf-check-wrap">
+            <svg class="qhf-check-svg" viewBox="0 0 72 72" fill="none">
+              <!-- faint background ring -->
+              <circle cx="36" cy="36" r="30" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
+              <!-- animated drawing ring -->
+              <circle class="qhf-ring" cx="36" cy="36" r="30" stroke="white" stroke-width="3" stroke-linecap="round"/>
+              <!-- checkmark path -->
+              <path class="qhf-tick" d="M22 36 L31 45 L50 26" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
-          <div>
-            <div class="qhf-banner-title">Congratulations!</div>
-            <div class="qhf-banner-sub" id="completeMessage">Request submitted</div>
-          </div>
+          <h1 class="qhf-banner-heading">Congratulations!</h1>
+          <p class="qhf-banner-sub">We've found you a Contractor in your area</p>
+          <div id="completeMessage" style="display:none"></div>
         </div>
 
-        <!-- ② Contractors grid — all same cards -->
-        <div id="thumbtackContractorsSection" class="qhf-more-section">
+        <!-- ② Contractors grid -->
+        <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal">
           <div id="thumbtackContractors"></div>
         </div>
 
@@ -1579,17 +1586,43 @@ var _allowNavigation = true;
 .qhf-complete-wrapper { background:#EEF1F6; min-height:100vh; padding-bottom:48px; }
 
 /* ① Success banner */
-.qhf-success-banner { display:flex; align-items:center; gap:12px; padding:14px 20px; background:linear-gradient(135deg,#16a34a,#15803d); animation:qhfSlideDown .45s cubic-bezier(.22,1,.36,1) both; }
-.qhf-banner-icon { width:28px; height:28px; background:rgba(255,255,255,.25); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.qhf-banner-icon svg { width:16px; height:16px; color:white; }
-.qhf-banner-title { color:white; font-weight:700; font-size:14px; letter-spacing:.01em; }
-.qhf-banner-sub { color:rgba(255,255,255,.8); font-size:12px; font-weight:500; margin-top:1px; }
+.qhf-success-banner { display:flex; flex-direction:column; align-items:center; text-align:center; padding:40px 24px 36px; background:linear-gradient(160deg,#1a9e50 0%,#15803d 100%); box-shadow:inset 0 -4px 20px rgba(0,0,0,.12); }
+
+/* Animated check */
+.qhf-check-wrap { margin-bottom:20px; }
+.qhf-check-svg { width:72px; height:72px; }
+
+/* Ring: draws in over 0.9s */
+.qhf-ring {
+  stroke-dasharray: 188.5;   /* 2π × 30 */
+  stroke-dashoffset: 188.5;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  animation: qhfDrawRing .9s cubic-bezier(.6,0,.4,1) .1s forwards;
+}
+
+/* Tick: pops in after ring finishes */
+.qhf-tick {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: qhfDrawTick .35s ease-out 1s forwards;
+}
+
+/* Text: fades up after tick */
+.qhf-banner-heading { color:white; font-weight:800; font-size:30px; letter-spacing:-.02em; line-height:1.1; margin:0 0 8px; opacity:0; animation:qhfFadeUp .45s ease-out 1.2s forwards; }
+.qhf-banner-sub { color:rgba(255,255,255,.88); font-size:14px; font-weight:400; margin:0; line-height:1.6; max-width:260px; opacity:0; animation:qhfFadeUp .45s ease-out 1.45s forwards; }
+
+/* Grid: slides down after text */
+.qhf-grid-reveal { opacity:0; transform:translateY(18px); animation:qhfGridIn .55s ease-out 1.9s forwards; }
+
+/* Keyframes */
+@keyframes qhfDrawRing { to { stroke-dashoffset:0; } }
+@keyframes qhfDrawTick { to { stroke-dashoffset:0; } }
+@keyframes qhfFadeUp   { to { opacity:1; transform:translateY(0); } }
+@keyframes qhfGridIn   { to { opacity:1; transform:translateY(0); } }
 
 /* ② Contractors grid */
 .qhf-more-section { padding:16px; }
-
-/* Keyframes */
-@keyframes qhfSlideDown { from { transform:translateY(-12px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 </style>
 
 <script>
