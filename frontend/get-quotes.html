@@ -430,64 +430,28 @@
 
     <!-- ═══ COMPLETE ═══ -->
     <div id="step-complete" class="wizard-step">
-      <div class="flex-1 flex flex-col items-center px-4 py-6 sm:py-12 bg-gradient-to-b from-blue-50/50 to-white min-h-screen">
-        <div class="w-full max-w-lg bg-white border-0 rounded-3xl shadow-lg overflow-hidden mb-10">
-          <div class="bg-gradient-to-r from-green-500 to-green-600 px-8 pt-10 pb-12 text-center">
-            <div class="mb-5 flex justify-center">
-              <div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <svg class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              </div>
-            </div>
-            <h2 class="text-3xl font-bold text-white mb-2">Thank You!</h2>
-            <p class="text-green-100 font-medium text-sm">Your request has been submitted successfully.</p>
+      <div class="qhf-complete-wrapper">
+
+        <!-- ① Success banner with animated checkmark -->
+        <div class="qhf-success-banner">
+          <!-- Animated SVG circle + checkmark -->
+          <div class="qhf-check-wrap">
+            <svg class="qhf-check-svg" viewBox="0 0 72 72" fill="none">
+              <!-- faint background ring -->
+              <circle cx="36" cy="36" r="30" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
+              <!-- animated drawing ring -->
+              <circle class="qhf-ring" cx="36" cy="36" r="30" stroke="white" stroke-width="3" stroke-linecap="round"/>
+              <!-- checkmark path -->
+              <path class="qhf-tick" d="M22 36 L31 45 L50 26" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
-          <div class="p-6 sm:p-8 -mt-4">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-              <p id="completeMessage" class="text-gray-600 text-sm leading-relaxed text-center"></p>
-            </div>
-            <div class="mb-6">
-              <h3 class="text-sm font-bold text-gray-800 mb-4 text-center">What Happens Next?</h3>
-              <div class="space-y-4">
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  </div>
-                  <div><p class="text-sm font-semibold text-gray-800">Review within 24 hours</p><p class="text-xs text-gray-400">Our team will review your project details</p></div>
-                </div>
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                  </div>
-                  <div><p class="text-sm font-semibold text-gray-800">Matched with top professionals</p><p class="text-xs text-gray-400">We connect you with vetted local contractors</p></div>
-                </div>
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                  </div>
-                  <div><p class="text-sm font-semibold text-gray-800">Get your free quotes</p><p class="text-xs text-gray-400">Compare prices and choose the best offer</p></div>
-                </div>
-              </div>
-            </div>
-            <div class="flex items-center justify-center gap-6 mb-6 py-3 border-t border-gray-100">
-              <span class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
-                <svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                Secure & Encrypted
-              </span>
-              <span class="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
-                <svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                100% Free
-              </span>
-            </div>
-            <button onclick="_allowNavigation=true;store.resetAll();window.location.href='/'" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors">Back to Home</button>
-          </div>
+          <h1 class="qhf-banner-heading">Congratulations!</h1>
+          <p class="qhf-banner-sub">We've found you a Contractor in your area</p>
+          <div id="completeMessage" style="display:none"></div>
         </div>
 
-        <!-- Thumbtack Matched Contractors -->
-        <div id="thumbtackContractorsSection" class="w-full max-w-7xl mb-12" style="display:none;">
-          <div class="text-center mb-6">
-            <h3 class="text-xl font-bold text-gray-900">Matched Contractors Near You</h3>
-            <p class="text-sm text-gray-400 mt-1">Top-rated professionals ready to help with your project</p>
-          </div>
+        <!-- ② Contractors grid -->
+        <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal">
           <div id="thumbtackContractors"></div>
         </div>
 
@@ -590,6 +554,9 @@ const radioStepConfigs = {
   ]},
 };
 
+/* ── A/B: old TQ page HTML (served when URL has no /tt) ── */
+var TQ_VARIANT_OLD_HTML = '<div class="flex-1 flex flex-col items-center px-4 py-6 sm:py-12 bg-gradient-to-b from-blue-50/50 to-white min-h-screen"><div class="w-full max-w-lg bg-white border-0 rounded-3xl shadow-lg overflow-hidden mb-10"><div class="bg-gradient-to-r from-green-500 to-green-600 px-8 pt-10 pb-12 text-center"><div class="mb-5 flex justify-center"><div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"><svg class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div><h2 class="text-3xl font-bold text-white mb-2">Thank You!</h2><p class="text-green-100 font-medium text-sm">Your request has been submitted successfully.</p></div><div class="p-6 sm:p-8 -mt-4"><div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6"><p id="completeMessage" class="text-gray-600 text-sm leading-relaxed text-center"></p></div><div class="mb-6"><h3 class="text-sm font-bold text-gray-800 mb-4 text-center">What Happens Next?</h3><div class="space-y-4"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><p class="text-sm font-semibold text-gray-800">Review within 24 hours</p><p class="text-xs text-gray-400">Our team will review your project details</p></div></div><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></div><div><p class="text-sm font-semibold text-gray-800">Matched with top professionals</p><p class="text-xs text-gray-400">We connect you with vetted local contractors</p></div></div><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg></div><div><p class="text-sm font-semibold text-gray-800">Get your free quotes</p><p class="text-xs text-gray-400">Compare prices and choose the best offer</p></div></div></div></div><div class="flex items-center justify-center gap-6 mb-6 py-3 border-t border-gray-100"><span class="flex items-center gap-1.5 text-xs text-gray-400 font-medium"><svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Secure &amp; Encrypted</span><span class="flex items-center gap-1.5 text-xs text-gray-400 font-medium"><svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>100% Free</span></div><button onclick="_allowNavigation=true;store.resetAll();window.location.href=\'/\'" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors">Back to Home</button></div></div><div id="thumbtackContractorsSection" class="w-full max-w-3xl mb-12" style="display:none;"><div class="text-center mb-6"><h3 class="text-xl font-bold text-gray-900">Matched Contractors Near You</h3><p class="text-sm text-gray-400 mt-1">Top-rated professionals ready to help with your project</p></div><div id="thumbtackContractors"></div></div></div>';
+
 const THUMBTACK_SERVICE_QUERIES = {
   roof:    "roofing",
   windows: "window installation",
@@ -623,7 +590,13 @@ let showingLanding = false;
 document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("trustDate").textContent = new Date().toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});
 
-  var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)\/?$/);
+  var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)(?:\/tt)?\/?$/);
+  // Store TT variant flag in sessionStorage so it survives URL changes during wizard navigation
+  if (/^\/get-quotes\/[a-zA-Z0-9_-]+\/tt\/?$/.test(window.location.pathname)) {
+    sessionStorage.setItem("qhf_tt_variant", "1");
+  } else {
+    sessionStorage.removeItem("qhf_tt_variant");
+  }
   var params = new URLSearchParams(window.location.search);
   var svc = (pathMatch && pathMatch[1]) || params.get("service");
   if (!svc || !isValidService(svc)) {
@@ -884,9 +857,19 @@ function renderCurrentStep() {
   } else if (stepName === "complete") {
     document.getElementById("step-complete").classList.add("active");
     backBtn.style.display = "none";
-    var svcMap = { windows:"window", solar:"solar energy", bath:"bath remodeling", gutter:"gutter service", shower:"walk-in shower", tub:"walk-in tub" };
-    var label = svcMap[store.formData.service] || "roofing";
-    document.getElementById("completeMessage").textContent = "A specialist will review your " + label + " project and contact you within 24 hours with a free, no-obligation quote.";
+    var svcMap = { windows:"Window installation", solar:"Solar energy", bath:"Bath remodeling", gutter:"Gutter service", shower:"Walk-in shower", tub:"Walk-in tub", roofing:"Roofing" };
+    var label = svcMap[store.formData.service] || "Home project";
+
+    // ── A/B: /service/tt → new design, /service → old design ──
+    var isTT = !!sessionStorage.getItem("qhf_tt_variant");
+    var abVariant = isTT ? "tt" : "standard";
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: "abVariantAssigned", abTest: "tq_page_v1", abVariant: abVariant });
+    if (!isTT) {
+      document.getElementById("step-complete").innerHTML = TQ_VARIANT_OLD_HTML;
+    }
+
+    document.getElementById("completeMessage").textContent = label + " · submitted";
     buildThumbTackContractors();
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
@@ -1215,6 +1198,7 @@ function buildUpsellCards() {
 
 var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5";
 
+
 function buildThumbTackContractors() {
   var section = document.getElementById("thumbtackContractorsSection");
   var container = document.getElementById("thumbtackContractors");
@@ -1225,6 +1209,10 @@ function buildThumbTackContractors() {
   if (!keyword || !zipCode) return;
 
   section.style.display = "block";
+  // Override animation so section is immediately visible
+  section.style.opacity = "1";
+  section.style.transform = "none";
+  section.style.animation = "none";
 
   // Skeleton grid (matches final card layout)
   var skeletonHtml = '<div class="' + TT_GRID_CLASS + '">';
@@ -1248,30 +1236,41 @@ function buildThumbTackContractors() {
       //                       isTopPro, opinionatedSignal, yearsInBusiness, numberOfHires,
       //                       businessIntroduction, widgets, servicePageURL, quote, ... }] }
       var businesses = (data && data.data) || [];
-      if (!businesses.length) { section.style.display = "none"; return; }
+      if (!businesses.length) { container.innerHTML = ""; return; }
 
-      // Sort by rating descending (mirrors HouseCrew results.html)
+      // Sort by rating descending
       businesses = businesses.slice().sort(function(a, b) {
         return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
       });
 
-      var grid = document.createElement("div");
-      grid.className = TT_GRID_CLASS;
-
-      businesses.forEach(function(biz) {
-        grid.appendChild(buildBizCard(biz));
-      });
-
+      var isTTCard = !!sessionStorage.getItem("qhf_tt_variant");
+      var wrap = document.createElement("div");
+      if (isTTCard) {
+        wrap.className = TT_GRID_CLASS;
+        businesses.forEach(function(biz) { wrap.appendChild(buildBizCard(biz)); });
+      } else {
+        wrap.className = TT_GRID_CLASS;
+        businesses.forEach(function(biz) {
+          var cell = document.createElement("div");
+          cell.className = "h-full";
+          cell.appendChild(buildBizCardOld(biz));
+          wrap.appendChild(cell);
+        });
+      }
       while (container.firstChild) container.removeChild(container.firstChild);
-      container.appendChild(grid);
+      container.appendChild(wrap);
     })
     .catch(function() {
-      section.style.display = "none";
+      container.innerHTML = "";
     });
 }
 
-/* Build a single vertical contractor card (HouseCrew-style). */
-function buildBizCard(biz) {
+function _esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Prod-style card for the standard (non-tt) variant — exact copy from prod branch */
+function buildBizCardOld(biz) {
   var name     = String(biz.businessName || "Local Pro");
   var address  = String(biz.businessLocation || "");
   var rating   = parseFloat(biz.rating || 0);
@@ -1283,17 +1282,207 @@ function buildBizCard(biz) {
   var hires    = parseInt(biz.numberOfHires || 0, 10);
   var rawIntro = String(biz.businessIntroduction || "");
   var intro    = rawIntro ? (rawIntro.length > 140 ? rawIntro.slice(0, 140) + "…" : rawIntro) : "";
-  // Prefer Thumbtack Request Flow Widget URL (quote popup) — fall back to profile page.
   var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
-
-  // URL whitelist — only http/https, no javascript: payloads
   var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
   var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
 
   var card = document.createElement("div");
-  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200";
+  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-200";
 
-  // ─── Image area (top of card) ───────────────────────────────────────────
+  // Image area
+  var imgWrap = document.createElement("div");
+  imgWrap.className = "relative w-full bg-gradient-to-br from-blue-400 to-blue-600";
+  imgWrap.style.height = "160px";
+  if (safePhoto) {
+    var imgEl = document.createElement("img");
+    imgEl.src = safePhoto; imgEl.alt = name; imgEl.loading = "lazy";
+    imgEl.className = "w-full h-full object-cover";
+    imgWrap.appendChild(imgEl);
+  } else {
+    var phWrap = document.createElement("div");
+    phWrap.className = "w-full h-full flex items-center justify-center";
+    var phSvg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    phSvg.setAttribute("class","w-12 h-12 text-white opacity-80"); phSvg.setAttribute("fill","none"); phSvg.setAttribute("viewBox","0 0 24 24"); phSvg.setAttribute("stroke","currentColor"); phSvg.setAttribute("stroke-width","1.5");
+    var phPath = document.createElementNS("http://www.w3.org/2000/svg","path");
+    phPath.setAttribute("stroke-linecap","round"); phPath.setAttribute("stroke-linejoin","round"); phPath.setAttribute("d","M3 21V8l9-5 9 5v13M9 21V12h6v9");
+    phSvg.appendChild(phPath); phWrap.appendChild(phSvg); imgWrap.appendChild(phWrap);
+  }
+  if (isTopPro) {
+    var tpBadge = document.createElement("div");
+    tpBadge.className = "absolute top-2.5 left-2.5 inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md text-white";
+    tpBadge.style.background = "linear-gradient(135deg,#F59E0B,#D97706)";
+    var tpStar = document.createElementNS("http://www.w3.org/2000/svg","svg"); tpStar.setAttribute("class","w-3 h-3 fill-current"); tpStar.setAttribute("viewBox","0 0 24 24");
+    var tpStarP = document.createElementNS("http://www.w3.org/2000/svg","path"); tpStarP.setAttribute("d","M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
+    tpStar.appendChild(tpStarP); var tpTxt = document.createElement("span"); tpTxt.textContent = "Top Pro";
+    tpBadge.appendChild(tpStar); tpBadge.appendChild(tpTxt); imgWrap.appendChild(tpBadge);
+  }
+  card.appendChild(imgWrap);
+
+  // Body
+  var body = document.createElement("div");
+  body.className = "p-4 flex flex-col flex-1";
+
+  var nameEl = document.createElement("h4"); nameEl.className = "font-bold text-gray-900 text-base leading-snug"; nameEl.textContent = name; body.appendChild(nameEl);
+
+  if (rating > 0) {
+    var starRow = document.createElement("div"); starRow.className = "flex items-center gap-1 mt-1.5";
+    for (var s = 0; s < 5; s++) {
+      var sv = document.createElementNS("http://www.w3.org/2000/svg","svg"); sv.setAttribute("class","w-3.5 h-3.5 "+(s<Math.round(rating)?"text-yellow-400 fill-yellow-400":"text-gray-200 fill-gray-200")); sv.setAttribute("viewBox","0 0 24 24");
+      var sp = document.createElementNS("http://www.w3.org/2000/svg","path"); sp.setAttribute("d","M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
+      sv.appendChild(sp); starRow.appendChild(sv);
+    }
+    var rn = document.createElement("span"); rn.className = "font-bold text-gray-900 text-xs ml-1"; rn.textContent = rating.toFixed(1); starRow.appendChild(rn);
+    if (reviews) { var rs = document.createElement("span"); rs.className = "text-xs text-gray-400"; rs.textContent = "· "+reviews+" reviews"; starRow.appendChild(rs); }
+    body.appendChild(starRow);
+  }
+
+  if (isTopPro || signal) {
+    var bdgRow = document.createElement("div"); bdgRow.className = "flex flex-wrap gap-1.5 mt-2";
+    if (isTopPro) {
+      var ib = document.createElement("span"); ib.className = "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"; ib.style.cssText = "background:#FEF3C7;color:#B45309;border:1px solid #FDE68A";
+      var ibs = document.createElementNS("http://www.w3.org/2000/svg","svg"); ibs.setAttribute("class","w-2.5 h-2.5 fill-current"); ibs.setAttribute("viewBox","0 0 24 24");
+      var ibsp = document.createElementNS("http://www.w3.org/2000/svg","path"); ibsp.setAttribute("d","M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
+      ibs.appendChild(ibsp); var ibt = document.createElement("span"); ibt.textContent = "Top Pro"; ib.appendChild(ibs); ib.appendChild(ibt); bdgRow.appendChild(ib);
+    }
+    if (signal) { var sg = document.createElement("span"); sg.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full"; sg.style.cssText = "background:rgba(37,99,235,0.08);color:#2563EB;border:1px solid rgba(37,99,235,0.2)"; sg.textContent = signal; bdgRow.appendChild(sg); }
+    body.appendChild(bdgRow);
+  }
+
+  if (address) {
+    var addrRow = document.createElement("div"); addrRow.className = "flex items-center gap-1 text-gray-400 text-xs mt-1.5";
+    var pinS = document.createElementNS("http://www.w3.org/2000/svg","svg"); pinS.setAttribute("class","w-3 h-3 flex-shrink-0"); pinS.setAttribute("fill","none"); pinS.setAttribute("viewBox","0 0 24 24"); pinS.setAttribute("stroke","currentColor"); pinS.setAttribute("stroke-width","2");
+    var pp1 = document.createElementNS("http://www.w3.org/2000/svg","path"); pp1.setAttribute("stroke-linecap","round"); pp1.setAttribute("stroke-linejoin","round"); pp1.setAttribute("d","M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z");
+    var pp2 = document.createElementNS("http://www.w3.org/2000/svg","path"); pp2.setAttribute("stroke-linecap","round"); pp2.setAttribute("stroke-linejoin","round"); pp2.setAttribute("d","M15 11a3 3 0 11-6 0 3 3 0 016 0z");
+    pinS.appendChild(pp1); pinS.appendChild(pp2); var addrT = document.createElement("span"); addrT.className = "truncate"; addrT.textContent = address;
+    addrRow.appendChild(pinS); addrRow.appendChild(addrT); body.appendChild(addrRow);
+  }
+
+  if (years > 0 || hires > 0) {
+    var metaRow = document.createElement("div"); metaRow.className = "flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium mt-2";
+    if (years > 0) {
+      var yE = document.createElement("span"); yE.className = "inline-flex items-center gap-1";
+      var clkS = document.createElementNS("http://www.w3.org/2000/svg","svg"); clkS.setAttribute("class","w-3 h-3 text-gray-400"); clkS.setAttribute("fill","none"); clkS.setAttribute("viewBox","0 0 24 24"); clkS.setAttribute("stroke","currentColor"); clkS.setAttribute("stroke-width","2");
+      var clkP = document.createElementNS("http://www.w3.org/2000/svg","path"); clkP.setAttribute("stroke-linecap","round"); clkP.setAttribute("stroke-linejoin","round"); clkP.setAttribute("d","M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z");
+      clkS.appendChild(clkP); var yT = document.createElement("span"); yT.textContent = years+" yrs"; yE.appendChild(clkS); yE.appendChild(yT); metaRow.appendChild(yE);
+    }
+    if (years > 0 && hires > 0) { var dot = document.createElement("span"); dot.className = "text-gray-200"; dot.textContent = "·"; metaRow.appendChild(dot); }
+    if (hires > 0) {
+      var hE = document.createElement("span"); hE.className = "inline-flex items-center gap-1"; hE.style.color = "#059669";
+      var chkS = document.createElementNS("http://www.w3.org/2000/svg","svg"); chkS.setAttribute("class","w-3 h-3"); chkS.style.color="#10B981"; chkS.setAttribute("fill","none"); chkS.setAttribute("viewBox","0 0 24 24"); chkS.setAttribute("stroke","currentColor"); chkS.setAttribute("stroke-width","2");
+      var chkP = document.createElementNS("http://www.w3.org/2000/svg","path"); chkP.setAttribute("stroke-linecap","round"); chkP.setAttribute("stroke-linejoin","round"); chkP.setAttribute("d","M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z");
+      chkS.appendChild(chkP); var hT = document.createElement("span"); hT.textContent = hires+" hired"; hE.appendChild(chkS); hE.appendChild(hT); metaRow.appendChild(hE);
+    }
+    body.appendChild(metaRow);
+  }
+
+  if (intro) { var intEl = document.createElement("p"); intEl.className = "text-gray-500 text-xs leading-relaxed mt-3 pt-3 border-t border-gray-100"; intEl.style.lineHeight="1.65"; intEl.textContent = intro; body.appendChild(intEl); }
+
+  var spacer = document.createElement("div"); spacer.className = "flex-1"; spacer.style.minHeight = "10px"; body.appendChild(spacer);
+
+  if (safeCta) {
+    var ctaEl = document.createElement("a"); ctaEl.href = safeCta; ctaEl.className = "js-tt-cta mt-3 flex items-center justify-center gap-1.5 w-full text-white font-semibold py-2.5 rounded-xl text-sm bg-blue-600 hover:bg-blue-700 transition-colors"; ctaEl.setAttribute("data-biz-name", name);
+    var sendS = document.createElementNS("http://www.w3.org/2000/svg","svg"); sendS.setAttribute("class","w-4 h-4"); sendS.setAttribute("fill","none"); sendS.setAttribute("viewBox","0 0 24 24"); sendS.setAttribute("stroke","currentColor"); sendS.setAttribute("stroke-width","2");
+    var sendP = document.createElementNS("http://www.w3.org/2000/svg","path"); sendP.setAttribute("stroke-linecap","round"); sendP.setAttribute("stroke-linejoin","round"); sendP.setAttribute("d","M12 19l9 2-9-18-9 18 9-2zm0 0v-8");
+    sendS.appendChild(sendP); var ctaLbl = document.createElement("span"); ctaLbl.textContent = "Compare Free Quote"; ctaEl.appendChild(sendS); ctaEl.appendChild(ctaLbl); body.appendChild(ctaEl);
+  }
+
+  card.appendChild(body);
+  return card;
+}
+
+/* Build a single contractor card matching screenshot layout. */
+function buildBizCard(biz) {
+  var name     = _esc(biz.businessName || "Local Pro");
+  var address  = _esc(biz.businessLocation || "");
+  var rating   = parseFloat(biz.rating || 0);
+  var reviews  = parseInt(biz.numberOfReviews || 0, 10);
+  var rawPhoto = String(biz.businessImageURL || "");
+  var isTopPro = !!biz.isTopPro;
+  var years    = parseInt(biz.yearsInBusiness || 0, 10);
+  var hires    = parseInt(biz.numberOfHires || 0, 10);
+  var rawIntro = String(biz.businessIntroduction || "");
+  var rawQuote    = String(biz.featuredReview || "");
+  var rawReviewer = String(biz.featuredReviewerName || "");
+  var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
+  var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
+  var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
+
+  // Intro: 95 chars then inline Read More (expands in place)
+  var introText = rawIntro.length > 95 ? _esc(rawIntro.slice(0, 95)) : _esc(rawIntro);
+  var introMore = rawIntro.length > 95
+    ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawIntro) + '">Read More +</button>'
+    : '';
+
+  // Avatar
+  var avatarHtml = safePhoto
+    ? '<img src="' + safePhoto + '" alt="' + name + '" class="ttc-avatar-img" loading="lazy">'
+    : (function() {
+        var w = name.trim().split(/\s+/);
+        var ini = w.length >= 2 ? (w[0][0] + w[w.length-1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+        return '<div class="ttc-avatar-fallback">' + ini + '</div>';
+      })();
+
+  // Stars
+  var fullStars = Math.round(rating);
+  var starsHtml = '';
+  var starPath = 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z';
+  for (var s = 0; s < 5; s++) {
+    starsHtml += '<svg class="ttc-star ' + (s < fullStars ? 'ttc-star-on' : 'ttc-star-off') + '" viewBox="0 0 24 24"><path d="' + starPath + '"/></svg>';
+  }
+
+  // Meta rows
+  var PIN  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  var CLK  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>';
+  var PPL  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+
+  var metaHtml = '';
+  if (address) metaHtml += '<div class="ttc-meta-row">' + PIN + '<span>' + address + '</span></div>';
+  if (years > 0) metaHtml += '<div class="ttc-meta-row">' + CLK + '<span>' + years + ' years in business</span></div>';
+  if (hires > 0) metaHtml += '<div class="ttc-meta-row">' + PPL + '<span>Hired ' + hires + ' times</span></div>';
+
+  // Top Pro badge
+  var topProHtml = isTopPro
+    ? '<span class="ttc-toppro-badge"><svg class="ttc-toppro-star" viewBox="0 0 24 24"><path d="' + starPath + '"/></svg>Top Pro</span>'
+    : '';
+
+  // Build card HTML
+  var card = document.createElement("div");
+  card.className = "ttc-card";
+  card.innerHTML =
+    '<div class="ttc-avatar-wrap">' + avatarHtml + '</div>' +
+    '<div class="ttc-body">' +
+      '<div class="ttc-name-row">' +
+        '<h4 class="ttc-name">' + name + '</h4>' + topProHtml +
+      '</div>' +
+      (rawIntro ? '<p class="ttc-intro">' + introText + introMore + '</p>' : '') +
+      (metaHtml ? '<div class="ttc-meta">' + metaHtml + '</div>' : '') +
+      (rating > 0
+        ? (function() {
+            var quoteShort = rawQuote.length > 110 ? _esc(rawQuote.slice(0, 110)) : _esc(rawQuote);
+            var quoteMore  = rawQuote.length > 110
+              ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawQuote) + '">Read More +</button>'
+              : '';
+            return '<div class="ttc-review-box">' +
+              '<div class="ttc-stars-row">' +
+                '<div class="ttc-stars">' + starsHtml + '</div>' +
+                '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
+                (reviews ? '<span class="ttc-reviews"> &ndash; ' + reviews + ' reviews</span>' : '') +
+              '</div>' +
+              (rawQuote ? '<p class="ttc-quote">&ldquo;' + quoteShort + quoteMore + '&rdquo;</p>' +
+                (rawReviewer ? '<p class="ttc-reviewer">&mdash; ' + _esc(rawReviewer) + '</p>' : '') : '') +
+            '</div>';
+          })()
+        : '') +
+    '</div>' +
+    (safeCta
+      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '">Compare Quotes</a>'
+      : '');
+
+  return card;
+}
+
+function _deadcode_oldBizCard() {
+  // ─── old DOM-manipulation code preserved for reference ──────────────────
   var imgWrap = document.createElement("div");
   imgWrap.className = "relative w-full bg-gradient-to-br from-blue-400 to-blue-600";
   imgWrap.style.height = "160px";
@@ -1535,8 +1724,6 @@ function buildBizCard(biz) {
     body.appendChild(ctaEl);
   }
 
-  card.appendChild(body);
-  return card;
 }
 
 function switchToService(serviceKey, path) {
@@ -1601,7 +1788,8 @@ var _allowNavigation = true;
 
 <!-- ═══ Thumbtack Request Flow Widget — Popup ═══ -->
 <div id="tt-popup-backdrop" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;">
-  <div id="tt-popup-card" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;">
+  <div id="tt-popup-card" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;position:relative;">
+    <button id="tt-popup-close" aria-label="Close" onclick="document.getElementById('tt-popup-backdrop').style.display='none';document.body.style.overflow='';document.getElementById('tt-popup-iframe').src='';" style="position:absolute;top:10px;right:10px;z-index:1;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
     <iframe id="tt-popup-iframe"
       width="860" height="760"
       style="width:860px;height:760px;max-width:100%;display:block;border:none;"
@@ -1618,6 +1806,91 @@ var _allowNavigation = true;
   #tt-popup-iframe { width: 100% !important; height: 90vh !important; }
 }
 @keyframes ttSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+
+/* ═══ COMPLETE PAGE — redesign ═══ */
+.qhf-complete-wrapper { background:#EEF1F6; min-height:100vh; padding-bottom:48px; }
+
+/* ① Success banner */
+.qhf-success-banner { display:flex; flex-direction:column; align-items:center; text-align:center; padding:40px 24px 36px; background:linear-gradient(160deg,#1a9e50 0%,#15803d 100%); box-shadow:inset 0 -4px 20px rgba(0,0,0,.12); }
+
+/* Animated check */
+.qhf-check-wrap { margin-bottom:20px; }
+.qhf-check-svg { width:72px; height:72px; }
+
+/* Ring: draws in over 0.9s */
+.qhf-ring {
+  stroke-dasharray: 188.5;   /* 2π × 30 */
+  stroke-dashoffset: 188.5;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  animation: qhfDrawRing .9s cubic-bezier(.6,0,.4,1) .1s forwards;
+}
+
+/* Tick: pops in after ring finishes */
+.qhf-tick {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: qhfDrawTick .35s ease-out 1s forwards;
+}
+
+/* Text: fades up after tick */
+.qhf-banner-heading { color:white; font-weight:800; font-size:30px; letter-spacing:-.02em; line-height:1.1; margin:0 0 8px; opacity:0; animation:qhfFadeUp .45s ease-out 1.2s forwards; }
+.qhf-banner-sub { color:rgba(255,255,255,.88); font-size:14px; font-weight:400; margin:0; line-height:1.6; max-width:260px; opacity:0; animation:qhfFadeUp .45s ease-out 1.45s forwards; }
+
+/* Grid: slides down after text */
+.qhf-grid-reveal { opacity:0; transform:translateY(18px); animation:qhfGridIn .55s ease-out 1.9s forwards; }
+
+/* Keyframes */
+@keyframes qhfDrawRing { to { stroke-dashoffset:0; } }
+@keyframes qhfDrawTick { to { stroke-dashoffset:0; } }
+@keyframes qhfFadeUp   { to { opacity:1; transform:translateY(0); } }
+@keyframes qhfGridIn   { to { opacity:1; transform:translateY(0); } }
+
+/* ② Contractors grid */
+.qhf-more-section { padding:16px; }
+
+/* ── Contractor card ── */
+.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .2s; }
+.ttc-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.09); }
+
+/* Avatar */
+.ttc-avatar-wrap { display:flex; justify-content:center; padding:22px 16px 0; }
+.ttc-avatar-img { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #e5e7eb; }
+.ttc-avatar-fallback { width:90px; height:90px; border-radius:50%; background:#1e40af; color:#fff; font-weight:800; font-size:26px; display:flex; align-items:center; justify-content:center; border:3px solid #dbeafe; letter-spacing:.02em; }
+
+/* Body */
+.ttc-body { padding:16px 18px 12px; flex:1; display:flex; flex-direction:column; }
+.ttc-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.ttc-name { font-weight:700; font-size:19px; color:#111827; line-height:1.2; }
+.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:3px 8px; font-size:12px; font-weight:700; white-space:nowrap; }
+.ttc-toppro-star { width:11px; height:11px; fill:#F59E0B; }
+
+/* Intro */
+.ttc-intro { font-size:15px; color:#6b7280; line-height:1.65; margin-bottom:14px; }
+.ttc-readmore { color:#1e40af; font-weight:600; font-size:15px; text-decoration:none; white-space:nowrap; }
+.ttc-readmore:hover { text-decoration:underline; }
+.ttc-expand-btn { background:none; border:none; padding:0; cursor:pointer; }
+
+/* Meta */
+.ttc-meta { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; }
+.ttc-meta-row { display:flex; align-items:center; gap:10px; font-size:15px; color:#374151; font-weight:500; }
+.ttc-meta-icon { width:18px; height:18px; flex-shrink:0; color:#9ca3af; }
+
+/* Review box */
+.ttc-review-box { background:#F9FAFB; border:1px solid #F3F4F6; border-radius:10px; padding:12px 14px; margin-bottom:16px; }
+.ttc-stars-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ttc-stars { display:flex; gap:3px; }
+.ttc-star { width:18px; height:18px; }
+.ttc-star-on  { fill:#F59E0B; }
+.ttc-star-off { fill:#E5E7EB; }
+.ttc-rating { font-weight:700; font-size:16px; color:#111827; }
+.ttc-reviews { font-size:14.5px; color:#9ca3af; }
+.ttc-quote { font-size:14px; color:#6b7280; line-height:1.6; margin-top:9px; font-style:italic; }
+.ttc-reviewer { font-size:13px; color:#9ca3af; margin-top:4px; font-style:normal; }
+
+/* CTA */
+.ttc-cta { display:block; margin:0 16px 16px; padding:15px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:16px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
+.ttc-cta:hover { background:#1d3a9f; box-shadow:0 5px 16px rgba(30,64,175,.4); }
 </style>
 
 <script>
@@ -1671,6 +1944,22 @@ var _allowNavigation = true;
   // Close on backdrop click / Escape
   backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closePopup(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePopup(); });
+
+  // Inline "Read More" expand — replaces truncated text with full text
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".ttc-expand-btn");
+    if (btn) {
+      var full = btn.dataset.full || "";
+      var parent = btn.parentNode;
+      if (parent) {
+        // Replace the last text node + the button with the full text
+        var nodes = Array.prototype.slice.call(parent.childNodes);
+        nodes.forEach(function(n) { if (n.nodeType === 3 || n === btn) parent.removeChild(n); });
+        parent.appendChild(document.createTextNode(full));
+      }
+      return;
+    }
+  });
 
   // Delegated click on dynamically rendered CTA buttons
   document.addEventListener("click", function (e) {
