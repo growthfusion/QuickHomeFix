@@ -1213,7 +1213,6 @@ function buildThumbTackContractors() {
       //                       isTopPro, opinionatedSignal, yearsInBusiness, numberOfHires,
       //                       businessIntroduction, widgets, servicePageURL, quote, ... }] }
       var businesses = (data && data.data) || [];
-      if (businesses.length) console.log("[TT] first biz fields:", JSON.stringify(businesses[0], null, 2));
       if (!businesses.length) { container.innerHTML = ""; return; }
 
       // Sort by rating descending
@@ -1249,8 +1248,8 @@ function buildBizCard(biz) {
   var years    = parseInt(biz.yearsInBusiness || 0, 10);
   var hires    = parseInt(biz.numberOfHires || 0, 10);
   var rawIntro = String(biz.businessIntroduction || "");
-  var rawQuote = typeof biz.quote === "string" ? biz.quote
-               : (biz.quote && typeof biz.quote.text === "string" ? biz.quote.text : "");
+  var rawQuote    = String(biz.featuredReview || "");
+  var rawReviewer = String(biz.featuredReviewerName || "");
   var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
   var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
   var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
@@ -1316,7 +1315,8 @@ function buildBizCard(biz) {
                 '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
                 (reviews ? '<span class="ttc-reviews"> &ndash; ' + reviews + ' reviews</span>' : '') +
               '</div>' +
-              (rawQuote ? '<p class="ttc-quote">' + quoteShort + quoteMore + '</p>' : '') +
+              (rawQuote ? '<p class="ttc-quote">&ldquo;' + quoteShort + quoteMore + '&rdquo;</p>' +
+                (rawReviewer ? '<p class="ttc-reviewer">&mdash; ' + _esc(rawReviewer) + '</p>' : '') : '') +
             '</div>';
           })()
         : '') +
@@ -1731,6 +1731,7 @@ var _allowNavigation = true;
 .ttc-rating { font-weight:700; font-size:15px; color:#111827; }
 .ttc-reviews { font-size:13.5px; color:#9ca3af; }
 .ttc-quote { font-size:13px; color:#3b5fc0; line-height:1.6; margin-top:9px; font-style:italic; }
+.ttc-reviewer { font-size:12px; color:#9ca3af; margin-top:4px; font-style:normal; }
 
 /* CTA */
 .ttc-cta { display:block; margin:0 16px 16px; padding:15px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:15px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
