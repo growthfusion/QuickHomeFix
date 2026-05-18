@@ -443,40 +443,30 @@
           </div>
         </div>
 
-        <!-- ② Amber hook chip — Zeigarnik effect -->
-        <div class="qhf-hook-chip">
-          <svg viewBox="0 0 24 24" fill="currentColor" class="qhf-chip-icon"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <!-- ② "We found a contractor" label -->
+        <div class="qhf-found-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="qhf-found-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           We found a contractor near you
         </div>
 
-        <!-- ③ Featured contractor card — single dominant CTA -->
+        <!-- ③ Clean contractor card -->
         <div class="qhf-featured-card">
-
-          <!-- Card header: personalization bias -->
-          <div class="qhf-card-header">
-            <div class="qhf-header-left">
-              <span class="qhf-ready-name" id="featuredPersonName">Your contractor</span>
-              <span class="qhf-ready-sub">is ready to quote you</span>
-            </div>
-            <div class="qhf-near-badge">
-              <span class="qhf-near-dot"></span>
-              <span id="featuredNearCount">…</span>&nbsp;near you
-            </div>
-          </div>
 
           <!-- Contractor details — populated by JS -->
           <div id="featuredContractorContent">
             <div class="qhf-skeleton">
-              <div class="qhf-skel-name-bar"></div>
               <div class="qhf-skel-body">
-                <div class="qhf-skel-line" style="width:72%"></div>
-                <div class="qhf-skel-line" style="width:48%"></div>
-                <div class="qhf-skel-line" style="width:60%"></div>
+                <div class="qhf-skel-avatar"></div>
+                <div class="qhf-skel-lines">
+                  <div class="qhf-skel-line" style="width:65%"></div>
+                  <div class="qhf-skel-line" style="width:40%"></div>
+                  <div class="qhf-skel-line" style="width:55%"></div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Single dominant CTA — Hick's law -->
+          <!-- Single CTA -->
           <div class="qhf-cta-section">
             <a id="featuredCtaBtn" href="#" target="_blank" rel="noopener" class="qhf-cta-btn">
               View Profile &amp; Get Free Quote
@@ -1259,40 +1249,55 @@ function buildFeaturedContractor(biz, nearCount) {
   var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
   var safeCta  = /^https?:\/\//.test(rawCta) ? rawCta : "#";
 
-  var firstName = name.split(/\s+/)[0] || name;
-
-  var personNameEl = document.getElementById("featuredPersonName");
-  if (personNameEl) personNameEl.textContent = firstName;
-  var nearCountEl = document.getElementById("featuredNearCount");
-  if (nearCountEl) nearCountEl.textContent = nearCount;
   var ctaBtn = document.getElementById("featuredCtaBtn");
   if (ctaBtn) ctaBtn.href = safeCta;
+
+  // Initials avatar
+  var words = name.trim().split(/\s+/);
+  var initials = words.length >= 2
+    ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+
+  var SVG_STAR_FILLED = '<svg class="qhf-star-svg qhf-star-on" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>';
+  var SVG_STAR_EMPTY  = '<svg class="qhf-star-svg qhf-star-off" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>';
+  var SVG_CHECK = '<svg class="qhf-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+  var SVG_USERS = '<svg class="qhf-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  var SVG_SHIELD = '<svg class="qhf-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>';
+  var SVG_PIN = '<svg class="qhf-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  var SVG_CLOCK = '<svg class="qhf-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
 
   var starsHtml = "";
   var fullStars = Math.round(rating);
   for (var s = 0; s < 5; s++) {
-    starsHtml += '<span class="qhf-star">' + (s < fullStars ? "★" : "☆") + '</span>';
+    starsHtml += s < fullStars ? SVG_STAR_FILLED : SVG_STAR_EMPTY;
   }
 
   var badgesHtml = "";
   if (signal) {
-    badgesHtml += '<span class="qhf-badge qhf-badge-green">✓ ' + signal + '</span>';
+    badgesHtml += '<span class="qhf-badge qhf-badge-green">' + SVG_CHECK + signal + '</span>';
   } else if (isTopPro) {
-    badgesHtml += '<span class="qhf-badge qhf-badge-green">✓ Highly rated</span>';
+    badgesHtml += '<span class="qhf-badge qhf-badge-green">' + SVG_CHECK + 'Highly rated</span>';
   }
-  if (hires > 0) badgesHtml += '<span class="qhf-badge qhf-badge-blue">' + hires + ' hired</span>';
-  if (isTopPro) badgesHtml += '<span class="qhf-badge qhf-badge-gray">Background checked</span>';
+  if (hires > 0) badgesHtml += '<span class="qhf-badge qhf-badge-blue">' + SVG_USERS + hires + ' hired</span>';
+  if (isTopPro) badgesHtml += '<span class="qhf-badge qhf-badge-gray">' + SVG_SHIELD + 'Background checked</span>';
 
   var metaHtml = "";
-  if (address) metaHtml += '<span>📍 ' + address + '</span>';
-  if (years > 0) metaHtml += (address ? '<span class="qhf-meta-dot">·</span>' : '') + '<span>' + years + ' yr exp</span>';
+  if (address) metaHtml += '<span class="qhf-meta-item">' + SVG_PIN + address + '</span>';
+  if (years > 0) metaHtml += '<span class="qhf-meta-sep"></span><span class="qhf-meta-item">' + SVG_CLOCK + years + ' yr exp</span>';
 
   var html =
-    '<div class="qhf-contractor-name-bar">' +
-      '<div class="qhf-contractor-fullname">' + name + '</div>' +
-      '<div class="qhf-contractor-role">' + (isTopPro ? 'Top Pro · Verified' : 'Verified Professional') + '</div>' +
-    '</div>' +
     '<div class="qhf-contractor-body">' +
+      '<div class="qhf-biz-header">' +
+        '<div class="qhf-biz-avatar">' + initials + '</div>' +
+        '<div class="qhf-biz-info">' +
+          '<div class="qhf-biz-name">' + name + '</div>' +
+          '<div class="qhf-biz-verified">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="qhf-verified-icon"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>' +
+            (isTopPro ? 'Top Pro &nbsp;·&nbsp; Verified' : 'Verified Professional') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="qhf-divider"></div>' +
       (rating > 0
         ? '<div class="qhf-stars-row"><div class="qhf-stars">' + starsHtml + '</div>' +
           '<span class="qhf-rating">' + rating.toFixed(1) + '</span>' +
@@ -1727,41 +1732,48 @@ var _allowNavigation = true;
 .qhf-banner-title { color:white; font-weight:700; font-size:14px; letter-spacing:.01em; }
 .qhf-banner-sub { color:rgba(255,255,255,.8); font-size:12px; font-weight:500; margin-top:1px; }
 
-/* ② Hook chip */
-.qhf-hook-chip { display:flex; align-items:center; gap:8px; padding:10px 20px; background:linear-gradient(135deg,#fbbf24,#f59e0b); font-size:13px; font-weight:600; color:#78350f; animation:qhfSlideDown .45s cubic-bezier(.22,1,.36,1) .1s both; }
-.qhf-chip-icon { width:14px; height:14px; flex-shrink:0; }
+/* ② Found label */
+.qhf-found-label { display:flex; align-items:center; justify-content:center; gap:7px; padding:12px 20px; font-size:13px; font-weight:600; color:#374151; background:#EEF1F6; animation:qhfSlideDown .45s cubic-bezier(.22,1,.36,1) .1s both; }
+.qhf-found-icon { width:15px; height:15px; color:#1e40af; flex-shrink:0; }
 
 /* ③ Featured card */
-.qhf-featured-card { margin:16px; background:white; border-radius:18px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,.08),0 8px 32px rgba(30,64,175,.12); animation:qhfFadeUp .5s cubic-bezier(.22,1,.36,1) .2s both; }
+.qhf-featured-card { margin:0 16px 16px; background:white; border-radius:18px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,.07),0 6px 24px rgba(0,0,0,.05); animation:qhfFadeUp .5s cubic-bezier(.22,1,.36,1) .2s both; }
 
-/* Card header */
-.qhf-card-header { background:#1e40af; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.qhf-header-left { display:flex; flex-direction:column; }
-.qhf-ready-name { color:white; font-weight:800; font-size:16px; line-height:1.2; }
-.qhf-ready-sub { color:rgba(255,255,255,.7); font-size:12px; font-weight:400; margin-top:2px; }
-.qhf-near-badge { display:flex; align-items:center; gap:5px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); border-radius:100px; padding:5px 10px; font-size:11px; font-weight:600; color:white; white-space:nowrap; flex-shrink:0; }
-.qhf-near-dot { width:6px; height:6px; background:#4ade80; border-radius:50%; animation:qhfPulse 2s ease-in-out infinite; }
+/* Biz header inside card */
+.qhf-contractor-body { padding:16px; }
+.qhf-biz-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.qhf-biz-avatar { width:46px; height:46px; border-radius:12px; background:#1e40af; color:white; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; letter-spacing:.02em; }
+.qhf-biz-info { display:flex; flex-direction:column; min-width:0; }
+.qhf-biz-name { font-weight:700; font-size:14px; color:#111827; line-height:1.3; }
+.qhf-biz-verified { display:flex; align-items:center; gap:4px; font-size:11px; color:#16a34a; font-weight:600; margin-top:3px; }
+.qhf-verified-icon { width:13px; height:13px; flex-shrink:0; }
+.qhf-divider { height:1px; background:#f3f4f6; margin-bottom:12px; }
 
-/* Contractor name bar */
-.qhf-contractor-name-bar { background:#111827; padding:12px 16px; }
-.qhf-contractor-fullname { color:white; font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
-.qhf-contractor-role { color:rgba(255,255,255,.5); font-size:10px; letter-spacing:.06em; text-transform:uppercase; margin-top:2px; }
-
-/* Contractor body */
-.qhf-contractor-body { padding:14px 16px; }
+/* Stars */
 .qhf-stars-row { display:flex; align-items:center; gap:6px; margin-bottom:10px; }
 .qhf-stars { display:flex; gap:2px; }
-.qhf-star { color:#f59e0b; font-size:14px; }
+.qhf-star-svg { width:14px; height:14px; }
+.qhf-star-on  { fill:#f59e0b; }
+.qhf-star-off { fill:#e5e7eb; }
 .qhf-rating { font-weight:700; font-size:13px; color:#111827; }
 .qhf-reviews { font-size:12px; color:#9ca3af; }
+
+/* Badges */
 .qhf-badges-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-.qhf-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:600; }
-.qhf-badge-green { background:#f0fdf4; color:#16a34a; }
+.qhf-badge { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:7px; font-size:11px; font-weight:600; line-height:1; }
+.qhf-badge-green { background:#f0fdf4; color:#15803d; }
 .qhf-badge-blue  { background:#eff6ff; color:#1d4ed8; }
 .qhf-badge-gray  { background:#f9fafb; color:#374151; border:1px solid #e5e7eb; }
-.qhf-meta-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#6b7280; margin-bottom:10px; flex-wrap:wrap; }
-.qhf-meta-dot { color:#d1d5db; }
-.qhf-bio { font-size:12px; color:#6b7280; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.qhf-badge-icon  { width:12px; height:12px; flex-shrink:0; }
+
+/* Meta row */
+.qhf-meta-row { display:flex; align-items:center; gap:4px; font-size:12px; color:#6b7280; margin-bottom:10px; flex-wrap:wrap; }
+.qhf-meta-item { display:inline-flex; align-items:center; gap:4px; }
+.qhf-meta-icon { width:13px; height:13px; flex-shrink:0; color:#9ca3af; }
+.qhf-meta-sep { width:3px; height:3px; border-radius:50%; background:#d1d5db; margin:0 2px; }
+
+/* Bio */
+.qhf-bio { font-size:12px; color:#6b7280; line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
 /* CTA */
 .qhf-cta-section { padding:12px 16px 16px; border-top:1px solid #f3f4f6; }
@@ -1786,8 +1798,9 @@ var _allowNavigation = true;
 
 /* Skeleton */
 .qhf-skeleton { animation:qhfPulseOpacity 1.4s ease-in-out infinite; }
-.qhf-skel-name-bar { height:48px; background:#1f2937; opacity:.08; }
-.qhf-skel-body { padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.qhf-skel-body { padding:16px; display:flex; align-items:center; gap:12px; }
+.qhf-skel-avatar { width:46px; height:46px; border-radius:12px; background:#e5e7eb; flex-shrink:0; }
+.qhf-skel-lines { flex:1; display:flex; flex-direction:column; gap:9px; }
 .qhf-skel-line { height:11px; background:#e5e7eb; border-radius:6px; }
 
 /* Keyframes */
