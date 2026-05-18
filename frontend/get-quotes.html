@@ -1250,7 +1250,12 @@ function buildThumbTackContractors() {
         businesses.forEach(function(biz) { wrap.appendChild(buildBizCard(biz)); });
       } else {
         wrap.className = TT_GRID_CLASS;
-        businesses.forEach(function(biz) { wrap.appendChild(buildBizCardOld(biz)); });
+        businesses.forEach(function(biz) {
+          var cell = document.createElement("div");
+          cell.className = "h-full";
+          cell.appendChild(buildBizCardOld(biz));
+          wrap.appendChild(cell);
+        });
       }
       while (container.firstChild) container.removeChild(container.firstChild);
       container.appendChild(wrap);
@@ -1282,7 +1287,7 @@ function buildBizCardOld(biz) {
   var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
 
   var card = document.createElement("div");
-  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200";
+  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-200";
 
   // Image area
   var imgWrap = document.createElement("div");
