@@ -41,6 +41,8 @@ export async function fetchMeta() {
   }
 
   const ch = buildClient();
+
+
   try {
     let placementData, deviceData, regionData;
     try {
@@ -57,6 +59,7 @@ export async function fetchMeta() {
           fields: 'campaign_id,campaign_name,date_start,clicks,impressions,spend',
           breakdowns: 'device_platform,impression_device',
           date_preset: 'last_30d',
+          
           time_increment: 1,
         }),
         fetchInsights(accountId, token, {
