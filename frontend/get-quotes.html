@@ -1213,6 +1213,7 @@ function buildThumbTackContractors() {
       //                       isTopPro, opinionatedSignal, yearsInBusiness, numberOfHires,
       //                       businessIntroduction, widgets, servicePageURL, quote, ... }] }
       var businesses = (data && data.data) || [];
+      if (businesses.length) console.log("[TT] first biz fields:", JSON.stringify(businesses[0], null, 2));
       if (!businesses.length) { container.innerHTML = ""; return; }
 
       // Sort by rating descending
@@ -1248,6 +1249,8 @@ function buildBizCard(biz) {
   var years    = parseInt(biz.yearsInBusiness || 0, 10);
   var hires    = parseInt(biz.numberOfHires || 0, 10);
   var rawIntro = String(biz.businessIntroduction || "");
+  var rawQuote = typeof biz.quote === "string" ? biz.quote
+               : (biz.quote && typeof biz.quote.text === "string" ? biz.quote.text : "");
   var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
   var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
   var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
@@ -1302,13 +1305,20 @@ function buildBizCard(biz) {
       (rawIntro ? '<p class="ttc-intro">' + introText + introMore + '</p>' : '') +
       (metaHtml ? '<div class="ttc-meta">' + metaHtml + '</div>' : '') +
       (rating > 0
-        ? '<div class="ttc-review-box">' +
-            '<div class="ttc-stars-row">' +
-              '<div class="ttc-stars">' + starsHtml + '</div>' +
-              '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
-              (reviews ? '<span class="ttc-reviews"> &ndash; ' + reviews + ' reviews</span>' : '') +
-            '</div>' +
-          '</div>'
+        ? (function() {
+            var quoteShort = rawQuote.length > 110 ? _esc(rawQuote.slice(0, 110)) : _esc(rawQuote);
+            var quoteMore  = rawQuote.length > 110 && safeCta
+              ? ' <a href="' + safeCta + '" target="_blank" rel="noopener" class="ttc-readmore js-tt-cta" data-biz-name="' + name + '">Read More +</a>'
+              : '';
+            return '<div class="ttc-review-box">' +
+              '<div class="ttc-stars-row">' +
+                '<div class="ttc-stars">' + starsHtml + '</div>' +
+                '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
+                (reviews ? '<span class="ttc-reviews"> &ndash; ' + reviews + ' reviews</span>' : '') +
+              '</div>' +
+              (rawQuote ? '<p class="ttc-quote">' + quoteShort + quoteMore + '</p>' : '') +
+            '</div>';
+          })()
         : '') +
     '</div>' +
     (safeCta
@@ -1690,39 +1700,40 @@ var _allowNavigation = true;
 .ttc-card:hover { box-shadow:0 8px 24px rgba(0,0,0,.1); transform:translateY(-2px); }
 
 /* Avatar */
-.ttc-avatar-wrap { display:flex; justify-content:center; padding:20px 16px 0; }
-.ttc-avatar-img { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid #e5e7eb; }
-.ttc-avatar-fallback { width:72px; height:72px; border-radius:50%; background:#1e40af; color:#fff; font-weight:800; font-size:22px; display:flex; align-items:center; justify-content:center; border:3px solid #dbeafe; letter-spacing:.02em; }
+.ttc-avatar-wrap { display:flex; justify-content:center; padding:22px 16px 0; }
+.ttc-avatar-img { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #e5e7eb; }
+.ttc-avatar-fallback { width:90px; height:90px; border-radius:50%; background:#1e40af; color:#fff; font-weight:800; font-size:26px; display:flex; align-items:center; justify-content:center; border:3px solid #dbeafe; letter-spacing:.02em; }
 
 /* Body */
-.ttc-body { padding:14px 16px 12px; flex:1; display:flex; flex-direction:column; }
-.ttc-name-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:7px; }
-.ttc-name { font-weight:700; font-size:15px; color:#111827; line-height:1.2; }
-.ttc-toppro-badge { display:inline-flex; align-items:center; gap:3px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:2px 7px; font-size:10px; font-weight:700; white-space:nowrap; }
-.ttc-toppro-star { width:10px; height:10px; fill:#F59E0B; }
+.ttc-body { padding:16px 18px 12px; flex:1; display:flex; flex-direction:column; }
+.ttc-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.ttc-name { font-weight:700; font-size:17px; color:#111827; line-height:1.2; }
+.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:3px 8px; font-size:11px; font-weight:700; white-space:nowrap; }
+.ttc-toppro-star { width:11px; height:11px; fill:#F59E0B; }
 
 /* Intro */
-.ttc-intro { font-size:12px; color:#6b7280; line-height:1.6; margin-bottom:12px; }
-.ttc-readmore { color:#1e40af; font-weight:600; font-size:12px; text-decoration:none; white-space:nowrap; }
+.ttc-intro { font-size:13.5px; color:#6b7280; line-height:1.65; margin-bottom:14px; }
+.ttc-readmore { color:#1e40af; font-weight:600; font-size:13.5px; text-decoration:none; white-space:nowrap; }
 .ttc-readmore:hover { text-decoration:underline; }
 
 /* Meta */
-.ttc-meta { display:flex; flex-direction:column; gap:8px; margin-bottom:13px; }
-.ttc-meta-row { display:flex; align-items:center; gap:9px; font-size:12.5px; color:#374151; font-weight:500; }
-.ttc-meta-icon { width:15px; height:15px; flex-shrink:0; color:#9ca3af; }
+.ttc-meta { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; }
+.ttc-meta-row { display:flex; align-items:center; gap:10px; font-size:14px; color:#374151; font-weight:500; }
+.ttc-meta-icon { width:18px; height:18px; flex-shrink:0; color:#9ca3af; }
 
 /* Review box */
-.ttc-review-box { background:#F9FAFB; border:1px solid #F3F4F6; border-radius:10px; padding:10px 12px; margin-bottom:14px; }
-.ttc-stars-row { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
-.ttc-stars { display:flex; gap:2px; }
-.ttc-star { width:15px; height:15px; }
+.ttc-review-box { background:#F9FAFB; border:1px solid #F3F4F6; border-radius:10px; padding:12px 14px; margin-bottom:16px; }
+.ttc-stars-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ttc-stars { display:flex; gap:3px; }
+.ttc-star { width:18px; height:18px; }
 .ttc-star-on  { fill:#F59E0B; }
 .ttc-star-off { fill:#E5E7EB; }
-.ttc-rating { font-weight:700; font-size:13px; color:#111827; }
-.ttc-reviews { font-size:12px; color:#9ca3af; }
+.ttc-rating { font-weight:700; font-size:15px; color:#111827; }
+.ttc-reviews { font-size:13.5px; color:#9ca3af; }
+.ttc-quote { font-size:13px; color:#3b5fc0; line-height:1.6; margin-top:9px; font-style:italic; }
 
 /* CTA */
-.ttc-cta { display:block; margin:0 16px 16px; padding:13px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:14px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
+.ttc-cta { display:block; margin:0 16px 16px; padding:15px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:15px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
 .ttc-cta:hover { background:#1d3a9f; box-shadow:0 5px 16px rgba(30,64,175,.4); }
 </style>
 
