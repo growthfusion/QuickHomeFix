@@ -1233,30 +1233,93 @@ function buildThumbTackContractors() {
     });
 }
 
-/* Build a single vertical contractor card (HouseCrew-style). */
+function _esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Build a single contractor card matching screenshot layout. */
 function buildBizCard(biz) {
-  var name     = String(biz.businessName || "Local Pro");
-  var address  = String(biz.businessLocation || "");
+  var name     = _esc(biz.businessName || "Local Pro");
+  var address  = _esc(biz.businessLocation || "");
   var rating   = parseFloat(biz.rating || 0);
   var reviews  = parseInt(biz.numberOfReviews || 0, 10);
   var rawPhoto = String(biz.businessImageURL || "");
   var isTopPro = !!biz.isTopPro;
-  var signal   = String(biz.opinionatedSignal || "");
   var years    = parseInt(biz.yearsInBusiness || 0, 10);
   var hires    = parseInt(biz.numberOfHires || 0, 10);
   var rawIntro = String(biz.businessIntroduction || "");
-  var intro    = rawIntro ? (rawIntro.length > 140 ? rawIntro.slice(0, 140) + "…" : rawIntro) : "";
-  // Prefer Thumbtack Request Flow Widget URL (quote popup) — fall back to profile page.
   var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
-
-  // URL whitelist — only http/https, no javascript: payloads
   var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
-  var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
+  var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
 
+  // Intro: 95 chars then Read More
+  var introText = rawIntro.length > 95 ? _esc(rawIntro.slice(0, 95)) : _esc(rawIntro);
+  var introMore = rawIntro.length > 95 && safeCta
+    ? ' <a href="' + safeCta + '" target="_blank" rel="noopener" class="ttc-readmore js-tt-cta" data-biz-name="' + name + '">Read More +</a>'
+    : '';
+
+  // Avatar
+  var avatarHtml = safePhoto
+    ? '<img src="' + safePhoto + '" alt="' + name + '" class="ttc-avatar-img" loading="lazy">'
+    : (function() {
+        var w = name.trim().split(/\s+/);
+        var ini = w.length >= 2 ? (w[0][0] + w[w.length-1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+        return '<div class="ttc-avatar-fallback">' + ini + '</div>';
+      })();
+
+  // Stars
+  var fullStars = Math.round(rating);
+  var starsHtml = '';
+  var starPath = 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z';
+  for (var s = 0; s < 5; s++) {
+    starsHtml += '<svg class="ttc-star ' + (s < fullStars ? 'ttc-star-on' : 'ttc-star-off') + '" viewBox="0 0 24 24"><path d="' + starPath + '"/></svg>';
+  }
+
+  // Meta rows
+  var PIN  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+  var CLK  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>';
+  var PPL  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
+
+  var metaHtml = '';
+  if (address) metaHtml += '<div class="ttc-meta-row">' + PIN + '<span>' + address + '</span></div>';
+  if (years > 0) metaHtml += '<div class="ttc-meta-row">' + CLK + '<span>' + years + ' years in business</span></div>';
+  if (hires > 0) metaHtml += '<div class="ttc-meta-row">' + PPL + '<span>Hired ' + hires + ' times</span></div>';
+
+  // Top Pro badge
+  var topProHtml = isTopPro
+    ? '<span class="ttc-toppro-badge"><svg class="ttc-toppro-star" viewBox="0 0 24 24"><path d="' + starPath + '"/></svg>Top Pro</span>'
+    : '';
+
+  // Build card HTML
   var card = document.createElement("div");
-  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200";
+  card.className = "ttc-card";
+  card.innerHTML =
+    '<div class="ttc-avatar-wrap">' + avatarHtml + '</div>' +
+    '<div class="ttc-body">' +
+      '<div class="ttc-name-row">' +
+        '<h4 class="ttc-name">' + name + '</h4>' + topProHtml +
+      '</div>' +
+      (rawIntro ? '<p class="ttc-intro">' + introText + introMore + '</p>' : '') +
+      (metaHtml ? '<div class="ttc-meta">' + metaHtml + '</div>' : '') +
+      (rating > 0
+        ? '<div class="ttc-review-box">' +
+            '<div class="ttc-stars-row">' +
+              '<div class="ttc-stars">' + starsHtml + '</div>' +
+              '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
+              (reviews ? '<span class="ttc-reviews"> &ndash; ' + reviews + ' reviews</span>' : '') +
+            '</div>' +
+          '</div>'
+        : '') +
+    '</div>' +
+    (safeCta
+      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '">Compare Quotes</a>'
+      : '');
 
-  // ─── Image area (top of card) ───────────────────────────────────────────
+  return card;
+}
+
+function _deadcode_oldBizCard() {
+  // ─── old DOM-manipulation code preserved for reference ──────────────────
   var imgWrap = document.createElement("div");
   imgWrap.className = "relative w-full bg-gradient-to-br from-blue-400 to-blue-600";
   imgWrap.style.height = "160px";
@@ -1498,8 +1561,6 @@ function buildBizCard(biz) {
     body.appendChild(ctaEl);
   }
 
-  card.appendChild(body);
-  return card;
 }
 
 function switchToService(serviceKey, path) {
@@ -1623,6 +1684,46 @@ var _allowNavigation = true;
 
 /* ② Contractors grid */
 .qhf-more-section { padding:16px; }
+
+/* ── Contractor card ── */
+.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .2s,transform .2s; }
+.ttc-card:hover { box-shadow:0 8px 24px rgba(0,0,0,.1); transform:translateY(-2px); }
+
+/* Avatar */
+.ttc-avatar-wrap { display:flex; justify-content:center; padding:20px 16px 0; }
+.ttc-avatar-img { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid #e5e7eb; }
+.ttc-avatar-fallback { width:72px; height:72px; border-radius:50%; background:#1e40af; color:#fff; font-weight:800; font-size:22px; display:flex; align-items:center; justify-content:center; border:3px solid #dbeafe; letter-spacing:.02em; }
+
+/* Body */
+.ttc-body { padding:14px 16px 12px; flex:1; display:flex; flex-direction:column; }
+.ttc-name-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:7px; }
+.ttc-name { font-weight:700; font-size:15px; color:#111827; line-height:1.2; }
+.ttc-toppro-badge { display:inline-flex; align-items:center; gap:3px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:2px 7px; font-size:10px; font-weight:700; white-space:nowrap; }
+.ttc-toppro-star { width:10px; height:10px; fill:#F59E0B; }
+
+/* Intro */
+.ttc-intro { font-size:12px; color:#6b7280; line-height:1.6; margin-bottom:12px; }
+.ttc-readmore { color:#1e40af; font-weight:600; font-size:12px; text-decoration:none; white-space:nowrap; }
+.ttc-readmore:hover { text-decoration:underline; }
+
+/* Meta */
+.ttc-meta { display:flex; flex-direction:column; gap:8px; margin-bottom:13px; }
+.ttc-meta-row { display:flex; align-items:center; gap:9px; font-size:12.5px; color:#374151; font-weight:500; }
+.ttc-meta-icon { width:15px; height:15px; flex-shrink:0; color:#9ca3af; }
+
+/* Review box */
+.ttc-review-box { background:#F9FAFB; border:1px solid #F3F4F6; border-radius:10px; padding:10px 12px; margin-bottom:14px; }
+.ttc-stars-row { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.ttc-stars { display:flex; gap:2px; }
+.ttc-star { width:15px; height:15px; }
+.ttc-star-on  { fill:#F59E0B; }
+.ttc-star-off { fill:#E5E7EB; }
+.ttc-rating { font-weight:700; font-size:13px; color:#111827; }
+.ttc-reviews { font-size:12px; color:#9ca3af; }
+
+/* CTA */
+.ttc-cta { display:block; margin:0 16px 16px; padding:13px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:14px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
+.ttc-cta:hover { background:#1d3a9f; box-shadow:0 5px 16px rgba(30,64,175,.4); }
 </style>
 
 <script>
