@@ -177,7 +177,7 @@
     .metric-table th:first-child,
     .metric-table td:first-child { min-width: 200px; }
     .metric-table.wide-first th:first-child,
-    .metric-table.wide-first td:first-child { min-width: 360px; }
+    .metric-table.wide-first td:first-child { min-width: 480px; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -550,7 +550,7 @@
         fmt2(ttRev),       // 26 THUMBTACK, $
         0,                  // 27 PPC, $
         0,                  // 28 REPOSTS, $
-        fmt2(totalRev - cost), // 29 ADJUSTMENT, $
+        0,                  // 29 ADJUSTMENT, $
         fmt2(avgLead),     // 30 AVG PER LEAD, $
         fmt2(avgSold),     // 31 AVG PER SOLD, $
         fmt2(epc),         // 32 EPC, $
@@ -1282,21 +1282,26 @@
 
     // LANDING — LP_ROWS as source for leads/sold (full LP lead counts, not LD_LANDING
     // which is incomplete because most leads have null landing_page_url in our table).
-    // Row label = landing path inferred from LP campaign name.
-    // LP campaign → landing path: Bath→bath, Roofing→roof, Windows→windows, Tub→tub
+    // Row label = full landing URL inferred from LP campaign name.
+    // LP campaign → landing URL: Bath→/get-quotes/bath, Roofing→/get-quotes/roof, etc.
     // visits/clicks = RT total × Meta impression/click share per service type
     // cost = RT cost × Meta spend share per service type
     function buildLandingRows() {
-      // Map LP campaign name to landing path label
+      const BASE_URL = 'https://quickhomefix.pro/get-quotes';
+      // Map LP campaign name to full landing URL label
       function lpCampToPath(name) {
         const n = (name || '').toLowerCase();
-        if (n === 'tub' || n.includes('tub')) return 'tub';
-        if (n.includes('bath') || n.includes('shower')) return 'bath';
-        if (n.includes('roof')) return 'roof';
-        if (n.includes('window') || n.includes('windo')) return 'windows';
-        if (n.includes('gutter')) return 'gutter';
-        if (n.includes('solar')) return 'solar';
+        if (n === 'tub' || n.includes('tub')) return BASE_URL + '/tub';
+        if (n.includes('bath') || n.includes('shower')) return BASE_URL + '/bath';
+        if (n.includes('roof')) return BASE_URL + '/roof';
+        if (n.includes('window') || n.includes('windo')) return BASE_URL + '/windows';
+        if (n.includes('gutter')) return BASE_URL + '/gutters';
+        if (n.includes('solar')) return BASE_URL + '/solar';
         return null;
+      }
+      // Strip BASE_URL prefix to get just the path slug for service inference
+      function pathToSlug(label) {
+        return label.replace(BASE_URL + '/', '');
       }
 
       // Step 1: LP_ROWS → leads/sold per landing path
@@ -1354,7 +1359,7 @@
 
       const out = [];
       for (const [path, v] of m.entries()) {
-        const svc       = inferFormFromCampaign(path);
+        const svc       = inferFormFromCampaign(pathToSlug(path));
         const meta      = metaByService.get(svc) || { imp: 0, clk: 0, spend: 0 };
         const leadShare = totalLeads > 0 ? v.l / totalLeads : 0;
         const impShare  = totalMetaImp   > 0 ? meta.imp   / totalMetaImp   : leadShare;
