@@ -476,8 +476,60 @@
   </div>
 
 
-  <!-- Tables container -->
-  <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
+  <!-- Tables container — min-height prevents CLS when tables inject -->
+  <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6" style="min-height:800px">
+    <!-- Skeleton shown immediately — prevents SI/CLS while APIs load -->
+    <div id="loading-skeleton" class="px-0 pt-4">
+      <style>
+        .skel { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation: shimmer 1.4s infinite; border-radius:4px; }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .skel-block { height:14px; margin-bottom:10px; }
+      </style>
+      <div style="margin-bottom:32px">
+        <div class="skel skel-block" style="width:120px;height:12px;margin-bottom:14px"></div>
+        <div style="background:#fff;border-radius:4px;padding:16px;overflow:hidden">
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skel skel-block" style="width:200px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skel skel-block" style="width:200px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div class="skel skel-block" style="width:200px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:32px">
+        <div class="skel skel-block" style="width:100px;height:12px;margin-bottom:14px"></div>
+        <div style="background:#fff;border-radius:4px;padding:16px">
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skel skel-block" style="width:200px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div class="skel skel-block" style="width:200px;opacity:.6"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.6"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.6"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ── Metric column headers (33 columns after the label) ──────────────────
@@ -1797,20 +1849,38 @@
         </div>`;
     }
 
+    function bindExpand(wrap) {
+      const open = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        wrap.querySelector(".expand-btn")?.remove();
+        wrap.querySelector(".expand-overlay")?.remove();
+        wrap.classList.add("expanded");
+      };
+      wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
+      wrap.querySelector(".expand-overlay")?.addEventListener("mousedown", open);
+    }
+
     function rerender() {
       const tables = getTables();
-      document.getElementById("tables-container").innerHTML =
-        tables.map(t => renderTable(t)).join("");
-      document.querySelectorAll(".expandable").forEach(wrap => {
-        const open = (e) => {
-          if (e) { e.preventDefault(); e.stopPropagation(); }
-          wrap.querySelector(".expand-btn")?.remove();
-          wrap.querySelector(".expand-overlay")?.remove();
-          wrap.classList.add("expanded");
-        };
-        wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
-        wrap.querySelector(".expand-overlay")?.addEventListener("mousedown", open);
-      });
+      const container = document.getElementById("tables-container");
+
+      // Remove skeleton on first real render
+      document.getElementById("loading-skeleton")?.remove();
+      container.innerHTML = "";
+
+      // Render one table per frame — keeps each task under 50ms, reduces TBT
+      let i = 0;
+      function renderNext() {
+        if (i >= tables.length) return;
+        const div = document.createElement("div");
+        div.innerHTML = renderTable(tables[i]);
+        const wrap = div.querySelector(".expandable");
+        if (wrap) bindExpand(wrap);
+        container.appendChild(div.firstElementChild);
+        i++;
+        setTimeout(renderNext, 0);
+      }
+      renderNext();
     }
 
     // ── Filter state ─────────────────────────────────────────────────────────
