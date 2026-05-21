@@ -432,22 +432,28 @@
     <div id="step-complete" class="wizard-step">
       <div class="qhf-complete-wrapper">
 
-        <!-- ① Success banner with animated checkmark -->
+        <!-- ① Success banner — full cover image with text overlay -->
         <div class="qhf-success-banner">
-          <!-- Animated SVG circle + checkmark -->
-          <div class="qhf-check-wrap">
-            <svg class="qhf-check-svg" viewBox="0 0 72 72" fill="none">
-              <!-- faint background ring -->
-              <circle cx="36" cy="36" r="30" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
-              <!-- animated drawing ring -->
-              <circle class="qhf-ring" cx="36" cy="36" r="30" stroke="white" stroke-width="3" stroke-linecap="round"/>
-              <!-- checkmark path -->
-              <path class="qhf-tick" d="M22 36 L31 45 L50 26" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <img id="qhfBannerImg" src="" alt="" class="qhf-banner-img-bg" />
+          <div id="qhfBannerImgWrap" class="qhf-banner-img-overlay"></div>
+          <div class="qhf-bubble qhf-bubble-1"></div>
+          <div class="qhf-bubble qhf-bubble-2"></div>
+          <div class="qhf-bubble qhf-bubble-3"></div>
+          <div class="qhf-bubble qhf-bubble-4"></div>
+          <div class="qhf-bubble qhf-bubble-5"></div>
+          <div class="qhf-banner-content">
+            <div class="qhf-banner-left">
+              <div class="qhf-congrats-row">
+                <div class="qhf-check-icon">
+                  <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M4 10l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <span class="qhf-congrats-text">Congratulations!</span>
+              </div>
+              <h1 class="qhf-banner-heading">We Found Trusted <span id="qhfServiceName" class="qhf-service-highlight">Pros</span> Near You</h1>
+              <p class="qhf-banner-sub">Compare local pros and get your best quote in minutes.</p>
+              <div id="completeMessage" style="display:none"></div>
+            </div>
           </div>
-          <h1 class="qhf-banner-heading">Congratulations!</h1>
-          <p class="qhf-banner-sub">We've found you a Contractor in your area</p>
-          <div id="completeMessage" style="display:none"></div>
         </div>
 
         <!-- ② Contractors grid -->
@@ -561,8 +567,6 @@ const radioStepConfigs = {
   ]},
 };
 
-/* ── A/B: old TQ page HTML (served when URL has no /tt) ── */
-var TQ_VARIANT_OLD_HTML = '<div class="flex-1 flex flex-col items-center px-4 py-6 sm:py-12 bg-gradient-to-b from-blue-50/50 to-white min-h-screen"><div class="w-full max-w-lg bg-white border-0 rounded-3xl shadow-lg overflow-hidden mb-10"><div class="bg-gradient-to-r from-green-500 to-green-600 px-8 pt-10 pb-12 text-center"><div class="mb-5 flex justify-center"><div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"><svg class="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div><h2 class="text-3xl font-bold text-white mb-2">Thank You!</h2><p class="text-green-100 font-medium text-sm">Your request has been submitted successfully.</p></div><div class="p-6 sm:p-8 -mt-4"><div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6"><p id="completeMessage" class="text-gray-600 text-sm leading-relaxed text-center"></p></div><div class="mb-6"><h3 class="text-sm font-bold text-gray-800 mb-4 text-center">What Happens Next?</h3><div class="space-y-4"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><p class="text-sm font-semibold text-gray-800">Review within 24 hours</p><p class="text-xs text-gray-400">Our team will review your project details</p></div></div><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></div><div><p class="text-sm font-semibold text-gray-800">Matched with top professionals</p><p class="text-xs text-gray-400">We connect you with vetted local contractors</p></div></div><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg></div><div><p class="text-sm font-semibold text-gray-800">Get your free quotes</p><p class="text-xs text-gray-400">Compare prices and choose the best offer</p></div></div></div></div><div class="flex items-center justify-center gap-6 mb-6 py-3 border-t border-gray-100"><span class="flex items-center gap-1.5 text-xs text-gray-400 font-medium"><svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Secure &amp; Encrypted</span><span class="flex items-center gap-1.5 text-xs text-gray-400 font-medium"><svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>100% Free</span></div><button onclick="_allowNavigation=true;store.resetAll();window.location.href=\'/\'" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors">Back to Home</button></div></div><div id="thumbtackContractorsSection" class="w-full max-w-3xl mb-12" style="display:none;"><div class="text-center mb-6"><h3 class="text-xl font-bold text-gray-900">Matched Contractors Near You</h3><p class="text-sm text-gray-400 mt-1">Top-rated professionals ready to help with your project</p></div><div id="thumbtackContractors"></div></div></div>';
 
 const THUMBTACK_SERVICE_QUERIES = {
   roof:    "roofing",
@@ -597,13 +601,7 @@ let showingLanding = false;
 document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("trustDate").textContent = new Date().toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});
 
-  var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)(?:\/tt)?\/?$/);
-  // Store TT variant flag in sessionStorage so it survives URL changes during wizard navigation
-  if (/^\/get-quotes\/[a-zA-Z0-9_-]+\/tt\/?$/.test(window.location.pathname)) {
-    sessionStorage.setItem("qhf_tt_variant", "1");
-  } else {
-    sessionStorage.removeItem("qhf_tt_variant");
-  }
+  var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)\/?$/);
   var params = new URLSearchParams(window.location.search);
   var svc = (pathMatch && pathMatch[1]) || params.get("service");
   if (!svc || !isValidService(svc)) {
@@ -866,17 +864,23 @@ function renderCurrentStep() {
     backBtn.style.display = "none";
     var svcMap = { windows:"Window installation", solar:"Solar energy", bath:"Bath remodeling", gutter:"Gutter service", shower:"Walk-in shower", tub:"Walk-in tub", roofing:"Roofing" };
     var label = svcMap[store.formData.service] || "Home project";
-
-    // ── A/B: /service/tt → new design, /service → old design ──
-    var isTT = !!sessionStorage.getItem("qhf_tt_variant");
-    var abVariant = isTT ? "tt" : "standard";
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: "abVariantAssigned", abTest: "tq_page_v1", abVariant: abVariant });
-    if (!isTT) {
-      document.getElementById("step-complete").innerHTML = TQ_VARIANT_OLD_HTML;
-    }
-
     document.getElementById("completeMessage").textContent = label + " · submitted";
+
+    var bannerLabelMap = { bath:"Bathroom Remodeling Pros", roof:"Roofers", windows:"Window Pros", solar:"Solar Experts", gutter:"Gutter Pros", tub:"Walk-In Tub Pros", shower:"Walk-In Shower Pros" };
+    var bannerImgMap = {
+      bath:    "images/ChatGPT Image May 21, 2026, 03_33_16 PM.png",
+      roof:    "images/ChatGPT Image May 21, 2026, 04_12_18 PM.png",
+      windows: "images/ChatGPT Image May 21, 2026, 04_16_31 PM.png",
+      tub:     "images/ChatGPT Image May 21, 2026, 04_18_13 PM.png",
+      solar:   "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png"
+    };
+    var svc = store.formData.service;
+    document.getElementById("qhfServiceName").textContent = bannerLabelMap[svc] || "Home Improvement Pros";
+    var bannerImg = bannerImgMap[svc] || "";
+    var imgEl = document.getElementById("qhfBannerImg");
+    if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgEl.removeAttribute("style"); }
+    else { imgEl.src = ""; }
+
     buildThumbTackContractors();
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
@@ -1250,20 +1254,9 @@ function buildThumbTackContractors() {
         return (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0);
       });
 
-      var isTTCard = !!sessionStorage.getItem("qhf_tt_variant");
       var wrap = document.createElement("div");
-      if (isTTCard) {
-        wrap.className = TT_GRID_CLASS;
-        businesses.forEach(function(biz) { wrap.appendChild(buildBizCard(biz)); });
-      } else {
-        wrap.className = TT_GRID_CLASS;
-        businesses.forEach(function(biz) {
-          var cell = document.createElement("div");
-          cell.className = "h-full";
-          cell.appendChild(buildBizCardOld(biz));
-          wrap.appendChild(cell);
-        });
-      }
+      wrap.className = TT_GRID_CLASS;
+      businesses.forEach(function(biz) { wrap.appendChild(buildBizCard(biz)); });
       while (container.firstChild) container.removeChild(container.firstChild);
       container.appendChild(wrap);
     })
@@ -1274,127 +1267,6 @@ function buildThumbTackContractors() {
 
 function _esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-/* Prod-style card for the standard (non-tt) variant — exact copy from prod branch */
-function buildBizCardOld(biz) {
-  var name     = String(biz.businessName || "Local Pro");
-  var address  = String(biz.businessLocation || "");
-  var rating   = parseFloat(biz.rating || 0);
-  var reviews  = parseInt(biz.numberOfReviews || 0, 10);
-  var rawPhoto = String(biz.businessImageURL || "");
-  var isTopPro = !!biz.isTopPro;
-  var signal   = String(biz.opinionatedSignal || "");
-  var years    = parseInt(biz.yearsInBusiness || 0, 10);
-  var hires    = parseInt(biz.numberOfHires || 0, 10);
-  var rawIntro = String(biz.businessIntroduction || "");
-  var intro    = rawIntro ? (rawIntro.length > 140 ? rawIntro.slice(0, 140) + "…" : rawIntro) : "";
-  var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
-  var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
-  var safeCta   = /^https?:\/\//.test(rawCta)   ? rawCta   : "";
-
-  var card = document.createElement("div");
-  card.className = "bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-200";
-
-  // Image area
-  var imgWrap = document.createElement("div");
-  imgWrap.className = "relative w-full bg-gradient-to-br from-blue-400 to-blue-600";
-  imgWrap.style.height = "160px";
-  if (safePhoto) {
-    var imgEl = document.createElement("img");
-    imgEl.src = safePhoto; imgEl.alt = name; imgEl.loading = "lazy";
-    imgEl.className = "w-full h-full object-cover";
-    imgWrap.appendChild(imgEl);
-  } else {
-    var phWrap = document.createElement("div");
-    phWrap.className = "w-full h-full flex items-center justify-center";
-    var phSvg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-    phSvg.setAttribute("class","w-12 h-12 text-white opacity-80"); phSvg.setAttribute("fill","none"); phSvg.setAttribute("viewBox","0 0 24 24"); phSvg.setAttribute("stroke","currentColor"); phSvg.setAttribute("stroke-width","1.5");
-    var phPath = document.createElementNS("http://www.w3.org/2000/svg","path");
-    phPath.setAttribute("stroke-linecap","round"); phPath.setAttribute("stroke-linejoin","round"); phPath.setAttribute("d","M3 21V8l9-5 9 5v13M9 21V12h6v9");
-    phSvg.appendChild(phPath); phWrap.appendChild(phSvg); imgWrap.appendChild(phWrap);
-  }
-  if (isTopPro) {
-    var tpBadge = document.createElement("div");
-    tpBadge.className = "absolute top-2.5 left-2.5 inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-md text-white";
-    tpBadge.style.background = "linear-gradient(135deg,#F59E0B,#D97706)";
-    var tpStar = document.createElementNS("http://www.w3.org/2000/svg","svg"); tpStar.setAttribute("class","w-3 h-3 fill-current"); tpStar.setAttribute("viewBox","0 0 24 24");
-    var tpStarP = document.createElementNS("http://www.w3.org/2000/svg","path"); tpStarP.setAttribute("d","M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
-    tpStar.appendChild(tpStarP); var tpTxt = document.createElement("span"); tpTxt.textContent = "Top Pro";
-    tpBadge.appendChild(tpStar); tpBadge.appendChild(tpTxt); imgWrap.appendChild(tpBadge);
-  }
-  card.appendChild(imgWrap);
-
-  // Body
-  var body = document.createElement("div");
-  body.className = "p-4 flex flex-col flex-1";
-
-  var nameEl = document.createElement("h4"); nameEl.className = "font-bold text-gray-900 text-base leading-snug"; nameEl.textContent = name; body.appendChild(nameEl);
-
-  if (rating > 0) {
-    var starRow = document.createElement("div"); starRow.className = "flex items-center gap-1 mt-1.5";
-    for (var s = 0; s < 5; s++) {
-      var sv = document.createElementNS("http://www.w3.org/2000/svg","svg"); sv.setAttribute("class","w-3.5 h-3.5 "+(s<Math.round(rating)?"text-yellow-400 fill-yellow-400":"text-gray-200 fill-gray-200")); sv.setAttribute("viewBox","0 0 24 24");
-      var sp = document.createElementNS("http://www.w3.org/2000/svg","path"); sp.setAttribute("d","M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
-      sv.appendChild(sp); starRow.appendChild(sv);
-    }
-    var rn = document.createElement("span"); rn.className = "font-bold text-gray-900 text-xs ml-1"; rn.textContent = rating.toFixed(1); starRow.appendChild(rn);
-    if (reviews) { var rs = document.createElement("span"); rs.className = "text-xs text-gray-400"; rs.textContent = "· "+reviews+" reviews"; starRow.appendChild(rs); }
-    body.appendChild(starRow);
-  }
-
-  if (isTopPro || signal) {
-    var bdgRow = document.createElement("div"); bdgRow.className = "flex flex-wrap gap-1.5 mt-2";
-    if (isTopPro) {
-      var ib = document.createElement("span"); ib.className = "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"; ib.style.cssText = "background:#FEF3C7;color:#B45309;border:1px solid #FDE68A";
-      var ibs = document.createElementNS("http://www.w3.org/2000/svg","svg"); ibs.setAttribute("class","w-2.5 h-2.5 fill-current"); ibs.setAttribute("viewBox","0 0 24 24");
-      var ibsp = document.createElementNS("http://www.w3.org/2000/svg","path"); ibsp.setAttribute("d","M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z");
-      ibs.appendChild(ibsp); var ibt = document.createElement("span"); ibt.textContent = "Top Pro"; ib.appendChild(ibs); ib.appendChild(ibt); bdgRow.appendChild(ib);
-    }
-    if (signal) { var sg = document.createElement("span"); sg.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full"; sg.style.cssText = "background:rgba(37,99,235,0.08);color:#2563EB;border:1px solid rgba(37,99,235,0.2)"; sg.textContent = signal; bdgRow.appendChild(sg); }
-    body.appendChild(bdgRow);
-  }
-
-  if (address) {
-    var addrRow = document.createElement("div"); addrRow.className = "flex items-center gap-1 text-gray-400 text-xs mt-1.5";
-    var pinS = document.createElementNS("http://www.w3.org/2000/svg","svg"); pinS.setAttribute("class","w-3 h-3 flex-shrink-0"); pinS.setAttribute("fill","none"); pinS.setAttribute("viewBox","0 0 24 24"); pinS.setAttribute("stroke","currentColor"); pinS.setAttribute("stroke-width","2");
-    var pp1 = document.createElementNS("http://www.w3.org/2000/svg","path"); pp1.setAttribute("stroke-linecap","round"); pp1.setAttribute("stroke-linejoin","round"); pp1.setAttribute("d","M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z");
-    var pp2 = document.createElementNS("http://www.w3.org/2000/svg","path"); pp2.setAttribute("stroke-linecap","round"); pp2.setAttribute("stroke-linejoin","round"); pp2.setAttribute("d","M15 11a3 3 0 11-6 0 3 3 0 016 0z");
-    pinS.appendChild(pp1); pinS.appendChild(pp2); var addrT = document.createElement("span"); addrT.className = "truncate"; addrT.textContent = address;
-    addrRow.appendChild(pinS); addrRow.appendChild(addrT); body.appendChild(addrRow);
-  }
-
-  if (years > 0 || hires > 0) {
-    var metaRow = document.createElement("div"); metaRow.className = "flex flex-wrap items-center gap-2 text-xs text-gray-500 font-medium mt-2";
-    if (years > 0) {
-      var yE = document.createElement("span"); yE.className = "inline-flex items-center gap-1";
-      var clkS = document.createElementNS("http://www.w3.org/2000/svg","svg"); clkS.setAttribute("class","w-3 h-3 text-gray-400"); clkS.setAttribute("fill","none"); clkS.setAttribute("viewBox","0 0 24 24"); clkS.setAttribute("stroke","currentColor"); clkS.setAttribute("stroke-width","2");
-      var clkP = document.createElementNS("http://www.w3.org/2000/svg","path"); clkP.setAttribute("stroke-linecap","round"); clkP.setAttribute("stroke-linejoin","round"); clkP.setAttribute("d","M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z");
-      clkS.appendChild(clkP); var yT = document.createElement("span"); yT.textContent = years+" yrs"; yE.appendChild(clkS); yE.appendChild(yT); metaRow.appendChild(yE);
-    }
-    if (years > 0 && hires > 0) { var dot = document.createElement("span"); dot.className = "text-gray-200"; dot.textContent = "·"; metaRow.appendChild(dot); }
-    if (hires > 0) {
-      var hE = document.createElement("span"); hE.className = "inline-flex items-center gap-1"; hE.style.color = "#059669";
-      var chkS = document.createElementNS("http://www.w3.org/2000/svg","svg"); chkS.setAttribute("class","w-3 h-3"); chkS.style.color="#10B981"; chkS.setAttribute("fill","none"); chkS.setAttribute("viewBox","0 0 24 24"); chkS.setAttribute("stroke","currentColor"); chkS.setAttribute("stroke-width","2");
-      var chkP = document.createElementNS("http://www.w3.org/2000/svg","path"); chkP.setAttribute("stroke-linecap","round"); chkP.setAttribute("stroke-linejoin","round"); chkP.setAttribute("d","M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z");
-      chkS.appendChild(chkP); var hT = document.createElement("span"); hT.textContent = hires+" hired"; hE.appendChild(chkS); hE.appendChild(hT); metaRow.appendChild(hE);
-    }
-    body.appendChild(metaRow);
-  }
-
-  if (intro) { var intEl = document.createElement("p"); intEl.className = "text-gray-500 text-xs leading-relaxed mt-3 pt-3 border-t border-gray-100"; intEl.style.lineHeight="1.65"; intEl.textContent = intro; body.appendChild(intEl); }
-
-  var spacer = document.createElement("div"); spacer.className = "flex-1"; spacer.style.minHeight = "10px"; body.appendChild(spacer);
-
-  if (safeCta) {
-    var ctaEl = document.createElement("a"); ctaEl.href = safeCta; ctaEl.className = "js-tt-cta mt-3 flex items-center justify-center gap-1.5 w-full text-white font-semibold py-2.5 rounded-xl text-sm bg-blue-600 hover:bg-blue-700 transition-colors"; ctaEl.setAttribute("data-biz-name", name);
-    var sendS = document.createElementNS("http://www.w3.org/2000/svg","svg"); sendS.setAttribute("class","w-4 h-4"); sendS.setAttribute("fill","none"); sendS.setAttribute("viewBox","0 0 24 24"); sendS.setAttribute("stroke","currentColor"); sendS.setAttribute("stroke-width","2");
-    var sendP = document.createElementNS("http://www.w3.org/2000/svg","path"); sendP.setAttribute("stroke-linecap","round"); sendP.setAttribute("stroke-linejoin","round"); sendP.setAttribute("d","M12 19l9 2-9-18-9 18 9-2zm0 0v-8");
-    sendS.appendChild(sendP); var ctaLbl = document.createElement("span"); ctaLbl.textContent = "Compare Free Quote"; ctaEl.appendChild(sendS); ctaEl.appendChild(ctaLbl); body.appendChild(ctaEl);
-  }
-
-  card.appendChild(body);
-  return card;
 }
 
 /* Build a single contractor card matching screenshot layout. */
@@ -1814,44 +1686,121 @@ var _allowNavigation = true;
 }
 @keyframes ttSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
-/* ═══ COMPLETE PAGE — redesign ═══ */
+/* ═══ COMPLETE PAGE ═══ */
 .qhf-complete-wrapper { background:#EEF1F6; min-height:100vh; padding-bottom:48px; }
 
-/* ① Success banner */
-.qhf-success-banner { display:flex; flex-direction:column; align-items:center; text-align:center; padding:40px 24px 36px; background:linear-gradient(160deg,#1a9e50 0%,#15803d 100%); box-shadow:inset 0 -4px 20px rgba(0,0,0,.12); }
-
-/* Animated check */
-.qhf-check-wrap { margin-bottom:20px; }
-.qhf-check-svg { width:72px; height:72px; }
-
-/* Ring: draws in over 0.9s */
-.qhf-ring {
-  stroke-dasharray: 188.5;   /* 2π × 30 */
-  stroke-dashoffset: 188.5;
-  transform-origin: center;
-  transform: rotate(-90deg);
-  animation: qhfDrawRing .9s cubic-bezier(.6,0,.4,1) .1s forwards;
+/* ══ Banner base ══ */
+.qhf-success-banner {
+  position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#e2eeff 0%,#d0e5fc 60%,#daeafa 100%);
+  border-bottom:1px solid #bfd5f0;
 }
 
-/* Tick: pops in after ring finishes */
-.qhf-tick {
-  stroke-dasharray: 50;
-  stroke-dashoffset: 50;
-  animation: qhfDrawTick .35s ease-out 1s forwards;
+/* ── Decorative bubbles (mobile only) ── */
+.qhf-bubble {
+  position:absolute; border-radius:50%; pointer-events:none;
+  background:rgba(255,255,255,.55); display:none;
+}
+@media (max-width:639px) {
+  .qhf-bubble { display:block; }
+  .qhf-bubble-1 { width:110px; height:110px; top:-40px;   right:8%;  opacity:.7; }
+  .qhf-bubble-2 { width:64px;  height:64px;  bottom:-22px; right:22%; opacity:.55; }
+  .qhf-bubble-3 { width:40px;  height:40px;  top:14px;    right:4%;  opacity:.45; }
+  .qhf-bubble-4 { display:none; }
+  .qhf-bubble-5 { display:none; }
 }
 
-/* Text: fades up after tick */
-.qhf-banner-heading { color:white; font-weight:800; font-size:30px; letter-spacing:-.02em; line-height:1.1; margin:0 0 8px; opacity:0; animation:qhfFadeUp .45s ease-out 1.2s forwards; }
-.qhf-banner-sub { color:rgba(255,255,255,.88); font-size:14px; font-weight:400; margin:0; line-height:1.6; max-width:260px; opacity:0; animation:qhfFadeUp .45s ease-out 1.45s forwards; }
+/* ── Full-cover image (desktop / tablet only) ── */
+.qhf-banner-img-bg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit:cover; object-position:right center;
+  display:none; /* hidden on mobile */
+}
+.qhf-banner-img-overlay {
+  position:absolute; inset:0;
+  display:none;
+  background:linear-gradient(to right,
+    #d8eaff 0%,
+    #d8eaff 30%,
+    rgba(216,234,255,.92) 48%,
+    rgba(216,234,255,.55) 65%,
+    rgba(216,234,255,.1) 82%,
+    transparent 100%);
+}
 
-/* Grid: slides down after text */
-.qhf-grid-reveal { opacity:0; transform:translateY(18px); animation:qhfGridIn .55s ease-out 1.9s forwards; }
+/* ── Content ── */
+.qhf-banner-content {
+  position:relative; z-index:2;
+  max-width:1280px; margin:0 auto;
+  padding:32px 20px;
+}
+.qhf-banner-left { max-width:520px; }
+.qhf-congrats-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.qhf-check-icon {
+  width:26px; height:26px; border-radius:50%;
+  background:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.qhf-congrats-text { color:#15803d; font-weight:700; font-size:15px; }
+.qhf-banner-heading {
+  color:#0f172a; font-weight:800; font-size:24px;
+  line-height:1.22; margin:0 0 10px; letter-spacing:-.025em;
+  opacity:0; animation:qhfFadeUp .4s ease-out .1s forwards;
+}
+.qhf-service-highlight { color:#1d4ed8; }
+.qhf-banner-sub {
+  color:#475569; font-size:16px; line-height:1.65; margin:0;
+  opacity:0; animation:qhfFadeUp .4s ease-out .25s forwards;
+}
 
-/* Keyframes */
-@keyframes qhfDrawRing { to { stroke-dashoffset:0; } }
-@keyframes qhfDrawTick { to { stroke-dashoffset:0; } }
-@keyframes qhfFadeUp   { to { opacity:1; transform:translateY(0); } }
-@keyframes qhfGridIn   { to { opacity:1; transform:translateY(0); } }
+/* ── Mobile (< 640px): no image, bubbles only ── */
+@media (max-width:639px) {
+  .qhf-success-banner { min-height:0; }
+  .qhf-banner-content { padding:28px 18px; }
+  .qhf-banner-heading { font-size:22px; }
+}
+
+/* ── Tablet (640px – 1023px): show image, tighter overlay ── */
+@media (min-width:640px) {
+  .qhf-success-banner { min-height:220px; }
+  .qhf-banner-img-bg { display:block; }
+  .qhf-banner-img-overlay { display:block; }
+  .qhf-banner-heading { font-size:27px; }
+  .qhf-banner-content { padding:36px 28px; }
+}
+
+/* ── Desktop (1024px+) ── */
+@media (min-width:1024px) {
+  .qhf-success-banner { min-height:250px; }
+  .qhf-banner-heading { font-size:32px; }
+  .qhf-banner-content { padding:44px 40px; }
+  .qhf-banner-left { max-width:540px; }
+  .qhf-banner-sub { font-size:15px; }
+}
+
+/* ── 4K / wide (1536px+) ── */
+@media (min-width:1536px) {
+  .qhf-success-banner { min-height:280px; }
+  .qhf-banner-heading { font-size:38px; }
+  .qhf-banner-content { padding:52px 48px; }
+  .qhf-banner-left { max-width:640px; }
+  .qhf-banner-sub { font-size:16px; }
+  /* gradient fades later on ultra-wide so image shows more */
+  .qhf-banner-img-overlay {
+    background:linear-gradient(to right,
+      #d8eaff 0%, #d8eaff 22%,
+      rgba(216,234,255,.88) 40%,
+      rgba(216,234,255,.4) 60%,
+      transparent 80%);
+  }
+}
+
+/* ── Grid reveal ── */
+.qhf-grid-reveal { opacity:0; transform:translateY(18px); animation:qhfGridIn .5s ease-out .55s forwards; }
+
+/* ── Keyframes ── */
+@keyframes qhfFadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes qhfGridIn { to { opacity:1; transform:translateY(0); } }
 
 /* ② Contractors grid */
 .qhf-more-section { padding:16px; }
