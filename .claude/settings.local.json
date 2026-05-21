@@ -5,7 +5,9 @@
       "WebSearch",
       "mcp__claude_ai_Clickhouse__run_query",
       "PowerShell(netstat *)",
-      "PowerShell(head *)"
+      "PowerShell(head *)",
+      "PowerShell(gcloud config get-value project 2>&1; gcloud auth list 2>&1 | Select-Object -First 5)",
+      "PowerShell(docker --version)"
     ]
   }
 }
