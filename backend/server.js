@@ -888,13 +888,25 @@ app.use(
 
 
 // --- Rate limit API routes ---
+// Stats/read routes get a generous limit — dashboard loads 5+ in parallel
+app.use(
+    "/api/stats/",
+    rateLimit({
+      windowMs: 60 * 1000,
+      max: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+    })
+);
+// All other API routes (lead submission, places, etc.) keep stricter limit
 app.use(
     "/api/",
     rateLimit({
       windowMs: 60 * 1000,
-      max: 60, // 60 req/min/IP
+      max: 120,
       standardHeaders: true,
       legacyHeaders: false,
+      skip: (req) => req.path.startsWith("/stats/"),
     })
 );
 
