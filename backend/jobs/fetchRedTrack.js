@@ -48,23 +48,48 @@ const QHF_SOURCE_IDS_FALLBACK = [
   '6a06ee2065debd900963ee10', // QuickHomeFix | Meta | Windows | Ankith
 ];
 
+// Guaranteed owner assignments for known source IDs — used as fallback when the
+// source title doesn't contain a recognisable buyer keyword (e.g. renamed sources).
+const SOURCE_ID_OWNER_OVERRIDE = {
+  '69e726d9a4d9b51357c6304d': 'kg',
+  '69e7279a3bab5180c00c1ac8': 'kg',
+  '69e7279e0a796ad2584aef8e': 'kg',
+  '6a06ebe3493e29d568fb16e8': 'viknesh',
+  '6a06ec25493e29d568fb25cc': 'viknesh',
+  '6a06ec3e65debd90096398d5': 'viknesh',
+  '6a06ee1b5d73f05db6c5b040': 'ak',
+  '6a06ee1b36a33020ed173d89': 'ak',
+  '6a06ee2065debd900963ee10': 'ak',
+};
+
+// Returns { ids: string[], idToOwner: Record<string,string> }
+// idToOwner is built from the live /sources response so it covers any newly
+// renamed sources; SOURCE_ID_OWNER_OVERRIDE fills in gaps when name-matching fails.
 async function fetchQhfSourceIds(apiKey) {
   try {
     const res = await axios.get(`${RT_BASE}/sources?api_key=${encodeURIComponent(apiKey)}&per=500`);
     const rows = Array.isArray(res.data) ? res.data : [];
-    const qhfIds = rows
-      .filter(s => /quickhomefix|qhf/i.test(s.title || s.name || ''))
-      .map(s => s.id)
-      .filter(Boolean);
-    if (qhfIds.length > 0) {
-      console.log(`[fetchRedTrack] Found ${qhfIds.length} QHF sources from API`);
-      return qhfIds;
+    const qhfSources = rows.filter(s => /quickhomefix|qhf/i.test(s.title || s.name || ''));
+
+    if (qhfSources.length > 0) {
+      console.log(`[fetchRedTrack] Found ${qhfSources.length} QHF sources from API`);
+      const ids = qhfSources.map(s => s.id).filter(Boolean);
+      // Build id→owner from name-based detection, then overlay hardcoded overrides
+      const idToOwner = { ...SOURCE_ID_OWNER_OVERRIDE };
+      for (const s of qhfSources) {
+        if (!s.id) continue;
+        const title = s.title || s.name || '';
+        const { owner } = parseSourceTitle(title);
+        if (owner !== 'unknown') idToOwner[s.id] = owner;
+        console.log(`[fetchRedTrack] source "${title}" (${s.id}) → owner: ${idToOwner[s.id] || 'unknown'}`);
+      }
+      return { ids, idToOwner };
     }
     console.warn('[fetchRedTrack] No QHF sources found via API — using fallback list');
-    return QHF_SOURCE_IDS_FALLBACK;
+    return { ids: QHF_SOURCE_IDS_FALLBACK, idToOwner: SOURCE_ID_OWNER_OVERRIDE };
   } catch (err) {
     console.warn('[fetchRedTrack] /sources call failed — using fallback list:', err.message);
-    return QHF_SOURCE_IDS_FALLBACK;
+    return { ids: QHF_SOURCE_IDS_FALLBACK, idToOwner: SOURCE_ID_OWNER_OVERRIDE };
   }
 }
 
@@ -126,9 +151,12 @@ function parseSourceTitle(title) {
   return { platform, service, owner };
 }
 
-function makeRow(fetchedAt, type, row) {
+function makeRow(fetchedAt, type, row, idToOwner = {}) {
   const sourceTitle = row.source || '';
-  const { platform: rt_platform, service: rt_service, owner: rt_owner } = parseSourceTitle(sourceTitle);
+  const sourceId    = row.source_id || row.id || '';
+  const { platform: rt_platform, service: rt_service, owner: ownerByName } = parseSourceTitle(sourceTitle);
+  // Fall back to id-based mapping when the source title doesn't carry a buyer keyword
+  const rt_owner = ownerByName !== 'unknown' ? ownerByName : (idToOwner[sourceId] || 'unknown');
 
   const lp_views  = Number(row.lp_views)  || 0;
   const lp_clicks = Number(row.lp_clicks) || 0;
@@ -174,8 +202,8 @@ export async function fetchRedTrack() {
   const ch = buildClient();
 
   try {
-    // Step 1: get QHF source IDs
-    const sourceIds = await fetchQhfSourceIds(apiKey);
+    // Step 1: get QHF source IDs + id→owner map
+    const { ids: sourceIds, idToOwner } = await fetchQhfSourceIds(apiKey);
     await delay(delayMs);
 
     // Step 2: fetch QHF daily totals (group=date)
@@ -191,12 +219,12 @@ export async function fetchRedTrack() {
 
     for (const row of dailyRows) {
       if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'daily', row));
+      allRows.push(makeRow(fetchedAt, 'daily', row, idToOwner));
     }
 
     for (const row of sourceRows) {
       if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'source', row));
+      allRows.push(makeRow(fetchedAt, 'source', row, idToOwner));
     }
 
     if (allRows.length === 0) {
