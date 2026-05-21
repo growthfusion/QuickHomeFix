@@ -180,6 +180,10 @@ function getTrustedFormToken() {
     var v = (allHidden[j].value || "").trim();
     if (v.indexOf("trustedform.com/") !== -1) return v;
   }
+
+
+
+  
   return "";
 }
 
