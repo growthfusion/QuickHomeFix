@@ -458,22 +458,26 @@
     <div id="step-complete" class="wizard-step">
       <div class="qhf-complete-wrapper">
 
-        <!-- ① Success banner with animated checkmark -->
+        <!-- ① Success banner — horizontal layout -->
         <div class="qhf-success-banner">
-          <!-- Animated SVG circle + checkmark -->
-          <div class="qhf-check-wrap">
-            <svg class="qhf-check-svg" viewBox="0 0 72 72" fill="none">
-              <!-- faint background ring -->
-              <circle cx="36" cy="36" r="30" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
-              <!-- animated drawing ring -->
-              <circle class="qhf-ring" cx="36" cy="36" r="30" stroke="white" stroke-width="3" stroke-linecap="round"/>
-              <!-- checkmark path -->
-              <path class="qhf-tick" d="M22 36 L31 45 L50 26" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <div class="qhf-banner-bg-blob qhf-blob1"></div>
+          <div class="qhf-banner-bg-blob qhf-blob2"></div>
+          <div class="qhf-banner-content">
+            <div class="qhf-banner-left">
+              <div class="qhf-congrats-row">
+                <div class="qhf-check-icon">
+                  <svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M4 10l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <span class="qhf-congrats-text">Congratulations!</span>
+              </div>
+              <h1 class="qhf-banner-heading">We Found Trusted <span id="qhfServiceName" class="qhf-service-highlight">Pros</span> Near You</h1>
+              <p class="qhf-banner-sub">Compare local pros, check reviews, and get your best quote in minutes.</p>
+              <div id="completeMessage" style="display:none"></div>
+            </div>
+            <div id="qhfBannerImgWrap" class="qhf-banner-right">
+              <img id="qhfBannerImg" src="" alt="" class="qhf-banner-img" />
+            </div>
           </div>
-          <h1 class="qhf-banner-heading">Congratulations!</h1>
-          <p class="qhf-banner-sub">We've found you a Contractor in your area</p>
-          <div id="completeMessage" style="display:none"></div>
         </div>
 
         <!-- ② Contractors grid -->
@@ -896,8 +900,24 @@ function renderCurrentStep() {
     backBtn.style.display = "none";
     var svcMap = { windows:"Window installation", solar:"Solar energy", bath:"Bath remodeling", gutter:"Gutter service", shower:"Walk-in shower", tub:"Walk-in tub", roofing:"Roofing" };
     var label = svcMap[store.formData.service] || "Home project";
-
     document.getElementById("completeMessage").textContent = label + " · submitted";
+
+    var bannerLabelMap = { bath:"Bathroom Remodeling Pros", roof:"Roofers", windows:"Window Pros", solar:"Solar Experts", gutter:"Gutter Pros", tub:"Walk-In Tub Pros", shower:"Walk-In Shower Pros" };
+    var bannerImgMap = {
+      bath:    "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
+      roof:    "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png",
+      windows: "images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png",
+      tub:     "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png",
+      solar:   "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png"
+    };
+    var svc = store.formData.service;
+    document.getElementById("qhfServiceName").textContent = bannerLabelMap[svc] || "Home Improvement Pros";
+    var bannerImg = bannerImgMap[svc] || "";
+    var imgEl = document.getElementById("qhfBannerImg");
+    var imgWrap = document.getElementById("qhfBannerImgWrap");
+    if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgWrap.style.display = "block"; }
+    else { imgWrap.style.display = "none"; }
+
     buildThumbTackContractors();
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
@@ -1706,40 +1726,39 @@ var _allowNavigation = true;
 /* ═══ COMPLETE PAGE — redesign ═══ */
 .qhf-complete-wrapper { background:#EEF1F6; min-height:100vh; padding-bottom:48px; }
 
-/* ① Success banner */
-.qhf-success-banner { display:flex; flex-direction:column; align-items:center; text-align:center; padding:40px 24px 36px; background:linear-gradient(160deg,#1a9e50 0%,#15803d 100%); box-shadow:inset 0 -4px 20px rgba(0,0,0,.12); }
-
-/* Animated check */
-.qhf-check-wrap { margin-bottom:20px; }
-.qhf-check-svg { width:72px; height:72px; }
-
-/* Ring: draws in over 0.9s */
-.qhf-ring {
-  stroke-dasharray: 188.5;   /* 2π × 30 */
-  stroke-dashoffset: 188.5;
-  transform-origin: center;
-  transform: rotate(-90deg);
-  animation: qhfDrawRing .9s cubic-bezier(.6,0,.4,1) .1s forwards;
+/* ① Success banner — horizontal */
+.qhf-success-banner {
+  position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#e8f2ff 0%,#d6e8fb 50%,#e0ecfa 100%);
+  padding:28px 24px 24px;
+  border-bottom:1px solid #c8ddf4;
+}
+.qhf-banner-bg-blob { position:absolute; border-radius:50%; pointer-events:none; }
+.qhf-blob1 { width:220px; height:220px; background:rgba(255,255,255,.55); top:-80px; right:20%; }
+.qhf-blob2 { width:140px; height:140px; background:rgba(255,255,255,.4); bottom:-50px; right:8%; }
+.qhf-banner-content { position:relative; max-width:720px; margin:0 auto; display:flex; align-items:center; gap:16px; }
+.qhf-banner-left { flex:1; min-width:0; }
+.qhf-congrats-row { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
+.qhf-check-icon { width:26px; height:26px; border-radius:50%; background:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.qhf-congrats-text { color:#16a34a; font-weight:700; font-size:15px; }
+.qhf-banner-heading { color:#111827; font-weight:800; font-size:26px; line-height:1.2; margin:0 0 8px; letter-spacing:-.02em; opacity:0; animation:qhfFadeUp .4s ease-out .1s forwards; }
+@media (min-width:480px) { .qhf-banner-heading { font-size:30px; } }
+.qhf-service-highlight { color:#2563eb; }
+.qhf-banner-sub { color:#6b7280; font-size:14px; line-height:1.6; margin:0; opacity:0; animation:qhfFadeUp .4s ease-out .25s forwards; }
+.qhf-banner-right { flex-shrink:0; width:160px; }
+@media (min-width:480px) { .qhf-banner-right { width:200px; } }
+.qhf-banner-img { width:100%; height:auto; object-fit:contain; display:block; }
+@media (max-width:440px) {
+  .qhf-banner-content { flex-direction:column-reverse; align-items:center; text-align:center; }
+  .qhf-congrats-row { justify-content:center; }
+  .qhf-banner-right { width:130px; }
 }
 
-/* Tick: pops in after ring finishes */
-.qhf-tick {
-  stroke-dasharray: 50;
-  stroke-dashoffset: 50;
-  animation: qhfDrawTick .35s ease-out 1s forwards;
-}
-
-/* Text: fades up after tick */
-.qhf-banner-heading { color:white; font-weight:800; font-size:30px; letter-spacing:-.02em; line-height:1.1; margin:0 0 8px; opacity:0; animation:qhfFadeUp .45s ease-out 1.2s forwards; }
-.qhf-banner-sub { color:rgba(255,255,255,.88); font-size:14px; font-weight:400; margin:0; line-height:1.6; max-width:260px; opacity:0; animation:qhfFadeUp .45s ease-out 1.45s forwards; }
-
-/* Grid: slides down after text */
-.qhf-grid-reveal { opacity:0; transform:translateY(18px); animation:qhfGridIn .55s ease-out 1.9s forwards; }
+/* Grid: slides down */
+.qhf-grid-reveal { opacity:0; transform:translateY(18px); animation:qhfGridIn .5s ease-out .6s forwards; }
 
 /* Keyframes */
-@keyframes qhfDrawRing { to { stroke-dashoffset:0; } }
-@keyframes qhfDrawTick { to { stroke-dashoffset:0; } }
-@keyframes qhfFadeUp   { to { opacity:1; transform:translateY(0); } }
+@keyframes qhfFadeUp   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @keyframes qhfGridIn   { to { opacity:1; transform:translateY(0); } }
 
 /* ② Contractors grid */
