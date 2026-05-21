@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockInsert = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockCommand = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockClose = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
-const mockClickhouseClient = vi.hoisted(() => ({ insert: mockInsert, close: mockClose }));
+const mockClickhouseClient = vi.hoisted(() => ({ insert: mockInsert, command: mockCommand, close: mockClose }));
 
 vi.mock('axios');
 vi.mock('@clickhouse/client', () => ({

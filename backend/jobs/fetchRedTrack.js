@@ -204,9 +204,9 @@ export async function fetchRedTrack() {
       return;
     }
 
-    // Truncate before insert so each scheduled run replaces all data (no duplicate accumulation).
-    await ch.command({ query: 'TRUNCATE TABLE redtrack_stats' });
+    // Insert first, then delete old batches — avoids the empty-table window that TRUNCATE caused.
     await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     console.log(`[fetchRedTrack] Inserted ${allRows.length} rows (${dailyRows.length} daily + ${sourceRows.length} source)`);
   } finally {
     await ch.close();

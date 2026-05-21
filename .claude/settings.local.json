@@ -3,7 +3,8 @@
     "allow": [
       "Bash(curl -s \"http://localhost:5000/api/thumbtack/keywords?searchQuery=roofing\")",
       "WebSearch",
-      "mcp__claude_ai_Clickhouse__run_query"
+      "mcp__claude_ai_Clickhouse__run_query",
+      "PowerShell(netstat *)"
     ]
   }
 }
