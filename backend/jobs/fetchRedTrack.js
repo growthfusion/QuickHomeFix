@@ -62,9 +62,11 @@ const SOURCE_ID_OWNER_OVERRIDE = {
   '6a06ee2065debd900963ee10': 'ak',
 };
 
-// Returns { ids: string[], idToOwner: Record<string,string> }
-// idToOwner is built from the live /sources response so it covers any newly
-// renamed sources; SOURCE_ID_OWNER_OVERRIDE fills in gaps when name-matching fails.
+// Returns { ids: string[], titleToOwner: Record<string,string> }
+// titleToOwner maps lowercased source titles to owner keys.  It is built from
+// the live /sources response so it always covers the exact title strings that
+// appear in /report rows.  SOURCE_ID_OWNER_OVERRIDE fills in sources whose
+// titles carry no recognisable buyer keyword (e.g. renamed/new sources).
 async function fetchQhfSourceIds(apiKey) {
   try {
     const res = await axios.get(`${RT_BASE}/sources?api_key=${encodeURIComponent(apiKey)}&per=500`);
@@ -74,22 +76,22 @@ async function fetchQhfSourceIds(apiKey) {
     if (qhfSources.length > 0) {
       console.log(`[fetchRedTrack] Found ${qhfSources.length} QHF sources from API`);
       const ids = qhfSources.map(s => s.id).filter(Boolean);
-      // Build id→owner from name-based detection, then overlay hardcoded overrides
-      const idToOwner = { ...SOURCE_ID_OWNER_OVERRIDE };
+      const titleToOwner = {};
       for (const s of qhfSources) {
-        if (!s.id) continue;
-        const title = s.title || s.name || '';
-        const { owner } = parseSourceTitle(title);
-        if (owner !== 'unknown') idToOwner[s.id] = owner;
-        console.log(`[fetchRedTrack] source "${title}" (${s.id}) → owner: ${idToOwner[s.id] || 'unknown'}`);
+        const title = (s.title || s.name || '').trim();
+        const { owner: ownerByName } = parseSourceTitle(title);
+        // If name-based detection fails, fall back to the hardcoded ID override
+        const owner = ownerByName !== 'unknown' ? ownerByName : (SOURCE_ID_OWNER_OVERRIDE[s.id] || 'unknown');
+        titleToOwner[title.toLowerCase()] = owner;
+        console.log(`[fetchRedTrack] source "${title}" (${s.id}) → owner: ${owner}`);
       }
-      return { ids, idToOwner };
+      return { ids, titleToOwner };
     }
     console.warn('[fetchRedTrack] No QHF sources found via API — using fallback list');
-    return { ids: QHF_SOURCE_IDS_FALLBACK, idToOwner: SOURCE_ID_OWNER_OVERRIDE };
+    return { ids: QHF_SOURCE_IDS_FALLBACK, titleToOwner: {} };
   } catch (err) {
     console.warn('[fetchRedTrack] /sources call failed — using fallback list:', err.message);
-    return { ids: QHF_SOURCE_IDS_FALLBACK, idToOwner: SOURCE_ID_OWNER_OVERRIDE };
+    return { ids: QHF_SOURCE_IDS_FALLBACK, titleToOwner: {} };
   }
 }
 
@@ -151,12 +153,11 @@ function parseSourceTitle(title) {
   return { platform, service, owner };
 }
 
-function makeRow(fetchedAt, type, row, idToOwner = {}) {
+function makeRow(fetchedAt, type, row, titleToOwner = {}) {
   const sourceTitle = row.source || '';
-  const sourceId    = row.source_id || row.id || '';
   const { platform: rt_platform, service: rt_service, owner: ownerByName } = parseSourceTitle(sourceTitle);
-  // Fall back to id-based mapping when the source title doesn't carry a buyer keyword
-  const rt_owner = ownerByName !== 'unknown' ? ownerByName : (idToOwner[sourceId] || 'unknown');
+  // Fall back to title-map when name-based detection fails (e.g. renamed sources)
+  const rt_owner = ownerByName !== 'unknown' ? ownerByName : (titleToOwner[sourceTitle.toLowerCase()] || 'unknown');
 
   const lp_views  = Number(row.lp_views)  || 0;
   const lp_clicks = Number(row.lp_clicks) || 0;
@@ -202,8 +203,8 @@ export async function fetchRedTrack() {
   const ch = buildClient();
 
   try {
-    // Step 1: get QHF source IDs + id→owner map
-    const { ids: sourceIds, idToOwner } = await fetchQhfSourceIds(apiKey);
+    // Step 1: get QHF source IDs + title→owner map
+    const { ids: sourceIds, titleToOwner } = await fetchQhfSourceIds(apiKey);
     await delay(delayMs);
 
     // Step 2: fetch QHF daily totals (group=date)
@@ -219,12 +220,12 @@ export async function fetchRedTrack() {
 
     for (const row of dailyRows) {
       if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'daily', row, idToOwner));
+      allRows.push(makeRow(fetchedAt, 'daily', row, titleToOwner));
     }
 
     for (const row of sourceRows) {
       if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'source', row, idToOwner));
+      allRows.push(makeRow(fetchedAt, 'source', row, titleToOwner));
     }
 
     if (allRows.length === 0) {
