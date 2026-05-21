@@ -10,6 +10,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leads – QuickHomeFix Dashboard</title>
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/styles.css" />
@@ -690,7 +691,7 @@
           const v = map.get(key);
           v.sessions += Number(r.sessions       || 0);
           v.pros     += Number(r.pros_contacted || 0);
-          v.rev      += Number(r.net_revenue    || 0);
+          v.rev      += Number(r.owed_revenue    || 0);
         };
         if (r.campaign_id) add(byCampaignId, r.campaign_id);
         add(bySvc, r.form_type);
@@ -814,7 +815,7 @@
         const v = ttMap.get(date);
         v.contacts += Number(r.sessions        || 0);
         v.pros     += Number(r.pros_contacted  || 0);
-        v.rev      += Number(r.net_revenue      || 0);
+        v.rev      += Number(r.owed_revenue      || 0);
       }
       const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...ttMap.keys()]);
       const out = [];
@@ -879,7 +880,7 @@
         const v = ttBySvc.get(r.form_type);
         v.contacts += Number(r.sessions        || 0);
         v.pros     += Number(r.pros_contacted  || 0);
-        v.rev      += Number(r.net_revenue      || 0);
+        v.rev      += Number(r.owed_revenue      || 0);
       }
 
       // Step 4: build output — apply FILTERS.form for display only

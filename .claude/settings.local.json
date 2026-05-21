@@ -3,7 +3,12 @@
     "allow": [
       "Bash(curl -s \"http://localhost:5000/api/thumbtack/keywords?searchQuery=roofing\")",
       "WebSearch",
-      "mcp__claude_ai_Clickhouse__run_query"
+      "mcp__claude_ai_Clickhouse__run_query",
+      "PowerShell(netstat *)",
+      "PowerShell(head *)",
+      "PowerShell(gcloud config get-value project 2>&1; gcloud auth list 2>&1 | Select-Object -First 5)",
+      "PowerShell(docker --version)",
+      "PowerShell(gcloud config get-value *)"
     ]
   }
 }

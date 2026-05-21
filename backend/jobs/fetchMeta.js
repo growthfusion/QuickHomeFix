@@ -148,6 +148,7 @@ export async function fetchMeta() {
     allRows.forEach(row => { row.fetched_at = fetchedAt; });
 
     await ch.insert({ table: 'meta_ad_stats', values: allRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE meta_ad_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     console.log(`[fetchMeta] Inserted ${allRows.length} rows`);
   } finally {
     await ch.close();

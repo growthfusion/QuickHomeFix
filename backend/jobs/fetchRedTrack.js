@@ -48,23 +48,50 @@ const QHF_SOURCE_IDS_FALLBACK = [
   '6a06ee2065debd900963ee10', // QuickHomeFix | Meta | Windows | Ankith
 ];
 
+// Guaranteed owner assignments for known source IDs — used as fallback when the
+// source title doesn't contain a recognisable buyer keyword (e.g. renamed sources).
+const SOURCE_ID_OWNER_OVERRIDE = {
+  '69e726d9a4d9b51357c6304d': 'kg',
+  '69e7279a3bab5180c00c1ac8': 'kg',
+  '69e7279e0a796ad2584aef8e': 'kg',
+  '6a06ebe3493e29d568fb16e8': 'viknesh',
+  '6a06ec25493e29d568fb25cc': 'viknesh',
+  '6a06ec3e65debd90096398d5': 'viknesh',
+  '6a06ee1b5d73f05db6c5b040': 'ak',
+  '6a06ee1b36a33020ed173d89': 'ak',
+  '6a06ee2065debd900963ee10': 'ak',
+};
+
+// Returns { ids: string[], titleToOwner: Record<string,string> }
+// titleToOwner maps lowercased source titles to owner keys.  It is built from
+// the live /sources response so it always covers the exact title strings that
+// appear in /report rows.  SOURCE_ID_OWNER_OVERRIDE fills in sources whose
+// titles carry no recognisable buyer keyword (e.g. renamed/new sources).
 async function fetchQhfSourceIds(apiKey) {
   try {
     const res = await axios.get(`${RT_BASE}/sources?api_key=${encodeURIComponent(apiKey)}&per=500`);
     const rows = Array.isArray(res.data) ? res.data : [];
-    const qhfIds = rows
-      .filter(s => /quickhomefix|qhf/i.test(s.title || s.name || ''))
-      .map(s => s.id)
-      .filter(Boolean);
-    if (qhfIds.length > 0) {
-      console.log(`[fetchRedTrack] Found ${qhfIds.length} QHF sources from API`);
-      return qhfIds;
+    const qhfSources = rows.filter(s => /quickhomefix|qhf/i.test(s.title || s.name || ''));
+
+    if (qhfSources.length > 0) {
+      console.log(`[fetchRedTrack] Found ${qhfSources.length} QHF sources from API`);
+      const ids = qhfSources.map(s => s.id).filter(Boolean);
+      const titleToOwner = {};
+      for (const s of qhfSources) {
+        const title = (s.title || s.name || '').trim();
+        const { owner: ownerByName } = parseSourceTitle(title);
+        // If name-based detection fails, fall back to the hardcoded ID override
+        const owner = ownerByName !== 'unknown' ? ownerByName : (SOURCE_ID_OWNER_OVERRIDE[s.id] || 'unknown');
+        titleToOwner[title.toLowerCase()] = owner;
+        console.log(`[fetchRedTrack] source "${title}" (${s.id}) → owner: ${owner}`);
+      }
+      return { ids, titleToOwner };
     }
     console.warn('[fetchRedTrack] No QHF sources found via API — using fallback list');
-    return QHF_SOURCE_IDS_FALLBACK;
+    return { ids: QHF_SOURCE_IDS_FALLBACK, titleToOwner: {} };
   } catch (err) {
     console.warn('[fetchRedTrack] /sources call failed — using fallback list:', err.message);
-    return QHF_SOURCE_IDS_FALLBACK;
+    return { ids: QHF_SOURCE_IDS_FALLBACK, titleToOwner: {} };
   }
 }
 
@@ -126,9 +153,11 @@ function parseSourceTitle(title) {
   return { platform, service, owner };
 }
 
-function makeRow(fetchedAt, type, row) {
+function makeRow(fetchedAt, type, row, titleToOwner = {}) {
   const sourceTitle = row.source || '';
-  const { platform: rt_platform, service: rt_service, owner: rt_owner } = parseSourceTitle(sourceTitle);
+  const { platform: rt_platform, service: rt_service, owner: ownerByName } = parseSourceTitle(sourceTitle);
+  // Fall back to title-map when name-based detection fails (e.g. renamed sources)
+  const rt_owner = ownerByName !== 'unknown' ? ownerByName : (titleToOwner[sourceTitle.toLowerCase()] || 'unknown');
 
   const lp_views  = Number(row.lp_views)  || 0;
   const lp_clicks = Number(row.lp_clicks) || 0;
@@ -174,8 +203,8 @@ export async function fetchRedTrack() {
   const ch = buildClient();
 
   try {
-    // Step 1: get QHF source IDs
-    const sourceIds = await fetchQhfSourceIds(apiKey);
+    // Step 1: get QHF source IDs + title→owner map
+    const { ids: sourceIds, titleToOwner } = await fetchQhfSourceIds(apiKey);
     await delay(delayMs);
 
     // Step 2: fetch QHF daily totals (group=date)
@@ -191,12 +220,12 @@ export async function fetchRedTrack() {
 
     for (const row of dailyRows) {
       if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'daily', row));
+      allRows.push(makeRow(fetchedAt, 'daily', row, titleToOwner));
     }
 
     for (const row of sourceRows) {
       if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'source', row));
+      allRows.push(makeRow(fetchedAt, 'source', row, titleToOwner));
     }
 
     if (allRows.length === 0) {
@@ -204,9 +233,9 @@ export async function fetchRedTrack() {
       return;
     }
 
-    // Truncate before insert so each scheduled run replaces all data (no duplicate accumulation).
-    await ch.command({ query: 'TRUNCATE TABLE redtrack_stats' });
+    // Insert first, then delete old batches — avoids the empty-table window that TRUNCATE caused.
     await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     console.log(`[fetchRedTrack] Inserted ${allRows.length} rows (${dailyRows.length} daily + ${sourceRows.length} source)`);
   } finally {
     await ch.close();

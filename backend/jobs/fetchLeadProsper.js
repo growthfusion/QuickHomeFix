@@ -104,6 +104,7 @@ export async function fetchLeadProsper() {
     }
 
     await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     console.log(`[fetchLeadProsper] Inserted ${allRows.length} rows across ${days.length} days`);
   } finally {
     await ch.close();
