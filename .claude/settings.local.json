@@ -8,7 +8,8 @@
       "PowerShell(head *)",
       "PowerShell(gcloud config get-value project 2>&1; gcloud auth list 2>&1 | Select-Object -First 5)",
       "PowerShell(docker --version)",
-      "PowerShell(gcloud config get-value *)"
+      "PowerShell(gcloud config get-value *)",
+      "Bash(dir backend *)"
     ]
   }
 }
