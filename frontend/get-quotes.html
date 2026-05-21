@@ -450,7 +450,7 @@
                 <span class="qhf-congrats-text">Congratulations!</span>
               </div>
               <h1 class="qhf-banner-heading">We Found Trusted <span id="qhfServiceName" class="qhf-service-highlight">Pros</span> Near You</h1>
-              <p class="qhf-banner-sub">Compare local pros, check reviews, and get your best quote in minutes.</p>
+              <p class="qhf-banner-sub">Compare local pros and get your best quote in minutes.</p>
               <div id="completeMessage" style="display:none"></div>
             </div>
           </div>
@@ -878,8 +878,8 @@ function renderCurrentStep() {
     document.getElementById("qhfServiceName").textContent = bannerLabelMap[svc] || "Home Improvement Pros";
     var bannerImg = bannerImgMap[svc] || "";
     var imgEl = document.getElementById("qhfBannerImg");
-    if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgEl.style.display = "block"; }
-    else { imgEl.style.display = "none"; }
+    if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgEl.removeAttribute("style"); }
+    else { imgEl.src = ""; }
 
     buildThumbTackContractors();
   } else if (radioStepConfigs[stepName]) {
@@ -1696,16 +1696,19 @@ var _allowNavigation = true;
   border-bottom:1px solid #bfd5f0;
 }
 
-/* ── Decorative bubbles (always present, more visible on mobile) ── */
+/* ── Decorative bubbles (mobile only) ── */
 .qhf-bubble {
   position:absolute; border-radius:50%; pointer-events:none;
-  background:rgba(255,255,255,.55); backdrop-filter:blur(0px);
+  background:rgba(255,255,255,.55); display:none;
 }
-.qhf-bubble-1 { width:160px; height:160px; top:-60px;  right:12%;  opacity:.7; }
-.qhf-bubble-2 { width:90px;  height:90px;  bottom:-30px; right:28%; opacity:.55; }
-.qhf-bubble-3 { width:55px;  height:55px;  top:20px;   right:6%;   opacity:.45; }
-.qhf-bubble-4 { width:36px;  height:36px;  bottom:18px; right:18%; opacity:.4; }
-.qhf-bubble-5 { width:24px;  height:24px;  top:50%;    right:38%;  opacity:.35; }
+@media (max-width:639px) {
+  .qhf-bubble { display:block; }
+  .qhf-bubble-1 { width:110px; height:110px; top:-40px;   right:8%;  opacity:.7; }
+  .qhf-bubble-2 { width:64px;  height:64px;  bottom:-22px; right:22%; opacity:.55; }
+  .qhf-bubble-3 { width:40px;  height:40px;  top:14px;    right:4%;  opacity:.45; }
+  .qhf-bubble-4 { display:none; }
+  .qhf-bubble-5 { display:none; }
+}
 
 /* ── Full-cover image (desktop / tablet only) ── */
 .qhf-banner-img-bg {
@@ -1746,7 +1749,7 @@ var _allowNavigation = true;
 }
 .qhf-service-highlight { color:#1d4ed8; }
 .qhf-banner-sub {
-  color:#475569; font-size:14px; line-height:1.65; margin:0;
+  color:#475569; font-size:16px; line-height:1.65; margin:0;
   opacity:0; animation:qhfFadeUp .4s ease-out .25s forwards;
 }
 
@@ -1755,12 +1758,6 @@ var _allowNavigation = true;
   .qhf-success-banner { min-height:0; }
   .qhf-banner-content { padding:28px 18px; }
   .qhf-banner-heading { font-size:22px; }
-  /* bubbles scaled down / repositioned */
-  .qhf-bubble-1 { width:110px; height:110px; top:-40px; right:8%; }
-  .qhf-bubble-2 { width:64px;  height:64px;  bottom:-22px; right:22%; }
-  .qhf-bubble-3 { width:40px;  height:40px;  top:14px; right:4%; }
-  .qhf-bubble-4 { display:none; }
-  .qhf-bubble-5 { display:none; }
 }
 
 /* ── Tablet (640px – 1023px): show image, tighter overlay ── */
@@ -1788,8 +1785,6 @@ var _allowNavigation = true;
   .qhf-banner-content { padding:52px 48px; }
   .qhf-banner-left { max-width:640px; }
   .qhf-banner-sub { font-size:16px; }
-  .qhf-bubble-1 { width:220px; height:220px; }
-  .qhf-bubble-2 { width:130px; height:130px; }
   /* gradient fades later on ultra-wide so image shows more */
   .qhf-banner-img-overlay {
     background:linear-gradient(to right,
