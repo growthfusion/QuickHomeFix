@@ -284,22 +284,26 @@
             <div class="text-center mb-6">
               <h2 class="text-lg sm:text-xl font-bold text-gray-900">What type of service do you need?</h2>
             </div>
-            <div class="border border-gray-200 rounded-xl overflow-hidden mb-6">
-              <button type="button" onclick="selectBathroomService('bath')"
-                class="w-full flex items-center gap-3 px-5 py-4 text-left bg-white hover:bg-blue-50 border-b border-gray-200 transition-colors">
-                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+            <div id="serviceSelectOptions" class="border border-gray-200 rounded-xl overflow-hidden mb-6">
+              <button type="button" onclick="highlightBathroomService('bath')"
+                class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white border-b border-gray-200 transition-colors">
+                <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
                 <span class="font-medium text-base text-gray-800">Bathroom Remodeling</span>
               </button>
-              <button type="button" onclick="selectBathroomService('tub')"
-                class="w-full flex items-center gap-3 px-5 py-4 text-left bg-white hover:bg-blue-50 border-b border-gray-200 transition-colors">
-                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+              <button type="button" onclick="highlightBathroomService('tub')"
+                class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white border-b border-gray-200 transition-colors">
+                <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
                 <span class="font-medium text-base text-gray-800">Walk-in Tub</span>
               </button>
-              <button type="button" onclick="selectBathroomService('shower')"
-                class="w-full flex items-center gap-3 px-5 py-4 text-left bg-white hover:bg-blue-50 transition-colors">
-                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+              <button type="button" onclick="highlightBathroomService('shower')"
+                class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white transition-colors">
+                <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
                 <span class="font-medium text-base text-gray-800">Walk-in Shower</span>
               </button>
+            </div>
+            <div class="flex justify-center">
+              <button id="svcNextBtn" onclick="selectBathroomService()" disabled
+                class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
             </div>
           </div>
         </div>
@@ -1028,8 +1032,30 @@ function submitZipcode() {
   renderCurrentStep();
 }
 
-function selectBathroomService(serviceId) {
-  store.switchService(serviceId);
+var _selectedBathroomService = "";
+
+function highlightBathroomService(serviceId) {
+  _selectedBathroomService = serviceId;
+  var opts = document.querySelectorAll("#serviceSelectOptions .svc-opt");
+  var ids = ["bath", "tub", "shower"];
+  opts.forEach(function(btn, i) {
+    var selected = ids[i] === serviceId;
+    btn.className = "svc-opt w-full flex items-center gap-3 px-5 py-4 text-left transition-colors " +
+      (i < 2 ? "border-b border-gray-200 " : "") +
+      (selected ? "bg-blue-50" : "bg-white");
+    var radio = btn.querySelector(".svc-radio");
+    radio.className = "svc-radio w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 " +
+      (selected ? "border-blue-600" : "border-gray-300");
+    radio.innerHTML = selected ? '<div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>' : "";
+    var label = btn.querySelector("span");
+    label.className = "font-medium text-base " + (selected ? "text-blue-600" : "text-gray-800");
+  });
+  document.getElementById("svcNextBtn").disabled = false;
+}
+
+function selectBathroomService() {
+  if (!_selectedBathroomService) return;
+  store.switchService(_selectedBathroomService);
   renderCurrentStep();
 }
 
