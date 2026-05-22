@@ -876,7 +876,7 @@ app.use(express.static(path.join(__dirname, '..', 'frontend'), { extensions: ['h
 
 // --- Security & basics ---
 app.set("trust proxy", 1);
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "200kb" }));
 app.use(
     cors({
@@ -2109,6 +2109,30 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
     console.error('[leads-breakdown]', e.message);
     res.status(500).json({ error: e.message });
   }
+});
+
+// --- SPA / clean-URL fallbacks ---
+// These run after all API routes so /api/* is never intercepted.
+// Each handler maps a URL pattern that has no corresponding static file
+// to the correct HTML file, letting the page's own JS read window.location.pathname.
+
+const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
+
+app.get('/get-quotes/:service', (_req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'get-quotes.html'));
+});
+
+app.get('/get-quotes', (_req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'get-quotes.html'));
+});
+
+// Catch-all: for any unmatched route that doesn't look like an API call,
+// serve index.html so the browser can display a proper 404 or redirect.
+app.get('/{*path}', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ ok: false, error: 'Not found' });
+  }
+  res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
