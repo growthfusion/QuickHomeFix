@@ -70,6 +70,40 @@ const serviceLandingData = {
       { question: "Do I need permits for a bathroom remodel?", answer: "Permits are typically required for plumbing or electrical changes. Your contractor will handle the permitting." }
     ]
   },
+  bathroom: {
+    heroTitle: "Top Bathroom Remodeling Contractors Near You",
+    heroSubtitle: "Enter your ZIP Code to get matched with the top bathroom professionals near you.",
+    heroImage: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
+    overviewImage: "images/landing/bath-1.jpg",
+    gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
+    overviewTitle: "Bathroom Remodeling, Walk-In Tubs & Walk-In Showers",
+    overviewSubtitle: "Transform your bathroom into a beautiful, functional space:",
+    overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Walk-in tub & shower installs","Custom vanities & fixtures","Superior style and comfort"],
+    features: [
+      { title: "Bathroom Remodeling", desc: "Full bathroom renovations tailored to your style, space, and daily needs." },
+      { title: "Walk-In Tubs", desc: "Safe, therapeutic walk-in tubs with low step-in entry and hydrotherapy jets." },
+      { title: "Walk-In Showers", desc: "Custom walk-in shower installations with modern tile, glass, and fixtures." }
+    ],
+    advantages: [
+      { title: "Increased Home Value", desc: "A bathroom remodel offers one of the highest returns on investment." },
+      { title: "Improved Safety", desc: "Walk-in tubs and showers reduce the risk of slips and falls." },
+      { title: "Energy Efficiency", desc: "Modern low-flow fixtures and LED lighting reduce your utility bills." },
+      { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with modern designs." },
+      { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smart storage solutions." },
+      { title: "Enhanced Comfort", desc: "Heated floors, rain showerheads, and spa-like features." }
+    ],
+    reviews: [
+      { name: "Joe", rating: 5, text: "They installed 2 days after we signed contract and the installers were nice, quiet, fast, and cleaned up well.", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
+      { name: "Kelly", rating: 5, text: "The team that came out was honest, thorough and focused on safety.", avatar: "https://randomuser.me/api/portraits/women/44.jpg" },
+      { name: "Beth", rating: 5, text: "The products they use, the lifetime guaranty, seemed to outdo the competition.", avatar: "https://randomuser.me/api/portraits/women/68.jpg" }
+    ],
+    faqs: [
+      { question: "How much does a bathroom remodel cost?", answer: "On average, homeowners spend $10,000 to $30,000 for a full remodel, though smaller updates can start around $5,000." },
+      { question: "How much does a walk-in tub cost?", answer: "Walk-in tub prices range from $2,000 to $10,000 depending on features. Installation adds $1,500 to $5,000." },
+      { question: "How long does installation take?", answer: "Most projects are completed in 1 to 4 weeks depending on scope of work." },
+      { question: "Do I need permits?", answer: "Permits are typically required for plumbing or electrical changes. Your contractor will handle the permitting." }
+    ]
+  },
   tub: {
     heroTitle: "Top Walk-In Tub Contractors Near You",
     heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",

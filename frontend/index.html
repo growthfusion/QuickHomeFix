@@ -24,21 +24,17 @@
   snaptr('init', 'b0d876c8-12f5-4750-b9ac-8be3e0795e74', {});
   </script>
 
-  <!-- Preload critical assets -->
-  <link rel="preload" href="images/landing/quickhomefix_Logo.png" as="image" />
-  <link rel="preload" href="images/Toolbox_team_at_work-removebg-preview.png" as="image" />
-  <link rel="preload" href="images/12085683_20944179.svg" as="image" />
-  <link rel="preload" href="images/21585719_Na_Nov_23.svg" as="image" />
-  <link rel="preload" href="images/10613460_10144.svg" as="image" />
-  <link rel="preload" href="images/12291237_Plumber repairing pipe burst.svg" as="image" />
-  <link rel="preload" href="images/12469188_Wavy_Park-02_Single-01.jpg" as="image" />
-  <link rel="preload" href="images/45256249_plumbers_clearing_blockage_in_toilet_with_plunger.jpg" as="image" />
-  <link rel="preload" href="images/23591705_cleaning_v_03.jpg" as="image" />
+  <!-- Preconnect to third-party origins before browser discovers them -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
 
-  <script src="js/tailwind-cdn.js"></script>
+  <!-- Preload only the LCP image in AVIF (smallest, fastest) -->
+  <link rel="preload" href="images/Toolbox_team_at_work-removebg-preview.avif" as="image" type="image/avif" fetchpriority="high" />
+
+  <!-- Tailwind must stay synchronous (runtime engine) -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -49,10 +45,14 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="css/styles.css" />
 
-  <!-- Cache & Performance meta -->
-  <meta http-equiv="Cache-Control" content="public, max-age=31536000" />
+  <!-- Non-render-blocking CSS -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+
+  <link rel="preload" href="css/styles.css" as="style" onload="this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="css/styles.css" /></noscript>
+
   <meta name="theme-color" content="#1e40af" />
 </head>
 <body class="text-gray-700 overflow-x-hidden">
@@ -77,7 +77,11 @@
     <div class="relative z-20 w-full">
       <div class="max-w-6xl mx-auto px-5 sm:px-6 flex items-center justify-between h-16">
         <a href="/" class="flex items-center gap-2">
-          <img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" />
+          <picture>
+            <source srcset="images/landing/quickhomefix_Logo.avif" type="image/avif" />
+            <source srcset="images/landing/quickhomefix_Logo.webp" type="image/webp" />
+            <img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" width="48" height="48" />
+          </picture>
         </a>
         <a href="/contractor" class="text-sm font-medium text-white/80 hover:text-white transition-colors">
           I'm a contractor
@@ -132,9 +136,14 @@
 
         <!-- Right – Hero Image -->
         <div class="flex justify-center lg:justify-end">
-          <img src="images/Toolbox_team_at_work-removebg-preview.png" alt="Home repair team at work"
-            loading="eager" decoding="async" fetchpriority="high"
-            class="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl" />
+          <picture>
+            <source srcset="images/Toolbox_team_at_work-removebg-preview.avif" type="image/avif" />
+            <source srcset="images/Toolbox_team_at_work-removebg-preview.webp" type="image/webp" />
+            <img src="images/Toolbox_team_at_work-removebg-preview.png" alt="Home repair team at work"
+              loading="eager" decoding="async" fetchpriority="high"
+              width="512" height="480"
+              class="w-full max-w-sm sm:max-w-md lg:max-w-lg h-auto object-contain drop-shadow-2xl" />
+          </picture>
         </div>
       </div>
     </div>
@@ -146,54 +155,66 @@
       <h2 class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">Our Premium Services</h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
 
-        <a href="/get-quotes/roof" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/roof" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/12085683_20944179.svg" alt="Roofing" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <img src="images/12085683_20944179.svg" alt="Roofing" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight">Roofing</span>
         </a>
 
-        <a href="/get-quotes/solar" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/solar" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/21585719_Na_Nov_23.svg" alt="Solar" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <img src="images/21585719_Na_Nov_23.svg" alt="Solar" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight">Solar</span>
         </a>
 
-        <a href="/get-quotes/windows" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/windows" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/10613460_10144.svg" alt="Window Replacement" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <img src="images/10613460_10144.svg" alt="Window Replacement" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight whitespace-pre-line">Window
 Replacement</span>
         </a>
 
-        <a href="/get-quotes/bath" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/bath" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/12291237_Plumber repairing pipe burst.svg" alt="Bath Remodeling" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <img src="images/12291237_Plumber repairing pipe burst.svg" alt="Bath Remodeling" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight whitespace-pre-line">Bath
 Remodeling</span>
         </a>
 
-        <a href="/get-quotes/gutter" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/gutter" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/12469188_Wavy_Park-02_Single-01.jpg" alt="Gutters" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <picture>
+              <source srcset="images/12469188_Wavy_Park-02_Single-01.avif" type="image/avif" />
+              <source srcset="images/12469188_Wavy_Park-02_Single-01.webp" type="image/webp" />
+              <img src="images/12469188_Wavy_Park-02_Single-01.jpg" alt="Gutters" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
+            </picture>
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight">Gutters</span>
         </a>
 
-        <a href="/get-quotes/shower" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/shower" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/45256249_plumbers_clearing_blockage_in_toilet_with_plunger.jpg" alt="Walk-In Showers" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <picture>
+              <source srcset="images/45256249_plumbers_clearing_blockage_in_toilet_with_plunger.avif" type="image/avif" />
+              <source srcset="images/45256249_plumbers_clearing_blockage_in_toilet_with_plunger.webp" type="image/webp" />
+              <img src="images/45256249_plumbers_clearing_blockage_in_toilet_with_plunger.jpg" alt="Walk-In Showers" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
+            </picture>
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight whitespace-pre-line">Walk-In
 Showers</span>
         </a>
 
-        <a href="/get-quotes/tub" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:shadow-md transition-shadow">
+        <a href="/get-quotes/tub" class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center text-center cursor-pointer card-smooth hover:-translate-y-0.5 transition-transform">
           <div class="flex items-center justify-center mb-2">
-            <img src="images/23591705_cleaning_v_03.jpg" alt="Walk-In Tubs" class="w-full h-32 sm:h-36 object-contain" loading="eager" decoding="async" />
+            <picture>
+              <source srcset="images/23591705_cleaning_v_03.avif" type="image/avif" />
+              <source srcset="images/23591705_cleaning_v_03.webp" type="image/webp" />
+              <img src="images/23591705_cleaning_v_03.jpg" alt="Walk-In Tubs" width="144" height="128" class="w-full h-32 sm:h-36 object-contain" loading="lazy" decoding="async" />
+            </picture>
           </div>
           <span class="text-sm font-semibold text-gray-800 leading-tight whitespace-pre-line">Walk-In
 Tubs</span>
@@ -340,6 +361,10 @@ Tubs</span>
 
           
         </div>
+
+
+
+        
       </div>
       <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-5 text-[11px] text-gray-500">
         <span>&copy; <script>document.write(new Date().getFullYear())</script> QuickHomeFix. All rights reserved.</span>
@@ -352,8 +377,8 @@ Tubs</span>
   </footer>
 
   <!-- JS -->
-  <script src="js/config.js"></script>
-  <script src="js/tracking.js"></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/tracking.js" defer></script>
   <script>
     let selectedHeroService = "";
 

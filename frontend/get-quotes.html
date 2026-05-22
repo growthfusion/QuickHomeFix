@@ -25,20 +25,40 @@
   snaptr('init', 'b0d876c8-12f5-4750-b9ac-8be3e0795e74', {});
   </script>
 
-  <!-- Preload critical assets -->
-  <link rel="preload" href="images/landing/quickhomefix_Logo.png" as="image" />
-  <link rel="preload" href="images/landing/quickhomefix_Logo2.png" as="image" />
+  <!-- Preconnect to third-party origins -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-  <!-- Thumbtack Request Flow Widget warm-up: cuts iframe load latency on the Thank-you popup -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+  <!-- Thumbtack iframe warm-up -->
   <link rel="dns-prefetch" href="//www.thumbtack.com" />
   <link rel="dns-prefetch" href="//assets-pro.thumbtackstatic.com" />
   <link rel="preconnect" href="https://www.thumbtack.com" crossorigin />
   <link rel="preconnect" href="https://assets-pro.thumbtackstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <script src="js/tailwind-cdn.js"></script>
+  <!-- Preload LCP hero image based on URL slug — makes it discoverable before JS runs -->
+  <script>
+    (function() {
+      var heroImages = {
+        roof:    "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png",
+        windows: "images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png",
+        bath:    "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
+        tub:     "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png"
+      };
+      var m = window.location.pathname.match(/\/get-quotes\/([a-zA-Z0-9_-]+)/);
+      var svc = m && m[1];
+      if (svc && heroImages[svc]) {
+        var l = document.createElement("link");
+        l.rel = "preload"; l.as = "image"; l.fetchPriority = "high";
+        l.href = heroImages[svc].replace(/\.(png|jpg|jpeg)$/i, ".avif");
+        l.type = "image/avif";
+        document.head.appendChild(l);
+      }
+    })();
+  </script>
+
+  <!-- Tailwind must stay synchronous (runtime engine) -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: { extend: {
@@ -47,8 +67,14 @@
       }}
     }
   </script>
-  <link rel="stylesheet" href="css/styles.css" />
-  <meta http-equiv="Cache-Control" content="public, max-age=31536000" />
+
+  <!-- Non-render-blocking CSS -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+
+  <link rel="preload" href="css/styles.css" as="style" onload="this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="css/styles.css" /></noscript>
+
   <meta name="theme-color" content="#1e40af" />
 </head>
 <body class="bg-white">
@@ -62,10 +88,10 @@
 </script>
 <input type="hidden" name="xxTrustedFormCertUrl" id="xxTrustedFormCertUrl" value="" />
 
-<script src="js/config.js"></script>
-<script src="js/store.js"></script>
-<script src="js/tracking.js"></script>
-<script src="js/landing-data.js"></script>
+<script src="js/config.js" defer></script>
+<script src="js/store.js" defer></script>
+<script src="js/tracking.js" defer></script>
+<script src="js/landing-data.js" defer></script>
 
 <!-- ═══ SERVICE LANDING PAGE (shown first before wizard) ═══ -->
 <div id="landingPage" class="text-gray-700 overflow-x-hidden min-h-screen bg-white" style="display:none;flex-direction:column;">
@@ -76,7 +102,7 @@
       <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-400/[0.06] rounded-full blur-3xl"></div>
     </div>
     <div class="relative z-20 max-w-6xl mx-auto px-5 sm:px-6 flex items-center justify-between h-16">
-      <a href="/" class="flex items-center gap-2.5"><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" /></a>
+      <a href="/" class="flex items-center gap-2.5"><picture><source srcset="images/landing/quickhomefix_Logo.avif" type="image/avif" /><source srcset="images/landing/quickhomefix_Logo.webp" type="image/webp" /><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" width="48" height="48" /></picture></a>
       <a href="/contractor" class="text-sm font-medium text-white/80 hover:text-white transition-colors">I'm a contractor</a>
     </div>
     <div class="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-14 lg:py-16">
@@ -178,7 +204,7 @@
     <div class="max-w-6xl mx-auto px-5 sm:px-6">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 pb-8 border-b border-gray-800">
         <div class="col-span-2 lg:col-span-1">
-          <div class="flex items-center gap-2 mb-3"><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" /></div>
+          <div class="flex items-center gap-2 mb-3"><picture><source srcset="images/landing/quickhomefix_Logo.avif" type="image/avif" /><source srcset="images/landing/quickhomefix_Logo.webp" type="image/webp" /><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" width="48" height="48" /></picture></div>
           <p class="text-sm leading-relaxed">Connecting homeowners with top-rated local professionals.</p>
         </div>
         <div>
@@ -244,6 +270,40 @@
             </div>
             <div class="flex justify-center">
               <button id="zipNextBtn" onclick="submitZipcode()" disabled class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SERVICE SELECTION (bathroom hub) ═══ -->
+    <div id="step-service-selection" class="wizard-step">
+      <div class="flex justify-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-6 sm:p-8">
+            <div class="text-center mb-6">
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900">What type of service do you need?</h2>
+            </div>
+            <div id="serviceSelectOptions" class="border border-gray-200 rounded-xl overflow-hidden mb-6">
+              <button type="button" onclick="highlightBathroomService('bath')"
+                class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white border-b border-gray-200 transition-colors">
+                <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+                <span class="font-medium text-base text-gray-800">Bathroom Remodeling</span>
+              </button>
+              <button type="button" onclick="highlightBathroomService('tub')"
+                class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white border-b border-gray-200 transition-colors">
+                <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+                <span class="font-medium text-base text-gray-800">Walk-in Tub</span>
+              </button>
+              <button type="button" onclick="highlightBathroomService('shower')"
+                class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white transition-colors">
+                <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+                <span class="font-medium text-base text-gray-800">Walk-in Shower</span>
+              </button>
+            </div>
+            <div class="flex justify-center">
+              <button id="svcNextBtn" onclick="selectBathroomService()" disabled
+                class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
             </div>
           </div>
         </div>
@@ -583,6 +643,7 @@ const serviceImages = {
   windows: "images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png",
   bath: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
   tub: "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png",
+  bathroom: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
 };
 
 const serviceSubtitles = {
@@ -590,6 +651,7 @@ const serviceSubtitles = {
   windows: "Enter your ZIP to find window pros near you",
   bath: "Enter your ZIP to find bath remodeling pros near you",
   tub: "Enter your ZIP to find walk-in tub pros near you",
+  bathroom: "Enter your ZIP to find bathroom remodeling pros near you",
 };
 
 let currentRadioField = "";
@@ -663,15 +725,14 @@ function showLandingPage(svc) {
   document.getElementById("landingHeroSubtitle").textContent = data.heroSubtitle;
   var heroImgEl = document.getElementById("landingHeroImage");
   if (data.heroImage) {
-    var img = document.createElement("img");
-    img.src = data.heroImage;
-    img.alt = data.heroTitle;
-    img.loading = "eager";
-    img.decoding = "async";
-    img.className = "w-full h-auto max-h-64 sm:max-h-80 lg:max-h-96 object-contain drop-shadow-xl";
-    img.style.cssText = "max-height:380px;width:auto;max-width:100%;";
-    heroImgEl.textContent = "";
-    heroImgEl.appendChild(img);
+    var heroSrc = data.heroImage;
+    var heroAvif = heroSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
+    var heroWebp = heroSrc.replace(/\.(png|jpg|jpeg)$/i, ".webp");
+    heroImgEl.innerHTML = '<picture>' +
+      '<source srcset="'+heroAvif+'" type="image/avif" />' +
+      '<source srcset="'+heroWebp+'" type="image/webp" />' +
+      '<img src="'+heroSrc+'" alt="'+data.heroTitle+'" loading="eager" decoding="async" fetchpriority="high" width="528" height="385" class="w-full h-auto object-contain drop-shadow-xl" />' +
+      '</picture>';
   } else if (data.gallery && data.gallery.length > 0) {
     var img = document.createElement("img");
     img.src = data.gallery[0];
@@ -688,13 +749,19 @@ function showLandingPage(svc) {
   document.getElementById("landingOverviewSubtitle").textContent = data.overviewSubtitle;
   var overviewImgEl = document.getElementById("landingOverviewImage");
   if (data.overviewImage) {
-    overviewImgEl.innerHTML = '<img src="'+data.overviewImage+'" alt="'+data.overviewTitle+'" loading="lazy" decoding="async" class="w-full h-48 sm:h-64 lg:h-72 object-cover" />';
+    var ovSrc = data.overviewImage;
+    var ovAvif = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
+    var ovWebp = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".webp");
+    overviewImgEl.innerHTML = '<picture>' +
+      '<source srcset="'+ovAvif+'" type="image/avif" />' +
+      '<source srcset="'+ovWebp+'" type="image/webp" />' +
+      '<img src="'+ovSrc+'" alt="'+data.overviewTitle+'" loading="lazy" decoding="async" class="w-full h-48 sm:h-64 lg:h-72 object-cover" />' +
+      '</picture>';
   }
   var benefitsEl = document.getElementById("landingOverviewBenefits");
-  benefitsEl.innerHTML = "";
-  data.overviewBenefits.forEach(function(b) {
-    benefitsEl.innerHTML += '<div class="flex items-start gap-2.5"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[15px] text-gray-800 leading-relaxed">'+b+'</span></div>';
-  });
+  benefitsEl.innerHTML = data.overviewBenefits.map(function(b) {
+    return '<div class="flex items-start gap-2.5"><svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-[15px] text-gray-800 leading-relaxed">'+b+'</span></div>';
+  }).join("");
 
   // Features
   var featEl = document.getElementById("landingFeatures");
@@ -767,10 +834,9 @@ function showLandingPage(svc) {
 
   // FAQs
   var faqEl = document.getElementById("landingFaqs");
-  faqEl.innerHTML = "";
-  data.faqs.forEach(function(f, i) {
-    faqEl.innerHTML += '<div class="border border-gray-200 rounded-lg"><button type="button" onclick="toggleLandingFaq('+i+')" class="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left"><span class="text-base font-semibold text-gray-900 leading-snug">'+f.question+'</span><svg id="lfaqChevron'+i+'" class="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></button><div id="lfaqAnswer'+i+'" class="hidden px-4 sm:px-6 pb-4 animate-expand"><p class="text-[15px] text-gray-600 leading-relaxed">'+f.answer+'</p></div></div>';
-  });
+  faqEl.innerHTML = data.faqs.map(function(f, i) {
+    return '<div class="border border-gray-200 rounded-lg"><button type="button" onclick="toggleLandingFaq('+i+')" class="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left"><span class="text-base font-semibold text-gray-900 leading-snug">'+f.question+'</span><svg id="lfaqChevron'+i+'" class="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></button><div id="lfaqAnswer'+i+'" class="hidden px-4 sm:px-6 pb-4 animate-expand"><p class="text-[15px] text-gray-600 leading-relaxed">'+f.answer+'</p></div></div>';
+  }).join("");
 
   window.scrollTo({top:0, behavior:"instant"});
 }
@@ -895,6 +961,8 @@ function renderCurrentStep() {
     else { imgEl.src = ""; }
 
     buildThumbTackContractors();
+  } else if (stepName === "service-selection") {
+    document.getElementById("step-service-selection").classList.add("active");
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
   }
@@ -941,12 +1009,16 @@ function renderRadioStep(stepName, progress) {
 
 /* ═══ STEP HANDLERS ═══ */
 function wizardBack() {
-  store.prevStep();
-  if (store.currentStep === 0) {
+  // If user came from bathroom hub and is at first service-specific step, go back to service-selection
+  if (currentLandingService === "bathroom" &&
+      store.currentStep === 2 &&
+      ["bath","tub","shower"].indexOf(store.formData.service) !== -1) {
+    store.switchService("bathroom");
     renderCurrentStep();
-  } else {
-    renderCurrentStep();
+    return;
   }
+  store.prevStep();
+  renderCurrentStep();
 }
 
 function submitZipcode() {
@@ -966,6 +1038,33 @@ function submitZipcode() {
     }
   });
   store.nextStep();
+  renderCurrentStep();
+}
+
+var _selectedBathroomService = "";
+
+function highlightBathroomService(serviceId) {
+  _selectedBathroomService = serviceId;
+  var opts = document.querySelectorAll("#serviceSelectOptions .svc-opt");
+  var ids = ["bath", "tub", "shower"];
+  opts.forEach(function(btn, i) {
+    var selected = ids[i] === serviceId;
+    btn.className = "svc-opt w-full flex items-center gap-3 px-5 py-4 text-left transition-colors " +
+      (i < 2 ? "border-b border-gray-200 " : "") +
+      (selected ? "bg-blue-50" : "bg-white");
+    var radio = btn.querySelector(".svc-radio");
+    radio.className = "svc-radio w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 " +
+      (selected ? "border-blue-600" : "border-gray-300");
+    radio.innerHTML = selected ? '<div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>' : "";
+    var label = btn.querySelector("span");
+    label.className = "font-medium text-base " + (selected ? "text-blue-600" : "text-gray-800");
+  });
+  document.getElementById("svcNextBtn").disabled = false;
+}
+
+function selectBathroomService() {
+  if (!_selectedBathroomService) return;
+  store.switchService(_selectedBathroomService);
   renderCurrentStep();
 }
 

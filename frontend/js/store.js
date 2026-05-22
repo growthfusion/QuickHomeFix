@@ -25,7 +25,8 @@ const serviceFlows = {
   bath:    { id: "bath",    name: "Bath Remodeling",   initialStep: "zipcode", steps: ["zipcode","bathroom-wall","email","details","name","final","complete"] },
   gutter:  { id: "gutter",  name: "Gutter Services",   initialStep: "zipcode", steps: ["zipcode","gutter-type","gutter-material","email","details","name","final","complete"] },
   tub:     { id: "tub",     name: "Walk-In Tub",       initialStep: "zipcode", steps: ["zipcode","tub-reason","email","details","name","final","complete"] },
-  shower:  { id: "shower",  name: "Walk-In Shower",    initialStep: "zipcode", steps: ["zipcode","walk","email","details","name","final","complete"] },
+  shower:   { id: "shower",   name: "Walk-In Shower",    initialStep: "zipcode", steps: ["zipcode","walk","email","details","name","final","complete"] },
+  bathroom: { id: "bathroom", name: "Bathroom Services", initialStep: "zipcode", steps: ["zipcode","service-selection"] },
 };
 
 function getServiceFlow(serviceId) {

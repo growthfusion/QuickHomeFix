@@ -1,6 +1,35 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leads – QuickHomeFix Dashboard</title>
+
+  <!-- Resource hints — establish connections before browser discovers the need -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <link rel="preconnect" href="https://quickhomefix-backend-test-1087056959880.us-central1.run.app" crossorigin />
+  <!-- dns-prefetch as fallback for browsers that don't support preconnect -->
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+  <link rel="dns-prefetch" href="https://quickhomefix-backend-test-1087056959880.us-central1.run.app" />
+
+  <!-- Self-hosted DM Sans — zero third-party request, fastest possible font load -->
+  <link rel="preload" href="/fonts/dm-sans-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/dm-sans-500.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/dm-sans-600.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/dm-sans-700.woff2" as="font" type="font/woff2" crossorigin />
+
+  <!-- Tailwind CDN must stay synchronous (runtime engine — deferring causes FOUC) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- styles.css not loaded here — all component classes in it are unused on this page.
+       The 6 global rules we actually need are inlined below instead. -->
+
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" as="style" onload="this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" /></noscript>
+
+  <!-- Non-parser-blocking scripts -->
   <script>
     window.BACKEND_URL = (function () {
       var host = location.hostname;
@@ -9,17 +38,54 @@
       return 'https://quickhomefix-backend-test-1087056959880.us-central1.run.app';
     })();
   </script>
-  <script src="/dash/auth.js"></script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leads – QuickHomeFix Dashboard</title>
-  <link rel="icon" type="image/png" href="/images/favicon.png" />
-  <script src="../js/tailwind-cdn.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/styles.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" />
-  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/ranges.js"></script>
+  <script src="/dash/auth.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/ranges.js" defer></script>
+  <style>
+    /* Self-hosted DM Sans */
+    @font-face {
+      font-family: 'DM Sans';
+      src: url('/fonts/dm-sans-400.woff2') format('woff2');
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      src: url('/fonts/dm-sans-500.woff2') format('woff2');
+      font-weight: 500; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      src: url('/fonts/dm-sans-600.woff2') format('woff2');
+      font-weight: 600; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'DM Sans';
+      src: url('/fonts/dm-sans-700.woff2') format('woff2');
+      font-weight: 700; font-style: normal; font-display: swap;
+    }
+
+    /* Global resets (inlined from styles.css — only rules used on this page) */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      margin: 0; padding: 0;
+      overflow-x: hidden;
+    }
+    img { content-visibility: auto; }
+    ::selection { background-color: rgba(29,58,155,.15); color: inherit; }
+    button, a { transition: transform .1s ease; }
+    button:active { transform: scale(0.97); }
+    input:focus, textarea:focus, select:focus {
+      box-shadow: 0 0 0 3px rgba(29,58,155,.1) !important;
+      outline: none !important;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.25); }
+  </style>
   <style>
     /* Light theme range picker (matches dashboard) */
     .litepicker {
@@ -129,6 +195,8 @@
       overflow-x: scroll;
       margin-bottom: 50px;
       background: #fff;
+      content-visibility: auto;
+      contain-intrinsic-size: 0 350px;
     }
     .expandable.expanded,
     .expandable.no-expand {
@@ -260,6 +328,9 @@
           <a href="/dash/bucket_affiliate_statistics">Statistics</a>
           <a href="/dash/bucket_affiliate_settings">Settings</a>
         </div>
+
+
+        
       </div>
 
       <div class="item">Thumbtack <span class="chev">▾</span>
@@ -420,8 +491,60 @@
   </div>
 
 
-  <!-- Tables container -->
-  <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6"></div>
+  <!-- Tables container — min-height prevents CLS when tables inject -->
+  <div id="tables-container" class="bg-gray-50 pb-[8%] w-full px-4 sm:px-6" style="min-height:800px">
+    <!-- Skeleton shown immediately — prevents SI/CLS while APIs load -->
+    <div id="loading-skeleton" class="px-0 pt-4">
+      <style>
+        .skel { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size:200% 100%; animation: shimmer 1.4s infinite; border-radius:4px; }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .skel-block { height:14px; margin-bottom:10px; }
+      </style>
+      <div style="margin-bottom:32px">
+        <div class="skel skel-block" style="width:120px;height:12px;margin-bottom:14px"></div>
+        <div style="background:#fff;border-radius:4px;padding:16px;overflow:hidden">
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skel skel-block" style="width:200px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skel skel-block" style="width:200px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.7"></div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div class="skel skel-block" style="width:200px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.5"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:32px">
+        <div class="skel skel-block" style="width:100px;height:12px;margin-bottom:14px"></div>
+        <div style="background:#fff;border-radius:4px;padding:16px">
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skel skel-block" style="width:200px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+            <div class="skel skel-block" style="width:80px"></div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div class="skel skel-block" style="width:200px;opacity:.6"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.6"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.6"></div>
+            <div class="skel skel-block" style="width:80px;opacity:.6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ── Metric column headers (33 columns after the label) ──────────────────
@@ -1741,20 +1864,38 @@
         </div>`;
     }
 
+    function bindExpand(wrap) {
+      const open = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        wrap.querySelector(".expand-btn")?.remove();
+        wrap.querySelector(".expand-overlay")?.remove();
+        wrap.classList.add("expanded");
+      };
+      wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
+      wrap.querySelector(".expand-overlay")?.addEventListener("mousedown", open);
+    }
+
     function rerender() {
       const tables = getTables();
-      document.getElementById("tables-container").innerHTML =
-        tables.map(t => renderTable(t)).join("");
-      document.querySelectorAll(".expandable").forEach(wrap => {
-        const open = (e) => {
-          if (e) { e.preventDefault(); e.stopPropagation(); }
-          wrap.querySelector(".expand-btn")?.remove();
-          wrap.querySelector(".expand-overlay")?.remove();
-          wrap.classList.add("expanded");
-        };
-        wrap.querySelector(".expand-btn")?.addEventListener("mousedown", open);
-        wrap.querySelector(".expand-overlay")?.addEventListener("mousedown", open);
-      });
+      const container = document.getElementById("tables-container");
+
+      // Remove skeleton on first real render
+      document.getElementById("loading-skeleton")?.remove();
+      container.innerHTML = "";
+
+      // Render one table per frame — keeps each task under 50ms, reduces TBT
+      let i = 0;
+      function renderNext() {
+        if (i >= tables.length) return;
+        const div = document.createElement("div");
+        div.innerHTML = renderTable(tables[i]);
+        const wrap = div.querySelector(".expandable");
+        if (wrap) bindExpand(wrap);
+        container.appendChild(div.firstElementChild);
+        i++;
+        setTimeout(renderNext, 0);
+      }
+      renderNext();
     }
 
     // ── Filter state ─────────────────────────────────────────────────────────
