@@ -910,6 +910,8 @@ function renderCurrentStep() {
     else { imgEl.src = ""; }
 
     buildThumbTackContractors();
+  } else if (stepName === "service-selection") {
+    document.getElementById("step-service-selection").classList.add("active");
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
   }
@@ -981,6 +983,11 @@ function submitZipcode() {
     }
   });
   store.nextStep();
+  renderCurrentStep();
+}
+
+function selectBathroomService(serviceId) {
+  store.switchService(serviceId);
   renderCurrentStep();
 }
 
