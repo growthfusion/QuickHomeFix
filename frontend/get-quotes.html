@@ -279,26 +279,26 @@
     <!-- ═══ SERVICE SELECTION (bathroom hub) ═══ -->
     <div id="step-service-selection" class="wizard-step">
       <div class="flex justify-center px-4 py-4 sm:py-12">
-        <div class="w-full max-w-sm sm:max-w-lg bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div class="p-6 sm:p-8">
             <div class="text-center mb-6">
-              <p class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Let's get started!</p>
-              <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900">What type of service do you need?</h2>
+              <h2 class="text-lg sm:text-xl font-bold text-gray-900">What type of service do you need?</h2>
             </div>
-            <div class="grid grid-cols-2 gap-3 mb-3">
+            <div class="border border-gray-200 rounded-xl overflow-hidden mb-6">
               <button type="button" onclick="selectBathroomService('bath')"
-                class="w-full py-5 px-4 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold text-sm sm:text-base rounded-2xl transition-colors leading-snug">
-                Bathroom Remodeling
+                class="w-full flex items-center gap-3 px-5 py-4 text-left bg-white hover:bg-blue-50 border-b border-gray-200 transition-colors">
+                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+                <span class="font-medium text-base text-gray-800">Bathroom Remodeling</span>
               </button>
               <button type="button" onclick="selectBathroomService('tub')"
-                class="w-full py-5 px-4 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold text-sm sm:text-base rounded-2xl transition-colors leading-snug">
-                Walk-in Tub
+                class="w-full flex items-center gap-3 px-5 py-4 text-left bg-white hover:bg-blue-50 border-b border-gray-200 transition-colors">
+                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+                <span class="font-medium text-base text-gray-800">Walk-in Tub</span>
               </button>
-            </div>
-            <div class="flex justify-center">
               <button type="button" onclick="selectBathroomService('shower')"
-                class="w-1/2 py-5 px-4 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-bold text-sm sm:text-base rounded-2xl transition-colors leading-snug">
-                Walk-in Shower
+                class="w-full flex items-center gap-3 px-5 py-4 text-left bg-white hover:bg-blue-50 transition-colors">
+                <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
+                <span class="font-medium text-base text-gray-800">Walk-in Shower</span>
               </button>
             </div>
           </div>
