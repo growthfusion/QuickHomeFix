@@ -173,6 +173,36 @@ All tables live in the `default` database on ClickHouse Cloud. Connection is con
 
 ---
 
+## Table 6: `leadprosper_buyer_stats`
+
+**Purpose:** LeadProsper buyer-level performance — lead counts, ping stats, and revenue broken down per buyer per campaign per day. Populated by `fetchLeadProsper` alongside `leadprosper_stats`. Dashboard reads the latest `fetched_at` snapshot.
+
+**Engine:** `MergeTree` — `ORDER BY (date, campaign_id, buyer_id)`
+
+| Column | Type | Description |
+|---|---|---|
+| `fetched_at` | `DateTime64(3, 'UTC')` | Timestamp of the fetch run |
+| `date` | `Date` | Date of the stats row |
+| `campaign_id` | `String` | LP campaign ID |
+| `campaign_name` | `String` | LP campaign name |
+| `buyer_id` | `String` | LP buyer ID |
+| `buyer_name` | `String` | LP buyer name (e.g. Modernize, Remodelwell) |
+| `leads_total` | `UInt32` | Total leads submitted to this buyer |
+| `leads_accepted` | `UInt32` | Leads accepted by this buyer |
+| `leads_duplicated` | `UInt32` | Duplicate leads |
+| `leads_failed` | `UInt32` | Leads rejected by this buyer |
+| `leads_returned` | `UInt32` | Leads returned after acceptance |
+| `pings_total` | `UInt32` | Total pings sent to this buyer |
+| `pings_accepted` | `UInt32` | Pings accepted by this buyer |
+| `pings_failed` | `UInt32` | Pings rejected by this buyer |
+| `total_sell` | `Float64` | Total sell-side revenue from this buyer (USD) |
+| `gross_revenue` | `Float64` | Gross revenue from this buyer (USD) |
+| `net_revenue` | `Float64` | Net revenue from this buyer (USD) |
+| `returned_revenue` | `Float64` | Revenue from returned leads (USD) |
+| `net_leads_accepted` | `UInt32` | Net accepted leads (accepted minus returned) |
+
+---
+
 ## Migration
 
 Run `POST /api/dev/migrate` to create all tables if they do not exist. The endpoint also runs safe `ALTER TABLE … ADD COLUMN IF NOT EXISTS` statements for columns added after initial deployment (e.g. `breakdown_type`, `group_key` on `redtrack_stats`).

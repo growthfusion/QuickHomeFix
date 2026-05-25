@@ -78,7 +78,7 @@ describe('fetchLeadProsper', () => {
         const day = opts.params.start_date;
         callDates.push(day);
         return Promise.resolve({
-          data: [{ campaign: { id: 'c1', name: 'Bath', leads_total: 1, leads_accepted: 1, leads_failed: 0, leads_returned: 0 } }],
+          data: [{ campaign: { id: 'c1', name: 'Bath', leads_total: 1, leads_accepted: 1, leads_failed: 0, leads_returned: 0 }, suppliers: [], buyers: [] }],
         });
       }
       return Promise.resolve({ data: [] });
@@ -130,6 +130,114 @@ describe('fetchLeadProsper', () => {
     await fetchLeadProsper();
 
     expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('inserts buyer rows into leadprosper_buyer_stats when buyers are present', async () => {
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/stats')) {
+        return Promise.resolve({
+          data: [{
+            campaign: {
+              id: 'c1', name: 'Bath Campaign',
+              leads_total: 10, leads_accepted: 8,
+              leads_failed: 1, leads_returned: 1,
+            },
+            suppliers: [],
+            buyers: [
+              {
+                id: 'b1', name: 'Modernize', client_id: 100, client_company: 'Modernize',
+                leads_total: 5, leads_accepted: 3, leads_duplicated: 0,
+                leads_failed: 2, leads_returned: 0,
+                pings_total: 10, pings_accepted: 8, pings_failed: 2,
+                total_sell: 30.0, gross_revenue: 30.0, net_revenue: 30.0,
+                returned_revenue: 0, net_leads_accepted: 3,
+              },
+              {
+                id: 'b2', name: 'Remodelwell', client_id: 101, client_company: 'Remodelwell',
+                leads_total: 5, leads_accepted: 5, leads_duplicated: 0,
+                leads_failed: 0, leads_returned: 0,
+                pings_total: 10, pings_accepted: 10, pings_failed: 0,
+                total_sell: 50.0, gross_revenue: 50.0, net_revenue: 50.0,
+                returned_revenue: 0, net_leads_accepted: 5,
+              },
+            ],
+          }],
+        });
+      }
+      return Promise.resolve({
+        data: [{ campaign_id: 'c1', total_buy: 20.0, total_sell: 80.0, net_profit: 60.0 }],
+      });
+    });
+
+    await fetchLeadProsper();
+
+    // Two inserts: one for leadprosper_stats, one for leadprosper_buyer_stats
+    expect(mockInsert).toHaveBeenCalledTimes(2);
+
+    const buyerCall = mockInsert.mock.calls.find(c => c[0].table === 'leadprosper_buyer_stats');
+    expect(buyerCall).toBeDefined();
+
+    const buyerRows = buyerCall[0].values;
+    expect(buyerRows.length).toBeGreaterThanOrEqual(2);
+
+    expect(buyerRows[0]).toMatchObject({
+      campaign_id: 'c1',
+      campaign_name: 'Bath Campaign',
+      buyer_id: 'b1',
+      buyer_name: 'Modernize',
+      leads_total: 5,
+      leads_accepted: 3,
+      leads_duplicated: 0,
+      leads_failed: 2,
+      leads_returned: 0,
+      pings_total: 10,
+      pings_accepted: 8,
+      pings_failed: 2,
+      total_sell: 30,
+      gross_revenue: 30,
+      net_revenue: 30,
+      returned_revenue: 0,
+      net_leads_accepted: 3,
+    });
+
+    expect(buyerRows[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    expect(buyerRows[1]).toMatchObject({
+      campaign_id: 'c1',
+      campaign_name: 'Bath Campaign',
+      buyer_id: 'b2',
+      buyer_name: 'Remodelwell',
+      leads_total: 5,
+      leads_accepted: 5,
+      total_sell: 50,
+      net_revenue: 50,
+      net_leads_accepted: 5,
+    });
+    expect(buyerRows[1].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not insert buyer rows when all campaigns have empty buyers arrays', async () => {
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/stats')) {
+        return Promise.resolve({
+          data: [{
+            campaign: { id: 'c1', name: 'Bath', leads_total: 5, leads_accepted: 4, leads_failed: 0, leads_returned: 0 },
+            suppliers: [],
+            buyers: [],
+          }],
+        });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    await fetchLeadProsper();
+
+    // Only one insert: leadprosper_stats — no buyer insert
+    expect(mockInsert).toHaveBeenCalledTimes(1);
+    expect(mockInsert.mock.calls[0][0].table).toBe('leadprosper_stats');
     expect(mockClose).toHaveBeenCalledTimes(1);
   });
 });

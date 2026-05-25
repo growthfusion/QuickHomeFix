@@ -215,6 +215,11 @@ export async function fetchRedTrack() {
     // Step 3: fetch QHF per-source breakdown (group=date,source)
     const sourceRows = await fetchReport(apiKey, date_from, date_to, 'date,source', sourceIds);
     console.log(`[fetchRedTrack] source: ${sourceRows.length} rows`);
+    await delay(delayMs);
+
+    // Step 4: fetch city breakdown (group=date,city)
+    const cityRows = await fetchReport(apiKey, date_from, date_to, 'date,city', sourceIds);
+    console.log(`[fetchRedTrack] city: ${cityRows.length} rows`);
 
     const allRows = [];
 
@@ -228,6 +233,37 @@ export async function fetchRedTrack() {
       allRows.push(makeRow(fetchedAt, 'source', row, titleToOwner));
     }
 
+    for (const row of cityRows) {
+      if (!row.date || !row.city) continue;
+      const lp_views  = Number(row.lp_views)  || 0;
+      const lp_clicks = Number(row.lp_clicks) || 0;
+      allRows.push({
+        fetched_at:     fetchedAt,
+        date:           row.date,
+        breakdown_type: 'city',
+        group_key:      row.city,
+        campaign_name:  '',
+        adset_name:     '',
+        ad_name:        '',
+        channel:        '',
+        lander_name:    '',
+        lp_views,
+        lp_clicks,
+        lp_ctr:         lp_views > 0 ? (lp_clicks / lp_views) * 100 : 0,
+        conversions:    Number(row.conversions) || 0,
+        purchases:      Number(row.purchases)   || 0,
+        revenue:        Number(row.revenue)     || 0,
+        cost:           Number(row.cost)        || 0,
+        roi:            Number(row.roi)         || 0,
+        device:         '',
+        os:             '',
+        region:         '',
+        rt_platform:    '',
+        rt_service:     '',
+        rt_owner:       '',
+      });
+    }
+
     if (allRows.length === 0) {
       console.warn('[fetchRedTrack] No rows to insert — skipping');
       return;
@@ -236,7 +272,7 @@ export async function fetchRedTrack() {
     // Insert first, then delete old batches — avoids the empty-table window that TRUNCATE caused.
     await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
     await ch.command({ query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
-    console.log(`[fetchRedTrack] Inserted ${allRows.length} rows (${dailyRows.length} daily + ${sourceRows.length} source)`);
+    console.log(`[fetchRedTrack] Inserted ${allRows.length} rows (${dailyRows.length} daily + ${sourceRows.length} source + ${cityRows.length} city)`);
   } finally {
     await ch.close();
   }

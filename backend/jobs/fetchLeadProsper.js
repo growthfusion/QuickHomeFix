@@ -75,6 +75,8 @@ export async function fetchLeadProsper() {
     }
 
     const allRows = [];
+    const allBuyerRows = [];
+
     for (const { day, stats, accounting } of dayResults) {
       if (stats.length === 0) continue;
       const acctMap = {};
@@ -95,6 +97,31 @@ export async function fetchLeadProsper() {
           total_sell: Number(acct.total_sell || 0),
           net_profit: Number(acct.net_profit || 0),
         });
+
+        const buyers = Array.isArray(s.buyers) ? s.buyers : [];
+        for (const b of buyers) {
+          allBuyerRows.push({
+            fetched_at: fetchedAt,
+            date: day,
+            campaign_id: String(c.id || ''),
+            campaign_name: c.name || '',
+            buyer_id: String(b.id || ''),
+            buyer_name: b.name || '',
+            leads_total: Number(b.leads_total || 0),
+            leads_accepted: Number(b.leads_accepted || 0),
+            leads_duplicated: Number(b.leads_duplicated || 0),
+            leads_failed: Number(b.leads_failed || 0),
+            leads_returned: Number(b.leads_returned || 0),
+            pings_total: Number(b.pings_total || 0),
+            pings_accepted: Number(b.pings_accepted || 0),
+            pings_failed: Number(b.pings_failed || 0),
+            total_sell: Number(b.total_sell || 0),
+            gross_revenue: Number(b.gross_revenue || 0),
+            net_revenue: Number(b.net_revenue || 0),
+            returned_revenue: Number(b.returned_revenue || 0),
+            net_leads_accepted: Number(b.net_leads_accepted || 0),
+          });
+        }
       }
     }
 
@@ -106,6 +133,12 @@ export async function fetchLeadProsper() {
     await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
     await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     console.log(`[fetchLeadProsper] Inserted ${allRows.length} rows across ${days.length} days`);
+
+    if (allBuyerRows.length > 0) {
+      await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
+      console.log(`[fetchLeadProsper] Inserted ${allBuyerRows.length} buyer rows`);
+    }
+    await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
   } finally {
     await ch.close();
   }
