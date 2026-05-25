@@ -78,7 +78,7 @@ describe('fetchLeadProsper', () => {
         const day = opts.params.start_date;
         callDates.push(day);
         return Promise.resolve({
-          data: [{ campaign: { id: 'c1', name: 'Bath', leads_total: 1, leads_accepted: 1, leads_failed: 0, leads_returned: 0 } }],
+          data: [{ campaign: { id: 'c1', name: 'Bath', leads_total: 1, leads_accepted: 1, leads_failed: 0, leads_returned: 0 }, suppliers: [], buyers: [] }],
         });
       }
       return Promise.resolve({ data: [] });
@@ -202,6 +202,19 @@ describe('fetchLeadProsper', () => {
     });
 
     expect(buyerRows[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    expect(buyerRows[1]).toMatchObject({
+      campaign_id: 'c1',
+      campaign_name: 'Bath Campaign',
+      buyer_id: 'b2',
+      buyer_name: 'Remodelwell',
+      leads_total: 5,
+      leads_accepted: 5,
+      total_sell: 50,
+      net_revenue: 50,
+      net_leads_accepted: 5,
+    });
+    expect(buyerRows[1].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     expect(mockClose).toHaveBeenCalledTimes(1);
   });

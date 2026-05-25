@@ -136,9 +136,9 @@ export async function fetchLeadProsper() {
 
     if (allBuyerRows.length > 0) {
       await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
       console.log(`[fetchLeadProsper] Inserted ${allBuyerRows.length} buyer rows`);
     }
+    await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
   } finally {
     await ch.close();
   }
