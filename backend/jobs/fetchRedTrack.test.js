@@ -17,15 +17,18 @@ import { fetchRedTrack } from './fetchRedTrack.js';
 //   [0] /sources (QHF source IDs)
 //   [1] /report group=date (daily totals)
 //   [2] /report group=date,source (per-source breakdown)
+//   [3] /report group=date,city (city breakdown)
 function mockRtApi({
   sources = [{ id: 'src_kg_bath', title: 'QuickHomeFix | Meta | Bath | Karigouda' }],
   daily   = [],
   source  = [],
+  city    = [],
 } = {}) {
   axios.get
     .mockResolvedValueOnce({ data: sources })
     .mockResolvedValueOnce({ data: daily })
-    .mockResolvedValueOnce({ data: source });
+    .mockResolvedValueOnce({ data: source })
+    .mockResolvedValueOnce({ data: city });
 }
 
 describe('fetchRedTrack', () => {
@@ -40,10 +43,10 @@ describe('fetchRedTrack', () => {
     process.env.RT_CALL_DELAY_MS    = '0';
   });
 
-  it('makes exactly 3 API calls (1 sources + 1 daily + 1 source-breakdown report)', async () => {
+  it('makes exactly 4 API calls (1 sources + 1 daily + 1 source-breakdown + 1 city report)', async () => {
     mockRtApi();
     await fetchRedTrack();
-    expect(axios.get).toHaveBeenCalledTimes(3);
+    expect(axios.get).toHaveBeenCalledTimes(4);
   });
 
   it('first call targets /sources', async () => {
@@ -171,7 +174,40 @@ describe('fetchRedTrack', () => {
     expect(row.rt_service).toBe('bath');
   });
 
-  it('issues a single ch.insert with daily and source rows combined', async () => {
+  it('inserts city rows with breakdown_type=city and group_key=city_name', async () => {
+    mockRtApi({
+      city: [
+        { date: '2026-05-01', city: 'New York', lp_views: 20, lp_clicks: 8, conversions: 3, cost: 50 },
+        { date: '2026-05-01', city: 'Los Angeles', lp_views: 15, lp_clicks: 5, conversions: 2, cost: 35 },
+      ],
+    });
+    await fetchRedTrack();
+    const rows = mockInsert.mock.calls[0][0].values;
+    const cityRows = rows.filter(r => r.breakdown_type === 'city');
+    expect(cityRows).toHaveLength(2);
+    expect(cityRows[0].group_key).toBe('New York');
+    expect(cityRows[0].lp_views).toBe(20);
+    expect(cityRows[0].lp_clicks).toBe(8);
+    expect(cityRows[0].conversions).toBe(3);
+    expect(cityRows[0].cost).toBe(50);
+    expect(cityRows[0].rt_platform).toBe('');
+    expect(cityRows[0].rt_service).toBe('');
+    expect(cityRows[0].rt_owner).toBe('');
+  });
+
+  it('filters out city rows that have no city field', async () => {
+    mockRtApi({
+      city: [
+        { date: '2026-05-01', city: 'Dallas', lp_views: 10 },
+        { date: '2026-05-01', lp_views: 5 }, // no city — filtered
+      ],
+    });
+    await fetchRedTrack();
+    const rows = mockInsert.mock.calls[0][0].values;
+    expect(rows.filter(r => r.breakdown_type === 'city')).toHaveLength(1);
+  });
+
+  it('issues a single ch.insert with daily, source, and city rows combined', async () => {
     mockRtApi({
       daily: [
         { date: '2026-05-01', lp_views: 38, lp_clicks: 17 },
@@ -180,13 +216,17 @@ describe('fetchRedTrack', () => {
         { date: '2026-05-01', source: 'QuickHomeFix | Meta | Bath | Karigouda', lp_views: 25, lp_clicks: 11 },
         { date: '2026-05-01', source: 'QuickHomeFix | Google | Roof', lp_views: 13, lp_clicks: 6 },
       ],
+      city: [
+        { date: '2026-05-01', city: 'Houston', lp_views: 8, lp_clicks: 3 },
+      ],
     });
     await fetchRedTrack();
     expect(mockInsert).toHaveBeenCalledTimes(1);
     const rows = mockInsert.mock.calls[0][0].values;
-    expect(rows).toHaveLength(3);
+    expect(rows).toHaveLength(4);
     expect(rows.filter(r => r.breakdown_type === 'daily')).toHaveLength(1);
     expect(rows.filter(r => r.breakdown_type === 'source')).toHaveLength(2);
+    expect(rows.filter(r => r.breakdown_type === 'city')).toHaveLength(1);
   });
 
   it('filters out rows that have no date field', async () => {
@@ -217,10 +257,11 @@ describe('fetchRedTrack', () => {
     axios.get
       .mockResolvedValueOnce({ data: [{ id: 'other', title: 'Some Other Source' }] }) // no QHF
       .mockResolvedValueOnce({ data: [{ date: '2026-05-01', lp_views: 5 }] })
+      .mockResolvedValueOnce({ data: [] })
       .mockResolvedValueOnce({ data: [] });
     await fetchRedTrack();
     // Should still make the report calls using fallback IDs
-    expect(axios.get).toHaveBeenCalledTimes(3);
+    expect(axios.get).toHaveBeenCalledTimes(4);
     const reportUrl = axios.get.mock.calls[1][0];
     expect(reportUrl).toMatch(/source_id=/);
   });
