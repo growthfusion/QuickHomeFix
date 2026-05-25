@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -31,9 +31,12 @@
 
   <!-- Non-parser-blocking scripts -->
   <script>
-    // Set to backend Cloud Run URL when frontend and backend are separate services.
-    // Leave as empty string '' for same-origin (local dev / single-service deploy).
-    window.BACKEND_URL = 'https://quickhomefix-backend-test-1087056959880.us-central1.run.app';
+    window.BACKEND_URL = (function () {
+      var host = location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1') return '';
+      if (host === 'quickhomefix.pro' || host === 'www.quickhomefix.pro') return 'https://api.quickhomefix.pro';
+      return 'https://quickhomefix-backend-test-1087056959880.us-central1.run.app';
+    })();
   </script>
   <script src="/dash/auth.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js" defer></script>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -236,7 +236,7 @@
 </div>
 
 <!-- Full-screen wizard container -->
-<div id="wizardContainer" style="position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:2000;background:#fff;">
+<div id="wizardContainer" style="display:none;position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:2000;background:#fff;">
 <div style="display:flex;flex-direction:column;min-height:100vh;">
 
   <!-- Wizard Header -->
@@ -734,9 +734,14 @@ function showLandingPage(svc) {
       '<img src="'+heroSrc+'" alt="'+data.heroTitle+'" loading="eager" decoding="async" fetchpriority="high" width="528" height="385" class="w-full h-auto object-contain drop-shadow-xl" />' +
       '</picture>';
   } else if (data.gallery && data.gallery.length > 0) {
-    heroImgEl.innerHTML = '<div class="hidden lg:block rounded-lg overflow-hidden border border-gray-200"><img src="'+data.gallery[0]+'" alt="Project" class="w-full h-64 lg:h-72 object-cover" /></div>';
+    var img = document.createElement("img");
+    img.src = data.gallery[0];
+    img.alt = "Project";
+    img.className = "w-full h-64 lg:h-72 object-cover";
+    heroImgEl.textContent = "";
+    heroImgEl.appendChild(img);
   } else {
-    heroImgEl.innerHTML = "";
+    heroImgEl.textContent = "";
   }
 
   // Overview
