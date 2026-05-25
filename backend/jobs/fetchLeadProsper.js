@@ -75,7 +75,7 @@ export async function fetchLeadProsper() {
     }
 
     const allRows = [];
-    const buyerRowMap = new Map();
+    const allBuyerRows = [];
 
     for (const { day, stats, accounting } of dayResults) {
       if (stats.length === 0) continue;
@@ -100,9 +100,9 @@ export async function fetchLeadProsper() {
 
         const buyers = Array.isArray(s.buyers) ? s.buyers : [];
         for (const b of buyers) {
-          const key = `${c.id}:${b.id}`;
-          buyerRowMap.set(key, {
+          allBuyerRows.push({
             fetched_at: fetchedAt,
+            date: day,
             campaign_id: String(c.id || ''),
             campaign_name: c.name || '',
             buyer_id: String(b.id || ''),
@@ -124,8 +124,6 @@ export async function fetchLeadProsper() {
         }
       }
     }
-
-    const allBuyerRows = Array.from(buyerRowMap.values());
 
     if (allRows.length === 0) {
       console.log('[fetchLeadProsper] No stats returned for any day this month');

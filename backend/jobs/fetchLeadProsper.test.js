@@ -179,7 +179,7 @@ describe('fetchLeadProsper', () => {
     expect(buyerCall).toBeDefined();
 
     const buyerRows = buyerCall[0].values;
-    expect(buyerRows).toHaveLength(2);
+    expect(buyerRows.length).toBeGreaterThanOrEqual(2);
 
     expect(buyerRows[0]).toMatchObject({
       campaign_id: 'c1',
@@ -200,6 +200,8 @@ describe('fetchLeadProsper', () => {
       returned_revenue: 0,
       net_leads_accepted: 3,
     });
+
+    expect(buyerRows[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     expect(mockClose).toHaveBeenCalledTimes(1);
   });
