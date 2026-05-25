@@ -1927,7 +1927,7 @@ app.get("/api/stats/leadprosper-buyers", async (_req, res) => {
     res.json({ ok: true, rows });
   } catch (e) {
     console.error('[/api/stats/leadprosper-buyers]', e.message);
-    res.status(500).json({ ok: false, rows: [] });
+    res.status(500).json({ ok: false, message: e.message });
   }
 });
 
