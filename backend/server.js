@@ -1536,7 +1536,32 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id, category)
       `,
-      // 6-9. Add columns that may be absent in tables created before schema updates
+      // 6. LP buyer stats — one row per (date, campaign_id, buyer_id)
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_buyer_stats (
+          fetched_at          DateTime64(3, 'UTC') DEFAULT now64(3),
+          date                Date,
+          campaign_id         String,
+          campaign_name       String,
+          buyer_id            String,
+          buyer_name          String,
+          leads_total         UInt32,
+          leads_accepted      UInt32,
+          leads_duplicated    UInt32,
+          leads_failed        UInt32,
+          leads_returned      UInt32,
+          pings_total         UInt32,
+          pings_accepted      UInt32,
+          pings_failed        UInt32,
+          total_sell          Float64,
+          gross_revenue       Float64,
+          net_revenue         Float64,
+          returned_revenue    Float64,
+          net_leads_accepted  UInt32
+        ) ENGINE = MergeTree()
+        ORDER BY (date, campaign_id, buyer_id)
+      `,
+      // 7-10. Add columns that may be absent in tables created before schema updates
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS normalized_service Nullable(String)`,
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name            Nullable(String)`,
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS adset_name         Nullable(String)`,
@@ -1891,6 +1916,18 @@ app.get("/api/stats/leadprosper", async (_req, res) => {
   } catch (e) {
     console.error('[/api/stats/leadprosper]', e.message);
     res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/leadprosper-buyers", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_buyer_stats WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_buyer_stats) ORDER BY date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/leadprosper-buyers]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
   }
 });
 
