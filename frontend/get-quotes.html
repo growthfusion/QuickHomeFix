@@ -1009,11 +1009,11 @@ function renderRadioStep(stepName, progress) {
 
 /* ═══ STEP HANDLERS ═══ */
 function wizardBack() {
-  // If user came from bathroom hub and is at first service-specific step, go back to service-selection
-  if (currentLandingService === "bathroom" &&
+  // If user came from bathroom/bath hub and is at first service-specific step, go back to service-selection
+  if (["bathroom","bath"].indexOf(currentLandingService) !== -1 &&
       store.currentStep === 2 &&
       ["bath","tub","shower"].indexOf(store.formData.service) !== -1) {
-    store.switchService("bathroom");
+    store.switchService(currentLandingService);
     renderCurrentStep();
     return;
   }
