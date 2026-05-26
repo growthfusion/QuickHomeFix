@@ -1561,6 +1561,122 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ) ENGINE = MergeTree()
         ORDER BY (date, campaign_id, buyer_id)
       `,
+      // 7. LP raw lead records — one row per (lead_id, buyer_id)
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_lead_records (
+          fetched_at     DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_id        String,
+          lead_date      Date,
+          campaign_id    String,
+          campaign_name  String,
+          lead_status    LowCardinality(String),
+          revenue        Float64,
+          state          LowCardinality(String),
+          city           LowCardinality(String),
+          postal_code    String,
+          service        LowCardinality(String),
+          rt_ad          String,
+          source_id      String,
+          supplier_id    String,
+          supplier_name  LowCardinality(String),
+          buyer_id       String,
+          buyer_name     LowCardinality(String),
+          buyer_status   LowCardinality(String),
+          sell_price     Float64,
+          error_code     Int32,
+          error_message  String
+        ) ENGINE = MergeTree()
+        ORDER BY (lead_date, campaign_id, lead_id, buyer_id)
+      `,
+      // 8. LP buyer-level summary (current month, latest snapshot)
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer (
+          fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          buyer_id         String,
+          buyer_name       LowCardinality(String),
+          total_leads      UInt32,
+          accepted_leads   UInt32,
+          rejected_leads   UInt32,
+          outbid_leads     UInt32,
+          sold_leads       UInt32,
+          total_revenue    Float64,
+          avg_sell_price   Float64,
+          acceptance_rate  Float64,
+          rejection_rate   Float64,
+          conversion_rate  Float64,
+          pings_total      UInt32,
+          pings_accepted   UInt32,
+          pings_failed     UInt32,
+          ping_accept_rate Float64,
+          ping_reject_rate Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (buyer_id)
+      `,
+      // 9. LP buyer + state summary
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_state (
+          fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          buyer_id         String,
+          buyer_name       LowCardinality(String),
+          state            LowCardinality(String),
+          total_leads      UInt32,
+          accepted_leads   UInt32,
+          rejected_leads   UInt32,
+          outbid_leads     UInt32,
+          sold_leads       UInt32,
+          total_revenue    Float64,
+          avg_sell_price   Float64,
+          acceptance_rate  Float64,
+          rejection_rate   Float64,
+          conversion_rate  Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (buyer_id, state)
+      `,
+      // 10. LP buyer + state + city summary
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_city (
+          fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          buyer_id         String,
+          buyer_name       LowCardinality(String),
+          state            LowCardinality(String),
+          city             LowCardinality(String),
+          total_leads      UInt32,
+          accepted_leads   UInt32,
+          rejected_leads   UInt32,
+          outbid_leads     UInt32,
+          sold_leads       UInt32,
+          total_revenue    Float64,
+          avg_sell_price   Float64,
+          acceptance_rate  Float64,
+          rejection_rate   Float64,
+          conversion_rate  Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (buyer_id, state, city)
+      `,
+      // 11. LP buyer + postal code summary
+      `
+        CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_postal (
+          fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          buyer_id         String,
+          buyer_name       LowCardinality(String),
+          postal_code      String,
+          state            LowCardinality(String),
+          total_leads      UInt32,
+          accepted_leads   UInt32,
+          rejected_leads   UInt32,
+          outbid_leads     UInt32,
+          sold_leads       UInt32,
+          total_revenue    Float64,
+          avg_sell_price   Float64,
+          acceptance_rate  Float64,
+          rejection_rate   Float64,
+          conversion_rate  Float64
+        ) ENGINE = MergeTree()
+        ORDER BY (buyer_id, postal_code)
+      `,
+      // 12. Add rate columns to existing leadprosper_buyer_stats
+      `ALTER TABLE leadprosper_buyer_stats ADD COLUMN IF NOT EXISTS ping_accept_rate Float64 DEFAULT 0`,
+      `ALTER TABLE leadprosper_buyer_stats ADD COLUMN IF NOT EXISTS ping_reject_rate Float64 DEFAULT 0`,
       // 7-10. Add columns that may be absent in tables created before schema updates
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS normalized_service Nullable(String)`,
       `ALTER TABLE ${CLICKHOUSE_TABLE} ADD COLUMN IF NOT EXISTS ad_name            Nullable(String)`,
@@ -1928,6 +2044,84 @@ app.get("/api/stats/leadprosper-buyers", async (_req, res) => {
   } catch (e) {
     console.error('[/api/stats/leadprosper-buyers]', e.message);
     res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+app.get("/api/stats/lp-leads", async (req, res) => {
+  try {
+    const { buyer, state, city, postal_code, from, to } = req.query;
+    const conditions = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_lead_records)`];
+    if (buyer)       conditions.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (state)       conditions.push(`state = '${state.replace(/'/g, "''")}'`);
+    if (city)        conditions.push(`city = '${city.replace(/'/g, "''")}'`);
+    if (postal_code) conditions.push(`postal_code = '${postal_code.replace(/'/g, "''")}'`);
+    if (from)        conditions.push(`lead_date >= '${from}'`);
+    if (to)          conditions.push(`lead_date <= '${to}'`);
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_lead_records WHERE ${conditions.join(' AND ')} ORDER BY lead_date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-leads]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer) ORDER BY total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer-state", async (req, res) => {
+  try {
+    const { buyer } = req.query;
+    const extra = buyer ? ` AND buyer_name = '${buyer.replace(/'/g, "''")}'` : '';
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer_state WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_state)${extra} ORDER BY buyer_name, total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer-state]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer-city", async (req, res) => {
+  try {
+    const { buyer, state } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_city)`];
+    if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer_city WHERE ${conds.join(' AND ')} ORDER BY buyer_name, state, total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer-city]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer-postal", async (req, res) => {
+  try {
+    const { buyer, state } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_postal)`];
+    if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer_postal WHERE ${conds.join(' AND ')} ORDER BY buyer_name, total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer-postal]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
   }
 });
 

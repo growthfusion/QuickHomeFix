@@ -35,25 +35,23 @@ const serviceLandingData = {
     ]
   },
   bath: {
-    heroTitle: "Top Bath Remodeling Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",
+    heroTitle: "Top Bathroom Remodeling Contractors Near You",
+    heroSubtitle: "Enter your ZIP Code to get matched with the top bathroom professionals near you.",
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
     overviewImage: "images/landing/bath-1.jpg",
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
-    overviewTitle: "Bathroom Remodeling & Renovation",
+    overviewTitle: "Bathroom Remodeling, Walk-In Tubs & Walk-In Showers",
     overviewSubtitle: "Transform your bathroom into a beautiful, functional space:",
-    overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Custom vanities & fixtures","Modern tile & flooring","Superior style and comfort"],
+    overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Walk-in tub & shower installs","Custom vanities & fixtures","Superior style and comfort"],
     features: [
-      { title: "Custom Design", desc: "Personalized bathroom layouts tailored to your style, space, and daily needs." },
-      { title: "Quality Fixtures", desc: "Premium faucets, showerheads, and hardware that combine style with durability." },
-      { title: "Modern Tile & Flooring", desc: "Beautiful tile work for floors, walls, and showers with waterproof installation." }
+      { title: "Bathroom Remodeling", desc: "Full bathroom renovations tailored to your style, space, and daily needs." },
+      { title: "Walk-In Tubs", desc: "Safe, therapeutic walk-in tubs with low step-in entry and hydrotherapy jets." },
+      { title: "Walk-In Showers", desc: "Custom walk-in shower installations with modern tile, glass, and fixtures." }
     ],
-
-    
     advantages: [
       { title: "Increased Home Value", desc: "A bathroom remodel offers one of the highest returns on investment." },
-      { title: "Improved Functionality", desc: "Upgrade your layout with better storage, lighting, and fixtures." },
-      { title: "Energy Efficiency", desc: "Modern low-flow toilets, LED lighting, and efficient water heaters reduce your utility bills." },
+      { title: "Improved Safety", desc: "Walk-in tubs and showers reduce the risk of slips and falls." },
+      { title: "Energy Efficiency", desc: "Modern low-flow fixtures and LED lighting reduce your utility bills." },
       { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with modern designs." },
       { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smart storage solutions." },
       { title: "Enhanced Comfort", desc: "Heated floors, rain showerheads, and spa-like features." }
@@ -65,9 +63,9 @@ const serviceLandingData = {
     ],
     faqs: [
       { question: "How much does a bathroom remodel cost?", answer: "On average, homeowners spend $10,000 to $30,000 for a full remodel, though smaller updates can start around $5,000." },
-      { question: "How long does a bathroom remodel take?", answer: "A typical bathroom remodel takes 2 to 4 weeks depending on the scope of work." },
-      { question: "What does a full bathroom remodel include?", answer: "New flooring, tile work, vanity, fixtures, lighting, plumbing updates, and painting." },
-      { question: "Do I need permits for a bathroom remodel?", answer: "Permits are typically required for plumbing or electrical changes. Your contractor will handle the permitting." }
+      { question: "How much does a walk-in tub cost?", answer: "Walk-in tub prices range from $2,000 to $10,000 depending on features. Installation adds $1,500 to $5,000." },
+      { question: "How long does installation take?", answer: "Most projects are completed in 1 to 4 weeks depending on scope of work." },
+      { question: "Do I need permits?", answer: "Permits are typically required for plumbing or electrical changes. Your contractor will handle the permitting." }
     ]
   },
   bathroom: {
