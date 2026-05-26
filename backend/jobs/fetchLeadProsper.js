@@ -45,6 +45,20 @@ async function fetchDay(headers, day) {
   };
 }
 
+async function fetchAllLeadsForCampaign(headers, campaignId, startDate, endDate) {
+  const allLeads = [];
+  let searchAfter = null;
+  do {
+    const params = { start_date: startDate, end_date: endDate, campaign: campaignId };
+    if (searchAfter) params.search_after = searchAfter;
+    const res = await axios.get(`${LP_BASE}/public/leads`, { headers, params });
+    const batch = Array.isArray(res.data?.leads) ? res.data.leads : [];
+    allLeads.push(...batch);
+    searchAfter = res.data?.search_after || null;
+  } while (searchAfter);
+  return allLeads;
+}
+
 export async function fetchLeadProsper() {
   const key = process.env.LEADPROSPER_API_KEY;
 
@@ -120,6 +134,10 @@ export async function fetchLeadProsper() {
             net_revenue: Number(b.net_revenue || 0),
             returned_revenue: Number(b.returned_revenue || 0),
             net_leads_accepted: Number(b.net_leads_accepted || 0),
+            ping_accept_rate: Number(b.pings_total || 0) > 0
+              ? +((Number(b.pings_accepted || 0) / Number(b.pings_total)) * 100).toFixed(2) : 0,
+            ping_reject_rate: Number(b.pings_total || 0) > 0
+              ? +((Number(b.pings_failed || 0) / Number(b.pings_total)) * 100).toFixed(2) : 0,
           });
         }
       }
@@ -132,13 +150,56 @@ export async function fetchLeadProsper() {
 
     await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
     await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
-    console.log(`[fetchLeadProsper] Inserted ${allRows.length} rows across ${days.length} days`);
+    console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
 
     if (allBuyerRows.length > 0) {
       await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
-      console.log(`[fetchLeadProsper] Inserted ${allBuyerRows.length} buyer rows`);
+      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     }
-    await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+    // Leads fetch — one paginated call per campaign found in stats
+    const campaignIds = [...new Set(
+      dayResults.flatMap(({ stats }) => stats.map(s => String((s.campaign || s).id || '')))
+    )].filter(Boolean);
+
+    const allLeads = [];
+    for (const cid of campaignIds) {
+      try {
+        const leads = await fetchAllLeadsForCampaign(headers, cid, days[0], days[days.length - 1]);
+        allLeads.push(...leads);
+      } catch (e) {
+        console.warn(`[fetchLeadProsper] leads fetch failed for campaign ${cid}:`, e.message);
+      }
+    }
+
+    if (allLeads.length > 0) {
+      const allLeadRecordRows  = buildLeadRecordRows(fetchedAt, allLeads);
+      // Use only the latest day's buyer rows for ping aggregation — LP stats returns
+      // cumulative MTD totals per day, so summing all days would double-count pings.
+      const latestDay          = days[days.length - 1];
+      const latestBuyerRows    = allBuyerRows.filter(r => r.date === latestDay);
+      const aggBuyerRows       = computeAggBuyer(fetchedAt, allLeadRecordRows, latestBuyerRows);
+      const aggStateRows       = computeAggBuyerState(fetchedAt, allLeadRecordRows);
+      const aggCityRows        = computeAggBuyerStateCity(fetchedAt, allLeadRecordRows);
+      const aggPostalRows      = computeAggBuyerPostal(fetchedAt, allLeadRecordRows);
+
+      await ch.insert({ table: 'leadprosper_lead_records',    values: allLeadRecordRows, format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      console.log(`[fetchLeadProsper] Inserted ${allLeadRecordRows.length} lead records across ${campaignIds.length} campaigns`);
+    }
   } finally {
     await ch.close();
   }
