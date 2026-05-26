@@ -148,16 +148,7 @@ export async function fetchLeadProsper() {
       return;
     }
 
-    await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
-    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
-    console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
-
-    if (allBuyerRows.length > 0) {
-      await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
-    }
-
-    // Leads fetch — one paginated call per campaign found in stats
+    // Leads fetch — before stats insert so we can patch total_sell from actual lead revenues
     const campaignIds = [...new Set(
       dayResults.flatMap(({ stats }) => stats.map(s => String((s.campaign || s).id || '')))
     )].filter(Boolean);
@@ -170,6 +161,31 @@ export async function fetchLeadProsper() {
       } catch (e) {
         console.warn(`[fetchLeadProsper] leads fetch failed for campaign ${cid}:`, e.message);
       }
+    }
+
+    // Patch total_sell per (campaign_id, date) from individual lead sell prices.
+    // This overrides the accounting API value which is often 0 due to granular params.
+    if (allLeads.length > 0) {
+      const sellByKey = new Map();
+      for (const lead of allLeads) {
+        if ((lead.status || '').toUpperCase() !== 'ACCEPTED') continue;
+        const date = new Date(Number(lead.lead_date_ms)).toISOString().slice(0, 10);
+        const key = `${lead.campaign_id}_${date}`;
+        sellByKey.set(key, (sellByKey.get(key) || 0) + Number(lead.revenue || 0));
+      }
+      for (const row of allRows) {
+        const computed = sellByKey.get(`${row.campaign_id}_${row.date}`);
+        if (computed !== undefined) row.total_sell = +computed.toFixed(2);
+      }
+    }
+
+    await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
+    console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
+
+    if (allBuyerRows.length > 0) {
+      await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     }
 
     if (allLeads.length > 0) {
