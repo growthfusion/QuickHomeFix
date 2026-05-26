@@ -655,7 +655,7 @@
       const avgSold = sold       > 0 ? rev / sold  : 0;
       const epc     = clicks     > 0 ? rev / clicks : 0;
       const epv     = views      > 0 ? rev / views  : 0;
-      const totalRev = rev;
+      const totalRev = rev + ttRev;
       return [
         label,
         views,              // 1  VISITS
