@@ -670,6 +670,10 @@ document.addEventListener("DOMContentLoaded", function() {
     window.location.replace("/");
     return;
   }
+  // /get-quotes/bath URL shows the same bathroom hub (service selection)
+  if (svc === "bath") {
+    svc = "bathroom";
+  }
   currentLandingService = svc;
 
   // Resume in-progress wizard if user came back via upsell/switchService
@@ -1009,11 +1013,11 @@ function renderRadioStep(stepName, progress) {
 
 /* ═══ STEP HANDLERS ═══ */
 function wizardBack() {
-  // If user came from bathroom/bath hub and is at first service-specific step, go back to service-selection
-  if (["bathroom","bath"].indexOf(currentLandingService) !== -1 &&
+  // If user came from bathroom hub and is at first service-specific step, go back to service-selection
+  if (currentLandingService === "bathroom" &&
       store.currentStep === 2 &&
       ["bath","tub","shower"].indexOf(store.formData.service) !== -1) {
-    store.switchService(currentLandingService);
+    store.switchService("bathroom");
     renderCurrentStep();
     return;
   }
