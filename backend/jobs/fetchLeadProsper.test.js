@@ -247,7 +247,91 @@ describe('fetchLeadProsper', () => {
     expect(mockInsert.mock.calls[0][0].table).toBe('leadprosper_stats');
     expect(mockClose).toHaveBeenCalledTimes(1);
   });
+
+  it('fetches leads with pagination and inserts lead_records + 4 agg tables', async () => {
+    axios.get.mockImplementation((url, opts) => {
+      if (url.includes('/public/stats')) {
+        return Promise.resolve({
+          data: [{
+            campaign: { id: 33966, name: 'Bath', leads_total: 2, leads_accepted: 1, leads_failed: 1, leads_returned: 0 },
+            suppliers: [],
+            buyers: [{ id: 'b1', name: 'Modernize', client_id: 1, client_company: 'Modernize',
+              leads_total: 2, leads_accepted: 1, leads_duplicated: 0, leads_failed: 1, leads_returned: 0,
+              pings_total: 5, pings_accepted: 4, pings_failed: 1,
+              total_sell: 30, gross_revenue: 30, net_revenue: 30, returned_revenue: 0, net_leads_accepted: 1 }],
+          }],
+        });
+      }
+      if (url.includes('/public/accounting')) return Promise.resolve({ data: [] });
+      if (url.includes('/public/leads')) {
+        const sa = opts?.params?.search_after;
+        if (!sa) {
+          // First page: 1 lead + search_after cursor
+          return Promise.resolve({ data: { leads: [makeLead('L1', 'CA', 'ACCEPTED', 30)], search_after: 'cursor1' } });
+        }
+        // Second page: 1 lead + no cursor (last page)
+        return Promise.resolve({ data: { leads: [makeLead('L2', 'TX', 'ERROR', 0)], search_after: null } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    await fetchLeadProsper();
+
+    // inserts: leadprosper_stats(1) + leadprosper_buyer_stats(1) + lead_records(1) + agg_buyer(1) + agg_state(1) + agg_city(1) + agg_postal(1) = 7
+    expect(mockInsert).toHaveBeenCalledTimes(7);
+
+    const tableNames = mockInsert.mock.calls.map(c => c[0].table);
+    expect(tableNames).toContain('leadprosper_lead_records');
+    expect(tableNames).toContain('leadprosper_agg_buyer');
+    expect(tableNames).toContain('leadprosper_agg_buyer_state');
+    expect(tableNames).toContain('leadprosper_agg_buyer_city');
+    expect(tableNames).toContain('leadprosper_agg_buyer_postal');
+
+    const recordsCall = mockInsert.mock.calls.find(c => c[0].table === 'leadprosper_lead_records');
+    expect(recordsCall[0].values).toHaveLength(2); // 2 leads × 1 buyer each
+
+    const aggBuyerCall = mockInsert.mock.calls.find(c => c[0].table === 'leadprosper_agg_buyer');
+    const buyerRow = aggBuyerCall[0].values[0];
+    expect(buyerRow).toMatchObject({
+      buyer_name: 'Modernize',
+      total_leads: 2, sold_leads: 1, total_revenue: 30,
+      pings_total: 5, pings_accepted: 4, ping_accept_rate: 80,
+    });
+
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips lead_records inserts when leads fetch returns empty', async () => {
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/public/stats')) {
+        return Promise.resolve({
+          data: [{ campaign: { id: 33966, name: 'Bath', leads_total: 0, leads_accepted: 0, leads_failed: 0, leads_returned: 0 }, suppliers: [], buyers: [] }],
+        });
+      }
+      if (url.includes('/public/accounting')) return Promise.resolve({ data: [] });
+      if (url.includes('/public/leads')) return Promise.resolve({ data: { leads: [], search_after: null } });
+      return Promise.resolve({ data: [] });
+    });
+
+    await fetchLeadProsper();
+
+    const tableNames = mockInsert.mock.calls.map(c => c[0].table);
+    expect(tableNames).not.toContain('leadprosper_lead_records');
+    expect(tableNames).not.toContain('leadprosper_agg_buyer');
+    expect(mockClose).toHaveBeenCalledTimes(1);
+  });
 });
+
+function makeLead(id, state, buyerStatus, sellPrice, campaignId = 33966) {
+  return {
+    id, lead_date_ms: '1748260800000', status: buyerStatus === 'ACCEPTED' ? 'ACCEPTED' : 'ERROR',
+    revenue: sellPrice, cost: 0, campaign_id: campaignId, campaign_name: 'Bath',
+    returned: false, return_reason: '', test: false, error_code: 0, error_message: '',
+    lead_data: { state, city: 'TestCity', postalCode: '12345', service: 'BATH_REMODEL', rt_ad: 'ad', source_id: 'gf2' },
+    supplier: { id: '110222', name: 'Karigouda' },
+    buyers: [{ id: 'b1', name: 'Modernize', status: buyerStatus, sell_price: sellPrice, error_code: 0, error_message: '' }],
+  };
+}
 
 // ── Pure function unit tests ─────────────────────────────────────────────────
 describe('buildLeadRecordRows', () => {
