@@ -203,6 +203,108 @@ All tables live in the `default` database on ClickHouse Cloud. Connection is con
 
 ---
 
+## Table 7: `leadprosper_lead_records`
+
+**Purpose:** Individual LP lead × buyer decision rows for the current calendar month. One row per (lead_id, buyer_id). Populated by `fetchLeadProsper` via `/public/leads` with pagination. Enables geo-level filtering (state/city/postal) and per-buyer decision tracking.
+
+**Engine:** `MergeTree` — `ORDER BY (lead_date, campaign_id, lead_id, buyer_id)`
+
+| Column | Type | Description |
+|---|---|---|
+| `fetched_at` | `DateTime64(3,'UTC')` | Fetch timestamp |
+| `lead_id` | `String` | LP lead ID |
+| `lead_date` | `Date` | Lead submission date |
+| `campaign_id` | `String` | LP campaign ID |
+| `campaign_name` | `String` | LP campaign name |
+| `lead_status` | `LowCardinality(String)` | Overall lead status: `ACCEPTED` / `ERROR` |
+| `revenue` | `Float64` | Total payout for this lead |
+| `state` | `LowCardinality(String)` | 2-letter US state code |
+| `city` | `LowCardinality(String)` | City name |
+| `postal_code` | `String` | 5-digit ZIP |
+| `service` | `LowCardinality(String)` | e.g. `BATH_REMODEL` |
+| `rt_ad` | `String` | RedTrack ad label |
+| `source_id` | `String` | Traffic source ID |
+| `supplier_id` | `String` | LP supplier ID |
+| `supplier_name` | `LowCardinality(String)` | Supplier name |
+| `buyer_id` | `String` | LP buyer ID |
+| `buyer_name` | `LowCardinality(String)` | Buyer name (Modernize, Remodelwell…) |
+| `buyer_status` | `LowCardinality(String)` | `ACCEPTED` / `OUTBID` / `ERROR` |
+| `sell_price` | `Float64` | Buyer-level payout (USD) |
+| `error_code` | `Int32` | LP error code (0 = none) |
+| `error_message` | `String` | Rejection reason |
+
+---
+
+## Table 8: `leadprosper_agg_buyer`
+
+**Purpose:** Current-month buyer-level performance summary with ping metrics. Aggregated from `leadprosper_lead_records` (lead metrics) + `leadprosper_buyer_stats` (ping metrics). One row per buyer.
+
+**Engine:** `MergeTree` — `ORDER BY (buyer_id)`
+
+| Column | Type | Description |
+|---|---|---|
+| `fetched_at` | `DateTime64(3,'UTC')` | Fetch timestamp |
+| `buyer_id` | `String` | |
+| `buyer_name` | `LowCardinality(String)` | |
+| `total_leads` | `UInt32` | All lead attempts |
+| `accepted_leads` | `UInt32` | Buyer accepted |
+| `rejected_leads` | `UInt32` | Buyer rejected (ERROR) |
+| `outbid_leads` | `UInt32` | Lost auction (OUTBID) |
+| `sold_leads` | `UInt32` | Leads with sell_price > 0 |
+| `total_revenue` | `Float64` | Sum of sell_price |
+| `avg_sell_price` | `Float64` | Revenue ÷ sold_leads |
+| `acceptance_rate` | `Float64` | accepted ÷ total × 100 |
+| `rejection_rate` | `Float64` | rejected ÷ total × 100 |
+| `conversion_rate` | `Float64` | sold ÷ total × 100 |
+| `pings_total` | `UInt32` | From ping stats |
+| `pings_accepted` | `UInt32` | From ping stats |
+| `pings_failed` | `UInt32` | From ping stats |
+| `ping_accept_rate` | `Float64` | accepted ÷ total × 100 |
+| `ping_reject_rate` | `Float64` | failed ÷ total × 100 |
+
+---
+
+## Table 9: `leadprosper_agg_buyer_state`
+
+**Purpose:** Buyer × state performance. Same metrics as Table 8 minus ping columns (pings have no state breakdown).
+
+**Engine:** `MergeTree` — `ORDER BY (buyer_id, state)`
+
+Columns: `fetched_at`, `buyer_id`, `buyer_name`, `state` + all 10 lead metrics from Table 8 (total through conversion_rate).
+
+---
+
+## Table 10: `leadprosper_agg_buyer_city`
+
+**Purpose:** Buyer × state × city performance.
+
+**Engine:** `MergeTree` — `ORDER BY (buyer_id, state, city)`
+
+Columns: `fetched_at`, `buyer_id`, `buyer_name`, `state`, `city` + same 10 lead metrics.
+
+---
+
+## Table 11: `leadprosper_agg_buyer_postal`
+
+**Purpose:** Buyer × postal code performance. Includes `state` for context.
+
+**Engine:** `MergeTree` — `ORDER BY (buyer_id, postal_code)`
+
+Columns: `fetched_at`, `buyer_id`, `buyer_name`, `postal_code`, `state` + same 10 lead metrics.
+
+---
+
+## Table 6 update: `leadprosper_buyer_stats` (ping stats — updated)
+
+Two columns added via `ALTER TABLE … ADD COLUMN IF NOT EXISTS`:
+
+| New Column | Type | Description |
+|---|---|---|
+| `ping_accept_rate` | `Float64` | `pings_accepted / pings_total × 100`, 0 when total is 0 |
+| `ping_reject_rate` | `Float64` | `pings_failed / pings_total × 100`, 0 when total is 0 |
+
+---
+
 ## Migration
 
 Run `POST /api/dev/migrate` to create all tables if they do not exist. The endpoint also runs safe `ALTER TABLE … ADD COLUMN IF NOT EXISTS` statements for columns added after initial deployment (e.g. `breakdown_type`, `group_key` on `redtrack_stats`).
