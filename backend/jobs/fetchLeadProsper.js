@@ -143,3 +143,139 @@ export async function fetchLeadProsper() {
     await ch.close();
   }
 }
+
+// ── Pure data-transformation functions (exported for unit testing) ────────────
+
+export function buildLeadRecordRows(fetchedAt, leads) {
+  const rows = [];
+  for (const lead of leads) {
+    const ld = lead.lead_data || {};
+    const base = {
+      fetched_at:    fetchedAt,
+      lead_id:       String(lead.id || ''),
+      lead_date:     fetchedAt.slice(0, 10),
+      campaign_id:   String(lead.campaign_id || ''),
+      campaign_name: String(lead.campaign_name || ''),
+      lead_status:   String(lead.status || ''),
+      revenue:       Number(lead.revenue || 0),
+      state:         String(ld.state || ''),
+      city:          String(ld.city || ''),
+      postal_code:   String(ld.postalCode || ''),
+      service:       String(ld.service || ''),
+      rt_ad:         String(ld.rt_ad || ''),
+      source_id:     String(ld.source_id || ''),
+      supplier_id:   String(lead.supplier?.id || ''),
+      supplier_name: String(lead.supplier?.name || ''),
+    };
+    for (const b of (Array.isArray(lead.buyers) ? lead.buyers : [])) {
+      rows.push({
+        ...base,
+        buyer_id:      String(b.id || ''),
+        buyer_name:    String(b.name || ''),
+        buyer_status:  String(b.status || ''),
+        sell_price:    Number(b.sell_price || 0),
+        error_code:    Number(b.error_code || 0),
+        error_message: String(b.error_message || ''),
+      });
+    }
+  }
+  return rows;
+}
+
+export function computeAggBuyer(fetchedAt, leadRecordRows, allBuyerRows) {
+  const map = new Map();
+  for (const r of leadRecordRows) {
+    if (!map.has(r.buyer_id)) map.set(r.buyer_id, {
+      buyer_id: r.buyer_id, buyer_name: r.buyer_name,
+      total_leads: 0, accepted_leads: 0, rejected_leads: 0,
+      outbid_leads: 0, sold_leads: 0, total_revenue: 0,
+    });
+    const v = map.get(r.buyer_id);
+    v.total_leads++;
+    if (r.buyer_status === 'ACCEPTED') { v.accepted_leads++; v.sold_leads++; v.total_revenue += r.sell_price; }
+    else if (r.buyer_status === 'ERROR')  { v.rejected_leads++; }
+    else if (r.buyer_status === 'OUTBID') { v.outbid_leads++; }
+  }
+  const pingMap = new Map();
+  for (const r of allBuyerRows) {
+    if (!pingMap.has(r.buyer_id)) pingMap.set(r.buyer_id, { pings_total: 0, pings_accepted: 0, pings_failed: 0 });
+    const p = pingMap.get(r.buyer_id);
+    p.pings_total    += Number(r.pings_total    || 0);
+    p.pings_accepted += Number(r.pings_accepted || 0);
+    p.pings_failed   += Number(r.pings_failed   || 0);
+  }
+  return [...map.values()].map(v => {
+    const p = pingMap.get(v.buyer_id) || { pings_total: 0, pings_accepted: 0, pings_failed: 0 };
+    return {
+      fetched_at:       fetchedAt,
+      buyer_id:         v.buyer_id,
+      buyer_name:       v.buyer_name,
+      total_leads:      v.total_leads,
+      accepted_leads:   v.accepted_leads,
+      rejected_leads:   v.rejected_leads,
+      outbid_leads:     v.outbid_leads,
+      sold_leads:       v.sold_leads,
+      total_revenue:    +v.total_revenue.toFixed(2),
+      avg_sell_price:   v.sold_leads   > 0 ? +(v.total_revenue / v.sold_leads   * 1).toFixed(2) : 0,
+      acceptance_rate:  v.total_leads  > 0 ? +(v.accepted_leads / v.total_leads  * 100).toFixed(2) : 0,
+      rejection_rate:   v.total_leads  > 0 ? +(v.rejected_leads / v.total_leads  * 100).toFixed(2) : 0,
+      conversion_rate:  v.total_leads  > 0 ? +(v.sold_leads     / v.total_leads  * 100).toFixed(2) : 0,
+      pings_total:      p.pings_total,
+      pings_accepted:   p.pings_accepted,
+      pings_failed:     p.pings_failed,
+      ping_accept_rate: p.pings_total > 0 ? +(p.pings_accepted / p.pings_total * 100).toFixed(2) : 0,
+      ping_reject_rate: p.pings_total > 0 ? +(p.pings_failed   / p.pings_total * 100).toFixed(2) : 0,
+    };
+  });
+}
+
+function _aggMetrics(v) {
+  return {
+    total_leads:     v.total_leads,
+    accepted_leads:  v.accepted_leads,
+    rejected_leads:  v.rejected_leads,
+    outbid_leads:    v.outbid_leads,
+    sold_leads:      v.sold_leads,
+    total_revenue:   +v.total_revenue.toFixed(2),
+    avg_sell_price:  v.sold_leads  > 0 ? +(v.total_revenue / v.sold_leads  * 1).toFixed(2) : 0,
+    acceptance_rate: v.total_leads > 0 ? +(v.accepted_leads / v.total_leads * 100).toFixed(2) : 0,
+    rejection_rate:  v.total_leads > 0 ? +(v.rejected_leads / v.total_leads * 100).toFixed(2) : 0,
+    conversion_rate: v.total_leads > 0 ? +(v.sold_leads     / v.total_leads * 100).toFixed(2) : 0,
+  };
+}
+
+function _accumulateLead(map, key, dims, r) {
+  if (!map.has(key)) map.set(key, { ...dims, total_leads: 0, accepted_leads: 0, rejected_leads: 0, outbid_leads: 0, sold_leads: 0, total_revenue: 0 });
+  const v = map.get(key);
+  v.total_leads++;
+  if (r.buyer_status === 'ACCEPTED') { v.accepted_leads++; v.sold_leads++; v.total_revenue += r.sell_price; }
+  else if (r.buyer_status === 'ERROR')  { v.rejected_leads++; }
+  else if (r.buyer_status === 'OUTBID') { v.outbid_leads++; }
+}
+
+export function computeAggBuyerState(fetchedAt, leadRecordRows) {
+  const map = new Map();
+  for (const r of leadRecordRows) {
+    const key = `${r.buyer_id}|${r.state}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state }, r);
+  }
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, ..._aggMetrics(v) }));
+}
+
+export function computeAggBuyerStateCity(fetchedAt, leadRecordRows) {
+  const map = new Map();
+  for (const r of leadRecordRows) {
+    const key = `${r.buyer_id}|${r.state}|${r.city}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, city: r.city }, r);
+  }
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, city: v.city, ..._aggMetrics(v) }));
+}
+
+export function computeAggBuyerPostal(fetchedAt, leadRecordRows) {
+  const map = new Map();
+  for (const r of leadRecordRows) {
+    const key = `${r.buyer_id}|${r.postal_code}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, postal_code: r.postal_code, state: r.state }, r);
+  }
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, postal_code: v.postal_code, state: v.state, ..._aggMetrics(v) }));
+}
