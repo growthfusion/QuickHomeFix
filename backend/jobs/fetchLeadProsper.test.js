@@ -12,6 +12,13 @@ vi.mock('@clickhouse/client', () => ({
 
 import axios from 'axios';
 import { fetchLeadProsper } from './fetchLeadProsper.js';
+import {
+  buildLeadRecordRows,
+  computeAggBuyer,
+  computeAggBuyerState,
+  computeAggBuyerStateCity,
+  computeAggBuyerPostal,
+} from './fetchLeadProsper.js';
 
 describe('fetchLeadProsper', () => {
   beforeEach(() => {
@@ -239,5 +246,151 @@ describe('fetchLeadProsper', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1);
     expect(mockInsert.mock.calls[0][0].table).toBe('leadprosper_stats');
     expect(mockClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── Pure function unit tests ─────────────────────────────────────────────────
+describe('buildLeadRecordRows', () => {
+  const TS = '2026-05-26 12:00:00';
+
+  it('returns one row per buyer per lead', () => {
+    const leads = [{
+      id: 'lead1', lead_date_ms: '1779753600000', status: 'ACCEPTED',
+      revenue: 30, cost: 0, campaign_id: 33966, campaign_name: 'Bath',
+      returned: false, return_reason: '', test: false, error_code: 0, error_message: '',
+      lead_data: { state: 'CA', city: 'Los Angeles', postalCode: '90001', service: 'BATH_REMODEL', rt_ad: 'ad1', source_id: 'gf2' },
+      supplier: { id: '110222', name: 'Karigouda' },
+      buyers: [
+        { id: 'b1', name: 'Modernize',  status: 'ACCEPTED', sell_price: 30, error_code: 0, error_message: '' },
+        { id: 'b2', name: 'Remodelwell', status: 'OUTBID',  sell_price: 0,  error_code: 0, error_message: '' },
+      ],
+    }];
+
+    const rows = buildLeadRecordRows(TS, leads);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      fetched_at: TS, lead_id: 'lead1', lead_date: '2026-05-26',
+      campaign_id: '33966', campaign_name: 'Bath', lead_status: 'ACCEPTED',
+      revenue: 30, state: 'CA', city: 'Los Angeles', postal_code: '90001',
+      service: 'BATH_REMODEL', supplier_name: 'Karigouda',
+      buyer_id: 'b1', buyer_name: 'Modernize', buyer_status: 'ACCEPTED', sell_price: 30,
+    });
+    expect(rows[1]).toMatchObject({ buyer_id: 'b2', buyer_status: 'OUTBID', sell_price: 0 });
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(buildLeadRecordRows(TS, [])).toEqual([]);
+  });
+
+  it('skips buyers array gracefully when absent', () => {
+    const leads = [{
+      id: 'lead2', lead_date_ms: '1748260800000', status: 'ERROR',
+      revenue: 0, cost: 0, campaign_id: 33966, campaign_name: 'Bath',
+      returned: false, return_reason: '', test: false, error_code: 1, error_message: 'err',
+      lead_data: { state: 'TX', city: 'Austin', postalCode: '78701', service: 'BATH_REMODEL', rt_ad: '', source_id: '' },
+      supplier: { id: '110222', name: 'Karigouda' },
+      buyers: [],
+    }];
+    expect(buildLeadRecordRows(TS, leads)).toEqual([]);
+  });
+});
+
+describe('computeAggBuyer', () => {
+  const TS = '2026-05-26 12:00:00';
+
+  const sampleLeadRows = [
+    { buyer_id: 'b1', buyer_name: 'Modernize',  buyer_status: 'ACCEPTED', sell_price: 30 },
+    { buyer_id: 'b1', buyer_name: 'Modernize',  buyer_status: 'ACCEPTED', sell_price: 20 },
+    { buyer_id: 'b1', buyer_name: 'Modernize',  buyer_status: 'ERROR',    sell_price: 0  },
+    { buyer_id: 'b1', buyer_name: 'Modernize',  buyer_status: 'OUTBID',   sell_price: 0  },
+    { buyer_id: 'b2', buyer_name: 'Remodelwell', buyer_status: 'ACCEPTED', sell_price: 15 },
+  ];
+
+  const samplePingRows = [
+    { buyer_id: 'b1', pings_total: 10, pings_accepted: 8, pings_failed: 2 },
+    { buyer_id: 'b1', pings_total: 5,  pings_accepted: 4, pings_failed: 1 },
+  ];
+
+  it('aggregates buyer totals correctly', () => {
+    const rows = computeAggBuyer(TS, sampleLeadRows, []);
+    const b1 = rows.find(r => r.buyer_id === 'b1');
+    expect(b1).toMatchObject({
+      fetched_at: TS,
+      total_leads: 4, accepted_leads: 2, rejected_leads: 1, outbid_leads: 1,
+      sold_leads: 2, total_revenue: 50,
+      avg_sell_price: 25,
+      acceptance_rate: 50,
+      rejection_rate: 25,
+      conversion_rate: 50,
+    });
+  });
+
+  it('merges ping metrics from allBuyerRows', () => {
+    const rows = computeAggBuyer(TS, sampleLeadRows, samplePingRows);
+    const b1 = rows.find(r => r.buyer_id === 'b1');
+    expect(b1).toMatchObject({
+      pings_total: 15, pings_accepted: 12, pings_failed: 3,
+      ping_accept_rate: 80,
+      ping_reject_rate: 20,
+    });
+  });
+
+  it('sets ping rates to 0 when pings_total is 0', () => {
+    const rows = computeAggBuyer(TS, sampleLeadRows, []);
+    const b1 = rows.find(r => r.buyer_id === 'b1');
+    expect(b1.ping_accept_rate).toBe(0);
+    expect(b1.ping_reject_rate).toBe(0);
+  });
+});
+
+describe('computeAggBuyerState', () => {
+  const TS = '2026-05-26 12:00:00';
+
+  it('groups by buyer + state', () => {
+    const leadRows = [
+      { buyer_id: 'b1', buyer_name: 'Modernize', state: 'CA', buyer_status: 'ACCEPTED', sell_price: 30 },
+      { buyer_id: 'b1', buyer_name: 'Modernize', state: 'CA', buyer_status: 'ERROR',    sell_price: 0  },
+      { buyer_id: 'b1', buyer_name: 'Modernize', state: 'TX', buyer_status: 'ACCEPTED', sell_price: 20 },
+    ];
+    const rows = computeAggBuyerState(TS, leadRows);
+    expect(rows).toHaveLength(2);
+    const ca = rows.find(r => r.state === 'CA');
+    expect(ca).toMatchObject({
+      buyer_id: 'b1', state: 'CA',
+      total_leads: 2, accepted_leads: 1, rejected_leads: 1, sold_leads: 1,
+      total_revenue: 30, avg_sell_price: 30, acceptance_rate: 50,
+    });
+  });
+});
+
+describe('computeAggBuyerStateCity', () => {
+  const TS = '2026-05-26 12:00:00';
+
+  it('groups by buyer + state + city', () => {
+    const leadRows = [
+      { buyer_id: 'b1', buyer_name: 'Modernize', state: 'CA', city: 'LA',   buyer_status: 'ACCEPTED', sell_price: 30 },
+      { buyer_id: 'b1', buyer_name: 'Modernize', state: 'CA', city: 'LA',   buyer_status: 'OUTBID',   sell_price: 0  },
+      { buyer_id: 'b1', buyer_name: 'Modernize', state: 'CA', city: 'SF',   buyer_status: 'ACCEPTED', sell_price: 25 },
+    ];
+    const rows = computeAggBuyerStateCity(TS, leadRows);
+    expect(rows).toHaveLength(2);
+    const la = rows.find(r => r.city === 'LA');
+    expect(la).toMatchObject({ state: 'CA', city: 'LA', total_leads: 2, sold_leads: 1, total_revenue: 30 });
+  });
+});
+
+describe('computeAggBuyerPostal', () => {
+  const TS = '2026-05-26 12:00:00';
+
+  it('groups by buyer + postal code', () => {
+    const leadRows = [
+      { buyer_id: 'b1', buyer_name: 'Modernize', postal_code: '90001', state: 'CA', buyer_status: 'ACCEPTED', sell_price: 30 },
+      { buyer_id: 'b1', buyer_name: 'Modernize', postal_code: '90001', state: 'CA', buyer_status: 'ERROR',    sell_price: 0  },
+      { buyer_id: 'b1', buyer_name: 'Modernize', postal_code: '78701', state: 'TX', buyer_status: 'ACCEPTED', sell_price: 20 },
+    ];
+    const rows = computeAggBuyerPostal(TS, leadRows);
+    expect(rows).toHaveLength(2);
+    const zip = rows.find(r => r.postal_code === '90001');
+    expect(zip).toMatchObject({ postal_code: '90001', state: 'CA', total_leads: 2, sold_leads: 1, total_revenue: 30 });
   });
 });

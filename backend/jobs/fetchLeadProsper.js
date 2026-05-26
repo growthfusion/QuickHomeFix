@@ -153,7 +153,7 @@ export function buildLeadRecordRows(fetchedAt, leads) {
     const base = {
       fetched_at:    fetchedAt,
       lead_id:       String(lead.id || ''),
-      lead_date:     fetchedAt.slice(0, 10),
+      lead_date:     new Date(Number(lead.lead_date_ms)).toISOString().slice(0, 10),
       campaign_id:   String(lead.campaign_id || ''),
       campaign_name: String(lead.campaign_name || ''),
       lead_status:   String(lead.status || ''),
