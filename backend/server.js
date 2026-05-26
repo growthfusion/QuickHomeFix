@@ -2047,6 +2047,84 @@ app.get("/api/stats/leadprosper-buyers", async (_req, res) => {
   }
 });
 
+app.get("/api/stats/lp-leads", async (req, res) => {
+  try {
+    const { buyer, state, city, postal_code, from, to } = req.query;
+    const conditions = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_lead_records)`];
+    if (buyer)       conditions.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (state)       conditions.push(`state = '${state.replace(/'/g, "''")}'`);
+    if (city)        conditions.push(`city = '${city.replace(/'/g, "''")}'`);
+    if (postal_code) conditions.push(`postal_code = '${postal_code.replace(/'/g, "''")}'`);
+    if (from)        conditions.push(`lead_date >= '${from}'`);
+    if (to)          conditions.push(`lead_date <= '${to}'`);
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_lead_records WHERE ${conditions.join(' AND ')} ORDER BY lead_date DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-leads]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer", async (_req, res) => {
+  try {
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer) ORDER BY total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer-state", async (req, res) => {
+  try {
+    const { buyer } = req.query;
+    const extra = buyer ? ` AND buyer_name = '${buyer.replace(/'/g, "''")}'` : '';
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer_state WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_state)${extra} ORDER BY buyer_name, total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer-state]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer-city", async (req, res) => {
+  try {
+    const { buyer, state } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_city)`];
+    if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer_city WHERE ${conds.join(' AND ')} ORDER BY buyer_name, state, total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer-city]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
+app.get("/api/stats/lp-agg-buyer-postal", async (req, res) => {
+  try {
+    const { buyer, state } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_postal)`];
+    if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    const rows = await runClickhouseSelect(
+      `SELECT * FROM leadprosper_agg_buyer_postal WHERE ${conds.join(' AND ')} ORDER BY buyer_name, total_revenue DESC`
+    );
+    res.json({ ok: true, rows });
+  } catch (e) {
+    console.error('[/api/stats/lp-agg-buyer-postal]', e.message);
+    res.status(500).json({ ok: false, rows: [] });
+  }
+});
+
 app.get("/api/stats/redtrack", async (_req, res) => {
   try {
     const rows = await runClickhouseSelect(
