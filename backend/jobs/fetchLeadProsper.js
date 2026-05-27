@@ -166,26 +166,21 @@ export async function fetchLeadProsper() {
     // Patch total_sell per (campaign_id, date) from individual lead sell prices.
     // This overrides the accounting API value which is often 0 due to granular params.
     if (allLeads.length > 0) {
-      const sellByKey = new Map();
-      for (const lead of allLeads) {
-        if ((lead.status || '').toUpperCase() !== 'ACCEPTED') continue;
-        const date = new Date(Number(lead.lead_date_ms)).toISOString().slice(0, 10);
-        const key = `${lead.campaign_id}_${date}`;
-        sellByKey.set(key, (sellByKey.get(key) || 0) + Number(lead.revenue || 0));
-      }
-      for (const row of allRows) {
-        const computed = sellByKey.get(`${row.campaign_id}_${row.date}`);
-        if (computed !== undefined) row.total_sell = +computed.toFixed(2);
-      }
+      patchTotalSell(allRows, allLeads);
     }
 
+    const successfulDays = dayResults.map(r => r.day);
+    const daysInList = successfulDays.map(d => `'${d}'`).join(',');
+    const allDaysSucceeded = dayResults.length === days.length;
+
     await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
-    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
+    // Only purge dates we re-fetched — preserves prior-fetch rows for dates the upstream API omitted.
+    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
     console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
 
     if (allBuyerRows.length > 0) {
       await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
+      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
     }
 
     if (allLeads.length > 0) {
@@ -200,19 +195,25 @@ export async function fetchLeadProsper() {
       const aggPostalRows      = computeAggBuyerPostal(fetchedAt, allLeadRecordRows);
 
       await ch.insert({ table: 'leadprosper_lead_records',    values: allLeadRecordRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}'` });
+      await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}' AND lead_date IN (${daysInList})` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
+      // Agg tables are month-to-date aggregates with no date column — only do a full replace
+      // when every day succeeded, otherwise prior-fetch rows are more complete than a partial agg.
+      if (allDaysSucceeded) {
+        await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
+        await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
+        await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
+        await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
+      } else {
+        console.log(`[fetchLeadProsper] Skipping agg tables — ${days.length - dayResults.length}/${days.length} days failed to fetch`);
+      }
 
       console.log(`[fetchLeadProsper] Inserted ${allLeadRecordRows.length} lead records across ${campaignIds.length} campaigns`);
     }
@@ -222,6 +223,35 @@ export async function fetchLeadProsper() {
 }
 
 // ── Pure data-transformation functions (exported for unit testing) ────────────
+
+// Convert an epoch-ms timestamp to a YYYY-MM-DD string in LeadProsper's reporting
+// timezone (US Eastern). LP /public/stats buckets each day by Eastern, so lead-level
+// revenue must be keyed the same way — otherwise late-evening Eastern leads (which
+// roll into the next UTC calendar day) get dropped from the correct day's total_sell.
+export function easternDate(ms) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(Number(ms)));
+}
+
+// Override each stats row's total_sell with the summed revenue of its ACCEPTED leads,
+// matched by (campaign_id, Eastern date). The accounting API frequently reports 0
+// total_sell under granular params, so lead-level sums are the authoritative figure.
+export function patchTotalSell(rows, leads) {
+  const sellByKey = new Map();
+  for (const lead of leads) {
+    if ((lead.status || '').toUpperCase() !== 'ACCEPTED') continue;
+    const date = easternDate(lead.lead_date_ms);
+    const key = `${lead.campaign_id}_${date}`;
+    sellByKey.set(key, (sellByKey.get(key) || 0) + Number(lead.revenue || 0));
+  }
+  for (const row of rows) {
+    const computed = sellByKey.get(`${row.campaign_id}_${row.date}`);
+    if (computed !== undefined) row.total_sell = +computed.toFixed(2);
+  }
+  return rows;
+}
 
 export function buildLeadRecordRows(fetchedAt, leads) {
   const rows = [];

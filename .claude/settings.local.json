@@ -26,7 +26,13 @@
       "Bash(curl *)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('ok:', d['ok'], '| rows:', len\\(d['rows']\\)\\); r=d['rows'][0] if d['rows'] else {}; print\\('sample keys:', list\\(r.keys\\(\\)\\)[:8]\\)\")",
       "Bash(awk -F: '{s+=$2} END {printf \"lp-agg-buyer total_revenue sum: %.2f\\\\n\", s}')",
-      "mcp__claude_ai_Clickhouse__list_tables"
+      "mcp__claude_ai_Clickhouse__list_tables",
+      "Bash(xargs grep *)",
+      "Bash(npm test *)",
+      "Bash(git -C \"C:/Users/MukilanMoorthy/Desktop/QuickHomeFix_clean\" add backend/server.js)",
+      "Bash(git -C C:/Users/MukilanMoorthy/Desktop/QuickHomeFix_clean commit -m 'chore\\(cron\\): update stale '\\\\''hourly'\\\\'' wording to '\\\\''3-hourly'\\\\'' *)",
+      "Bash(rm -f _live3.mjs _live2.mjs _livetest.mjs _hubtest.mjs)",
+      "Bash(ls _*.mjs)"
     ]
   }
 }
