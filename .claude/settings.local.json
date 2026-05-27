@@ -30,7 +30,9 @@
       "Bash(xargs grep *)",
       "Bash(npm test *)",
       "Bash(git -C \"C:/Users/MukilanMoorthy/Desktop/QuickHomeFix_clean\" add backend/server.js)",
-      "Bash(git -C C:/Users/MukilanMoorthy/Desktop/QuickHomeFix_clean commit -m 'chore\\(cron\\): update stale '\\\\''hourly'\\\\'' wording to '\\\\''3-hourly'\\\\'' *)"
+      "Bash(git -C C:/Users/MukilanMoorthy/Desktop/QuickHomeFix_clean commit -m 'chore\\(cron\\): update stale '\\\\''hourly'\\\\'' wording to '\\\\''3-hourly'\\\\'' *)",
+      "Bash(rm -f _live3.mjs _live2.mjs _livetest.mjs _hubtest.mjs)",
+      "Bash(ls _*.mjs)"
     ]
   }
 }
