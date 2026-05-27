@@ -166,17 +166,7 @@ export async function fetchLeadProsper() {
     // Patch total_sell per (campaign_id, date) from individual lead sell prices.
     // This overrides the accounting API value which is often 0 due to granular params.
     if (allLeads.length > 0) {
-      const sellByKey = new Map();
-      for (const lead of allLeads) {
-        if ((lead.status || '').toUpperCase() !== 'ACCEPTED') continue;
-        const date = new Date(Number(lead.lead_date_ms)).toISOString().slice(0, 10);
-        const key = `${lead.campaign_id}_${date}`;
-        sellByKey.set(key, (sellByKey.get(key) || 0) + Number(lead.revenue || 0));
-      }
-      for (const row of allRows) {
-        const computed = sellByKey.get(`${row.campaign_id}_${row.date}`);
-        if (computed !== undefined) row.total_sell = +computed.toFixed(2);
-      }
+      patchTotalSell(allRows, allLeads);
     }
 
     const successfulDays = dayResults.map(r => r.day);
@@ -233,6 +223,35 @@ export async function fetchLeadProsper() {
 }
 
 // ── Pure data-transformation functions (exported for unit testing) ────────────
+
+// Convert an epoch-ms timestamp to a YYYY-MM-DD string in LeadProsper's reporting
+// timezone (US Eastern). LP /public/stats buckets each day by Eastern, so lead-level
+// revenue must be keyed the same way — otherwise late-evening Eastern leads (which
+// roll into the next UTC calendar day) get dropped from the correct day's total_sell.
+export function easternDate(ms) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(Number(ms)));
+}
+
+// Override each stats row's total_sell with the summed revenue of its ACCEPTED leads,
+// matched by (campaign_id, Eastern date). The accounting API frequently reports 0
+// total_sell under granular params, so lead-level sums are the authoritative figure.
+export function patchTotalSell(rows, leads) {
+  const sellByKey = new Map();
+  for (const lead of leads) {
+    if ((lead.status || '').toUpperCase() !== 'ACCEPTED') continue;
+    const date = easternDate(lead.lead_date_ms);
+    const key = `${lead.campaign_id}_${date}`;
+    sellByKey.set(key, (sellByKey.get(key) || 0) + Number(lead.revenue || 0));
+  }
+  for (const row of rows) {
+    const computed = sellByKey.get(`${row.campaign_id}_${row.date}`);
+    if (computed !== undefined) row.total_sell = +computed.toFixed(2);
+  }
+  return rows;
+}
 
 export function buildLeadRecordRows(fetchedAt, leads) {
   const rows = [];

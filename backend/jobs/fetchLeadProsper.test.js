@@ -18,6 +18,8 @@ import {
   computeAggBuyerState,
   computeAggBuyerStateCity,
   computeAggBuyerPostal,
+  easternDate,
+  patchTotalSell,
 } from './fetchLeadProsper.js';
 
 describe('fetchLeadProsper', () => {
@@ -460,6 +462,43 @@ describe('computeAggBuyerStateCity', () => {
     expect(rows).toHaveLength(2);
     const la = rows.find(r => r.city === 'LA');
     expect(la).toMatchObject({ state: 'CA', city: 'LA', total_leads: 2, sold_leads: 1, total_revenue: 30 });
+  });
+});
+
+describe('easternDate', () => {
+  it('converts a UTC ms timestamp to the America/New_York calendar date', () => {
+    // 02:20 UTC on 05-27 == 22:20 EDT on 05-26 → belongs to 05-26
+    expect(easternDate(Date.parse('2026-05-27T02:20:00Z'))).toBe('2026-05-26');
+    // 05:00 UTC on 05-27 == 01:00 EDT on 05-27 → 05-27
+    expect(easternDate(Date.parse('2026-05-27T05:00:00Z'))).toBe('2026-05-27');
+  });
+});
+
+describe('patchTotalSell (Eastern-day bucketing)', () => {
+  it('buckets late-evening Eastern leads (early next-day UTC) into the correct day', () => {
+    const rows = [
+      { campaign_id: '33966', date: '2026-05-26', total_sell: 0 },
+      { campaign_id: '33966', date: '2026-05-27', total_sell: 0 },
+    ];
+    const leads = [
+      // 22:20 EDT 05-26 (02:20 UTC 05-27) — must land on 05-26, not 05-27
+      { campaign_id: '33966', status: 'ACCEPTED', revenue: 40, lead_date_ms: Date.parse('2026-05-27T02:20:00Z') },
+      // 08:08 EDT 05-26
+      { campaign_id: '33966', status: 'ACCEPTED', revenue: 60, lead_date_ms: Date.parse('2026-05-26T12:08:00Z') },
+      // ERROR leads contribute no revenue
+      { campaign_id: '33966', status: 'ERROR', revenue: 0, lead_date_ms: Date.parse('2026-05-27T01:00:00Z') },
+    ];
+
+    patchTotalSell(rows, leads);
+
+    expect(rows.find(r => r.date === '2026-05-26').total_sell).toBe(100);
+    expect(rows.find(r => r.date === '2026-05-27').total_sell).toBe(0);
+  });
+
+  it('leaves total_sell untouched for rows with no matching leads', () => {
+    const rows = [{ campaign_id: 'cX', date: '2026-05-26', total_sell: 12.5 }];
+    patchTotalSell(rows, [{ campaign_id: 'cY', status: 'ACCEPTED', revenue: 40, lead_date_ms: Date.parse('2026-05-26T12:00:00Z') }]);
+    expect(rows[0].total_sell).toBe(12.5);
   });
 });
 
