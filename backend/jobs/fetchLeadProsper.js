@@ -185,11 +185,9 @@ export async function fetchLeadProsper() {
 
     if (allLeads.length > 0) {
       const allLeadRecordRows  = buildLeadRecordRows(fetchedAt, allLeads);
-      // Use only the latest day's buyer rows for ping aggregation — LP stats returns
-      // cumulative MTD totals per day, so summing all days would double-count pings.
-      const latestDay          = days[days.length - 1];
-      const latestBuyerRows    = allBuyerRows.filter(r => r.date === latestDay);
-      const aggBuyerRows       = computeAggBuyer(fetchedAt, allLeadRecordRows, latestBuyerRows);
+      // Pings are now keyed per (buyer, date) inside computeAggBuyer; pass all rows
+      // so each day's pings land on the matching per-day agg row.
+      const aggBuyerRows       = computeAggBuyer(fetchedAt, allLeadRecordRows, allBuyerRows);
       const aggStateRows       = computeAggBuyerState(fetchedAt, allLeadRecordRows);
       const aggCityRows        = computeAggBuyerStateCity(fetchedAt, allLeadRecordRows);
       const aggPostalRows      = computeAggBuyerPostal(fetchedAt, allLeadRecordRows);
@@ -260,7 +258,8 @@ export function buildLeadRecordRows(fetchedAt, leads) {
     const base = {
       fetched_at:    fetchedAt,
       lead_id:       String(lead.id || ''),
-      lead_date:     new Date(Number(lead.lead_date_ms)).toISOString().slice(0, 10),
+      // Eastern, not UTC — LP buckets days by America/New_York, so lead_date must match.
+      lead_date:     easternDate(lead.lead_date_ms),
       campaign_id:   String(lead.campaign_id || ''),
       campaign_name: String(lead.campaign_name || ''),
       lead_status:   String(lead.status || ''),
@@ -292,12 +291,13 @@ export function buildLeadRecordRows(fetchedAt, leads) {
 export function computeAggBuyer(fetchedAt, leadRecordRows, allBuyerRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    if (!map.has(r.buyer_id)) map.set(r.buyer_id, {
-      buyer_id: r.buyer_id, buyer_name: r.buyer_name,
+    const key = `${r.buyer_id}|${r.lead_date}`;
+    if (!map.has(key)) map.set(key, {
+      buyer_id: r.buyer_id, buyer_name: r.buyer_name, lead_date: r.lead_date,
       total_leads: 0, accepted_leads: 0, rejected_leads: 0,
       outbid_leads: 0, sold_leads: 0, total_revenue: 0,
     });
-    const v = map.get(r.buyer_id);
+    const v = map.get(key);
     v.total_leads++;
     if (r.buyer_status === 'ACCEPTED') { v.accepted_leads++; v.sold_leads++; v.total_revenue += r.sell_price; }
     else if (r.buyer_status === 'ERROR')  { v.rejected_leads++; }
@@ -305,16 +305,18 @@ export function computeAggBuyer(fetchedAt, leadRecordRows, allBuyerRows) {
   }
   const pingMap = new Map();
   for (const r of allBuyerRows) {
-    if (!pingMap.has(r.buyer_id)) pingMap.set(r.buyer_id, { pings_total: 0, pings_accepted: 0, pings_failed: 0 });
-    const p = pingMap.get(r.buyer_id);
+    const pk = `${r.buyer_id}|${r.date}`;
+    if (!pingMap.has(pk)) pingMap.set(pk, { pings_total: 0, pings_accepted: 0, pings_failed: 0 });
+    const p = pingMap.get(pk);
     p.pings_total    += Number(r.pings_total    || 0);
     p.pings_accepted += Number(r.pings_accepted || 0);
     p.pings_failed   += Number(r.pings_failed   || 0);
   }
   return [...map.values()].map(v => {
-    const p = pingMap.get(v.buyer_id) || { pings_total: 0, pings_accepted: 0, pings_failed: 0 };
+    const p = pingMap.get(`${v.buyer_id}|${v.lead_date}`) || { pings_total: 0, pings_accepted: 0, pings_failed: 0 };
     return {
       fetched_at:       fetchedAt,
+      lead_date:        v.lead_date,
       buyer_id:         v.buyer_id,
       buyer_name:       v.buyer_name,
       total_leads:      v.total_leads,
@@ -363,26 +365,26 @@ function _accumulateLead(map, key, dims, r) {
 export function computeAggBuyerState(fetchedAt, leadRecordRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    const key = `${r.buyer_id}|${r.state}`;
-    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state }, r);
+    const key = `${r.buyer_id}|${r.state}|${r.lead_date}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, lead_date: r.lead_date }, r);
   }
-  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, ..._aggMetrics(v) }));
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, lead_date: v.lead_date, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, ..._aggMetrics(v) }));
 }
 
 export function computeAggBuyerStateCity(fetchedAt, leadRecordRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    const key = `${r.buyer_id}|${r.state}|${r.city}`;
-    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, city: r.city }, r);
+    const key = `${r.buyer_id}|${r.state}|${r.city}|${r.lead_date}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, city: r.city, lead_date: r.lead_date }, r);
   }
-  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, city: v.city, ..._aggMetrics(v) }));
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, lead_date: v.lead_date, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, city: v.city, ..._aggMetrics(v) }));
 }
 
 export function computeAggBuyerPostal(fetchedAt, leadRecordRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    const key = `${r.buyer_id}|${r.postal_code}`;
-    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, postal_code: r.postal_code, state: r.state }, r);
+    const key = `${r.buyer_id}|${r.postal_code}|${r.lead_date}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, postal_code: r.postal_code, state: r.state, lead_date: r.lead_date }, r);
   }
-  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, postal_code: v.postal_code, state: v.state, ..._aggMetrics(v) }));
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, lead_date: v.lead_date, buyer_id: v.buyer_id, buyer_name: v.buyer_name, postal_code: v.postal_code, state: v.state, ..._aggMetrics(v) }));
 }
