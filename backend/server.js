@@ -1592,6 +1592,7 @@ app.post("/api/dev/migrate", async (_req, res) => {
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           total_leads      UInt32,
@@ -1610,12 +1611,13 @@ app.post("/api/dev/migrate", async (_req, res) => {
           ping_accept_rate Float64,
           ping_reject_rate Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id)
+        ORDER BY (lead_date, buyer_id)
       `,
       // 9. LP buyer + state summary
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_state (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           state            LowCardinality(String),
@@ -1630,12 +1632,13 @@ app.post("/api/dev/migrate", async (_req, res) => {
           rejection_rate   Float64,
           conversion_rate  Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id, state)
+        ORDER BY (lead_date, buyer_id, state)
       `,
       // 10. LP buyer + state + city summary
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_city (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           state            LowCardinality(String),
@@ -1651,12 +1654,13 @@ app.post("/api/dev/migrate", async (_req, res) => {
           rejection_rate   Float64,
           conversion_rate  Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id, state, city)
+        ORDER BY (lead_date, buyer_id, state, city)
       `,
       // 11. LP buyer + postal code summary
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_postal (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           postal_code      String,
@@ -1672,7 +1676,7 @@ app.post("/api/dev/migrate", async (_req, res) => {
           rejection_rate   Float64,
           conversion_rate  Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id, postal_code)
+        ORDER BY (lead_date, buyer_id, postal_code)
       `,
       // 12. Add rate columns to existing leadprosper_buyer_stats
       `ALTER TABLE leadprosper_buyer_stats ADD COLUMN IF NOT EXISTS ping_accept_rate Float64 DEFAULT 0`,
@@ -2067,10 +2071,13 @@ app.get("/api/stats/lp-leads", async (req, res) => {
   }
 });
 
-app.get("/api/stats/lp-agg-buyer", async (_req, res) => {
+app.get("/api/stats/lp-agg-buyer", async (req, res) => {
   try {
+    const { date } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer)`];
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer) ORDER BY total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2081,10 +2088,12 @@ app.get("/api/stats/lp-agg-buyer", async (_req, res) => {
 
 app.get("/api/stats/lp-agg-buyer-state", async (req, res) => {
   try {
-    const { buyer } = req.query;
-    const extra = buyer ? ` AND buyer_name = '${buyer.replace(/'/g, "''")}'` : '';
+    const { buyer, date } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_state)`];
+    if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer_state WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_state)${extra} ORDER BY buyer_name, total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer_state WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, buyer_name, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2095,12 +2104,13 @@ app.get("/api/stats/lp-agg-buyer-state", async (req, res) => {
 
 app.get("/api/stats/lp-agg-buyer-city", async (req, res) => {
   try {
-    const { buyer, state } = req.query;
+    const { buyer, state, date } = req.query;
     const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_city)`];
     if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
     if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer_city WHERE ${conds.join(' AND ')} ORDER BY buyer_name, state, total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer_city WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, buyer_name, state, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2111,12 +2121,13 @@ app.get("/api/stats/lp-agg-buyer-city", async (req, res) => {
 
 app.get("/api/stats/lp-agg-buyer-postal", async (req, res) => {
   try {
-    const { buyer, state } = req.query;
+    const { buyer, state, date } = req.query;
     const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_postal)`];
     if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
     if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer_postal WHERE ${conds.join(' AND ')} ORDER BY buyer_name, total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer_postal WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, buyer_name, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
