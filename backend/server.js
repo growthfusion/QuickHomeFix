@@ -1588,7 +1588,12 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ) ENGINE = MergeTree()
         ORDER BY (lead_date, campaign_id, lead_id, buyer_id)
       `,
-      // 8. LP buyer-level summary (current month, latest snapshot)
+      // 8. LP buyer aggregates — drop old (no lead_date column) so new schema below applies.
+      // Safe to re-run; CREATE IF NOT EXISTS recreates them, next cron repopulates.
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer`,
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer_state`,
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer_city`,
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer_postal`,
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
