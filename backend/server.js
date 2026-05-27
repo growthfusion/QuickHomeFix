@@ -8,7 +8,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { createClient } from "@clickhouse/client";
+import { getClickhouse, closeClickhouse } from "./clickhouseClient.js";
 import cron from "node-cron";
 import { fetchMeta } from "./jobs/fetchMeta.js";
 import { fetchLeadProsper } from "./jobs/fetchLeadProsper.js";
@@ -911,42 +911,14 @@ app.use(
 );
 
 // --- ClickHouse client ---
-const CLICKHOUSE_HOST = String(process.env.CLICKHOUSE_HOST || process.env.CLICKHOUSE_URL || "").trim();
-const CLICKHOUSE_PORT = Number(process.env.CLICKHOUSE_PORT || 8443);
-const CLICKHOUSE_PROTOCOL = String(process.env.CLICKHOUSE_PROTOCOL || "https").trim();
-const CLICKHOUSE_DATABASE = String(process.env.CLICKHOUSE_DATABASE || "default").trim();
-const CLICKHOUSE_USERNAME = String(process.env.CLICKHOUSE_USERNAME || "default").trim();
-const CLICKHOUSE_PASSWORD = String(process.env.CLICKHOUSE_PASSWORD || "").trim();
 const CLICKHOUSE_TABLE = String(process.env.CLICKHOUSE_TABLE || "leads").trim();
 
 if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(CLICKHOUSE_TABLE)) {
   throw new Error("Invalid CLICKHOUSE_TABLE name. Use only letters, numbers, and underscore.");
 }
 
-function buildClickhouseUrl() {
-  if (!CLICKHOUSE_HOST) return "";
-
-  if (/^https?:\/\//i.test(CLICKHOUSE_HOST)) {
-    const parsed = new URL(CLICKHOUSE_HOST);
-    if (!parsed.port) parsed.port = String(CLICKHOUSE_PORT);
-    return parsed.toString().replace(/\/$/, "");
-  }
-
-  return `${CLICKHOUSE_PROTOCOL}://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT}`;
-}
-
-const CLICKHOUSE_URL = buildClickhouseUrl();
-const CLICKHOUSE_ENABLED = Boolean(CLICKHOUSE_URL && CLICKHOUSE_USERNAME && CLICKHOUSE_PASSWORD);
-
-const clickhouse = CLICKHOUSE_ENABLED
-  ? createClient({
-      url: CLICKHOUSE_URL,
-      database: CLICKHOUSE_DATABASE,
-      username: CLICKHOUSE_USERNAME,
-      password: CLICKHOUSE_PASSWORD,
-      request_timeout: 45000,
-    })
-  : null;
+// Shared, connection-pooled client reused by the server and all cron jobs.
+const clickhouse = getClickhouse();
 
 function boolToUInt8(value) {
   if (value === true) return 1;
@@ -2383,6 +2355,19 @@ app.get('/{*path}', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Graceful shutdown — close the shared ClickHouse client once on exit.
+async function shutdown(signal) {
+  console.log(`[shutdown] ${signal} received, closing...`);
+  server.close(async () => {
+    await closeClickhouse();
+    console.log("[shutdown] ClickHouse client closed. Bye.");
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000).unref(); // safety net if close hangs
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

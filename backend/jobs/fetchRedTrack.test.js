@@ -270,7 +270,6 @@ describe('fetchRedTrack', () => {
     axios.get.mockRejectedValue(new Error('network error'));
     await fetchRedTrack();
     expect(mockInsert).not.toHaveBeenCalled();
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('skips everything when REDTRACK_API_KEY is not set', async () => {
