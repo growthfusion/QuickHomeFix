@@ -1991,11 +1991,11 @@ app.post("/api/thumbtack/businesses", async (req, res) => {
 Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
   .then(() => console.log('[startup] Initial API sync complete'));
 
-// --- Hourly cron scheduler ---
-cron.schedule('0 * * * *', () => {
-  console.log('[cron] Starting hourly API sync...');
+// --- Every-3-hours cron scheduler ---
+cron.schedule('0 */3 * * *', () => {
+  console.log('[cron] Starting 3-hourly API sync...');
   Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
-    .then(() => console.log('[cron] Hourly sync complete'));
+    .then(() => console.log('[cron] 3-hourly sync complete'));
 });
 
 // --- GET endpoints for latest stats snapshots ---
