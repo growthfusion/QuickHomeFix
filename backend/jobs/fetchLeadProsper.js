@@ -179,13 +179,18 @@ export async function fetchLeadProsper() {
       }
     }
 
+    const successfulDays = dayResults.map(r => r.day);
+    const daysInList = successfulDays.map(d => `'${d}'`).join(',');
+    const allDaysSucceeded = dayResults.length === days.length;
+
     await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
-    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
+    // Only purge dates we re-fetched — preserves prior-fetch rows for dates the upstream API omitted.
+    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
     console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
 
     if (allBuyerRows.length > 0) {
       await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
+      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
     }
 
     if (allLeads.length > 0) {
@@ -200,19 +205,25 @@ export async function fetchLeadProsper() {
       const aggPostalRows      = computeAggBuyerPostal(fetchedAt, allLeadRecordRows);
 
       await ch.insert({ table: 'leadprosper_lead_records',    values: allLeadRecordRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}'` });
+      await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}' AND lead_date IN (${daysInList})` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
+      // Agg tables are month-to-date aggregates with no date column — only do a full replace
+      // when every day succeeded, otherwise prior-fetch rows are more complete than a partial agg.
+      if (allDaysSucceeded) {
+        await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
+        await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
+        await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
 
-      await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
+        await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
+        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
+      } else {
+        console.log(`[fetchLeadProsper] Skipping agg tables — ${days.length - dayResults.length}/${days.length} days failed to fetch`);
+      }
 
       console.log(`[fetchLeadProsper] Inserted ${allLeadRecordRows.length} lead records across ${campaignIds.length} campaigns`);
     }

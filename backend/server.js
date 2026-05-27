@@ -1992,7 +1992,7 @@ Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumb
   .then(() => console.log('[startup] Initial API sync complete'));
 
 // --- Hourly cron scheduler ---
-cron.schedule('0 * * * *', () => {
+cron.schedule('0 */3 * * *', () => {
   console.log('[cron] Starting hourly API sync...');
   Promise.allSettled([fetchMeta(), fetchLeadProsper(), fetchRedTrack(), fetchThumbTack()])
     .then(() => console.log('[cron] Hourly sync complete'));
