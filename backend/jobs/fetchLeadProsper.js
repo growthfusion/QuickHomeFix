@@ -1,21 +1,7 @@
 import axios from 'axios';
-import { createClient } from '@clickhouse/client';
+import { getClickhouse } from '../clickhouseClient.js';
 
 const LP_BASE = 'https://api.leadprosper.io';
-
-function buildClient() {
-  const host = process.env.CLICKHOUSE_HOST || '';
-  const url = /^https?:\/\//i.test(host)
-    ? host
-    : `https://${host}:${process.env.CLICKHOUSE_PORT || 8443}`;
-  return createClient({
-    url,
-    database: process.env.CLICKHOUSE_DATABASE || 'default',
-    username: process.env.CLICKHOUSE_USERNAME || 'default',
-    password: process.env.CLICKHOUSE_PASSWORD || '',
-    request_timeout: 45000,
-  });
-}
 
 function currentMonthDays() {
   const now = new Date();
@@ -68,157 +54,152 @@ export async function fetchLeadProsper() {
   }
 
   const headers = { Authorization: `Bearer ${key}` };
-  const ch = buildClient();
-  try {
-    const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const days = currentMonthDays();
+  const ch = getClickhouse();
+  if (!ch) { console.warn('[fetchLeadProsper] ClickHouse not configured — skipping'); return; }
+  const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const days = currentMonthDays();
 
-    const settled = await Promise.allSettled(days.map(day => fetchDay(headers, day)));
+  const settled = await Promise.allSettled(days.map(day => fetchDay(headers, day)));
 
-    const dayResults = settled.map((r, i) => {
-      if (r.status === 'rejected') {
-        console.warn(`[fetchLeadProsper] Failed to fetch ${days[i]}:`, r.reason?.message);
-        return null;
-      }
-      return r.value;
-    }).filter(Boolean);
-
-    if (dayResults.length === 0) {
-      console.error('[fetchLeadProsper] All daily API calls failed');
-      return;
+  const dayResults = settled.map((r, i) => {
+    if (r.status === 'rejected') {
+      console.warn(`[fetchLeadProsper] Failed to fetch ${days[i]}:`, r.reason?.message);
+      return null;
     }
+    return r.value;
+  }).filter(Boolean);
 
-    const allRows = [];
-    const allBuyerRows = [];
+  if (dayResults.length === 0) {
+    console.error('[fetchLeadProsper] All daily API calls failed');
+    return;
+  }
 
-    for (const { day, stats, accounting } of dayResults) {
-      if (stats.length === 0) continue;
-      const acctMap = {};
-      accounting.forEach(a => { acctMap[a.campaign_id] = a; });
-      for (const s of stats) {
-        const c = s.campaign || s;
-        const acct = acctMap[c.id] || {};
-        allRows.push({
+  const allRows = [];
+  const allBuyerRows = [];
+
+  for (const { day, stats, accounting } of dayResults) {
+    if (stats.length === 0) continue;
+    const acctMap = {};
+    accounting.forEach(a => { acctMap[a.campaign_id] = a; });
+    for (const s of stats) {
+      const c = s.campaign || s;
+      const acct = acctMap[c.id] || {};
+      allRows.push({
+        fetched_at: fetchedAt,
+        date: day,
+        campaign_id: String(c.id || ''),
+        campaign_name: c.name || '',
+        leads_total: Number(c.leads_total || 0),
+        leads_accepted: Number(c.leads_accepted || 0),
+        leads_failed: Number(c.leads_failed || 0),
+        leads_returned: Number(c.leads_returned || 0),
+        total_buy: Number(acct.total_buy || 0),
+        total_sell: Number(acct.total_sell || 0),
+        net_profit: Number(acct.net_profit || 0),
+      });
+
+      const buyers = Array.isArray(s.buyers) ? s.buyers : [];
+      for (const b of buyers) {
+        allBuyerRows.push({
           fetched_at: fetchedAt,
           date: day,
           campaign_id: String(c.id || ''),
           campaign_name: c.name || '',
-          leads_total: Number(c.leads_total || 0),
-          leads_accepted: Number(c.leads_accepted || 0),
-          leads_failed: Number(c.leads_failed || 0),
-          leads_returned: Number(c.leads_returned || 0),
-          total_buy: Number(acct.total_buy || 0),
-          total_sell: Number(acct.total_sell || 0),
-          net_profit: Number(acct.net_profit || 0),
+          buyer_id: String(b.id || ''),
+          buyer_name: b.name || '',
+          leads_total: Number(b.leads_total || 0),
+          leads_accepted: Number(b.leads_accepted || 0),
+          leads_duplicated: Number(b.leads_duplicated || 0),
+          leads_failed: Number(b.leads_failed || 0),
+          leads_returned: Number(b.leads_returned || 0),
+          pings_total: Number(b.pings_total || 0),
+          pings_accepted: Number(b.pings_accepted || 0),
+          pings_failed: Number(b.pings_failed || 0),
+          total_sell: Number(b.total_sell || 0),
+          gross_revenue: Number(b.gross_revenue || 0),
+          net_revenue: Number(b.net_revenue || 0),
+          returned_revenue: Number(b.returned_revenue || 0),
+          net_leads_accepted: Number(b.net_leads_accepted || 0),
+          ping_accept_rate: Number(b.pings_total || 0) > 0
+            ? +((Number(b.pings_accepted || 0) / Number(b.pings_total)) * 100).toFixed(2) : 0,
+          ping_reject_rate: Number(b.pings_total || 0) > 0
+            ? +((Number(b.pings_failed || 0) / Number(b.pings_total)) * 100).toFixed(2) : 0,
         });
-
-        const buyers = Array.isArray(s.buyers) ? s.buyers : [];
-        for (const b of buyers) {
-          allBuyerRows.push({
-            fetched_at: fetchedAt,
-            date: day,
-            campaign_id: String(c.id || ''),
-            campaign_name: c.name || '',
-            buyer_id: String(b.id || ''),
-            buyer_name: b.name || '',
-            leads_total: Number(b.leads_total || 0),
-            leads_accepted: Number(b.leads_accepted || 0),
-            leads_duplicated: Number(b.leads_duplicated || 0),
-            leads_failed: Number(b.leads_failed || 0),
-            leads_returned: Number(b.leads_returned || 0),
-            pings_total: Number(b.pings_total || 0),
-            pings_accepted: Number(b.pings_accepted || 0),
-            pings_failed: Number(b.pings_failed || 0),
-            total_sell: Number(b.total_sell || 0),
-            gross_revenue: Number(b.gross_revenue || 0),
-            net_revenue: Number(b.net_revenue || 0),
-            returned_revenue: Number(b.returned_revenue || 0),
-            net_leads_accepted: Number(b.net_leads_accepted || 0),
-            ping_accept_rate: Number(b.pings_total || 0) > 0
-              ? +((Number(b.pings_accepted || 0) / Number(b.pings_total)) * 100).toFixed(2) : 0,
-            ping_reject_rate: Number(b.pings_total || 0) > 0
-              ? +((Number(b.pings_failed || 0) / Number(b.pings_total)) * 100).toFixed(2) : 0,
-          });
-        }
       }
     }
+  }
 
-    if (allRows.length === 0) {
-      console.log('[fetchLeadProsper] No stats returned for any day this month');
-      return;
+  if (allRows.length === 0) {
+    console.log('[fetchLeadProsper] No stats returned for any day this month');
+    return;
+  }
+
+  // Leads fetch — before stats insert so we can patch total_sell from actual lead revenues
+  const campaignIds = [...new Set(
+    dayResults.flatMap(({ stats }) => stats.map(s => String((s.campaign || s).id || '')))
+  )].filter(Boolean);
+
+  const allLeads = [];
+  for (const cid of campaignIds) {
+    try {
+      const leads = await fetchAllLeadsForCampaign(headers, cid, days[0], days[days.length - 1]);
+      allLeads.push(...leads);
+    } catch (e) {
+      console.warn(`[fetchLeadProsper] leads fetch failed for campaign ${cid}:`, e.message);
+    }
+  }
+
+  // Patch total_sell per (campaign_id, date) from individual lead sell prices.
+  // This overrides the accounting API value which is often 0 due to granular params.
+  if (allLeads.length > 0) {
+    patchTotalSell(allRows, allLeads);
+  }
+
+  const successfulDays = dayResults.map(r => r.day);
+  const daysInList = successfulDays.map(d => `'${d}'`).join(',');
+  const allDaysSucceeded = dayResults.length === days.length;
+
+  await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
+  // Only purge dates we re-fetched — preserves prior-fetch rows for dates the upstream API omitted.
+  await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
+  console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
+
+  if (allBuyerRows.length > 0) {
+    await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
+  }
+
+  if (allLeads.length > 0) {
+    const allLeadRecordRows  = buildLeadRecordRows(fetchedAt, allLeads);
+    // Pings are now keyed per (buyer, date) inside computeAggBuyer; pass all rows
+    // so each day's pings land on the matching per-day agg row.
+    const aggBuyerRows       = computeAggBuyer(fetchedAt, allLeadRecordRows, allBuyerRows);
+    const aggStateRows       = computeAggBuyerState(fetchedAt, allLeadRecordRows);
+    const aggCityRows        = computeAggBuyerStateCity(fetchedAt, allLeadRecordRows);
+    const aggPostalRows      = computeAggBuyerPostal(fetchedAt, allLeadRecordRows);
+
+    await ch.insert({ table: 'leadprosper_lead_records',    values: allLeadRecordRows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}' AND lead_date IN (${daysInList})` });
+
+    // Agg tables now keyed by lead_date — full replace by fetched_at only when every day
+    // succeeded, otherwise prior-fetch rows are more complete than a partial agg.
+    if (allDaysSucceeded) {
+      await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
+
+      await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
+      await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
+    } else {
+      console.log(`[fetchLeadProsper] Skipping agg tables — ${days.length - dayResults.length}/${days.length} days failed to fetch`);
     }
 
-    // Leads fetch — before stats insert so we can patch total_sell from actual lead revenues
-    const campaignIds = [...new Set(
-      dayResults.flatMap(({ stats }) => stats.map(s => String((s.campaign || s).id || '')))
-    )].filter(Boolean);
-
-    const allLeads = [];
-    for (const cid of campaignIds) {
-      try {
-        const leads = await fetchAllLeadsForCampaign(headers, cid, days[0], days[days.length - 1]);
-        allLeads.push(...leads);
-      } catch (e) {
-        console.warn(`[fetchLeadProsper] leads fetch failed for campaign ${cid}:`, e.message);
-      }
-    }
-
-    // Patch total_sell per (campaign_id, date) from individual lead sell prices.
-    // This overrides the accounting API value which is often 0 due to granular params.
-    if (allLeads.length > 0) {
-      patchTotalSell(allRows, allLeads);
-    }
-
-    const successfulDays = dayResults.map(r => r.day);
-    const daysInList = successfulDays.map(d => `'${d}'`).join(',');
-    const allDaysSucceeded = dayResults.length === days.length;
-
-    await ch.insert({ table: 'leadprosper_stats', values: allRows, format: 'JSONEachRow' });
-    // Only purge dates we re-fetched — preserves prior-fetch rows for dates the upstream API omitted.
-    await ch.command({ query: `ALTER TABLE leadprosper_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
-    console.log(`[fetchLeadProsper] Inserted ${allRows.length} stats rows`);
-
-    if (allBuyerRows.length > 0) {
-      await ch.insert({ table: 'leadprosper_buyer_stats', values: allBuyerRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_buyer_stats DELETE WHERE fetched_at != '${fetchedAt}' AND date IN (${daysInList})` });
-    }
-
-    if (allLeads.length > 0) {
-      const allLeadRecordRows  = buildLeadRecordRows(fetchedAt, allLeads);
-      // Use only the latest day's buyer rows for ping aggregation — LP stats returns
-      // cumulative MTD totals per day, so summing all days would double-count pings.
-      const latestDay          = days[days.length - 1];
-      const latestBuyerRows    = allBuyerRows.filter(r => r.date === latestDay);
-      const aggBuyerRows       = computeAggBuyer(fetchedAt, allLeadRecordRows, latestBuyerRows);
-      const aggStateRows       = computeAggBuyerState(fetchedAt, allLeadRecordRows);
-      const aggCityRows        = computeAggBuyerStateCity(fetchedAt, allLeadRecordRows);
-      const aggPostalRows      = computeAggBuyerPostal(fetchedAt, allLeadRecordRows);
-
-      await ch.insert({ table: 'leadprosper_lead_records',    values: allLeadRecordRows, format: 'JSONEachRow' });
-      await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}' AND lead_date IN (${daysInList})` });
-
-      // Agg tables are month-to-date aggregates with no date column — only do a full replace
-      // when every day succeeded, otherwise prior-fetch rows are more complete than a partial agg.
-      if (allDaysSucceeded) {
-        await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
-        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
-
-        await ch.insert({ table: 'leadprosper_agg_buyer_state',  values: aggStateRows,      format: 'JSONEachRow' });
-        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_state  DELETE WHERE fetched_at != '${fetchedAt}'` });
-
-        await ch.insert({ table: 'leadprosper_agg_buyer_city',   values: aggCityRows,       format: 'JSONEachRow' });
-        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_city   DELETE WHERE fetched_at != '${fetchedAt}'` });
-
-        await ch.insert({ table: 'leadprosper_agg_buyer_postal', values: aggPostalRows,     format: 'JSONEachRow' });
-        await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer_postal DELETE WHERE fetched_at != '${fetchedAt}'` });
-      } else {
-        console.log(`[fetchLeadProsper] Skipping agg tables — ${days.length - dayResults.length}/${days.length} days failed to fetch`);
-      }
-
-      console.log(`[fetchLeadProsper] Inserted ${allLeadRecordRows.length} lead records across ${campaignIds.length} campaigns`);
-    }
-  } finally {
-    await ch.close();
+    console.log(`[fetchLeadProsper] Inserted ${allLeadRecordRows.length} lead records across ${campaignIds.length} campaigns`);
   }
 }
 
@@ -260,7 +241,8 @@ export function buildLeadRecordRows(fetchedAt, leads) {
     const base = {
       fetched_at:    fetchedAt,
       lead_id:       String(lead.id || ''),
-      lead_date:     new Date(Number(lead.lead_date_ms)).toISOString().slice(0, 10),
+      // Eastern, not UTC — LP buckets days by America/New_York, so lead_date must match.
+      lead_date:     easternDate(lead.lead_date_ms),
       campaign_id:   String(lead.campaign_id || ''),
       campaign_name: String(lead.campaign_name || ''),
       lead_status:   String(lead.status || ''),
@@ -292,12 +274,13 @@ export function buildLeadRecordRows(fetchedAt, leads) {
 export function computeAggBuyer(fetchedAt, leadRecordRows, allBuyerRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    if (!map.has(r.buyer_id)) map.set(r.buyer_id, {
-      buyer_id: r.buyer_id, buyer_name: r.buyer_name,
+    const key = `${r.buyer_id}|${r.lead_date}`;
+    if (!map.has(key)) map.set(key, {
+      buyer_id: r.buyer_id, buyer_name: r.buyer_name, lead_date: r.lead_date,
       total_leads: 0, accepted_leads: 0, rejected_leads: 0,
       outbid_leads: 0, sold_leads: 0, total_revenue: 0,
     });
-    const v = map.get(r.buyer_id);
+    const v = map.get(key);
     v.total_leads++;
     if (r.buyer_status === 'ACCEPTED') { v.accepted_leads++; v.sold_leads++; v.total_revenue += r.sell_price; }
     else if (r.buyer_status === 'ERROR')  { v.rejected_leads++; }
@@ -305,16 +288,18 @@ export function computeAggBuyer(fetchedAt, leadRecordRows, allBuyerRows) {
   }
   const pingMap = new Map();
   for (const r of allBuyerRows) {
-    if (!pingMap.has(r.buyer_id)) pingMap.set(r.buyer_id, { pings_total: 0, pings_accepted: 0, pings_failed: 0 });
-    const p = pingMap.get(r.buyer_id);
+    const pk = `${r.buyer_id}|${r.date}`;
+    if (!pingMap.has(pk)) pingMap.set(pk, { pings_total: 0, pings_accepted: 0, pings_failed: 0 });
+    const p = pingMap.get(pk);
     p.pings_total    += Number(r.pings_total    || 0);
     p.pings_accepted += Number(r.pings_accepted || 0);
     p.pings_failed   += Number(r.pings_failed   || 0);
   }
   return [...map.values()].map(v => {
-    const p = pingMap.get(v.buyer_id) || { pings_total: 0, pings_accepted: 0, pings_failed: 0 };
+    const p = pingMap.get(`${v.buyer_id}|${v.lead_date}`) || { pings_total: 0, pings_accepted: 0, pings_failed: 0 };
     return {
       fetched_at:       fetchedAt,
+      lead_date:        v.lead_date,
       buyer_id:         v.buyer_id,
       buyer_name:       v.buyer_name,
       total_leads:      v.total_leads,
@@ -363,26 +348,26 @@ function _accumulateLead(map, key, dims, r) {
 export function computeAggBuyerState(fetchedAt, leadRecordRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    const key = `${r.buyer_id}|${r.state}`;
-    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state }, r);
+    const key = `${r.buyer_id}|${r.state}|${r.lead_date}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, lead_date: r.lead_date }, r);
   }
-  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, ..._aggMetrics(v) }));
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, lead_date: v.lead_date, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, ..._aggMetrics(v) }));
 }
 
 export function computeAggBuyerStateCity(fetchedAt, leadRecordRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    const key = `${r.buyer_id}|${r.state}|${r.city}`;
-    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, city: r.city }, r);
+    const key = `${r.buyer_id}|${r.state}|${r.city}|${r.lead_date}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, state: r.state, city: r.city, lead_date: r.lead_date }, r);
   }
-  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, city: v.city, ..._aggMetrics(v) }));
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, lead_date: v.lead_date, buyer_id: v.buyer_id, buyer_name: v.buyer_name, state: v.state, city: v.city, ..._aggMetrics(v) }));
 }
 
 export function computeAggBuyerPostal(fetchedAt, leadRecordRows) {
   const map = new Map();
   for (const r of leadRecordRows) {
-    const key = `${r.buyer_id}|${r.postal_code}`;
-    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, postal_code: r.postal_code, state: r.state }, r);
+    const key = `${r.buyer_id}|${r.postal_code}|${r.lead_date}`;
+    _accumulateLead(map, key, { buyer_id: r.buyer_id, buyer_name: r.buyer_name, postal_code: r.postal_code, state: r.state, lead_date: r.lead_date }, r);
   }
-  return [...map.values()].map(v => ({ fetched_at: fetchedAt, buyer_id: v.buyer_id, buyer_name: v.buyer_name, postal_code: v.postal_code, state: v.state, ..._aggMetrics(v) }));
+  return [...map.values()].map(v => ({ fetched_at: fetchedAt, lead_date: v.lead_date, buyer_id: v.buyer_id, buyer_name: v.buyer_name, postal_code: v.postal_code, state: v.state, ..._aggMetrics(v) }));
 }

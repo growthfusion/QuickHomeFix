@@ -8,7 +8,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { createClient } from "@clickhouse/client";
+import { getClickhouse, closeClickhouse } from "./clickhouseClient.js";
 import cron from "node-cron";
 import { fetchMeta } from "./jobs/fetchMeta.js";
 import { fetchLeadProsper } from "./jobs/fetchLeadProsper.js";
@@ -911,42 +911,14 @@ app.use(
 );
 
 // --- ClickHouse client ---
-const CLICKHOUSE_HOST = String(process.env.CLICKHOUSE_HOST || process.env.CLICKHOUSE_URL || "").trim();
-const CLICKHOUSE_PORT = Number(process.env.CLICKHOUSE_PORT || 8443);
-const CLICKHOUSE_PROTOCOL = String(process.env.CLICKHOUSE_PROTOCOL || "https").trim();
-const CLICKHOUSE_DATABASE = String(process.env.CLICKHOUSE_DATABASE || "default").trim();
-const CLICKHOUSE_USERNAME = String(process.env.CLICKHOUSE_USERNAME || "default").trim();
-const CLICKHOUSE_PASSWORD = String(process.env.CLICKHOUSE_PASSWORD || "").trim();
 const CLICKHOUSE_TABLE = String(process.env.CLICKHOUSE_TABLE || "leads").trim();
 
 if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(CLICKHOUSE_TABLE)) {
   throw new Error("Invalid CLICKHOUSE_TABLE name. Use only letters, numbers, and underscore.");
 }
 
-function buildClickhouseUrl() {
-  if (!CLICKHOUSE_HOST) return "";
-
-  if (/^https?:\/\//i.test(CLICKHOUSE_HOST)) {
-    const parsed = new URL(CLICKHOUSE_HOST);
-    if (!parsed.port) parsed.port = String(CLICKHOUSE_PORT);
-    return parsed.toString().replace(/\/$/, "");
-  }
-
-  return `${CLICKHOUSE_PROTOCOL}://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT}`;
-}
-
-const CLICKHOUSE_URL = buildClickhouseUrl();
-const CLICKHOUSE_ENABLED = Boolean(CLICKHOUSE_URL && CLICKHOUSE_USERNAME && CLICKHOUSE_PASSWORD);
-
-const clickhouse = CLICKHOUSE_ENABLED
-  ? createClient({
-      url: CLICKHOUSE_URL,
-      database: CLICKHOUSE_DATABASE,
-      username: CLICKHOUSE_USERNAME,
-      password: CLICKHOUSE_PASSWORD,
-      request_timeout: 45000,
-    })
-  : null;
+// Shared, connection-pooled client reused by the server and all cron jobs.
+const clickhouse = getClickhouse();
 
 function boolToUInt8(value) {
   if (value === true) return 1;
@@ -1588,10 +1560,16 @@ app.post("/api/dev/migrate", async (_req, res) => {
         ) ENGINE = MergeTree()
         ORDER BY (lead_date, campaign_id, lead_id, buyer_id)
       `,
-      // 8. LP buyer-level summary (current month, latest snapshot)
+      // 8. LP buyer aggregates — drop old (no lead_date column) so new schema below applies.
+      // Safe to re-run; CREATE IF NOT EXISTS recreates them, next cron repopulates.
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer`,
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer_state`,
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer_city`,
+      `DROP TABLE IF EXISTS leadprosper_agg_buyer_postal`,
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           total_leads      UInt32,
@@ -1610,12 +1588,13 @@ app.post("/api/dev/migrate", async (_req, res) => {
           ping_accept_rate Float64,
           ping_reject_rate Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id)
+        ORDER BY (lead_date, buyer_id)
       `,
       // 9. LP buyer + state summary
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_state (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           state            LowCardinality(String),
@@ -1630,12 +1609,13 @@ app.post("/api/dev/migrate", async (_req, res) => {
           rejection_rate   Float64,
           conversion_rate  Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id, state)
+        ORDER BY (lead_date, buyer_id, state)
       `,
       // 10. LP buyer + state + city summary
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_city (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           state            LowCardinality(String),
@@ -1651,12 +1631,13 @@ app.post("/api/dev/migrate", async (_req, res) => {
           rejection_rate   Float64,
           conversion_rate  Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id, state, city)
+        ORDER BY (lead_date, buyer_id, state, city)
       `,
       // 11. LP buyer + postal code summary
       `
         CREATE TABLE IF NOT EXISTS leadprosper_agg_buyer_postal (
           fetched_at       DateTime64(3, 'UTC') DEFAULT now64(3),
+          lead_date        Date,
           buyer_id         String,
           buyer_name       LowCardinality(String),
           postal_code      String,
@@ -1672,7 +1653,7 @@ app.post("/api/dev/migrate", async (_req, res) => {
           rejection_rate   Float64,
           conversion_rate  Float64
         ) ENGINE = MergeTree()
-        ORDER BY (buyer_id, postal_code)
+        ORDER BY (lead_date, buyer_id, postal_code)
       `,
       // 12. Add rate columns to existing leadprosper_buyer_stats
       `ALTER TABLE leadprosper_buyer_stats ADD COLUMN IF NOT EXISTS ping_accept_rate Float64 DEFAULT 0`,
@@ -2067,10 +2048,13 @@ app.get("/api/stats/lp-leads", async (req, res) => {
   }
 });
 
-app.get("/api/stats/lp-agg-buyer", async (_req, res) => {
+app.get("/api/stats/lp-agg-buyer", async (req, res) => {
   try {
+    const { date } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer)`];
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer) ORDER BY total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2081,10 +2065,12 @@ app.get("/api/stats/lp-agg-buyer", async (_req, res) => {
 
 app.get("/api/stats/lp-agg-buyer-state", async (req, res) => {
   try {
-    const { buyer } = req.query;
-    const extra = buyer ? ` AND buyer_name = '${buyer.replace(/'/g, "''")}'` : '';
+    const { buyer, date } = req.query;
+    const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_state)`];
+    if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer_state WHERE fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_state)${extra} ORDER BY buyer_name, total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer_state WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, buyer_name, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2095,12 +2081,13 @@ app.get("/api/stats/lp-agg-buyer-state", async (req, res) => {
 
 app.get("/api/stats/lp-agg-buyer-city", async (req, res) => {
   try {
-    const { buyer, state } = req.query;
+    const { buyer, state, date } = req.query;
     const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_city)`];
     if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
     if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer_city WHERE ${conds.join(' AND ')} ORDER BY buyer_name, state, total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer_city WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, buyer_name, state, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2111,12 +2098,13 @@ app.get("/api/stats/lp-agg-buyer-city", async (req, res) => {
 
 app.get("/api/stats/lp-agg-buyer-postal", async (req, res) => {
   try {
-    const { buyer, state } = req.query;
+    const { buyer, state, date } = req.query;
     const conds = [`fetched_at = (SELECT max(fetched_at) FROM leadprosper_agg_buyer_postal)`];
     if (buyer) conds.push(`buyer_name = '${buyer.replace(/'/g, "''")}'`);
     if (state) conds.push(`state = '${state.replace(/'/g, "''")}'`);
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) conds.push(`lead_date = '${date}'`);
     const rows = await runClickhouseSelect(
-      `SELECT * FROM leadprosper_agg_buyer_postal WHERE ${conds.join(' AND ')} ORDER BY buyer_name, total_revenue DESC`
+      `SELECT * FROM leadprosper_agg_buyer_postal WHERE ${conds.join(' AND ')} ORDER BY lead_date DESC, buyer_name, total_revenue DESC`
     );
     res.json({ ok: true, rows });
   } catch (e) {
@@ -2367,6 +2355,19 @@ app.get('/{*path}', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Graceful shutdown — close the shared ClickHouse client once on exit.
+async function shutdown(signal) {
+  console.log(`[shutdown] ${signal} received, closing...`);
+  server.close(async () => {
+    await closeClickhouse();
+    console.log("[shutdown] ClickHouse client closed. Bye.");
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000).unref(); // safety net if close hangs
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

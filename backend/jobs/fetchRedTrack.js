@@ -1,21 +1,7 @@
 import axios from 'axios';
-import { createClient } from '@clickhouse/client';
+import { getClickhouse } from '../clickhouseClient.js';
 
 const RT_BASE = 'https://api.redtrack.io';
-
-function buildClient() {
-  const host = process.env.CLICKHOUSE_HOST || '';
-  const url = /^https?:\/\//i.test(host)
-    ? host
-    : `https://${host}:${process.env.CLICKHOUSE_PORT || 8443}`;
-  return createClient({
-    url,
-    database: process.env.CLICKHOUSE_DATABASE || 'default',
-    username: process.env.CLICKHOUSE_USERNAME || 'default',
-    password: process.env.CLICKHOUSE_PASSWORD || '',
-    request_timeout: 45000,
-  });
-}
 
 function last30Days() {
   const now = new Date();
@@ -200,111 +186,108 @@ export async function fetchRedTrack() {
   const delayMs = Number(process.env.RT_CALL_DELAY_MS || 800);
   const { date_from, date_to } = last30Days();
   const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const ch = buildClient();
+  const ch = getClickhouse();
+  if (!ch) { console.warn('[fetchRedTrack] ClickHouse not configured — skipping'); return; }
 
-  try {
-    // Step 1: get QHF source IDs + title→owner map
-    const { ids: sourceIds, titleToOwner } = await fetchQhfSourceIds(apiKey);
-    await delay(delayMs);
+  // Step 1: get QHF source IDs + title→owner map
+  const { ids: sourceIds, titleToOwner } = await fetchQhfSourceIds(apiKey);
+  await delay(delayMs);
 
-    // Step 2: fetch QHF daily totals (group=date)
-    const dailyRows = await fetchReport(apiKey, date_from, date_to, 'date', sourceIds);
-    console.log(`[fetchRedTrack] daily: ${dailyRows.length} rows`);
-    await delay(delayMs);
+  // Step 2: fetch QHF daily totals (group=date)
+  const dailyRows = await fetchReport(apiKey, date_from, date_to, 'date', sourceIds);
+  console.log(`[fetchRedTrack] daily: ${dailyRows.length} rows`);
+  await delay(delayMs);
 
-    // Step 3: fetch QHF per-source breakdown (group=date,source)
-    const sourceRows = await fetchReport(apiKey, date_from, date_to, 'date,source', sourceIds);
-    console.log(`[fetchRedTrack] source: ${sourceRows.length} rows`);
-    await delay(delayMs);
+  // Step 3: fetch QHF per-source breakdown (group=date,source)
+  const sourceRows = await fetchReport(apiKey, date_from, date_to, 'date,source', sourceIds);
+  console.log(`[fetchRedTrack] source: ${sourceRows.length} rows`);
+  await delay(delayMs);
 
-    // Step 4: fetch city breakdown (group=date,city)
-    const cityRows = await fetchReport(apiKey, date_from, date_to, 'date,city', sourceIds);
-    console.log(`[fetchRedTrack] city: ${cityRows.length} rows`);
+  // Step 4: fetch city breakdown (group=date,city)
+  const cityRows = await fetchReport(apiKey, date_from, date_to, 'date,city', sourceIds);
+  console.log(`[fetchRedTrack] city: ${cityRows.length} rows`);
 
-    const allRows = [];
+  const allRows = [];
 
-    for (const row of dailyRows) {
-      if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'daily', row, titleToOwner));
-    }
-
-    for (const row of sourceRows) {
-      if (!row.date) continue;
-      allRows.push(makeRow(fetchedAt, 'source', row, titleToOwner));
-    }
-
-    for (const row of cityRows) {
-      if (!row.date || !row.city) continue;
-      const lp_views  = Number(row.lp_views)  || 0;
-      const lp_clicks = Number(row.lp_clicks) || 0;
-      allRows.push({
-        fetched_at:     fetchedAt,
-        date:           row.date,
-        breakdown_type: 'city',
-        group_key:      row.city,
-        campaign_name:  '',
-        adset_name:     '',
-        ad_name:        '',
-        channel:        '',
-        lander_name:    '',
-        lp_views,
-        lp_clicks,
-        lp_ctr:         lp_views > 0 ? (lp_clicks / lp_views) * 100 : 0,
-        conversions:    Number(row.conversions) || 0,
-        purchases:      Number(row.purchases)   || 0,
-        revenue:        Number(row.revenue)     || 0,
-        cost:           Number(row.cost)        || 0,
-        roi:            Number(row.roi)         || 0,
-        device:         '',
-        os:             '',
-        region:         '',
-        rt_platform:    '',
-        rt_service:     '',
-        rt_owner:       '',
-      });
-    }
-
-    if (allRows.length === 0) {
-      console.warn('[fetchRedTrack] No rows to insert — skipping');
-      return;
-    }
-
-    // Insert first, then delete old batches — avoids the empty-table window that TRUNCATE caused.
-    await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
-
-    // Build per-breakdown date sets — only purge dates we re-fetched so prior-fetch rows
-    // survive when the upstream API omits a date in this run.
-    const datesByBreakdown = { daily: new Set(), source: new Set(), city: new Set() };
-    for (const r of allRows) {
-      if (r.date && datesByBreakdown[r.breakdown_type]) {
-        datesByBreakdown[r.breakdown_type].add(r.date);
-      }
-    }
-    const breakdownClauses = [];
-    for (const bt of ['daily', 'source', 'city']) {
-      const dates = [...datesByBreakdown[bt]];
-      if (dates.length === 0) continue;
-      const inList = dates.map(d => `'${d}'`).join(',');
-      breakdownClauses.push(`(breakdown_type='${bt}' AND date IN (${inList}))`);
-    }
-    if (breakdownClauses.length > 0) {
-      await ch.command({
-        query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}' AND (${breakdownClauses.join(' OR ')})`,
-      });
-    }
-
-    let preserved = 0;
-    try {
-      const res = await ch.query({
-        query: `SELECT count() AS c FROM redtrack_stats WHERE fetched_at != '${fetchedAt}'`,
-        format: 'JSONEachRow',
-      });
-      const data = await res.json();
-      preserved = Number(data?.[0]?.c || 0);
-    } catch { /* count is best-effort */ }
-
-    console.log(`[fetchRedTrack] refreshed ${datesByBreakdown.daily.size} dates for daily, ${datesByBreakdown.source.size} dates for source, ${datesByBreakdown.city.size} dates for city; preserved ${preserved} prior-fetch rows for dates not in this batch`);
-  } finally {
-    await ch.close();
+  for (const row of dailyRows) {
+    if (!row.date) continue;
+    allRows.push(makeRow(fetchedAt, 'daily', row, titleToOwner));
   }
+
+  for (const row of sourceRows) {
+    if (!row.date) continue;
+    allRows.push(makeRow(fetchedAt, 'source', row, titleToOwner));
+  }
+
+  for (const row of cityRows) {
+    if (!row.date || !row.city) continue;
+    const lp_views  = Number(row.lp_views)  || 0;
+    const lp_clicks = Number(row.lp_clicks) || 0;
+    allRows.push({
+      fetched_at:     fetchedAt,
+      date:           row.date,
+      breakdown_type: 'city',
+      group_key:      row.city,
+      campaign_name:  '',
+      adset_name:     '',
+      ad_name:        '',
+      channel:        '',
+      lander_name:    '',
+      lp_views,
+      lp_clicks,
+      lp_ctr:         lp_views > 0 ? (lp_clicks / lp_views) * 100 : 0,
+      conversions:    Number(row.conversions) || 0,
+      purchases:      Number(row.purchases)   || 0,
+      revenue:        Number(row.revenue)     || 0,
+      cost:           Number(row.cost)        || 0,
+      roi:            Number(row.roi)         || 0,
+      device:         '',
+      os:             '',
+      region:         '',
+      rt_platform:    '',
+      rt_service:     '',
+      rt_owner:       '',
+    });
+  }
+
+  if (allRows.length === 0) {
+    console.warn('[fetchRedTrack] No rows to insert — skipping');
+    return;
+  }
+
+  // Insert first, then delete old batches — avoids the empty-table window that TRUNCATE caused.
+  await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
+
+  // Build per-breakdown date sets — only purge dates we re-fetched so prior-fetch rows
+  // survive when the upstream API omits a date in this run.
+  const datesByBreakdown = { daily: new Set(), source: new Set(), city: new Set() };
+  for (const r of allRows) {
+    if (r.date && datesByBreakdown[r.breakdown_type]) {
+      datesByBreakdown[r.breakdown_type].add(r.date);
+    }
+  }
+  const breakdownClauses = [];
+  for (const bt of ['daily', 'source', 'city']) {
+    const dates = [...datesByBreakdown[bt]];
+    if (dates.length === 0) continue;
+    const inList = dates.map(d => `'${d}'`).join(',');
+    breakdownClauses.push(`(breakdown_type='${bt}' AND date IN (${inList}))`);
+  }
+  if (breakdownClauses.length > 0) {
+    await ch.command({
+      query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}' AND (${breakdownClauses.join(' OR ')})`,
+    });
+  }
+
+  let preserved = 0;
+  try {
+    const res = await ch.query({
+      query: `SELECT count() AS c FROM redtrack_stats WHERE fetched_at != '${fetchedAt}'`,
+      format: 'JSONEachRow',
+    });
+    const data = await res.json();
+    preserved = Number(data?.[0]?.c || 0);
+  } catch { /* count is best-effort */ }
+
+  console.log(`[fetchRedTrack] refreshed ${datesByBreakdown.daily.size} dates for daily, ${datesByBreakdown.source.size} dates for source, ${datesByBreakdown.city.size} dates for city; preserved ${preserved} prior-fetch rows for dates not in this batch`);
 }
