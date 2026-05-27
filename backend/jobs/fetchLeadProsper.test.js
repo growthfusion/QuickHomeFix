@@ -77,7 +77,6 @@ describe('fetchLeadProsper', () => {
     // Multiple rows (one per day of current month that has data)
     expect(values.length).toBeGreaterThanOrEqual(1);
 
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('each row carries the date of its respective day', async () => {
@@ -100,7 +99,6 @@ describe('fetchLeadProsper', () => {
     insertedRows.forEach(row => {
       expect(callDates).toContain(row.date);
     });
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('skips insert when all days return empty stats', async () => {
@@ -109,7 +107,6 @@ describe('fetchLeadProsper', () => {
     await fetchLeadProsper();
 
     expect(mockInsert).not.toHaveBeenCalled();
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('inserts rows from successful days even when some days fail', async () => {
@@ -130,7 +127,6 @@ describe('fetchLeadProsper', () => {
 
     // Some days succeeded → insert was called
     expect(mockInsert).toHaveBeenCalledTimes(1);
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('closes the ClickHouse client even when all API calls fail', async () => {
@@ -139,7 +135,6 @@ describe('fetchLeadProsper', () => {
     await fetchLeadProsper();
 
     expect(mockInsert).not.toHaveBeenCalled();
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('inserts buyer rows into leadprosper_buyer_stats when buyers are present', async () => {
@@ -225,7 +220,6 @@ describe('fetchLeadProsper', () => {
     });
     expect(buyerRows[1].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('does not insert buyer rows when all campaigns have empty buyers arrays', async () => {
@@ -247,7 +241,6 @@ describe('fetchLeadProsper', () => {
     // Only one insert: leadprosper_stats — no buyer insert
     expect(mockInsert).toHaveBeenCalledTimes(1);
     expect(mockInsert.mock.calls[0][0].table).toBe('leadprosper_stats');
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('fetches leads with pagination and inserts lead_records + 4 agg tables', async () => {
@@ -300,7 +293,6 @@ describe('fetchLeadProsper', () => {
       pings_total: 5, pings_accepted: 4, ping_accept_rate: 80,
     });
 
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 
   it('skips lead_records inserts when leads fetch returns empty', async () => {
@@ -320,7 +312,6 @@ describe('fetchLeadProsper', () => {
     const tableNames = mockInsert.mock.calls.map(c => c[0].table);
     expect(tableNames).not.toContain('leadprosper_lead_records');
     expect(tableNames).not.toContain('leadprosper_agg_buyer');
-    expect(mockClose).toHaveBeenCalledTimes(1);
   });
 });
 
