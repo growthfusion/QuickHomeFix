@@ -195,8 +195,8 @@ export async function fetchLeadProsper() {
       await ch.insert({ table: 'leadprosper_lead_records',    values: allLeadRecordRows, format: 'JSONEachRow' });
       await ch.command({ query: `ALTER TABLE leadprosper_lead_records    DELETE WHERE fetched_at != '${fetchedAt}' AND lead_date IN (${daysInList})` });
 
-      // Agg tables are month-to-date aggregates with no date column — only do a full replace
-      // when every day succeeded, otherwise prior-fetch rows are more complete than a partial agg.
+      // Agg tables now keyed by lead_date — full replace by fetched_at only when every day
+      // succeeded, otherwise prior-fetch rows are more complete than a partial agg.
       if (allDaysSucceeded) {
         await ch.insert({ table: 'leadprosper_agg_buyer',        values: aggBuyerRows,      format: 'JSONEachRow' });
         await ch.command({ query: `ALTER TABLE leadprosper_agg_buyer        DELETE WHERE fetched_at != '${fetchedAt}'` });
