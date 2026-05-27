@@ -648,7 +648,8 @@
       const fmt2 = n => +n.toFixed(2);
       const fmtP = n => n > 0 ? n.toFixed(2) + '%' : '0%';
       const ctr     = views      > 0 ? (clicks     / views)      * 100 : 0;
-      const cr      = views      > 0 ? (leads      / views)      * 100 : 0;
+      // CR = leads ÷ LP clicks — of visitors who clicked into the site, how many completed a lead.
+      const cr      = clicks     > 0 ? (leads      / clicks)     * 100 : 0;
       const accPct  = leads      > 0 ? (sold       / leads)      * 100 : 0;
       const ttPct   = ttContacts > 0 ? (ttSold     / ttContacts) * 100 : 0;
       const avgLead = leads      > 0 ? rev / leads : 0;
