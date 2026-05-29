@@ -2337,6 +2337,10 @@ app.get('/api/stats/leads-breakdown', async (_req, res) => {
 
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
 
+app.get('/get-quotes/:service/:variant', (_req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'get-quotes.html'));
+});
+
 app.get('/get-quotes/:service', (_req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'get-quotes.html'));
 });
