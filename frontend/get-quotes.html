@@ -45,8 +45,22 @@
         bath:    "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
         tub:     "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png"
       };
-      var m = window.location.pathname.match(/\/get-quotes\/([a-zA-Z0-9_-]+)/);
-      var svc = m && m[1];
+      var pm = window.location.pathname.match(/\/get-quotes\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?/);
+      var svc = pm && pm[1];
+      var variant = pm && pm[2];
+      var isMobile = window.matchMedia("(max-width: 1023px)").matches;
+
+      // Variant A: preload the bathroom-remodel hero illustration (desktop or mobile variant)
+      if (variant === "a" && (svc === "bath" || svc === "bathroom")) {
+        var imgBase = isMobile ? "images/landing/bath-hero-mobile" : "images/landing/bath-hero";
+        var la = document.createElement("link");
+        la.rel = "preload"; la.as = "image"; la.fetchPriority = "high";
+        la.href = imgBase + ".avif";
+        la.type = "image/avif";
+        document.head.appendChild(la);
+        return; // skip the default service preload — we have our own
+      }
+
       if (svc && heroImages[svc]) {
         var l = document.createElement("link");
         l.rel = "preload"; l.as = "image"; l.fetchPriority = "high";
@@ -76,6 +90,838 @@
   <noscript><link rel="stylesheet" href="css/styles.css" /></noscript>
 
   <meta name="theme-color" content="#1e40af" />
+  <style>
+    /* =====================================================================
+       Variant A design tokens — single source of truth.
+       Used by hero, ticker, wizard and all /a-only chrome.
+       ===================================================================== */
+    body.va-mode, .hero-variant-a, .va-hero-section, #vaActivityStrip {
+      /* Color */
+      --va-bg:           #f8fafc;
+      --va-bg-tint:      #eaf2fb;
+      --va-card:         #ffffff;
+      --va-border:       #e2e8f0;
+      --va-border-soft:  #eef2f7;
+      --va-text:         #0f172a;
+      --va-text-muted:   #475569;
+      --va-text-faint:   #94a3b8;
+      --va-divider:      #cbd5e1;
+      --va-brand:        #f97316;
+      --va-brand-hover:  #ea6a0c;
+      --va-brand-active: #c2530a;
+      --va-accent:       #3b82f6;
+      --va-success:      #16a34a;
+
+      /* Spacing scale (4-pt) */
+      --va-space-1: 0.25rem;
+      --va-space-2: 0.5rem;
+      --va-space-3: 0.75rem;
+      --va-space-4: 1rem;
+      --va-space-5: 1.25rem;
+      --va-space-6: 1.5rem;
+      --va-space-8: 2rem;
+
+      /* Radius scale */
+      --va-r-sm: 0.5rem;
+      --va-r-md: 0.625rem;
+      --va-r-lg: 0.875rem;
+      --va-r-xl: 1rem;
+      --va-r-pill: 9999px;
+
+      /* Shadow elevations */
+      --va-shadow-1: 0 1px 2px rgba(15,23,42,0.04);
+      --va-shadow-2: 0 4px 14px rgba(15,23,42,0.06);
+      --va-shadow-3: 0 10px 30px rgba(15,23,42,0.08);
+      --va-shadow-4: 0 20px 50px rgba(15,23,42,0.14);
+      --va-ring-focus: 0 0 0 3px rgba(59,130,246,0.35);
+
+      /* Motion */
+      --va-ease: cubic-bezier(.22,1,.36,1);
+      --va-dur:  .2s;
+    }
+
+    /* Hero Variant A — scoped via .hero-variant-a on #landingHeroContent.
+       No looping/auto animations. Hover/active only, spring easing. */
+
+    .hero-variant-a .va-cta-wrap {
+      flex-direction: column !important;
+      gap: 0.625rem !important;
+      padding: 0.625rem !important;
+      background: rgba(255,255,255,0.10) !important;
+      border: 1px solid rgba(255,255,255,0.20) !important;
+      border-radius: 0.875rem !important;
+    }
+    /* Modernize-style light hero for variant A — full-bleed background image */
+    section.va-hero-section {
+      background-color: #eaf2fb !important;
+      background-image: url("images/landing/bath-hero.png"); /* legacy fallback */
+      background-image: -webkit-image-set(
+        url("images/landing/bath-hero.avif") type("image/avif") 1x,
+        url("images/landing/bath-hero.webp") type("image/webp") 1x,
+        url("images/landing/bath-hero.png")  type("image/png")  1x
+      );
+      background-image: image-set(
+        url("images/landing/bath-hero.avif") type("image/avif") 1x,
+        url("images/landing/bath-hero.webp") type("image/webp") 1x,
+        url("images/landing/bath-hero.png")  type("image/png")  1x
+      );
+      background-size: cover;
+      background-position: right center;
+      background-repeat: no-repeat;
+    }
+    /* Soft white gradient on the left so headline stays legible over the illustration */
+    section.va-hero-section::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgba(248,250,252,0.98) 0%, rgba(248,250,252,0.85) 30%, rgba(248,250,252,0.4) 55%, rgba(248,250,252,0) 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    section.va-hero-section .absolute.inset-0 { display: none; } /* hide ambient orbs on light bg */
+    /* Lift content above the gradient overlay */
+    #landingHeroContent.hero-variant-a { position: relative; z-index: 2; }
+
+    /* --- Desktop (lg+): full-bleed background illustration on the right --- */
+    @media (min-width: 1024px) {
+      /* Hide the in-flow image block — illustration is the section bg */
+      #landingHeroContent.hero-variant-a #landingHeroImage { display: none !important; }
+      /* Single column so text sits in the cleared left half */
+      #landingHeroContent.hero-variant-a > div.grid {
+        grid-template-columns: 1fr !important;
+        max-width: 540px;
+      }
+    }
+
+    /* --- Mobile / tablet (<1024px): mobile illustration as full-bleed background, text on top --- */
+    @media (max-width: 1023px) {
+      section.va-hero-section {
+        background-image: url("images/landing/bath-hero-mobile.png") !important; /* legacy fallback */
+        background-image: -webkit-image-set(
+          url("images/landing/bath-hero-mobile.avif") type("image/avif") 1x,
+          url("images/landing/bath-hero-mobile.webp") type("image/webp") 1x,
+          url("images/landing/bath-hero-mobile.png")  type("image/png")  1x
+        ) !important;
+        background-image: image-set(
+          url("images/landing/bath-hero-mobile.avif") type("image/avif") 1x,
+          url("images/landing/bath-hero-mobile.webp") type("image/webp") 1x,
+          url("images/landing/bath-hero-mobile.png")  type("image/png")  1x
+        ) !important;
+        background-color: #eaf2fb !important;
+        background-position: center bottom !important;
+        background-size: 100% auto !important;
+        background-repeat: no-repeat !important;
+        min-height: 760px;
+      }
+      section.va-hero-section::before {
+        background: linear-gradient(to bottom,
+          rgba(248,250,252,0.98) 0%,
+          rgba(248,250,252,0.88) 28%,
+          rgba(234,242,251,0.50) 55%,
+          rgba(234,242,251,0)    80%) !important;
+        display: block !important;
+      }
+      /* Hide the in-flow image block — illustration is the section bg on mobile too */
+      #landingHeroContent.hero-variant-a #landingHeroImage { display: none !important; }
+      #landingHeroContent.hero-variant-a > div.grid {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+      }
+    }
+    section.va-hero-section a[href="/"] img { filter: brightness(0) saturate(100%) invert(15%) sepia(80%) saturate(2500%) hue-rotate(212deg) brightness(92%) contrast(98%); }
+
+    /* === Variant A: themed wizard background (more visible) === */
+    body.va-mode #wizardContainer {
+      background:
+        linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
+        url("images/landing/wizard-bg.jpg") center / cover no-repeat fixed !important;
+    }
+    @media (max-width: 1023px) {
+      body.va-mode #wizardContainer {
+        background:
+          linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
+          url("images/landing/wizard-bg.jpg") center / cover no-repeat !important;
+      }
+    }
+
+    /* Subtle live shimmer + soft glow on the progress bar (variant A only) */
+    body.va-mode .progress-bar-fill {
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(59,130,246,0.35);
+    }
+    body.va-mode .progress-bar-fill::after {
+      content: "";
+      position: absolute;
+      top: 0; bottom: 0;
+      left: -50%;
+      width: 50%;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,0.65) 50%,
+        transparent 100%);
+      animation: va-bar-shimmer 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes va-bar-shimmer {
+      0%   { left: -50%; }
+      100% { left: 110%; }
+    }
+
+    /* === Variant A: enhanced wizard — global treatment for all steps === */
+    /* Trust strip pinned above every wizard step */
+    body.va-mode #vaTrustStrip {
+      max-width: 28rem;
+      margin: 0.75rem auto -0.25rem;
+      padding: 0.55rem 0.85rem;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      font-size: 0.75rem;
+      color: #475569;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+    }
+    body.va-mode #vaTrustStrip .va-ts-divider { color: #cbd5e1; }
+    body.va-mode #vaTrustStrip .va-ts-stars { color: #f59e0b; letter-spacing: 1px; }
+    body.va-mode #vaTrustStrip .va-ts-lock { color: #16a34a; }
+
+    /* Wider, softer wizard cards on /a */
+    body.va-mode .wizard-step .max-w-sm {
+      max-width: 28rem !important;
+      border-radius: var(--va-r-xl) !important;
+      border: 1px solid var(--va-border) !important;
+      box-shadow: var(--va-shadow-4) !important;
+      background: var(--va-card) !important;
+    }
+    body.va-mode .wizard-step h2 {
+      font-size: 1.25rem !important;
+      color: var(--va-text) !important;
+      letter-spacing: -0.01em;
+      margin-bottom: var(--va-space-2) !important;
+    }
+    /* Consistent radio-tile system */
+    body.va-mode #radioOptions > button,
+    body.va-mode #radioOptions > label,
+    body.va-mode #step-service-selection .svc-opt {
+      border-radius: var(--va-r-lg) !important;
+      border: 1px solid var(--va-border) !important;
+      box-shadow: var(--va-shadow-1);
+    }
+    body.va-mode #radioOptions > button:hover,
+    body.va-mode #radioOptions > label:hover,
+    body.va-mode #step-service-selection .svc-opt:hover {
+      box-shadow: var(--va-shadow-2);
+    }
+    /* Radio-step options get softer card framing — neutral, no orange override */
+    body.va-mode #radioOptions {
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem !important;
+    }
+    body.va-mode #radioOptions > button,
+    body.va-mode #radioOptions > label {
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 0.75rem !important;
+      padding: 0.85rem 1rem !important;
+      background: rgba(255,255,255,0.95) !important;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    body.va-mode #radioOptions > button:hover,
+    body.va-mode #radioOptions > label:hover {
+      border-color: #93c5fd !important;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.07);
+      transform: translateY(-1px);
+    }
+
+    /* Reassurance footer below each wizard card */
+    body.va-mode #vaWizardFoot {
+      max-width: 28rem;
+      margin: var(--va-space-3) auto var(--va-space-5);
+      padding: 0 var(--va-space-4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--va-space-2);
+      font-size: 0.75rem;
+      color: var(--va-text-muted);
+    }
+    body.va-mode #vaWizardFoot svg { color: var(--va-success); }
+
+    /* Subtle slide-in for wizard step on activate */
+    body.va-mode .wizard-step.active > div {
+      animation: va-step-in .35s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes va-step-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === Variant A: enhanced wizard service-selection step === */
+    body.va-mode #step-service-selection .max-w-sm { max-width: 28rem !important; }
+    body.va-mode #step-service-selection #serviceSelectOptions {
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    body.va-mode #step-service-selection .svc-opt {
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 0.875rem !important;
+      padding: 0.85rem !important;
+      gap: 0.875rem !important;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    body.va-mode #step-service-selection .svc-opt:hover {
+      border-color: #fb923c !important;
+      box-shadow: 0 8px 22px rgba(15,23,42,0.08);
+      transform: translateY(-1px);
+    }
+    body.va-mode #step-service-selection .svc-opt.svc-active,
+    body.va-mode #step-service-selection .svc-opt[aria-pressed="true"] {
+      border-color: #f97316 !important;
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+    }
+    body.va-mode #step-service-selection .va-svc-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 0.625rem;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(15,23,42,0.08);
+    }
+    body.va-mode #step-service-selection .va-svc-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+    body.va-mode #step-service-selection .va-svc-title {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 0.9375rem;
+      line-height: 1.2;
+    }
+    body.va-mode #step-service-selection .va-svc-desc {
+      font-size: 0.75rem;
+      color: #64748b;
+      line-height: 1.35;
+    }
+    body.va-mode #step-service-selection .svc-radio {
+      margin-left: auto !important;
+    }
+
+    /* Trust chip above headline */
+    .hero-variant-a #vaTrustChip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.85rem;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 9999px;
+      font-size: 0.8125rem;
+      color: #334155;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.06);
+      margin-bottom: 1rem;
+    }
+    .hero-variant-a #vaTrustChip .va-stars { color: #f59e0b; letter-spacing: 1px; font-size: 0.875rem; line-height: 1; }
+    .hero-variant-a #vaTrustChip .va-rating-num { font-weight: 700; color: #0f172a; }
+    .hero-variant-a #vaTrustChip .va-rating-divider { color: #cbd5e1; }
+
+    /* Headline + subhead */
+    .hero-variant-a #landingHeroTitle {
+      color: var(--va-text) !important;
+      font-size: 2.5rem !important;
+      line-height: 1.1 !important;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--va-space-3) !important;
+    }
+    @media (min-width: 640px)  { .hero-variant-a #landingHeroTitle { font-size: 3.25rem !important; } }
+    @media (min-width: 1024px) { .hero-variant-a #landingHeroTitle { font-size: 4rem !important; } }
+
+    .hero-variant-a #landingHeroSubtitle {
+      color: var(--va-text-muted) !important;
+      font-size: 1rem !important;
+      margin-bottom: var(--va-space-6) !important;
+      line-height: 1.55;
+    }
+
+    /* CTA card — design-system tokens */
+    .hero-variant-a .va-cta-wrap {
+      background: var(--va-card) !important;
+      border: 1px solid var(--va-border) !important;
+      border-radius: var(--va-r-xl) !important;
+      box-shadow: var(--va-shadow-3) !important;
+      padding: var(--va-space-2) !important;
+      gap: var(--va-space-2) !important;
+    }
+    .hero-variant-a .va-cta-wrap input#landingZipInput {
+      background: var(--va-card) !important;
+      color: var(--va-text) !important;
+      border-radius: var(--va-r-md) !important;
+      border: 1px solid transparent !important;
+      transition: box-shadow var(--va-dur) ease, border-color var(--va-dur) ease;
+    }
+    .hero-variant-a .va-cta-wrap input#landingZipInput::placeholder { color: var(--va-text-faint); }
+    .hero-variant-a .va-cta-wrap input#landingZipInput:focus { box-shadow: var(--va-ring-focus); }
+
+    /* Real bathroom photo — layered, with offset accent + floating stat cards */
+    .hero-variant-a #landingHeroImage {
+      position: relative;
+      padding: 1.5rem 1rem;
+    }
+    .hero-variant-a #landingHeroImage::before {
+      content: "";
+      position: absolute;
+      top: 1rem; right: -1rem;
+      width: 70%; height: 80%;
+      background: linear-gradient(135deg, #f97316, #fb923c);
+      border-radius: 1.25rem;
+      z-index: 0;
+      opacity: 0.95;
+    }
+    .hero-variant-a #landingHeroImage::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: -0.5rem;
+      width: 55%; height: 55%;
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      border-radius: 1.25rem;
+      z-index: 0;
+    }
+    .hero-variant-a #landingHeroImage img,
+    .hero-variant-a #landingHeroImage picture {
+      position: relative;
+      z-index: 1;
+      border-radius: 1.25rem;
+      box-shadow: 0 25px 60px rgba(15,23,42,0.22);
+      object-fit: cover;
+      width: 100%;
+      max-width: 520px;
+      aspect-ratio: 4 / 3;
+      display: block;
+      margin: 0 auto;
+    }
+    .hero-variant-a #landingHeroImage picture img { box-shadow: none; width: 100%; height: 100%; }
+
+    /* Floating stat cards over the photo */
+    .hero-variant-a .va-stat-card {
+      position: absolute;
+      z-index: 2;
+      background: #ffffff;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.14);
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8125rem;
+      color: #0f172a;
+    }
+    .hero-variant-a .va-stat-card .va-stat-icon {
+      width: 2rem; height: 2rem;
+      border-radius: 0.55rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .hero-variant-a .va-stat-card .va-stat-label { color: #64748b; font-size: 0.6875rem; font-weight: 500; }
+    .hero-variant-a .va-stat-card .va-stat-value { font-weight: 700; font-size: 0.95rem; line-height: 1.1; }
+    .hero-variant-a .va-stat-rating { top: 1rem; left: 0; }
+    .hero-variant-a .va-stat-savings { bottom: 1.5rem; right: -0.5rem; }
+    @media (max-width: 640px) {
+      .hero-variant-a .va-stat-rating  { top: 0.5rem; left: 0.5rem; }
+      .hero-variant-a .va-stat-savings { bottom: 0.5rem; right: 0.5rem; }
+      .hero-variant-a .va-stat-card    { font-size: 0.75rem; padding: 0.5rem 0.65rem; }
+      .hero-variant-a #landingHeroImage::before { width: 65%; }
+    }
+
+    /* Hide elements that don't belong in a Modernize-style hero */
+    .hero-variant-a .text-blue-200\/70 { display: none !important; }
+
+    /* Activity strip — token-driven */
+    #vaActivityStrip {
+      background: linear-gradient(180deg, var(--va-card) 0%, var(--va-bg) 100%);
+      border-top: 1px solid var(--va-border);
+      border-bottom: 1px solid var(--va-border);
+      padding: var(--va-space-4) 0;
+    }
+    #vaActivityStrip .va-strip-inner {
+      max-width: 1152px;
+      margin: 0 auto;
+      padding: 0 var(--va-space-5);
+      display: flex;
+      align-items: center;
+      gap: var(--va-space-3);
+    }
+    #vaActivityStrip #vaActivity {
+      flex: 1;
+      background: linear-gradient(180deg, #eff6ff 0%, #f0f9ff 100%) !important;
+      border: 1px solid #dbeafe !important;
+      color: var(--va-text-muted) !important;
+      border-radius: var(--va-r-lg) !important;
+      padding: var(--va-space-2) var(--va-space-3) var(--va-space-2) var(--va-space-2) !important;
+      box-shadow: var(--va-shadow-2);
+    }
+    #vaActivityStrip #vaLiveBadge {
+      background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.10)) !important;
+      border-color: rgba(34,197,94,0.55) !important;
+      color: #14532d !important;
+      box-shadow: 0 2px 6px rgba(34,197,94,0.18);
+    }
+    #vaActivityStrip #vaActivityTrack .va-item {
+      color: #475569 !important;
+      font-size: 0.875rem !important;
+    }
+    #vaActivityStrip #vaActivityTrack .va-item .va-name { color: #0f172a !important; font-weight: 700 !important; }
+    #vaActivityStrip #vaActivityTrack .va-item .va-time { color: #94a3b8 !important; }
+    #vaActivityStrip #vaActivityTrack .va-avatar {
+      width: 2.25rem !important;
+      height: 2.25rem !important;
+      box-shadow: 0 0 0 2px #ffffff, 0 4px 10px rgba(15,23,42,0.15) !important;
+    }
+    /* Wider, stronger edge fade so the loop seam is invisible */
+    #vaActivityStrip #vaActivityViewport::before {
+      width: 60px !important;
+      background: linear-gradient(to right, #eff6ff 0%, rgba(239,246,255,0.95) 40%, transparent 100%) !important;
+    }
+    #vaActivityStrip #vaActivityViewport::after  {
+      width: 60px !important;
+      background: linear-gradient(to left,  #f0f9ff 0%, rgba(240,249,255,0.95) 40%, transparent 100%) !important;
+    }
+
+    /* Mobile: tighter padding, smaller avatars, faster marquee */
+    @media (max-width: 640px) {
+      #vaActivityStrip { padding: 0.75rem 0; }
+      #vaActivityStrip .va-strip-inner { padding: 0 0.75rem; gap: 0.5rem; }
+      #vaActivityStrip #vaActivity { padding: 0.5rem 0.5rem 0.5rem 0.45rem !important; border-radius: 0.75rem !important; }
+      #vaActivityStrip #vaLiveBadge {
+        font-size: 0.55rem !important;
+        padding: 0.18rem 0.45rem !important;
+      }
+      #vaActivityStrip #vaActivityTrack { gap: 1.5rem !important; animation-duration: 30s !important; }
+      #vaActivityStrip #vaActivityTrack .va-item { font-size: 0.75rem !important; gap: 0.45rem !important; }
+      #vaActivityStrip #vaActivityTrack .va-avatar { width: 1.75rem !important; height: 1.75rem !important; }
+      #vaActivityStrip #vaActivityViewport::before,
+      #vaActivityStrip #vaActivityViewport::after { width: 32px !important; }
+    }
+
+    /* Breathing room around the ZIP/CTA block on mobile */
+    .hero-variant-a #vaStepper  { margin-bottom: 1rem !important; }
+    #vaActivity { margin-top: 1.25rem !important; }
+    .hero-variant-a .text-blue-200\/70 { margin-top: 1.25rem !important; line-height: 1.6; }
+    /* Push the hero image down so it doesn't crowd the CTA on mobile */
+    @media (max-width: 1023px) {
+      #landingHeroContent.hero-variant-a > div.grid { gap: 2rem !important; }
+      #landingHeroContent.hero-variant-a #landingHeroImage { margin-top: 0.5rem; }
+    }
+    .hero-variant-a .va-cta-wrap .va-zip-field { width: 100%; }
+
+    .hero-variant-a .va-cta-wrap input#landingZipInput {
+      padding-top: 1.1rem; padding-bottom: 1.1rem; font-size: 1.0625rem;
+      border-radius: 0.625rem;
+      transition: box-shadow .2s ease, border-color .2s ease;
+    }
+    .hero-variant-a input#landingZipInput:focus {
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.45);
+    }
+
+    #landingHeroContent.hero-variant-a .va-cta-wrap > button {
+      width: 100%;
+      padding-top: 1.1rem;
+      padding-bottom: 1.1rem;
+      font-size: 1.0625rem;
+      border-radius: 0.625rem;
+      background: #f97316 !important;
+      transition: background-color .2s ease !important;
+    }
+    #landingHeroContent.hero-variant-a .va-cta-wrap > button:hover  { background: #ea6a0c !important; }
+    #landingHeroContent.hero-variant-a .va-cta-wrap > button:active { background: #c2530a !important; }
+
+    /* Arrow slides right on hover, springs back on leave */
+    .hero-variant-a .va-cta-wrap button svg {
+      transition: transform .35s cubic-bezier(.22,1.4,.36,1);
+      will-change: transform;
+    }
+    .hero-variant-a .va-cta-wrap button:hover svg  { transform: translateX(6px); }
+    .hero-variant-a .va-cta-wrap button:active svg { transform: translateX(10px); transition-duration: .12s; }
+
+    /* One-time entrance fade-up for hero text and image (variant A only) */
+    .hero-variant-a #landingHeroTitle,
+    .hero-variant-a #landingHeroSubtitle,
+    .hero-variant-a .va-cta-wrap,
+    .hero-variant-a + #landingHeroImage,
+    #landingHeroContent.hero-variant-a #landingHeroImage {
+      animation: va-enter .8s cubic-bezier(.22,1,.36,1) both;
+    }
+    .hero-variant-a #landingHeroSubtitle { animation-delay: .1s; }
+    .hero-variant-a .va-cta-wrap         { animation-delay: .2s; }
+    #landingHeroContent.hero-variant-a #landingHeroImage { animation-delay: .15s; }
+    @keyframes va-enter {
+      0%   { opacity: 0; transform: translateY(14px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Static bathroom-themed background decorations (variant A only) */
+    .va-hero-section .va-decor {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .va-hero-section .va-decor svg {
+      position: absolute;
+      color: rgba(186,230,253,0.22);
+      fill: none;
+      stroke: currentColor;
+      filter: drop-shadow(0 0 14px rgba(96,165,250,0.18));
+    }
+    .va-hero-section .va-decor .va-dec-shower { top: 6%;    left: 3%;   width: 170px; height: 170px; transform: rotate(-12deg); }
+    .va-hero-section .va-decor .va-dec-faucet { top: 10%;   right: 4%;  width: 190px; height: 190px; transform: rotate(8deg); color: rgba(186,230,253,0.20); }
+    .va-hero-section .va-decor .va-dec-tub    { bottom: 6%; left: 5%;   width: 230px; height: 230px; color: rgba(186,230,253,0.18); }
+    .va-hero-section .va-decor .va-dec-drop1  { top: 34%;   left: 30%;  width: 42px; height: 42px; color: rgba(186,230,253,0.32); }
+    .va-hero-section .va-decor .va-dec-drop2  { top: 56%;   right: 30%; width: 30px; height: 30px; color: rgba(186,230,253,0.26); }
+    .va-hero-section .va-decor .va-dec-drop3  { top: 24%;   right: 40%; width: 22px; height: 22px; color: rgba(186,230,253,0.22); }
+
+    /* Subtle large accent ring behind the headline */
+    .va-hero-section .va-decor .va-dec-ring {
+      position: absolute;
+      top: -120px; right: -120px;
+      width: 460px; height: 460px;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .va-hero-section .va-decor .va-dec-ring2 {
+      position: absolute;
+      bottom: -160px; left: -160px;
+      width: 520px; height: 520px;
+      border-radius: 9999px;
+      border: 1px dashed rgba(255,255,255,0.08);
+    }
+
+    /* Tile grid in bottom-right corner */
+    .va-hero-section .va-decor .va-dec-tile {
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 320px; height: 320px;
+      background-image:
+        linear-gradient(to right,  rgba(255,255,255,0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.10) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at 100% 100%, #000 0%, #000 45%, transparent 80%);
+      -webkit-mask-image: radial-gradient(circle at 100% 100%, #000 0%, #000 45%, transparent 80%);
+    }
+
+    @media (max-width: 640px) {
+      .va-hero-section .va-decor .va-dec-shower { width: 95px;  height: 95px;  top: 4%; }
+      .va-hero-section .va-decor .va-dec-faucet { width: 105px; height: 105px; top: 6%; }
+      .va-hero-section .va-decor .va-dec-tub    { width: 130px; height: 130px; bottom: 4%; }
+      .va-hero-section .va-decor .va-dec-tile   { width: 200px; height: 200px; }
+      .va-hero-section .va-decor .va-dec-ring   { width: 300px; height: 300px; top: -80px; right: -80px; }
+      .va-hero-section .va-decor .va-dec-ring2  { width: 360px; height: 360px; bottom: -120px; left: -120px; }
+      .va-hero-section .va-decor .va-dec-drop1,
+      .va-hero-section .va-decor .va-dec-drop2,
+      .va-hero-section .va-decor .va-dec-drop3  { display: none; }
+    }
+
+    /* Soft ambient drift on the hero background orbs */
+    .va-hero-section .va-orb-1 { animation: va-drift-1 14s ease-in-out infinite alternate; }
+    .va-hero-section .va-orb-2 { animation: va-drift-2 16s ease-in-out infinite alternate; }
+    @keyframes va-drift-1 {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-60px, 40px) scale(1.12); }
+    }
+    @keyframes va-drift-2 {
+      0%   { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, -40px) scale(1.15); }
+    }
+
+    /* One-time light sweep across the hero on first load */
+    .va-hero-section::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 50%, transparent 70%);
+      transform: translateX(-100%);
+      animation: va-sweep 1.6s ease-out .25s 1 both;
+    }
+    @keyframes va-sweep {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Variant A: hide the standalone CTA, put the arrow inside the ZIP input */
+    .hero-variant-a .va-cta-wrap > button { display: none !important; }
+    .hero-variant-a .va-cta-wrap input#landingZipInput {
+      padding-right: 4rem;
+    }
+    .hero-variant-a #vaZipSubmit {
+      position: absolute;
+      right: 0.4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: var(--va-r-md);
+      background: var(--va-brand);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color var(--va-dur) ease;
+      cursor: pointer;
+      border: 0;
+      box-shadow: var(--va-shadow-2);
+    }
+    .hero-variant-a #vaZipSubmit:hover  { background: var(--va-brand-hover); }
+    .hero-variant-a #vaZipSubmit:active { background: var(--va-brand-active); }
+    .hero-variant-a #vaZipSubmit svg { transition: transform .35s var(--va-ease); }
+    .hero-variant-a #vaZipSubmit:hover svg { transform: translateX(3px); }
+
+    /* Activity ticker — refined card with LIVE badge + continuous marquee */
+    #vaActivity {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 0.75rem;
+      padding: 0.6rem 0.75rem 0.6rem 0.6rem;
+      backdrop-filter: blur(4px);
+    }
+    #vaLiveBadge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.55rem;
+      background: rgba(34,197,94,0.18);
+      border: 1px solid rgba(34,197,94,0.45);
+      color: #d1fae5;
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      flex-shrink: 0;
+      z-index: 3;
+    }
+    #vaLiveBadge .va-dot {
+      position: relative;
+      display: inline-flex;
+      width: 0.45rem;
+      height: 0.45rem;
+    }
+    #vaLiveBadge .va-dot::before {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: 9999px;
+      background: #4ade80;
+      animation: va-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    #vaLiveBadge .va-dot::after {
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: 9999px;
+      background: #22c55e;
+    }
+    @keyframes va-ping {
+      0%   { transform: scale(1);   opacity: 1; }
+      75%, 100% { transform: scale(2.2); opacity: 0; }
+    }
+    #vaActivityViewport {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+      min-width: 0;
+    }
+    #vaActivityViewport::before,
+    #vaActivityViewport::after {
+      content: "";
+      position: absolute;
+      top: 0; bottom: 0; width: 24px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    #vaActivityViewport::before { left: 0;  background: linear-gradient(to right, rgba(30,58,138,0.85), transparent); }
+    #vaActivityViewport::after  { right: 0; background: linear-gradient(to left,  rgba(30,58,138,0.85), transparent); }
+    #vaActivityTrack {
+      display: inline-flex;
+      align-items: center;
+      gap: 2.25rem;
+      white-space: nowrap;
+      animation: va-marquee 45s linear infinite;
+      will-change: transform;
+    }
+    #vaActivity:hover #vaActivityTrack { animation-play-state: paused; }
+    #vaActivityTrack .va-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8125rem;
+      color: rgba(219,234,254,0.92);
+    }
+    #vaActivityTrack .va-item .va-name { color: #fff; font-weight: 600; }
+    #vaActivityTrack .va-item .va-time { color: rgba(191,219,254,0.65); }
+    #vaActivityTrack .va-avatar {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 9999px;
+      flex-shrink: 0;
+      object-fit: cover;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.22), 0 4px 10px rgba(0,0,0,0.25);
+    }
+    @keyframes va-marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* Attention wiggle on the ZIP field if user is idle */
+    .hero-variant-a input#landingZipInput.va-wiggle {
+      animation: va-wiggle 0.55s cubic-bezier(.36,.07,.19,.97) both;
+      box-shadow: 0 0 0 4px rgba(249,115,22,0.35);
+    }
+    @keyframes va-wiggle {
+      10%, 90% { transform: translateX(-2px); }
+      20%, 80% { transform: translateX(3px); }
+      30%, 50%, 70% { transform: translateX(-5px); }
+      40%, 60% { transform: translateX(5px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-variant-a .va-cta-wrap button,
+      .hero-variant-a .va-cta-wrap button svg,
+      .va-hero-section .va-orb-1,
+      .va-hero-section .va-orb-2,
+      .va-hero-section::after,
+      .hero-variant-a #landingHeroTitle,
+      .hero-variant-a #landingHeroSubtitle,
+      .hero-variant-a .va-cta-wrap,
+      .hero-variant-a input#landingZipInput.va-wiggle,
+      #landingHeroContent.hero-variant-a #landingHeroImage {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+      }
+    }
+  </style>
 </head>
 <body class="bg-white">
 
@@ -98,24 +944,24 @@
   <!-- Hero -->
   <section class="relative bg-gradient-to-br from-blue-800 via-blue-800 to-blue-900">
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
-      <div class="absolute -top-40 -right-40 w-[500px] h-[500px] bg-white/[0.03] rounded-full blur-3xl"></div>
-      <div class="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-400/[0.06] rounded-full blur-3xl"></div>
+      <div class="va-orb va-orb-1 absolute -top-40 -right-40 w-[500px] h-[500px] bg-white/[0.03] rounded-full blur-3xl"></div>
+      <div class="va-orb va-orb-2 absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-blue-400/[0.06] rounded-full blur-3xl"></div>
     </div>
     <div class="relative z-20 max-w-6xl mx-auto px-5 sm:px-6 flex items-center justify-between h-16">
       <a href="/" class="flex items-center gap-2.5"><picture><source srcset="images/landing/quickhomefix_Logo.avif" type="image/avif" /><source srcset="images/landing/quickhomefix_Logo.webp" type="image/webp" /><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" width="48" height="48" /></picture></a>
-      <a href="/contractor" class="text-sm font-medium text-white/80 hover:text-white transition-colors">I'm a contractor</a>
+      <a href="/contractor" id="heroContractorLink" class="text-sm font-medium text-white/80 hover:text-white transition-colors">I'm a contractor</a>
     </div>
-    <div class="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-14 lg:py-16">
+    <div id="landingHeroContent" class="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 py-8 sm:py-14 lg:py-16">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div class="text-center lg:text-left">
           <h1 id="landingHeroTitle" class="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-3 sm:mb-4"></h1>
           <p id="landingHeroSubtitle" class="text-blue-100/90 text-base sm:text-xl leading-relaxed mb-6 sm:mb-8 max-w-md mx-auto lg:mx-0"></p>
           <!-- ZIP CTA -->
           <div class="w-full max-w-md mx-auto lg:mx-0">
-            <div class="flex flex-col sm:flex-row items-stretch gap-2 p-2 rounded-xl border bg-white/10 border-white/20">
-              <div class="relative flex-1">
+            <div class="va-cta-wrap flex flex-col sm:flex-row items-stretch gap-2 p-2 rounded-xl border bg-white/10 border-white/20">
+              <div class="va-zip-field relative flex-1">
                 <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <input type="text" inputmode="numeric" maxlength="5" id="landingZipInput" placeholder="Enter Your ZIP Code"
+                <input type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" pattern="\d*" id="landingZipInput" placeholder="Enter Your ZIP Code"
                   class="w-full bg-white rounded-lg pl-10 pr-4 py-3.5 text-base font-medium text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
               <button onclick="startWizardFromLanding()" class="bg-orange-500 text-white font-bold px-6 py-3.5 rounded-lg whitespace-nowrap text-base flex items-center justify-center gap-2">
@@ -663,9 +1509,11 @@ let showingLanding = false;
 document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("trustDate").textContent = new Date().toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"});
 
-  var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)\/?$/);
+  var pathMatch = window.location.pathname.match(/^\/get-quotes\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?\/?$/);
   var params = new URLSearchParams(window.location.search);
   var svc = (pathMatch && pathMatch[1]) || params.get("service");
+  window._landingVariant = (pathMatch && pathMatch[2]) || "";
+  if (window._landingVariant === "a") document.body.classList.add("va-mode");
   if (!svc || !isValidService(svc)) {
     window.location.replace("/");
     return;
@@ -724,7 +1572,10 @@ function showLandingPage(svc) {
   document.getElementById("landingPage").style.display = "flex";
   document.getElementById("wizardContainer").style.display = "none";
 
-
+  // Variant A: bathroom + /a path → keep full layout, override hero words only
+  window._isHeroVariantA = (window._landingVariant === "a") && (svc === "bathroom" || svc === "bath");
+  // Variant B: bathroom + /b path → keep original layout/design, only swap the copy
+  window._isHeroVariantB = (window._landingVariant === "b") && (svc === "bathroom" || svc === "bath");
 
 
 
@@ -732,8 +1583,177 @@ function showLandingPage(svc) {
   // Hero
   document.getElementById("landingHeroTitle").textContent = data.heroTitle;
   document.getElementById("landingHeroSubtitle").textContent = data.heroSubtitle;
+
+  // Variant B: bathroom + /b path → keep original layout/design, only swap the copy
+  if (window._isHeroVariantB) {
+    var titleElB = document.getElementById("landingHeroTitle");
+    if (titleElB && !document.getElementById("vbPill")) {
+      var pill = document.createElement("div");
+      pill.id = "vbPill";
+      pill.className = "inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-3 py-1 mb-3";
+      pill.innerHTML =
+        '<span class="relative flex w-2 h-2">' +
+          '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>' +
+          '<span class="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>' +
+        '</span>' +
+        '<span class="text-xs font-medium text-white">Matching homeowners now</span>';
+      titleElB.parentNode.insertBefore(pill, titleElB);
+    }
+    titleElB.innerHTML = 'Get Your <span class="text-orange-500">Free Bathroom</span> Quotes Today';
+    document.getElementById("landingHeroSubtitle").textContent =
+      "Don't let bad contractors overcharge you. Compare 3 verified quotes — free, takes 2 minutes.";
+
+    var ctaBtnB = document.querySelector('#landingHeroContent button[onclick="startWizardFromLanding()"]');
+    if (ctaBtnB) {
+      ctaBtnB.innerHTML =
+        'See My Free Quotes <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+    }
+    var trustPB = document.querySelector('#landingHeroContent .text-blue-200\\/70');
+    if (trustPB) trustPB.textContent = "Free · No spam · 2-minute process · 12,000+ homeowners matched";
+
+    var zipInputB = document.getElementById("landingZipInput");
+    if (zipInputB) zipInputB.placeholder = "Enter your ZIP code";
+  }
+
+  // Variant A — words only (layout/image/theme unchanged) + scoped polish
+  var _heroContentEl = document.getElementById("landingHeroContent");
+  if (_heroContentEl) _heroContentEl.classList.toggle("hero-variant-a", !!window._isHeroVariantA);
+  var _heroSectionEl = _heroContentEl && _heroContentEl.closest("section");
+  if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-section", !!window._isHeroVariantA);
+
+  var _contractorLinkEl = document.getElementById("heroContractorLink");
+  if (_contractorLinkEl) _contractorLinkEl.style.display = window._isHeroVariantA ? "none" : "";
+  if (window._isHeroVariantA) {
+    document.getElementById("landingHeroTitle").textContent = 'Free Bathroom Quotes';
+    document.getElementById("landingHeroSubtitle").textContent = 'Compare 3 verified quotes in 2 minutes.';
+
+    // Desktop: bath-hero.png is the section background (image block hidden via CSS).
+    // Mobile: render the mobile-friendly illustration inside this block, below the text, separated by a wave.
+    var heroImgWrap = document.getElementById("landingHeroImage");
+    if (heroImgWrap) {
+      heroImgWrap.innerHTML =
+        '<img src="images/landing/bath-hero-mobile.png" alt="Bathroom remodel" ' +
+          'loading="eager" decoding="async" width="540" height="540" />';
+    }
+    var ctaBtn = document.querySelector('#landingHeroContent button[onclick="startWizardFromLanding()"]');
+    if (ctaBtn) {
+      ctaBtn.innerHTML =
+        'See My Free Quotes <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+    }
+    // Reverse-trust line: addresses the #1 unspoken ZIP fear (contractor spam)
+    var trustP = document.querySelector('#landingHeroContent .text-blue-200\\/70');
+    if (trustP) {
+      trustP.innerHTML =
+        '<svg class="inline-block w-3.5 h-3.5 -mt-0.5 mr-1 text-blue-200/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>' +
+        'We match you with up to 3 local pros — never 50 spammers · <span id="vaLiveCount">12,047</span> homeowners matched';
+    }
+
+    var ctaContainer = document.querySelector('#landingHeroContent .w-full.max-w-md');
+
+    // Activity ticker host moves OUT of hero — into its own strip just after the hero <section>
+    var tickerHost = document.getElementById("vaActivityStrip");
+    if (!tickerHost && _heroSectionEl) {
+      tickerHost = document.createElement("div");
+      tickerHost.id = "vaActivityStrip";
+      tickerHost.innerHTML = '<div class="va-strip-inner"></div>';
+      _heroSectionEl.parentNode.insertBefore(tickerHost, _heroSectionEl.nextSibling);
+    }
+
+    // Inline arrow submit inside the ZIP input
+    var zipField = document.querySelector('#landingHeroContent .va-zip-field');
+    if (zipField && !document.getElementById("vaZipSubmit")) {
+      var arrowBtn = document.createElement("button");
+      arrowBtn.id = "vaZipSubmit";
+      arrowBtn.type = "button";
+      arrowBtn.setAttribute("aria-label", "See my free quotes");
+      arrowBtn.onclick = function() { startWizardFromLanding(); };
+      arrowBtn.innerHTML =
+        '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">' +
+          '<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>' +
+        '</svg>';
+      zipField.appendChild(arrowBtn);
+    }
+
+    // Live activity ticker — continuous marquee, real portrait avatars
+    var _vaActivities = [
+      { name: "Maria",    city: "Phoenix, AZ",   min: 2,  img: 47 },
+      { name: "James",    city: "Dallas, TX",    min: 4,  img: 12 },
+      { name: "Sarah",    city: "Atlanta, GA",   min: 7,  img: 23 },
+      { name: "Michael",  city: "Tampa, FL",     min: 11, img: 51 },
+      { name: "Lisa",     city: "Chicago, IL",   min: 14, img: 49 },
+      { name: "David",    city: "Denver, CO",    min: 18, img: 65 },
+      { name: "Jennifer", city: "Charlotte, NC", min: 22, img: 31 },
+      { name: "Robert",   city: "Las Vegas, NV", min: 25, img: 36 }
+    ];
+    var tickerMount = (tickerHost && tickerHost.querySelector(".va-strip-inner")) || ctaContainer;
+    if (tickerMount && !document.getElementById("vaActivity")) {
+      var items = _vaActivities.map(function(a) {
+        var src = "https://i.pravatar.cc/56?img=" + a.img;
+        return '<span class="va-item">' +
+                 '<img class="va-avatar" src="' + src + '" alt="" loading="lazy" decoding="async" width="32" height="32" />' +
+                 '<span><span class="va-name">' + a.name + '</span> in ' + a.city + ' just requested a quote ' +
+                 '<span class="va-time">· ' + a.min + ' min ago</span></span>' +
+               '</span>';
+      }).join('');
+      // Duplicate for seamless loop
+      var trackHTML = items + items;
+      var ticker = document.createElement("div");
+      ticker.id = "vaActivity";
+      ticker.className = "mt-3";
+      ticker.innerHTML =
+        '<span id="vaLiveBadge"><span class="va-dot"></span>Live</span>' +
+        '<div id="vaActivityViewport"><span id="vaActivityTrack">' + trackHTML + '</span></div>';
+      tickerMount.appendChild(ticker);
+    }
+
+    // Live-ticking counter — bumps every 3.5s by 1, scoped to variant A
+    if (!window._vaCountTimer) {
+      window._vaCountTimer = setInterval(function() {
+        var el = document.getElementById("vaLiveCount");
+        if (!el) return;
+        var n = parseInt(el.textContent.replace(/,/g, ""), 10) || 12047;
+        n += 1;
+        el.textContent = n.toLocaleString("en-US");
+      }, 3500);
+    }
+
+    // Autofocus the ZIP input (skip on small touch screens so keyboard doesn't pop unexpectedly)
+    var zipInput = document.getElementById("landingZipInput");
+    if (zipInput) {
+      if (window.matchMedia && !window.matchMedia("(hover: none)").matches) {
+        setTimeout(function() { try { zipInput.focus({ preventScroll: true }); } catch(e) { zipInput.focus(); } }, 350);
+      }
+
+      if (!zipInput._vaWired) {
+        zipInput._vaWired = true;
+
+        // Enter-to-submit
+        zipInput.addEventListener("keydown", function(e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (zipInput.value.replace(/\D/g, "").length === 5) startWizardFromLanding();
+          }
+        });
+
+        // Cancel idle wiggle on first interaction
+        var cancelWiggle = function() { zipInput.classList.remove("va-wiggle"); };
+        zipInput.addEventListener("focus", cancelWiggle);
+        zipInput.addEventListener("input", cancelWiggle);
+      }
+
+      // One-time wiggle if user idles ~2s without typing/focusing
+      setTimeout(function() {
+        if (!zipInput.value && document.activeElement !== zipInput) {
+          zipInput.classList.add("va-wiggle");
+          setTimeout(function() { zipInput.classList.remove("va-wiggle"); }, 700);
+        }
+      }, 2000);
+    }
+  }
   var heroImgEl = document.getElementById("landingHeroImage");
-  if (data.heroImage) {
+  if (window._isHeroVariantA) {
+    // Variant A renders its own bathroom-remodel photo earlier in this function — don't overwrite.
+  } else if (data.heroImage) {
     var heroSrc = data.heroImage;
     var heroAvif = heroSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
     var heroWebp = heroSrc.replace(/\.(png|jpg|jpeg)$/i, ".webp");
@@ -888,6 +1908,12 @@ function startWizardFromLanding() {
 function showWizard() {
   document.getElementById("landingPage").style.display = "none";
   document.getElementById("wizardContainer").style.display = "block";
+  if (document.body.classList.contains("va-mode")) injectWizardChromeVariantA();
+}
+
+function injectWizardChromeVariantA() {
+  var wizMain = document.getElementById("wizardMain");
+  if (!wizMain) return;
 }
 
 /* Fix back button display */
@@ -972,6 +1998,7 @@ function renderCurrentStep() {
     buildThumbTackContractors();
   } else if (stepName === "service-selection") {
     document.getElementById("step-service-selection").classList.add("active");
+    if (document.body.classList.contains("va-mode")) enhanceServiceSelectionVariantA();
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
   }
@@ -1052,21 +2079,67 @@ function submitZipcode() {
 
 var _selectedBathroomService = "";
 
+function enhanceServiceSelectionVariantA() {
+  var svcMeta = {
+    bath:   { img: "images/landing/bath-1.jpg", title: "Bathroom Remodeling", desc: "Full renovations · vanities, tile, fixtures" },
+    tub:    { img: "images/landing/tub-1.jpg",  title: "Walk-in Tub",         desc: "Safety bathing · low entry, hand-rails" },
+    shower: { img: "images/landing/bath-2.jpg", title: "Walk-in Shower",      desc: "Modern conversions · glass, tile, accessibility" }
+  };
+  var buttons = document.querySelectorAll("#serviceSelectOptions .svc-opt");
+  buttons.forEach(function(btn) {
+    if (btn._vaEnhanced) return;
+    var onclick = btn.getAttribute("onclick") || "";
+    var m = onclick.match(/highlightBathroomService\('([^']+)'\)/);
+    var svc = m && m[1];
+    var meta = svc && svcMeta[svc];
+    if (!meta) return;
+    var radio = btn.querySelector(".svc-radio");
+    var label = btn.querySelector("span");
+    if (label) label.remove();
+    var img = document.createElement("img");
+    img.className = "va-svc-thumb";
+    img.src = meta.img;
+    img.alt = meta.title;
+    img.loading = "lazy";
+    img.decoding = "async";
+    var body = document.createElement("div");
+    body.className = "va-svc-body";
+    body.innerHTML =
+      '<span class="va-svc-title">' + meta.title + '</span>' +
+      '<span class="va-svc-desc">'  + meta.desc  + '</span>';
+    btn.insertBefore(img, radio);
+    btn.insertBefore(body, radio);
+    btn._vaEnhanced = true;
+  });
+}
+
 function highlightBathroomService(serviceId) {
   _selectedBathroomService = serviceId;
   var opts = document.querySelectorAll("#serviceSelectOptions .svc-opt");
   var ids = ["bath", "tub", "shower"];
+  var inVA = document.body.classList.contains("va-mode");
   opts.forEach(function(btn, i) {
     var selected = ids[i] === serviceId;
-    btn.className = "svc-opt w-full flex items-center gap-3 px-5 py-4 text-left transition-colors " +
-      (i < 2 ? "border-b border-gray-200 " : "") +
-      (selected ? "bg-blue-50" : "bg-white");
-    var radio = btn.querySelector(".svc-radio");
-    radio.className = "svc-radio w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 " +
-      (selected ? "border-blue-600" : "border-gray-300");
-    radio.innerHTML = selected ? '<div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>' : "";
-    var label = btn.querySelector("span");
-    label.className = "font-medium text-base " + (selected ? "text-blue-600" : "text-gray-800");
+    if (inVA) {
+      btn.classList.toggle("svc-active", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+      var radio = btn.querySelector(".svc-radio");
+      if (radio) {
+        radio.className = "svc-radio w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 " +
+          (selected ? "border-orange-500" : "border-gray-300");
+        radio.innerHTML = selected ? '<div class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>' : "";
+      }
+    } else {
+      btn.className = "svc-opt w-full flex items-center gap-3 px-5 py-4 text-left transition-colors " +
+        (i < 2 ? "border-b border-gray-200 " : "") +
+        (selected ? "bg-blue-50" : "bg-white");
+      var radio = btn.querySelector(".svc-radio");
+      radio.className = "svc-radio w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 " +
+        (selected ? "border-blue-600" : "border-gray-300");
+      radio.innerHTML = selected ? '<div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>' : "";
+      var label = btn.querySelector("span");
+      if (label) label.className = "font-medium text-base " + (selected ? "text-blue-600" : "text-gray-800");
+    }
   });
   document.getElementById("svcNextBtn").disabled = false;
 }
