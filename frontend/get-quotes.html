@@ -45,8 +45,22 @@
         bath:    "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
         tub:     "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png"
       };
-      var m = window.location.pathname.match(/\/get-quotes\/([a-zA-Z0-9_-]+)/);
-      var svc = m && m[1];
+      var pm = window.location.pathname.match(/\/get-quotes\/([a-zA-Z0-9_-]+)(?:\/([a-zA-Z0-9_-]+))?/);
+      var svc = pm && pm[1];
+      var variant = pm && pm[2];
+      var isMobile = window.matchMedia("(max-width: 1023px)").matches;
+
+      // Variant A: preload the bathroom-remodel hero illustration (desktop or mobile variant)
+      if (variant === "a" && (svc === "bath" || svc === "bathroom")) {
+        var imgBase = isMobile ? "images/landing/bath-hero-mobile" : "images/landing/bath-hero";
+        var la = document.createElement("link");
+        la.rel = "preload"; la.as = "image"; la.fetchPriority = "high";
+        la.href = imgBase + ".avif";
+        la.type = "image/avif";
+        document.head.appendChild(la);
+        return; // skip the default service preload — we have our own
+      }
+
       if (svc && heroImages[svc]) {
         var l = document.createElement("link");
         l.rel = "preload"; l.as = "image"; l.fetchPriority = "high";
@@ -140,7 +154,17 @@
     /* Modernize-style light hero for variant A — full-bleed background image */
     section.va-hero-section {
       background-color: #eaf2fb !important;
-      background-image: url("images/landing/bath-hero.png");
+      background-image: url("images/landing/bath-hero.png"); /* legacy fallback */
+      background-image: -webkit-image-set(
+        url("images/landing/bath-hero.avif") type("image/avif") 1x,
+        url("images/landing/bath-hero.webp") type("image/webp") 1x,
+        url("images/landing/bath-hero.png")  type("image/png")  1x
+      );
+      background-image: image-set(
+        url("images/landing/bath-hero.avif") type("image/avif") 1x,
+        url("images/landing/bath-hero.webp") type("image/webp") 1x,
+        url("images/landing/bath-hero.png")  type("image/png")  1x
+      );
       background-size: cover;
       background-position: right center;
       background-repeat: no-repeat;
@@ -172,7 +196,17 @@
     /* --- Mobile / tablet (<1024px): mobile illustration as full-bleed background, text on top --- */
     @media (max-width: 1023px) {
       section.va-hero-section {
-        background-image: url("images/landing/bath-hero-mobile.png") !important;
+        background-image: url("images/landing/bath-hero-mobile.png") !important; /* legacy fallback */
+        background-image: -webkit-image-set(
+          url("images/landing/bath-hero-mobile.avif") type("image/avif") 1x,
+          url("images/landing/bath-hero-mobile.webp") type("image/webp") 1x,
+          url("images/landing/bath-hero-mobile.png")  type("image/png")  1x
+        ) !important;
+        background-image: image-set(
+          url("images/landing/bath-hero-mobile.avif") type("image/avif") 1x,
+          url("images/landing/bath-hero-mobile.webp") type("image/webp") 1x,
+          url("images/landing/bath-hero-mobile.png")  type("image/png")  1x
+        ) !important;
         background-color: #eaf2fb !important;
         background-position: center bottom !important;
         background-size: 100% auto !important;
@@ -1880,16 +1914,6 @@ function showWizard() {
 function injectWizardChromeVariantA() {
   var wizMain = document.getElementById("wizardMain");
   if (!wizMain) return;
-  if (!document.getElementById("vaWizardFoot")) {
-    var foot = document.createElement("div");
-    foot.id = "vaWizardFoot";
-    foot.innerHTML =
-      '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">' +
-        '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>' +
-      '</svg>' +
-      '<span>Matched with up to 3 verified local pros — never 50 spammers.</span>';
-    wizMain.parentNode.insertBefore(foot, wizMain.nextSibling);
-  }
 }
 
 /* Fix back button display */
