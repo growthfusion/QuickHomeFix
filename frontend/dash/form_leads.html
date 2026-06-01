@@ -624,7 +624,8 @@
       const fmt2 = n => +n.toFixed(2);
       const fmtP = n => n > 0 ? n.toFixed(2) + '%' : '0%';
       const ctr     = views      > 0 ? (clicks     / views)      * 100 : 0;
-      const cr      = views      > 0 ? (leads      / views)      * 100 : 0;
+      // CR = leads ÷ LP clicks — of visitors who clicked into the site, how many completed a lead.
+      const cr      = clicks     > 0 ? (leads      / clicks)     * 100 : 0;
       const accPct  = leads      > 0 ? (sold       / leads)      * 100 : 0;
       const ttPct   = ttContacts > 0 ? (ttSold     / ttContacts) * 100 : 0;
       const avgLead = leads      > 0 ? rev / leads : 0;
@@ -774,14 +775,9 @@
         if (FILTERS.to   && date > FILTERS.to)   continue;
         if (FILTERS.form  && getFormType(r.campaign_name, r.campaign_id) !== FILTERS.form)  continue;
         if (FILTERS.buyer && inferOwnerFromCampaign(r.campaign_name)     !== FILTERS.buyer) continue;
-        l += Number(r.leads_total    || 0);
-        s += Number(r.leads_accepted || 0);
-      }
-      for (const r of filteredRtSource()) {
-        const date = r.date || '';
-        if (FILTERS.from && date < FILTERS.from) continue;
-        if (FILTERS.to   && date > FILTERS.to)   continue;
-        rv += Number(r.revenue || 0);
+        l  += Number(r.leads_total    || 0);
+        s  += Number(r.leads_accepted || 0);
+        rv += Number(r.total_sell     || 0);
       }
       return { l, s, rv };
     }
@@ -887,19 +883,20 @@
     // DATE — RT_DAILY (visits/clicks/cost/revenue) + LP_ROWS (leads/sold — LP ground truth)
     // Falls back to LD_DATE (actual leads table) when LP data is unavailable for a date
     function buildDateRows() {
-      // LP leads/sold grouped by date
+      // LP leads/sold/revenue grouped by date
       const lpMap = new Map();
       for (const r of LP_ROWS) {
-        const { date, campaign_name, campaign_id, leads_total, leads_accepted } = r;
+        const { date, campaign_name, campaign_id, leads_total, leads_accepted, total_sell } = r;
         if (!date) continue;
         if (FILTERS.from  && date < FILTERS.from) continue;
         if (FILTERS.to    && date > FILTERS.to)   continue;
         if (FILTERS.form  && getFormType(campaign_name, campaign_id) !== FILTERS.form)  continue;
         if (FILTERS.buyer && inferOwnerFromCampaign(campaign_name)   !== FILTERS.buyer) continue;
-        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0 });
+        if (!lpMap.has(date)) lpMap.set(date, { l: 0, s: 0, rv: 0 });
         const v = lpMap.get(date);
-        v.l += Number(leads_total    || 0);
-        v.s += Number(leads_accepted || 0);
+        v.l  += Number(leads_total    || 0);
+        v.s  += Number(leads_accepted || 0);
+        v.rv += Number(total_sell     || 0);
       }
       // LD_DATE fallback — used for dates where LP data is missing (e.g. month boundary)
       const ldDateMap = new Map();
@@ -907,7 +904,7 @@
         const date = r.date || '';
         if (FILTERS.from && date < FILTERS.from) continue;
         if (FILTERS.to   && date > FILTERS.to)   continue;
-        ldDateMap.set(date, { l: Number(r.leads || 0), s: Number(r.sold || 0) });
+        ldDateMap.set(date, { l: Number(r.leads || 0), s: Number(r.sold || 0), rv: Number(r.revenue || 0) });
       }
       // RT visits/clicks/cost/revenue grouped by date — always use RT_SOURCE so all filters apply
       const rtSource = filteredRtSource();
@@ -940,10 +937,10 @@
       const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...ttMap.keys(), ...ldDateMap.keys()]);
       const out = [];
       for (const d of allDates) {
-        const lp  = lpMap.get(d) || ldDateMap.get(d) || { l: 0, s: 0 };
+        const lp  = lpMap.get(d) || ldDateMap.get(d) || { l: 0, s: 0, rv: 0 };
         const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
         const tt  = ttMap.get(d) || { contacts: 0, pros: 0, rev: 0 };
-        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, rtD.rv, rtD.cost, tt.contacts, tt.pros, tt.rev));
+        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost, tt.contacts, tt.pros, tt.rev));
       }
       out.sort((a, b) => a[0] > b[0] ? -1 : 1);
       return out;
@@ -1927,6 +1924,7 @@
     loadStats();
 
     /* ── Litepicker date range with presets ── */
+    window.addEventListener('load', function() {
     const today = new Date();
     const fmt   = d => d.toLocaleDateString("en-GB").replace(/\//g, "-");
     const dayMs = 86400000;
@@ -1972,6 +1970,7 @@
         });
       },
     });
+    }); // window load
   </script>
 </body>
 </html>

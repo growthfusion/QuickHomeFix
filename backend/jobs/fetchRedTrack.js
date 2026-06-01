@@ -271,8 +271,39 @@ export async function fetchRedTrack() {
 
     // Insert first, then delete old batches — avoids the empty-table window that TRUNCATE caused.
     await ch.insert({ table: 'redtrack_stats', values: allRows, format: 'JSONEachRow' });
-    await ch.command({ query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
-    console.log(`[fetchRedTrack] Inserted ${allRows.length} rows (${dailyRows.length} daily + ${sourceRows.length} source + ${cityRows.length} city)`);
+
+    // Build per-breakdown date sets — only purge dates we re-fetched so prior-fetch rows
+    // survive when the upstream API omits a date in this run.
+    const datesByBreakdown = { daily: new Set(), source: new Set(), city: new Set() };
+    for (const r of allRows) {
+      if (r.date && datesByBreakdown[r.breakdown_type]) {
+        datesByBreakdown[r.breakdown_type].add(r.date);
+      }
+    }
+    const breakdownClauses = [];
+    for (const bt of ['daily', 'source', 'city']) {
+      const dates = [...datesByBreakdown[bt]];
+      if (dates.length === 0) continue;
+      const inList = dates.map(d => `'${d}'`).join(',');
+      breakdownClauses.push(`(breakdown_type='${bt}' AND date IN (${inList}))`);
+    }
+    if (breakdownClauses.length > 0) {
+      await ch.command({
+        query: `ALTER TABLE redtrack_stats DELETE WHERE fetched_at != '${fetchedAt}' AND (${breakdownClauses.join(' OR ')})`,
+      });
+    }
+
+    let preserved = 0;
+    try {
+      const res = await ch.query({
+        query: `SELECT count() AS c FROM redtrack_stats WHERE fetched_at != '${fetchedAt}'`,
+        format: 'JSONEachRow',
+      });
+      const data = await res.json();
+      preserved = Number(data?.[0]?.c || 0);
+    } catch { /* count is best-effort */ }
+
+    console.log(`[fetchRedTrack] refreshed ${datesByBreakdown.daily.size} dates for daily, ${datesByBreakdown.source.size} dates for source, ${datesByBreakdown.city.size} dates for city; preserved ${preserved} prior-fetch rows for dates not in this batch`);
   } finally {
     await ch.close();
   }
