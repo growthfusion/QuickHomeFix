@@ -10,6 +10,9 @@ var QHF_CONFIG = {
     if (host === "quickhomefix.pro" || host === "www.quickhomefix.pro") {
       return "https://api.quickhomefix.pro";
     }
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://localhost:5000";
+    }
     return "https://api-test.quickhomefix.pro";
   })(),
 

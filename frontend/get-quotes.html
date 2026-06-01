@@ -1362,7 +1362,8 @@
           </div>
         </div>
 
-        <!-- ② Contractors grid -->
+        <!-- ② Booking widget (bath) or contractors grid (other services) -->
+        <div id="airo-anchor"></div>
         <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal">
           <div id="thumbtackContractors"></div>
         </div>
@@ -1995,7 +1996,13 @@ function renderCurrentStep() {
     if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgEl.removeAttribute("style"); }
     else { imgEl.src = ""; }
 
-    buildThumbTackContractors();
+    if (store.formData.service === "bath") {
+      document.getElementById("thumbtackContractorsSection").style.display = "none";
+      loadAiroWidget(store.formData);
+    } else {
+      document.getElementById("airo-anchor").style.display = "none";
+      buildThumbTackContractors();
+    }
   } else if (stepName === "service-selection") {
     document.getElementById("step-service-selection").classList.add("active");
     if (document.body.classList.contains("va-mode")) enhanceServiceSelectionVariantA();
@@ -2399,6 +2406,107 @@ function buildUpsellCards() {
       '</div>';
     container.appendChild(card);
   });
+}
+
+function showAiroThankYou(formData) {
+  var anchor = document.getElementById("airo-anchor");
+  if (!anchor) return;
+
+  anchor.style.transition = "opacity 0.4s";
+  anchor.style.opacity = "0";
+
+  setTimeout(function() {
+    anchor.innerHTML =
+      '<div style="max-width:480px;margin:32px auto;padding:36px 28px;background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center;">' +
+        '<div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">' +
+          '<svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' +
+        '</div>' +
+        '<h2 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;">Appointment Booked!</h2>' +
+        '<p style="font-size:15px;color:#6b7280;margin:0 0 20px;">Hi ' + (formData.firstName || "there") + ', your bathroom remodeling appointment has been submitted. A local contractor will call you shortly to confirm the details.</p>' +
+        '<div style="background:#f9fafb;border-radius:12px;padding:16px;text-align:left;font-size:13px;color:#374151;line-height:1.8;">' +
+          '<div><strong>Name:</strong> ' + ((formData.firstName || "") + " " + (formData.lastName || "")).trim() + '</div>' +
+          '<div><strong>Phone:</strong> ' + (formData.phone || "") + '</div>' +
+          '<div><strong>Email:</strong> ' + (formData.email || "") + '</div>' +
+          '<div><strong>Address:</strong> ' + (formData.address || "") + ', ' + (formData.city || "") + ' ' + (formData.state || "") + ' ' + (formData.zipcode || "") + '</div>' +
+        '</div>' +
+      '</div>';
+    anchor.style.opacity = "1";
+  }, 350);
+}
+
+function loadAiroWidget(formData) {
+  var anchor = document.getElementById("airo-anchor");
+  if (!anchor) return;
+
+  anchor.style.display = "block";
+  anchor.innerHTML =
+    '<div id="airo-loader" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 16px;gap:16px;">' +
+      '<div style="width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:airo-spin 0.8s linear infinite;"></div>' +
+      '<p style="color:#6b7280;font-size:14px;margin:0;">Loading your booking options…</p>' +
+    '</div>';
+
+  if (!document.getElementById("airo-spin-style")) {
+    var style = document.createElement("style");
+    style.id = "airo-spin-style";
+    style.textContent = "@keyframes airo-spin { to { transform: rotate(360deg); } }";
+    document.head.appendChild(style);
+  }
+
+  window.airoBookingForm = {
+    zipCode:   formData.zipcode   || "",
+    firstName: formData.firstName || "",
+    lastName:  formData.lastName  || "",
+    address:   formData.address   || "",
+    email:     formData.email     || "",
+    phone:     formData.phone     || "",
+    trade:          "Bathroom - Bathtub or Shower Updates",
+    campaignId:     "6a15b3b46637d",
+    campaignKey:    "mcg9Wjv26VZJ43yqLdFX",
+    showLeadBuyers: "yes",
+    onScheduled: function() { showAiroThankYou(formData); },
+    onComplete:  function() { showAiroThankYou(formData); }
+  };
+
+  // Listen for postMessage from contractor appointments iframe
+  window.addEventListener("message", function onAiroMsg(e) {
+    if (!e.origin || e.origin.indexOf("contractorappointments.com") === -1) return;
+    var raw = typeof e.data === "string" ? e.data.toLowerCase() : JSON.stringify(e.data || "").toLowerCase();
+    if (raw.indexOf("scheduled") !== -1 || raw.indexOf("complete") !== -1 || raw.indexOf("submit") !== -1) {
+      window.removeEventListener("message", onAiroMsg);
+      showAiroThankYou(formData);
+    }
+  });
+
+  // MutationObserver fallback — fires when widget renders its own confirmation screen
+  var airoObserver = new MutationObserver(function() {
+    var anchor = document.getElementById("airo-anchor");
+    if (!anchor) return;
+    var text = anchor.innerText || "";
+    if (text.indexOf("Next Steps") !== -1 || text.indexOf("Project Details") !== -1 || text.indexOf("scheduled") !== -1) {
+      airoObserver.disconnect();
+      showAiroThankYou(formData);
+    }
+  });
+  airoObserver.observe(document.getElementById("airo-anchor"), { childList: true, subtree: true });
+
+  function loadEmbedScript() {
+    var s = document.createElement("script");
+    s.src = "https://form.contractorappointments.com/js/embed-form.js?v=" + new Date().getTime();
+    s.onload = function() {
+      var loader = document.getElementById("airo-loader");
+      if (loader) loader.style.display = "none";
+    };
+    document.body.appendChild(s);
+  }
+
+  if (window.jQuery) {
+    loadEmbedScript();
+  } else {
+    var jq = document.createElement("script");
+    jq.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+    jq.onload = loadEmbedScript;
+    document.body.appendChild(jq);
+  }
 }
 
 var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5";
