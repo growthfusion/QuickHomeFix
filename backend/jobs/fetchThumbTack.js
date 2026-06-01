@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { parse } from 'csv-parse/sync';
-import { createClient } from '@clickhouse/client';
+import { getClickhouse } from '../clickhouseClient.js';
 
 // Sheet 2 — detailed stats with contacts_created, pros_contacted, net_revenue
 const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1mu5MHTa0WeYcLonQ49Xw5rqamqB7qbCfikR1bDCvmeA/export?format=csv&gid=804697822';
@@ -12,20 +12,6 @@ const CATEGORY_MAP = {
   'Window Installation': 'windo',
   // 'Roofing' not present in sheet — add here when Thumbtack tracks it
 };
-
-function buildClient() {
-  const host = process.env.CLICKHOUSE_HOST || '';
-  const url = /^https?:\/\//i.test(host)
-    ? host
-    : `https://${host}:${process.env.CLICKHOUSE_PORT || 8443}`;
-  return createClient({
-    url,
-    database: process.env.CLICKHOUSE_DATABASE || 'default',
-    username: process.env.CLICKHOUSE_USERNAME || 'default',
-    password: process.env.CLICKHOUSE_PASSWORD || '',
-    request_timeout: 45000,
-  });
-}
 
 function parseDate(str) {
   // M/D/YYYY → YYYY-MM-DD
@@ -83,14 +69,11 @@ export async function fetchThumbTack() {
       return;
     }
 
-    const ch = buildClient();
-    try {
-      await ch.command({ query: 'TRUNCATE TABLE thumbtack_stats' });
-      await ch.insert({ table: 'thumbtack_stats', values: rows, format: 'JSONEachRow' });
-      console.log(`[fetchThumbTack] Inserted ${rows.length} rows`);
-    } finally {
-      await ch.close();
-    }
+    const ch = getClickhouse();
+    if (!ch) { console.warn('[fetchThumbTack] ClickHouse not configured — skipping'); return; }
+    await ch.command({ query: 'TRUNCATE TABLE thumbtack_stats' });
+    await ch.insert({ table: 'thumbtack_stats', values: rows, format: 'JSONEachRow' });
+    console.log(`[fetchThumbTack] Inserted ${rows.length} rows`);
   } catch (err) {
     console.warn('[fetchThumbTack] Failed:', err.message);
   }
