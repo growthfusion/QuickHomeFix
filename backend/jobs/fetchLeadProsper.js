@@ -17,14 +17,12 @@ function buildClient() {
   });
 }
 
-function currentMonthDays() {
+function rollingDays(n) {
   const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
   const days = [];
-  for (let d = 1; d <= now.getDate(); d++) {
-    const dd = String(d).padStart(2, '0');
-    days.push(`${yyyy}-${mm}-${dd}`);
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 86400000);
+    days.push(d.toISOString().slice(0, 10));
   }
   return days;
 }
@@ -57,7 +55,7 @@ export async function fetchLeadProsper() {
   const ch = buildClient();
   try {
     const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const days = currentMonthDays();
+    const days = rollingDays(45);
 
     const settled = await Promise.allSettled(days.map(day => fetchDay(headers, day)));
 
