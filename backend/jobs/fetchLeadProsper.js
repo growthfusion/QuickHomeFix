@@ -3,7 +3,7 @@ import { getClickhouse } from '../clickhouseClient.js';
 
 const LP_BASE = 'https://api.leadprosper.io';
 
-function currentMonthDays() {
+function rollingDays(n) {
   const now = new Date();
   const days = [];
   for (let i = n - 1; i >= 0; i--) {
@@ -55,7 +55,7 @@ export async function fetchLeadProsper() {
   const ch = getClickhouse();
   if (!ch) { console.warn('[fetchLeadProsper] ClickHouse not configured — skipping'); return; }
   const fetchedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const days = currentMonthDays();
+  const days = rollingDays(45);
 
   const settled = await Promise.allSettled(days.map(day => fetchDay(headers, day)));
 
