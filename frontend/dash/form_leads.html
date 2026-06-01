@@ -906,7 +906,8 @@
         if (FILTERS.to   && date > FILTERS.to)   continue;
         ldDateMap.set(date, { l: Number(r.leads || 0), s: Number(r.sold || 0), rv: Number(r.revenue || 0) });
       }
-      // RT visits/clicks/cost/revenue grouped by date — always use RT_SOURCE so all filters apply
+      // RT visits/clicks/cost/revenue grouped by date — prefer RT_SOURCE (supports filters);
+      // fall back to RT_DAILY aggregate when RT_SOURCE has no visits/clicks for a date
       const rtSource = filteredRtSource();
       const rtMap = new Map();
       for (const r of rtSource) {
@@ -916,6 +917,20 @@
         if (FILTERS.to   && date > FILTERS.to)   continue;
         if (!rtMap.has(date)) rtMap.set(date, { views: 0, clicks: 0, cost: 0, rv: 0 });
         const v = rtMap.get(date);
+        v.views  += Number(r.lp_views  || 0);
+        v.clicks += Number(r.lp_clicks || 0);
+        v.cost   += Number(r.cost      || 0);
+        v.rv     += Number(r.revenue   || 0);
+      }
+      // RT_DAILY fallback — used when RT_SOURCE is missing or has 0 views/clicks for a date
+      const rtDailyMap = new Map();
+      for (const r of RT_DAILY) {
+        const { date } = r;
+        if (!date) continue;
+        if (FILTERS.from && date < FILTERS.from) continue;
+        if (FILTERS.to   && date > FILTERS.to)   continue;
+        if (!rtDailyMap.has(date)) rtDailyMap.set(date, { views: 0, clicks: 0, cost: 0, rv: 0 });
+        const v = rtDailyMap.get(date);
         v.views  += Number(r.lp_views  || 0);
         v.clicks += Number(r.lp_clicks || 0);
         v.cost   += Number(r.cost      || 0);
@@ -934,13 +949,18 @@
         v.pros     += Number(r.pros_contacted  || 0);
         v.rev      += Number(r.owed_revenue      || 0);
       }
-      const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...ttMap.keys(), ...ldDateMap.keys()]);
+      const allDates = new Set([...lpMap.keys(), ...rtMap.keys(), ...rtDailyMap.keys(), ...ttMap.keys(), ...ldDateMap.keys()]);
       const out = [];
       for (const d of allDates) {
-        const lp  = lpMap.get(d) || ldDateMap.get(d) || { l: 0, s: 0, rv: 0 };
-        const rtD = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
+        const lp   = lpMap.get(d) || ldDateMap.get(d) || { l: 0, s: 0, rv: 0 };
+        const rtSrc = rtMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
+        const rtDly = rtDailyMap.get(d) || { views: 0, clicks: 0, cost: 0, rv: 0 };
+        // Use RT_SOURCE when it has data; fall back to RT_DAILY aggregate
+        const rtD = (rtSrc.views > 0 || rtSrc.clicks > 0) ? rtSrc : rtDly;
         const tt  = ttMap.get(d) || { contacts: 0, pros: 0, rev: 0 };
-        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, lp.rv, rtD.cost, tt.contacts, tt.pros, tt.rev));
+        // LP total_sell is authoritative for revenue; RT revenue is fallback
+        const rev = lp.rv > 0 ? lp.rv : rtD.rv;
+        out.push(lpRow(d, rtD.views, rtD.clicks, lp.l, lp.s, rev, rtD.cost, tt.contacts, tt.pros, tt.rev));
       }
       out.sort((a, b) => a[0] > b[0] ? -1 : 1);
       return out;
