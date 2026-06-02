@@ -1362,15 +1362,27 @@
           </div>
         </div>
 
-        <!-- ② Booking widget (bath) or contractors grid (other services) -->
-        <div id="airo-anchor"></div>
+        <!-- ② Thumbtack contractors grid -->
         <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal">
           <div id="thumbtackContractors"></div>
         </div>
 
         <!-- ③ CostGuide booking widget — shown only when LP accepts the lead -->
         <div id="airoBookingSection" style="display:none" class="qhf-more-section">
-          <div id="airo-anchor"></div>
+          <!-- header card -->
+          <div id="airoHeaderCard" style="max-width:640px;margin:0 auto 20px;padding:20px 20px 16px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);display:flex;align-items:flex-start;gap:14px;">
+            <div style="flex-shrink:0;width:44px;height:44px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#111827;">Book a Free In-Home Estimate</p>
+              <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">A local pro will call to confirm your appointment. Takes under 60 seconds.</p>
+            </div>
+          </div>
+          <!-- widget mount point -->
+          <div style="max-width:640px;margin:0 auto;">
+            <div id="airo-anchor"></div>
+          </div>
         </div>
 
       </div>
@@ -1979,6 +1991,13 @@ function renderCurrentStep() {
   } else if (stepName === "final") {
     document.getElementById("step-final").classList.add("active");
     document.getElementById("phoneInput").value = store.formData.phone || "";
+    // Preload jQuery so the widget loads instantly if LP accepts
+    if (!window.jQuery && !document.getElementById("airo-jquery-preload")) {
+      var jqPre = document.createElement("script");
+      jqPre.id = "airo-jquery-preload";
+      jqPre.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+      document.body.appendChild(jqPre);
+    }
   } else if (stepName === "complete") {
     document.getElementById("step-complete").classList.add("active");
     backBtn.style.display = "none";
@@ -2001,13 +2020,7 @@ function renderCurrentStep() {
     if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgEl.removeAttribute("style"); }
     else { imgEl.src = ""; }
 
-    if (store.formData.service === "bath") {
-      document.getElementById("thumbtackContractorsSection").style.display = "none";
-      loadAiroWidget(store.formData);
-    } else {
-      document.getElementById("airo-anchor").style.display = "none";
-      buildThumbTackContractors();
-    }
+    buildThumbTackContractors();
   } else if (stepName === "service-selection") {
     document.getElementById("step-service-selection").classList.add("active");
     if (document.body.classList.contains("va-mode")) enhanceServiceSelectionVariantA();
@@ -2440,10 +2453,11 @@ function showAiroThankYou(formData) {
 }
 
 function loadAiroWidget(formData) {
+  var section = document.getElementById("airoBookingSection");
+  if (section) section.style.display = "block";
   var anchor = document.getElementById("airo-anchor");
   if (!anchor) return;
 
-  anchor.style.display = "block";
   anchor.innerHTML =
     '<div id="airo-loader" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 16px;gap:16px;">' +
       '<div style="width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:airo-spin 0.8s linear infinite;"></div>' +
@@ -2468,6 +2482,11 @@ function loadAiroWidget(formData) {
     campaignId:     "6a15b3b46637d",
     campaignKey:    "mcg9Wjv26VZJ43yqLdFX",
     showLeadBuyers: "yes",
+    apptScheduledCallback: function() {
+      // GTM event — visible in GA4 as a conversion
+      if (window.dataLayer) window.dataLayer.push({ event: "airo_appt_scheduled", service: formData.service || "" });
+      showAiroThankYou(formData);
+    },
     onScheduled: function() { showAiroThankYou(formData); },
     onComplete:  function() { showAiroThankYou(formData); }
   };
@@ -2554,11 +2573,20 @@ function buildAiroWidget() {
   section.style.display = "block";
 }
 
+function formatPhoneForAiro(phone) {
+  var d = String(phone || "").replace(/\D/g, "");
+  if (d.length === 10) return d.slice(0,3) + "-" + d.slice(3,6) + "-" + d.slice(6);
+  return d;
+}
+
 function buildThumbTackContractors() {
   var lpAccepted = store.state.leadResponse && store.state.leadResponse.contractorApptsAccepted === true;
 
   if (lpAccepted) {
-    buildAiroWidget();
+    document.getElementById("thumbtackContractorsSection").style.display = "none";
+    var fd = store.formData;
+    var fdForAiro = Object.assign({}, fd, { phone: formatPhoneForAiro(fd.phone) });
+    loadAiroWidget(fdForAiro);
     return;
   }
 
