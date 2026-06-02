@@ -3044,44 +3044,73 @@ var _allowNavigation = true;
 </style>
 
 <script>
+/* DEBUG — remove after confirming what Thumbtack sends on Submit */
+window.addEventListener("message", function(e) {
+  if (!e.origin || e.origin.indexOf("thumbtack.com") === -1) return;
+  console.log("TT RAW:", JSON.stringify(e.data));
+});
+</script>
+
+<script>
 (function () {
-  var backdrop = document.getElementById("tt-popup-backdrop");
-  var iframeEl = document.getElementById("tt-popup-iframe");
+  var backdrop  = document.getElementById("tt-popup-backdrop");
+  var iframeEl  = document.getElementById("tt-popup-iframe");
+  var openTime  = null;
+  var submitted = false;
 
   function openPopup(url, bizName) {
+    openTime  = Date.now();
+    submitted = false;
     backdrop.style.display = "flex";
     document.body.style.overflow = "hidden";
     iframeEl.src = url;
 
     window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: "CompareQuoteOpen", businessName: bizName });
+    window.dataLayer.push({ event: "TT_PopupOpen", businessName: bizName });
   }
 
   function closePopup() {
+    var spent = openTime ? Math.round((Date.now() - openTime) / 1000) : 0;
+
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: "TT_PopupClose",
+      timeSpentSec: spent,
+      submittedBeforeClose: submitted
+    });
+
     backdrop.style.display = "none";
     document.body.style.overflow = "";
     iframeEl.src = "";
+    openTime  = null;
+    submitted = false;
   }
+
+  // Fires when the iframe URL actually renders (proves it loaded, not just opened)
+  iframeEl.addEventListener("load", function () {
+    if (!iframeEl.src) return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: "TT_IframeLoaded" });
+  });
 
   // Listen for postMessage events from the Thumbtack iframe
   window.addEventListener("message", function (e) {
     if (!e.origin || e.origin.indexOf("thumbtack.com") === -1) return;
 
-    var raw  = typeof e.data === "string"
-                 ? e.data.toLowerCase()
-                 : JSON.stringify(e.data || "").toLowerCase();
     var msg  = (typeof e.data === "object" && e.data !== null) ? e.data : {};
-    var type = String(msg.type || msg.event || msg.action || msg.name || e.data || "").toLowerCase();
+    var raw  = JSON.stringify(e.data || "").toLowerCase();
+    var type = String(msg.type || msg.event || msg.action || "").toLowerCase();
 
     if (type.indexOf("close") !== -1 || raw.indexOf("close") !== -1) {
       closePopup();
       return;
     }
 
-    if (type.indexOf("submit") !== -1 || type.indexOf("complete") !== -1 ||
-        raw.indexOf("submit") !== -1  || raw.indexOf("complete") !== -1) {
+    if (type.indexOf("submit")  !== -1 || type.indexOf("complete") !== -1 ||
+        raw.indexOf("submit")   !== -1 || raw.indexOf("complete")  !== -1) {
+      submitted = true;
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event: "QuoteSubmitted", rfwData: msg.data || {} });
+      window.dataLayer.push({ event: "TT_QuoteSubmitted", rfwData: msg.data || {} });
       return;
     }
 
@@ -3102,7 +3131,6 @@ var _allowNavigation = true;
       var full = btn.dataset.full || "";
       var parent = btn.parentNode;
       if (parent) {
-        // Replace the last text node + the button with the full text
         var nodes = Array.prototype.slice.call(parent.childNodes);
         nodes.forEach(function(n) { if (n.nodeType === 3 || n === btn) parent.removeChild(n); });
         parent.appendChild(document.createTextNode(full));
