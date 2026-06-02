@@ -1355,12 +1355,23 @@ app.post("/api/leads", async (req, res) => {
       };
     }
 
+    const postBuyerName = String(
+      partnerDelivery?.postResponse?.buyer_name ||
+      partnerDelivery?.pingResponse?.bids?.[0]?.buyer_name ||
+      ""
+    ).toLowerCase();
+    const contractorApptsAccepted =
+      partnerDelivery?.delivered === true &&
+      (postBuyerName.includes("contractor appointment") ||
+        String(partnerDelivery?.postResponse?.buyer_id || "") === "114420");
+
     res.status(201).json({
       ok: true,
       id: dbInsert.id || null,
       created_at: dbInsert.created_at || null,
       dbInsert,
       partnerDelivery,
+      contractorApptsAccepted,
     });
   } catch (err) {
     if (err?.issues) {
