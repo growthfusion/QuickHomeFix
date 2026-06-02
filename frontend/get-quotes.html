@@ -1367,6 +1367,11 @@
           <div id="thumbtackContractors"></div>
         </div>
 
+        <!-- ③ CostGuide booking widget — shown only when LP accepts the lead -->
+        <div id="airoBookingSection" style="display:none" class="qhf-more-section">
+          <div id="airo-anchor"></div>
+        </div>
+
       </div>
     </div>
 
@@ -2404,7 +2409,51 @@ function buildUpsellCards() {
 var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5";
 
 
+var AIRO_TRADE_MAP = {
+  bath:    "Bathroom - Bathtub or Shower Updates",
+  shower:  "Bathroom - Bathtub or Shower Updates",
+  tub:     "Bathroom - Bathtub or Shower Updates",
+  roof:    "Roofing",
+  windows: "Window Installation or Replacement",
+  solar:   "Solar Energy Installation",
+  gutter:  "Gutter Cleaning",
+};
+
+function buildAiroWidget() {
+  var section = document.getElementById("airoBookingSection");
+  if (!section) return;
+
+  var fd = store.formData;
+  window.airoBookingForm = {
+    zipCode:    fd.zipcode    || "",
+    firstName:  fd.firstName  || "",
+    lastName:   fd.lastName   || "",
+    address:    fd.address    || "",
+    email:      fd.email      || "",
+    phone:      fd.phone      || "",
+    trade:      AIRO_TRADE_MAP[fd.service] || "Bathroom - Bathtub or Shower Updates",
+    campaignId: "6a15b3b46637d",
+    campaignKey: "mcg9Wjv26VZJ43yqLdFX",
+    showLeadBuyers: "yes",
+    apptScheduledCallback: function() {
+      if (window.dataLayer) window.dataLayer.push({ event: "airo_appt_scheduled", service: fd.service });
+    },
+  };
+  var s = document.createElement("script");
+  s.src = "https://form.contractorappointments.com/js/embed-form.js?v=" + new Date().getTime();
+  document.body.appendChild(s);
+
+  section.style.display = "block";
+}
+
 function buildThumbTackContractors() {
+  var lpAccepted = store.state.leadResponse && store.state.leadResponse.contractorApptsAccepted === true;
+
+  if (lpAccepted) {
+    buildAiroWidget();
+    return;
+  }
+
   var section = document.getElementById("thumbtackContractorsSection");
   var container = document.getElementById("thumbtackContractors");
   if (!section || !container) return;
