@@ -71,8 +71,13 @@ export async function fetchThumbTack() {
 
     const ch = getClickhouse();
     if (!ch) { console.warn('[fetchThumbTack] ClickHouse not configured — skipping'); return; }
-    await ch.command({ query: 'TRUNCATE TABLE thumbtack_stats' });
+    // Insert first, then delete old batches — avoids the empty-table window that
+    // TRUNCATE caused: if the insert failed after a TRUNCATE, the dashboard's
+    // THUMBTACK column went to 0. /api/stats/thumbtack reads max(fetched_at), so
+    // the new batch is live the instant it lands and the old batch is only purged
+    // after a successful insert. (Same pattern as fetchRedTrack/Meta/LeadProsper.)
     await ch.insert({ table: 'thumbtack_stats', values: rows, format: 'JSONEachRow' });
+    await ch.command({ query: `ALTER TABLE thumbtack_stats DELETE WHERE fetched_at != '${fetchedAt}'` });
     console.log(`[fetchThumbTack] Inserted ${rows.length} rows`);
   } catch (err) {
     console.warn('[fetchThumbTack] Failed:', err.message);

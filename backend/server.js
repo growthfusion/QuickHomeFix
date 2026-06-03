@@ -1355,12 +1355,37 @@ app.post("/api/leads", async (req, res) => {
       };
     }
 
+    // Check all possible places LP might return buyer identity
+    const allBids = partnerDelivery?.pingResponse?.bids || [];
+    const postRes = partnerDelivery?.postResponse || {};
+    const pingRes = partnerDelivery?.pingResponse || {};
+    const buyerNameSources = [
+      postRes.buyer_name, postRes.buyerName, postRes.buyer,
+      pingRes.buyer_name, pingRes.buyerName,
+      allBids[0]?.buyer_name, allBids[0]?.buyerName, allBids[0]?.name,
+    ].map(v => String(v || "").toLowerCase());
+    const buyerIdSources = [
+      postRes.buyer_id, postRes.buyerId,
+      pingRes.buyer_id, pingRes.buyerId,
+      allBids[0]?.buyer_id, allBids[0]?.buyerId, allBids[0]?.id,
+    ].map(v => String(v || ""));
+
+    const isCaBuyer =
+      buyerNameSources.some(n => n.includes("contractor appointment")) ||
+      buyerIdSources.some(id => id === "114420");
+
+    // Log full LP response server-side for debugging
+    console.log("[LP buyer check] delivered:", partnerDelivery?.delivered, "isCaBuyer:", isCaBuyer, "postRes:", JSON.stringify(postRes), "pingBids:", JSON.stringify(allBids));
+
+    const contractorApptsAccepted = partnerDelivery?.delivered === true && isCaBuyer;
+
     res.status(201).json({
       ok: true,
       id: dbInsert.id || null,
       created_at: dbInsert.created_at || null,
       dbInsert,
       partnerDelivery,
+      contractorApptsAccepted,
     });
   } catch (err) {
     if (err?.issues) {

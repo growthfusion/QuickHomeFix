@@ -1362,9 +1362,27 @@
           </div>
         </div>
 
-        <!-- ② Contractors grid -->
+        <!-- ② Thumbtack contractors grid -->
         <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal">
           <div id="thumbtackContractors"></div>
+        </div>
+
+        <!-- ③ CostGuide booking widget — shown only when LP accepts the lead -->
+        <div id="airoBookingSection" style="display:none" class="qhf-more-section">
+          <!-- header card -->
+          <div id="airoHeaderCard" style="max-width:640px;margin:0 auto 20px;padding:20px 20px 16px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);display:flex;align-items:flex-start;gap:14px;">
+            <div style="flex-shrink:0;width:44px;height:44px;background:#eff6ff;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#111827;">Book a Free In-Home Estimate</p>
+              <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">A local pro will call to confirm your appointment. Takes under 60 seconds.</p>
+            </div>
+          </div>
+          <!-- widget mount point -->
+          <div style="max-width:640px;margin:0 auto;">
+            <div id="airo-anchor"></div>
+          </div>
         </div>
 
       </div>
@@ -1973,6 +1991,13 @@ function renderCurrentStep() {
   } else if (stepName === "final") {
     document.getElementById("step-final").classList.add("active");
     document.getElementById("phoneInput").value = store.formData.phone || "";
+    // Preload jQuery so the widget loads instantly if LP accepts
+    if (!window.jQuery && !document.getElementById("airo-jquery-preload")) {
+      var jqPre = document.createElement("script");
+      jqPre.id = "airo-jquery-preload";
+      jqPre.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+      document.body.appendChild(jqPre);
+    }
   } else if (stepName === "complete") {
     document.getElementById("step-complete").classList.add("active");
     backBtn.style.display = "none";
@@ -2346,7 +2371,17 @@ function doLeadSubmit(phone, btn) {
   // Submit the lead to backend — Lead fires via submitFullLead → metaLead → GTM
   submitFullLead(store.formData)
     .then(function(result) {
-      if (result) store.state.leadResponse = result;
+      if (result) {
+        store.state.leadResponse = result;
+        console.log("[QHF] LP response:", JSON.stringify({
+          delivered: result.partnerDelivery && result.partnerDelivery.delivered,
+          contractorApptsAccepted: result.contractorApptsAccepted,
+          postBuyerName: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.buyer_name,
+          postBuyerId: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.buyer_id,
+          pingBids: result.partnerDelivery && result.partnerDelivery.pingResponse && result.partnerDelivery.pingResponse.bids,
+          postStatus: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.status,
+        }));
+      }
       btn.disabled = false; btn.textContent = "Submit";
       store.nextStep();
       renderCurrentStep();
@@ -2401,10 +2436,170 @@ function buildUpsellCards() {
   });
 }
 
+function showAiroThankYou(formData) {
+  var anchor = document.getElementById("airo-anchor");
+  if (!anchor) return;
+
+  anchor.style.transition = "opacity 0.4s";
+  anchor.style.opacity = "0";
+
+  setTimeout(function() {
+    anchor.innerHTML =
+      '<div style="max-width:480px;margin:32px auto;padding:36px 28px;background:#fff;border-radius:20px;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center;">' +
+        '<div style="width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">' +
+          '<svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#16a34a" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' +
+        '</div>' +
+        '<h2 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 8px;">Appointment Booked!</h2>' +
+        '<p style="font-size:15px;color:#6b7280;margin:0 0 20px;">Hi ' + (formData.firstName || "there") + ', your bathroom remodeling appointment has been submitted. A local contractor will call you shortly to confirm the details.</p>' +
+        '<div style="background:#f9fafb;border-radius:12px;padding:16px;text-align:left;font-size:13px;color:#374151;line-height:1.8;">' +
+          '<div><strong>Name:</strong> ' + ((formData.firstName || "") + " " + (formData.lastName || "")).trim() + '</div>' +
+          '<div><strong>Phone:</strong> ' + (formData.phone || "") + '</div>' +
+          '<div><strong>Email:</strong> ' + (formData.email || "") + '</div>' +
+          '<div><strong>Address:</strong> ' + (formData.address || "") + ', ' + (formData.city || "") + ' ' + (formData.state || "") + ' ' + (formData.zipcode || "") + '</div>' +
+        '</div>' +
+      '</div>';
+    anchor.style.opacity = "1";
+  }, 350);
+}
+
+function loadAiroWidget(formData) {
+  var section = document.getElementById("airoBookingSection");
+  if (section) section.style.display = "block";
+  var anchor = document.getElementById("airo-anchor");
+  if (!anchor) return;
+
+  anchor.innerHTML =
+    '<div id="airo-loader" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 16px;gap:16px;">' +
+      '<div style="width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:airo-spin 0.8s linear infinite;"></div>' +
+      '<p style="color:#6b7280;font-size:14px;margin:0;">Loading your booking options…</p>' +
+    '</div>';
+
+  if (!document.getElementById("airo-spin-style")) {
+    var style = document.createElement("style");
+    style.id = "airo-spin-style";
+    style.textContent = "@keyframes airo-spin { to { transform: rotate(360deg); } }";
+    document.head.appendChild(style);
+  }
+
+  window.airoBookingForm = {
+    zipCode:   formData.zipcode   || "",
+    firstName: formData.firstName || "",
+    lastName:  formData.lastName  || "",
+    address:   formData.address   || "",
+    email:     formData.email     || "",
+    phone:     formData.phone     || "",
+    trade:          "Bathroom - Bathtub or Shower Updates",
+    campaignId:     "6a15b3b46637d",
+    campaignKey:    "mcg9Wjv26VZJ43yqLdFX",
+    showLeadBuyers: "yes",
+    apptScheduledCallback: function() {
+      // GTM event — visible in GA4 as a conversion
+      if (window.dataLayer) window.dataLayer.push({ event: "airo_appt_scheduled", service: formData.service || "" });
+      showAiroThankYou(formData);
+    },
+    onScheduled: function() { showAiroThankYou(formData); },
+    onComplete:  function() { showAiroThankYou(formData); }
+  };
+
+  // Listen for postMessage from contractor appointments iframe
+  window.addEventListener("message", function onAiroMsg(e) {
+    if (!e.origin || e.origin.indexOf("contractorappointments.com") === -1) return;
+    var raw = typeof e.data === "string" ? e.data.toLowerCase() : JSON.stringify(e.data || "").toLowerCase();
+    if (raw.indexOf("scheduled") !== -1 || raw.indexOf("complete") !== -1 || raw.indexOf("submit") !== -1) {
+      window.removeEventListener("message", onAiroMsg);
+      showAiroThankYou(formData);
+    }
+  });
+
+  // MutationObserver fallback — fires when widget renders its own confirmation screen
+  var airoObserver = new MutationObserver(function() {
+    var anchor = document.getElementById("airo-anchor");
+    if (!anchor) return;
+    var text = anchor.innerText || "";
+    if (text.indexOf("Next Steps") !== -1 || text.indexOf("Project Details") !== -1 || text.indexOf("scheduled") !== -1) {
+      airoObserver.disconnect();
+      showAiroThankYou(formData);
+    }
+  });
+  airoObserver.observe(document.getElementById("airo-anchor"), { childList: true, subtree: true });
+
+  function loadEmbedScript() {
+    var s = document.createElement("script");
+    s.src = "https://form.contractorappointments.com/js/embed-form.js?v=" + new Date().getTime();
+    s.onload = function() {
+      var loader = document.getElementById("airo-loader");
+      if (loader) loader.style.display = "none";
+    };
+    document.body.appendChild(s);
+  }
+
+  if (window.jQuery) {
+    loadEmbedScript();
+  } else {
+    var jq = document.createElement("script");
+    jq.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+    jq.onload = loadEmbedScript;
+    document.body.appendChild(jq);
+  }
+}
+
 var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5";
 
 
+var AIRO_TRADE_MAP = {
+  bath:    "Bathroom - Bathtub or Shower Updates",
+  shower:  "Bathroom - Bathtub or Shower Updates",
+  tub:     "Bathroom - Bathtub or Shower Updates",
+  roof:    "Roofing",
+  windows: "Window Installation or Replacement",
+  solar:   "Solar Energy Installation",
+  gutter:  "Gutter Cleaning",
+};
+
+function buildAiroWidget() {
+  var section = document.getElementById("airoBookingSection");
+  if (!section) return;
+
+  var fd = store.formData;
+  window.airoBookingForm = {
+    zipCode:    fd.zipcode    || "",
+    firstName:  fd.firstName  || "",
+    lastName:   fd.lastName   || "",
+    address:    fd.address    || "",
+    email:      fd.email      || "",
+    phone:      fd.phone      || "",
+    trade:      AIRO_TRADE_MAP[fd.service] || "Bathroom - Bathtub or Shower Updates",
+    campaignId: "6a15b3b46637d",
+    campaignKey: "mcg9Wjv26VZJ43yqLdFX",
+    showLeadBuyers: "yes",
+    apptScheduledCallback: function() {
+      if (window.dataLayer) window.dataLayer.push({ event: "airo_appt_scheduled", service: fd.service });
+    },
+  };
+  var s = document.createElement("script");
+  s.src = "https://form.contractorappointments.com/js/embed-form.js?v=" + new Date().getTime();
+  document.body.appendChild(s);
+
+  section.style.display = "block";
+}
+
+function formatPhoneForAiro(phone) {
+  var d = String(phone || "").replace(/\D/g, "");
+  if (d.length === 10) return d.slice(0,3) + "-" + d.slice(3,6) + "-" + d.slice(6);
+  return d;
+}
+
 function buildThumbTackContractors() {
+  var lpAccepted = store.state.leadResponse && store.state.leadResponse.contractorApptsAccepted === true;
+
+  if (lpAccepted) {
+    document.getElementById("thumbtackContractorsSection").style.display = "none";
+    var fd = store.formData;
+    var fdForAiro = Object.assign({}, fd, { phone: formatPhoneForAiro(fd.phone) });
+    loadAiroWidget(fdForAiro);
+    return;
+  }
+
   var section = document.getElementById("thumbtackContractorsSection");
   var container = document.getElementById("thumbtackContractors");
   if (!section || !container) return;
