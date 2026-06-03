@@ -2371,7 +2371,17 @@ function doLeadSubmit(phone, btn) {
   // Submit the lead to backend — Lead fires via submitFullLead → metaLead → GTM
   submitFullLead(store.formData)
     .then(function(result) {
-      if (result) store.state.leadResponse = result;
+      if (result) {
+        store.state.leadResponse = result;
+        console.log("[QHF] LP response:", JSON.stringify({
+          delivered: result.partnerDelivery && result.partnerDelivery.delivered,
+          contractorApptsAccepted: result.contractorApptsAccepted,
+          postBuyerName: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.buyer_name,
+          postBuyerId: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.buyer_id,
+          pingBids: result.partnerDelivery && result.partnerDelivery.pingResponse && result.partnerDelivery.pingResponse.bids,
+          postStatus: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.status,
+        }));
+      }
       btn.disabled = false; btn.textContent = "Submit";
       store.nextStep();
       renderCurrentStep();
