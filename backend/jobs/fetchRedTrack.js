@@ -139,14 +139,25 @@ function parseSourceTitle(title) {
   return { platform, service, owner };
 }
 
+// Direct-offer LP metrics. We run offers without a lander, so RedTrack has no
+// native lp_views/lp_clicks. Instead a GTM pixel fires RT conversion types:
+//   ViewContent = Type 4 (convtype4) → LP view
+//   AddtoCart   = Type 5 (convtype5) → LP click
+// Prefer the convtype counts; fall back to the native fields for historical rows
+// (pre-pixel) where convtype is 0 so previously stored data is left untouched.
+const VIEW_CONVTYPE  = 'convtype4'; // ViewContent
+const CLICK_CONVTYPE = 'convtype5'; // AddtoCart
+function lpViews(row)  { return Number(row[VIEW_CONVTYPE])  || Number(row.lp_views)  || 0; }
+function lpClicks(row) { return Number(row[CLICK_CONVTYPE]) || Number(row.lp_clicks) || 0; }
+
 function makeRow(fetchedAt, type, row, titleToOwner = {}) {
   const sourceTitle = row.source || '';
   const { platform: rt_platform, service: rt_service, owner: ownerByName } = parseSourceTitle(sourceTitle);
   // Fall back to title-map when name-based detection fails (e.g. renamed sources)
   const rt_owner = ownerByName !== 'unknown' ? ownerByName : (titleToOwner[sourceTitle.toLowerCase()] || 'unknown');
 
-  const lp_views  = Number(row.lp_views)  || 0;
-  const lp_clicks = Number(row.lp_clicks) || 0;
+  const lp_views  = lpViews(row);
+  const lp_clicks = lpClicks(row);
   const lp_ctr    = lp_views > 0 ? (lp_clicks / lp_views) * 100 : 0;
 
   return {
@@ -221,8 +232,8 @@ export async function fetchRedTrack() {
 
   for (const row of cityRows) {
     if (!row.date || !row.city) continue;
-    const lp_views  = Number(row.lp_views)  || 0;
-    const lp_clicks = Number(row.lp_clicks) || 0;
+    const lp_views  = lpViews(row);
+    const lp_clicks = lpClicks(row);
     allRows.push({
       fetched_at:     fetchedAt,
       date:           row.date,

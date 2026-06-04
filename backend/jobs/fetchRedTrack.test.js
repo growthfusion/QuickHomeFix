@@ -113,6 +113,31 @@ describe('fetchRedTrack', () => {
     expect(row.lp_clicks).toBe(11);
   });
 
+  it('maps convtype4 (ViewContent) → lp_views and convtype5 (AddtoCart) → lp_clicks', async () => {
+    mockRtApi({ daily: [{ date: '2026-06-04', convtype4: 12, convtype5: 4, lp_views: 0, lp_clicks: 0 }] });
+    await fetchRedTrack();
+    const row = mockInsert.mock.calls[0][0].values[0];
+    expect(row.lp_views).toBe(12);
+    expect(row.lp_clicks).toBe(4);
+    expect(row.lp_ctr).toBeCloseTo((4 / 12) * 100, 5);
+  });
+
+  it('prefers convtype counts over native lp_views/lp_clicks when both present', async () => {
+    mockRtApi({ daily: [{ date: '2026-06-04', convtype4: 9, convtype5: 3, lp_views: 99, lp_clicks: 88 }] });
+    await fetchRedTrack();
+    const row = mockInsert.mock.calls[0][0].values[0];
+    expect(row.lp_views).toBe(9);
+    expect(row.lp_clicks).toBe(3);
+  });
+
+  it('falls back to native lp_views/lp_clicks for historical rows (convtype absent/0)', async () => {
+    mockRtApi({ daily: [{ date: '2026-05-01', lp_views: 38, lp_clicks: 17 }] });
+    await fetchRedTrack();
+    const row = mockInsert.mock.calls[0][0].values[0];
+    expect(row.lp_views).toBe(38);
+    expect(row.lp_clicks).toBe(17);
+  });
+
   it('computes lp_ctr as (lp_clicks / lp_views) × 100', async () => {
     mockRtApi({ daily: [{ date: '2026-05-01', lp_views: 50, lp_clicks: 25 }] });
     await fetchRedTrack();
