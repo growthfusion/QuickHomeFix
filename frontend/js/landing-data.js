@@ -136,6 +136,40 @@ const serviceLandingData = {
       { question: "Are walk-in tubs covered by insurance?", answer: "Some plans may cover part of the cost if medically necessary." }
     ]
   },
+  shower: {
+    heroTitle: "Top Walk-In Shower Contractors Near You",
+    heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",
+    heroImage: "images/walkin_shower_services.png",
+    overviewImage: "images/landing/bath-1.jpg",
+    gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
+    overviewTitle: "Walk-In Shower Installation & Conversion",
+    overviewSubtitle: "Safe, low-maintenance showers built for accessibility and style:",
+    overviewBenefits: ["Available in most States","Competitive local pricing","Low-threshold barrier-free entry","Built-in seating & grab bars","Anti-slip flooring options","Modern glass & tile finishes"],
+    features: [
+      { title: "Barrier-Free Entry", desc: "Low or zero-threshold designs make stepping in safe and effortless for all ages." },
+      { title: "Built-In Safety", desc: "Sturdy grab bars, fold-down seating, and slip-resistant floors for peace of mind." },
+      { title: "Custom Glass & Tile", desc: "Frameless glass, modern tile, and sleek fixtures tailored to your space and style." }
+    ],
+    advantages: [
+      { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars dramatically reduce the risk of slips and falls." },
+      { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options let everyone shower with confidence and independence." },
+      { title: "Low Maintenance", desc: "Seamless walls and quality finishes resist mold and wipe clean in seconds." },
+      { title: "Increased Home Value", desc: "A modern walk-in shower boosts appeal for accessibility-focused and design-minded buyers." },
+      { title: "Space Saving", desc: "Converting an old tub to a walk-in shower opens up cramped bathrooms instantly." },
+      { title: "Customizable Options", desc: "Choose rain showerheads, built-in niches, bench seating, and spa-like finishes." }
+    ],
+    reviews: [
+      { name: "Carol", rating: 5, text: "Converting our tub to a walk-in shower was the best decision. So much safer and it looks beautiful.", avatar: "https://randomuser.me/api/portraits/women/65.jpg" },
+      { name: "Frank", rating: 5, text: "Installed in two days. The frameless glass and bench seat are exactly what we wanted.", avatar: "https://randomuser.me/api/portraits/men/52.jpg" },
+      { name: "Diane", rating: 5, text: "No more stepping over a high tub wall. The grab bars and non-slip floor give me real peace of mind.", avatar: "https://randomuser.me/api/portraits/women/33.jpg" }
+    ],
+    faqs: [
+      { question: "How much does a walk-in shower cost?", answer: "Walk-in showers typically cost $3,000 to $15,000 depending on size, materials, and whether it's a tub-to-shower conversion." },
+      { question: "How long does installation take?", answer: "Most tub-to-shower conversions are completed in 1 to 3 days." },
+      { question: "Can you convert my existing tub to a walk-in shower?", answer: "Yes — tub-to-shower conversions are one of the most popular and cost-effective bathroom upgrades." },
+      { question: "Are walk-in showers safe for seniors?", answer: "Yes. Low-threshold entry, grab bars, bench seating, and anti-slip floors make them an excellent accessibility solution." }
+    ]
+  },
   windows: {
     heroTitle: "Top Window Replacement Contractors Near You",
     heroSubtitle: "Enter your ZIP Code to get matched with the top window professionals near you.",
