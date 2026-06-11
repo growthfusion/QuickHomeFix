@@ -139,7 +139,7 @@ const serviceLandingData = {
   shower: {
     heroTitle: "Top Walk-In Shower Contractors Near You",
     heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",
-    heroImage: "images/walkin_shower_services.png",
+    heroImage: "images/walk-in-shower.png",
     overviewImage: "images/landing/bath-1.jpg",
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Walk-In Shower Installation & Conversion",
