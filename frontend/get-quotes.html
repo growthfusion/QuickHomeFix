@@ -1284,8 +1284,8 @@
                 <div class="border border-gray-200 rounded-xl p-3 flex items-center justify-between gap-3">
                   <p class="text-sm font-medium text-gray-700">I'm entitled to make changes to it</p>
                   <div class="flex gap-1 flex-shrink-0">
-                    <button type="button" class="w-14 py-1.5 rounded-md border text-xs font-bold bg-blue-600 text-white border-blue-600">Yes</button>
-                    <button type="button" class="w-14 py-1.5 rounded-md border text-xs font-bold bg-white text-gray-500 border-gray-200">No</button>
+                    <button type="button" id="changesYes" onclick="setCanMakeChanges(true)" class="w-14 py-1.5 rounded-md border text-xs font-bold bg-blue-600 text-white border-blue-600">Yes</button>
+                    <button type="button" id="changesNo" onclick="setCanMakeChanges(false)" class="w-14 py-1.5 rounded-md border text-xs font-bold bg-white text-gray-500 border-gray-200">No</button>
                   </div>
                 </div>
               </div>
@@ -2104,6 +2104,11 @@ function renderRadioStep(stepName, progress) {
     btn.onclick = function() {
       currentRadioValue = opt.id;
       store.updateFormData(config.field, opt.id);
+      // Windows flow: auto-advance to the next step on selection (no Next click)
+      if (store.formData.service === "windows") {
+        submitRadioStep();
+        return;
+      }
       renderRadioStep(stepName, progress);
       document.getElementById("radioNextBtn").disabled = false;
     };
@@ -2357,6 +2362,12 @@ function setOwner(val) {
   store.updateFormData("isOwner", val);
   document.getElementById("ownerYes").className = "w-14 py-1.5 rounded-md border text-xs font-bold " + (val ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200");
   document.getElementById("ownerNo").className = "w-14 py-1.5 rounded-md border text-xs font-bold " + (!val ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200");
+}
+
+function setCanMakeChanges(val) {
+  store.updateFormData("canMakeChanges", val);
+  document.getElementById("changesYes").className = "w-14 py-1.5 rounded-md border text-xs font-bold " + (val ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200");
+  document.getElementById("changesNo").className = "w-14 py-1.5 rounded-md border text-xs font-bold " + (!val ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200");
 }
 
 function submitName(e) {
