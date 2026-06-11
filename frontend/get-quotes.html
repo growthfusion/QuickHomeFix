@@ -2104,8 +2104,8 @@ function renderRadioStep(stepName, progress) {
     btn.onclick = function() {
       currentRadioValue = opt.id;
       store.updateFormData(config.field, opt.id);
-      // Windows flow: auto-advance to the next step on selection (no Next click)
-      if (store.formData.service === "windows") {
+      // Windows & walk-in shower flows: auto-advance on selection (no Next click)
+      if (store.formData.service === "windows" || store.formData.service === "shower") {
         submitRadioStep();
         return;
       }
