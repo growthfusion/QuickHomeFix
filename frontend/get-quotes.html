@@ -250,20 +250,20 @@
     }
     @media (max-width: 1023px) {
       section.va-hero-section.va-hero-shower {
-        background-image: url("images/walk-in-shower.png") !important; /* legacy fallback */
+        background-image: url("images/shower-mobile-hero.png") !important; /* legacy fallback */
         background-image: -webkit-image-set(
-          url("images/walk-in-shower.avif") type("image/avif") 1x,
-          url("images/walk-in-shower.webp") type("image/webp") 1x,
-          url("images/walk-in-shower.png")  type("image/png")  1x
+          url("images/shower-mobile-hero.avif") type("image/avif") 1x,
+          url("images/shower-mobile-hero.webp") type("image/webp") 1x,
+          url("images/shower-mobile-hero.png")  type("image/png")  1x
         ) !important;
         background-image: image-set(
-          url("images/walk-in-shower.avif") type("image/avif") 1x,
-          url("images/walk-in-shower.webp") type("image/webp") 1x,
-          url("images/walk-in-shower.png")  type("image/png")  1x
+          url("images/shower-mobile-hero.avif") type("image/avif") 1x,
+          url("images/shower-mobile-hero.webp") type("image/webp") 1x,
+          url("images/shower-mobile-hero.png")  type("image/png")  1x
         ) !important;
         background-position: center bottom !important;
         background-size: 100% auto !important;
-        min-height: 600px;
+        min-height: 760px;
       }
     }
 
@@ -1692,7 +1692,7 @@ function showLandingPage(svc) {
     // Mobile: render the illustration inside this block, below the text.
     var heroImgWrap = document.getElementById("landingHeroImage");
     if (heroImgWrap) {
-      var _vaMobileImg = _vaIsShower ? 'images/walk-in-shower.png' : 'images/landing/bath-hero-mobile.png';
+      var _vaMobileImg = _vaIsShower ? 'images/shower-mobile-hero.png' : 'images/landing/bath-hero-mobile.png';
       var _vaMobileAlt = _vaIsShower ? 'Walk-in shower installation' : 'Bathroom remodel';
       heroImgWrap.innerHTML =
         '<img src="' + _vaMobileImg + '" alt="' + _vaMobileAlt + '" ' +
