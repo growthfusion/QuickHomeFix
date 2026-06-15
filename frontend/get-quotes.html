@@ -28,8 +28,6 @@
   <!-- Preconnect to third-party origins -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
-  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
   <!-- Thumbtack iframe warm-up -->
   <link rel="dns-prefetch" href="//www.thumbtack.com" />
   <link rel="dns-prefetch" href="//assets-pro.thumbtackstatic.com" />
@@ -71,20 +69,15 @@
     })();
   </script>
 
-  <!-- Tailwind must stay synchronous (runtime engine) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: { extend: {
-        fontFamily: { sans: ['DM Sans','Inter','system-ui','sans-serif'] },
-        screens: { sm:'480px', md:'640px', lg:'1024px', xl:'1280px' }
-      }}
-    }
-  </script>
+  <!-- Precompiled Tailwind — replaces the render-blocking cdn.tailwindcss.com runtime engine.
+       Theme (fonts/screens) lives in tailwind.config.js. Rebuild after editing any class:
+       npx tailwindcss@3 -c tailwind.config.js -i tailwind-input.css -o css/tailwind.css --minify -->
+  <link rel="stylesheet" href="css/tailwind.css" />
 
   <!-- Non-render-blocking CSS -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+  <!-- Only DM Sans is downloaded; Inter stays in the font-family stack as a name-only fallback (system-ui covers the rest) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
 
   <link rel="preload" href="css/styles.css" as="style" onload="this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="css/styles.css" /></noscript>
@@ -269,15 +262,22 @@
 
     /* === Variant A: themed wizard background (more visible) === */
     body.va-mode #wizardContainer {
+      /* JPG fallback first; browsers that understand image-set() take the 79KB AVIF below */
       background:
         linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
         url("images/landing/wizard-bg.jpg") center / cover no-repeat fixed !important;
+      background:
+        linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
+        image-set(url("images/landing/wizard-bg.avif") type("image/avif"), url("images/landing/wizard-bg.jpg") type("image/jpeg")) center / cover no-repeat fixed !important;
     }
     @media (max-width: 1023px) {
       body.va-mode #wizardContainer {
         background:
           linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
           url("images/landing/wizard-bg.jpg") center / cover no-repeat !important;
+        background:
+          linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
+          image-set(url("images/landing/wizard-bg.avif") type("image/avif"), url("images/landing/wizard-bg.jpg") type("image/jpeg")) center / cover no-repeat !important;
       }
     }
 
@@ -1737,37 +1737,7 @@ function showLandingPage(svc) {
       zipField.appendChild(arrowBtn);
     }
 
-    // Live activity ticker — continuous marquee, real portrait avatars
-    var _vaActivities = [
-      { name: "Maria",    city: "Phoenix, AZ",   min: 2,  img: 47 },
-      { name: "James",    city: "Dallas, TX",    min: 4,  img: 12 },
-      { name: "Sarah",    city: "Atlanta, GA",   min: 7,  img: 23 },
-      { name: "Michael",  city: "Tampa, FL",     min: 11, img: 51 },
-      { name: "Lisa",     city: "Chicago, IL",   min: 14, img: 49 },
-      { name: "David",    city: "Denver, CO",    min: 18, img: 65 },
-      { name: "Jennifer", city: "Charlotte, NC", min: 22, img: 31 },
-      { name: "Robert",   city: "Las Vegas, NV", min: 25, img: 36 }
-    ];
-    var tickerMount = (tickerHost && tickerHost.querySelector(".va-strip-inner")) || ctaContainer;
-    if (tickerMount && !document.getElementById("vaActivity")) {
-      var items = _vaActivities.map(function(a) {
-        var src = "https://i.pravatar.cc/56?img=" + a.img;
-        return '<span class="va-item">' +
-                 '<img class="va-avatar" src="' + src + '" alt="" loading="lazy" decoding="async" width="32" height="32" />' +
-                 '<span><span class="va-name">' + a.name + '</span> in ' + a.city + ' just requested a quote ' +
-                 '<span class="va-time">· ' + a.min + ' min ago</span></span>' +
-               '</span>';
-      }).join('');
-      // Duplicate for seamless loop
-      var trackHTML = items + items;
-      var ticker = document.createElement("div");
-      ticker.id = "vaActivity";
-      ticker.className = "mt-3";
-      ticker.innerHTML =
-        '<span id="vaLiveBadge"><span class="va-dot"></span>Live</span>' +
-        '<div id="vaActivityViewport"><span id="vaActivityTrack">' + trackHTML + '</span></div>';
-      tickerMount.appendChild(ticker);
-    }
+    // Live activity ticker removed
 
     // Live-ticking counter — bumps every 3.5s by 1, scoped to variant A
     if (!window._vaCountTimer) {
@@ -1880,7 +1850,10 @@ function showLandingPage(svc) {
 
     function renderGallery(idx) {
       current = (idx + gallery.length) % gallery.length;
-      mainImg.src = gallery[current];
+      // Serve AVIF; fall back to the original if unsupported.
+      var gsrc = gallery[current];
+      mainImg.onerror = function () { this.onerror = null; this.src = gsrc; };
+      mainImg.src = gsrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
       mainImg.alt = "Project " + (current + 1);
       var dotsHtml = "";
       for (var i = 0; i < gallery.length; i++) {
@@ -1891,7 +1864,9 @@ function showLandingPage(svc) {
       var thumbsHtml = "";
       for (var j = 0; j < gallery.length; j++) {
         var activeThumb = j === current;
-        thumbsHtml += '<button type="button" data-gallery-thumb="'+j+'" class="rounded-xl overflow-hidden border '+(activeThumb ? 'border-gray-800 ring-2 ring-gray-800' : 'border-gray-200 opacity-85 hover:opacity-100')+' transition"><img src="'+gallery[j]+'" alt="Thumbnail '+(j+1)+'" loading="lazy" class="w-full h-20 sm:h-24 lg:h-28 object-cover" /></button>';
+        var tsrc = gallery[j];
+        var tavif = tsrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
+        thumbsHtml += '<button type="button" data-gallery-thumb="'+j+'" class="rounded-xl overflow-hidden border '+(activeThumb ? 'border-gray-800 ring-2 ring-gray-800' : 'border-gray-200 opacity-85 hover:opacity-100')+' transition"><img src="'+tavif+'" onerror="this.onerror=null;this.src=\''+tsrc+'\'" alt="Thumbnail '+(j+1)+'" loading="lazy" class="w-full h-20 sm:h-24 lg:h-28 object-cover" /></button>';
       }
       thumbsEl.innerHTML = thumbsHtml;
     }
@@ -2013,7 +1988,17 @@ function renderCurrentStep() {
     document.getElementById("progressZip").style.width = progress + "%";
     const img = serviceImages[store.formData.service];
     const imgEl = document.getElementById("zipHeroImg");
-    imgEl.innerHTML = img ? '<img src="'+img+'" alt="'+store.formData.service+'" class="w-full max-h-64 sm:max-h-72 lg:max-h-80 h-auto object-contain" />' : "";
+    if (img) {
+      var imgAvif = img.replace(/\.(png|jpg|jpeg)$/i, ".avif");
+      var imgWebp = img.replace(/\.(png|jpg|jpeg)$/i, ".webp");
+      imgEl.innerHTML = '<picture>' +
+        '<source srcset="'+imgAvif+'" type="image/avif" />' +
+        '<source srcset="'+imgWebp+'" type="image/webp" />' +
+        '<img src="'+img+'" alt="'+store.formData.service+'" loading="lazy" decoding="async" class="w-full max-h-64 sm:max-h-72 lg:max-h-80 h-auto object-contain" />' +
+        '</picture>';
+    } else {
+      imgEl.innerHTML = "";
+    }
     document.getElementById("zipSubtitle").textContent = serviceSubtitles[store.formData.service] || "";
     document.getElementById("zipInput").value = store.formData.zipcode || "";
     document.getElementById("zipNextBtn").disabled = (store.formData.zipcode||"").length < 5;
@@ -2062,7 +2047,14 @@ function renderCurrentStep() {
     document.getElementById("qhfServiceName").textContent = bannerLabelMap[svc] || "Home Improvement Pros";
     var bannerImg = bannerImgMap[svc] || "";
     var imgEl = document.getElementById("qhfBannerImg");
-    if (bannerImg) { imgEl.src = bannerImg; imgEl.alt = bannerLabelMap[svc] || ""; imgEl.removeAttribute("style"); }
+    if (bannerImg) {
+      // Serve the ~20KB AVIF (98% smaller than the PNG); fall back to the original if AVIF is unsupported.
+      var bannerAvif = bannerImg.replace(/\.(png|jpg|jpeg)$/i, ".avif");
+      imgEl.onerror = function () { this.onerror = null; this.src = bannerImg; };
+      imgEl.src = bannerAvif;
+      imgEl.alt = bannerLabelMap[svc] || "";
+      imgEl.removeAttribute("style");
+    }
     else { imgEl.src = ""; }
 
     buildThumbTackContractors();
