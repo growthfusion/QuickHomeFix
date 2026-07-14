@@ -2265,28 +2265,23 @@ function showSuggestions(predictions) {
   div.id = "addrSuggestions";
   div.className = "absolute z-50 w-full bg-white border border-gray-200 rounded-lg shadow-md mt-1 max-h-60 overflow-auto";
   predictions.forEach(function(p) {
+    var sf = p.structured_formatting || {};
     var parts = (p.description || "").split(",").map(function(s) { return s.trim(); });
-    var streetLine = parts[0] || "";
-    var restLine = parts.slice(1).join(", ");
+    var mainLine = sf.main_text || parts[0] || "";
+    var secondaryLine = sf.secondary_text || parts.slice(1).join(", ");
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "flex items-start gap-2 w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-b-0";
-    var icon = document.createElement("div");
-    icon.innerHTML = '<svg class="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
-    btn.appendChild(icon.firstChild);
-    var textWrap = document.createElement("span");
-    textWrap.className = "min-w-0";
-    var streetSpan = document.createElement("span");
-    streetSpan.className = "block font-medium text-gray-900 truncate";
-    streetSpan.textContent = streetLine;
-    textWrap.appendChild(streetSpan);
-    if (restLine) {
-      var restSpan = document.createElement("span");
-      restSpan.className = "block text-xs text-gray-500 truncate";
-      restSpan.textContent = restLine;
-      textWrap.appendChild(restSpan);
+    btn.className = "block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 border-b border-gray-100 last:border-b-0";
+    var mainSpan = document.createElement("span");
+    mainSpan.className = "block font-medium text-gray-900 truncate";
+    mainSpan.textContent = mainLine;
+    btn.appendChild(mainSpan);
+    if (secondaryLine) {
+      var secondarySpan = document.createElement("span");
+      secondarySpan.className = "block text-xs text-gray-500 truncate";
+      secondarySpan.textContent = secondaryLine;
+      btn.appendChild(secondarySpan);
     }
-    btn.appendChild(textWrap);
     btn.onmousedown = function(e) {
       e.preventDefault();
       applySuggestion(p);
@@ -2307,6 +2302,28 @@ function applySuggestion(suggestion) {
   document.getElementById("addressInput").value = streetOnly;
   store.updateFormData("address", streetOnly);
   hideSuggestions();
+
+  if (suggestion.place_id) {
+    placeDetails(suggestion.place_id).then(function(data) {
+      if (!data) return;
+      if (data.street) {
+        document.getElementById("addressInput").value = data.street;
+        store.updateFormData("address", data.street);
+      }
+      if (data.city) {
+        document.getElementById("cityInput").value = data.city;
+        store.updateFormData("city", data.city);
+      }
+      if (data.state) {
+        document.getElementById("stateInput").value = data.state;
+        store.updateFormData("state", data.state);
+      }
+      if (data.zipcode) {
+        document.getElementById("detailZipInput").value = data.zipcode;
+        store.updateFormData("zipcode", data.zipcode);
+      }
+    }).catch(function() {});
+  }
 }
 
 function submitDetails(e) {
