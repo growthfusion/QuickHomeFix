@@ -91,6 +91,22 @@
 
   <meta name="theme-color" content="#1e40af" />
   <style>
+    /* Wizard question titles sit outside the card, on the wizard column's white background */
+    .wizard-step-title { color: #0f172a; }
+    .wizard-step-subtitle { color: #64748b; }
+
+    /* Overview section image: hidden on mobile for bath/windows, still shown on desktop */
+    @media (max-width: 1023px) {
+      #landingOverviewImage.hide-overview-img-mobile { display: none !important; }
+    }
+
+    /* Wizard column: full-width on desktop/laptop (original look); narrow phone-mockup frame only on small/mobile screens */
+    .wizard-column { width: 100%; max-width: 100%; }
+    @media (max-width: 640px) {
+      .wizard-outer { background: #2b2b2b; }
+      .wizard-column { max-width: 520px; }
+    }
+
     /* =====================================================================
        Variant A design tokens — single source of truth.
        Used by hero, ticker, wizard and all /a-only chrome.
@@ -267,18 +283,29 @@
       }
     }
 
-    /* === Variant A: themed wizard background (more visible) === */
-    body.va-mode #wizardContainer {
-      background:
-        linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
-        url("images/landing/wizard-bg.jpg") center / cover no-repeat fixed !important;
+    /* Windows: variant-A hero with its own banner illustration (overrides bath bg) */
+    section.va-hero-section.va-hero-windows {
+      background-color: #eaf2fb !important;
+      background-image: url("images/ChatGPT Image May 21, 2026, 04_16_31 PM.png") !important;
+      background-size: cover;
+      background-position: right center;
+      background-repeat: no-repeat;
     }
     @media (max-width: 1023px) {
-      body.va-mode #wizardContainer {
-        background:
-          linear-gradient(180deg, rgba(248,250,252,0.78) 0%, rgba(248,250,252,0.72) 60%, rgba(241,245,249,0.78) 100%),
-          url("images/landing/wizard-bg.jpg") center / cover no-repeat !important;
+      /* Windows on mobile: illustration as full-bleed background, same treatment as bathroom */
+      section.va-hero-section.va-hero-windows {
+        background-image: url("images/ChatGPT Image Jul 14, 2026, 04_13_06 PM (1).png") !important;
+        background-position: center bottom !important;
+        background-size: 100% auto !important;
+        background-repeat: no-repeat !important;
+        min-height: 760px;
       }
+      #landingHeroContent.hero-variant-a #landingHeroImage.va-hero-windows-img { display: none !important; }
+    }
+
+    /* === Variant A: wizard background === */
+    body.va-mode #wizardContainer {
+      background: #fff !important;
     }
 
     /* Subtle live shimmer + soft glow on the progress bar (variant A only) */
@@ -326,56 +353,47 @@
     body.va-mode #vaTrustStrip .va-ts-stars { color: #f59e0b; letter-spacing: 1px; }
     body.va-mode #vaTrustStrip .va-ts-lock { color: #16a34a; }
 
-    /* Wider, softer wizard cards on /a */
-    body.va-mode .wizard-step .max-w-sm {
+    /* Wider, flat wizard cards on /a — Angi-style minimal shadow */
+    body.va-mode .wizard-step .max-w-sm.bg-white {
       max-width: 28rem !important;
-      border-radius: var(--va-r-xl) !important;
+      border-radius: 0.5rem !important;
       border: 1px solid var(--va-border) !important;
-      box-shadow: var(--va-shadow-4) !important;
+      box-shadow: var(--va-shadow-1) !important;
       background: var(--va-card) !important;
     }
-    body.va-mode .wizard-step h2 {
+    body.va-mode .wizard-step .max-w-sm.text-center.mb-4 {
+      max-width: 28rem !important;
+    }
+    body.va-mode .wizard-step h2:not(.wizard-step-title) {
       font-size: 1.25rem !important;
       color: var(--va-text) !important;
       letter-spacing: -0.01em;
       margin-bottom: var(--va-space-2) !important;
     }
-    /* Consistent radio-tile system */
-    body.va-mode #radioOptions > button,
-    body.va-mode #radioOptions > label,
-    body.va-mode #step-service-selection .svc-opt {
-      border-radius: var(--va-r-lg) !important;
-      border: 1px solid var(--va-border) !important;
-      box-shadow: var(--va-shadow-1);
-    }
-    body.va-mode #radioOptions > button:hover,
-    body.va-mode #radioOptions > label:hover,
-    body.va-mode #step-service-selection .svc-opt:hover {
-      box-shadow: var(--va-shadow-2);
-    }
-    /* Radio-step options get softer card framing — neutral, no orange override */
+    /* Angi-style list rows: touching rows, shared outer border, small radius */
     body.va-mode #radioOptions {
-      border: 0 !important;
-      border-radius: 0 !important;
-      overflow: visible !important;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 0.5rem !important;
+      overflow: hidden !important;
+      display: block;
       margin-bottom: 1.25rem !important;
     }
     body.va-mode #radioOptions > button,
     body.va-mode #radioOptions > label {
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 0.75rem !important;
+      border: 0 !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      border-radius: 0 !important;
       padding: 0.85rem 1rem !important;
-      background: rgba(255,255,255,0.95) !important;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+      background: #fff !important;
+      transition: background-color .15s ease;
+    }
+    body.va-mode #radioOptions > button:last-child,
+    body.va-mode #radioOptions > label:last-child {
+      border-bottom: 0 !important;
     }
     body.va-mode #radioOptions > button:hover,
     body.va-mode #radioOptions > label:hover {
-      border-color: #93c5fd !important;
-      box-shadow: 0 6px 18px rgba(15,23,42,0.07);
-      transform: translateY(-1px);
+      background: #f8fafc !important;
     }
 
     /* Reassurance footer below each wizard card */
@@ -401,33 +419,32 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* === Variant A: enhanced wizard service-selection step === */
+    /* === Variant A: Angi-style list rows for service-selection step === */
     body.va-mode #step-service-selection .max-w-sm { max-width: 28rem !important; }
     body.va-mode #step-service-selection #serviceSelectOptions {
-      border: 0 !important;
-      border-radius: 0 !important;
-      overflow: visible !important;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 0.5rem !important;
+      overflow: hidden !important;
+      display: block;
       margin-bottom: 1.25rem;
     }
     body.va-mode #step-service-selection .svc-opt {
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 0.875rem !important;
-      padding: 0.85rem !important;
+      border: 0 !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      border-radius: 0 !important;
+      padding: 0.85rem 1rem !important;
       gap: 0.875rem !important;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+      transition: background-color .15s ease;
+    }
+    body.va-mode #step-service-selection .svc-opt:last-child {
+      border-bottom: 0 !important;
     }
     body.va-mode #step-service-selection .svc-opt:hover {
-      border-color: #fb923c !important;
-      box-shadow: 0 8px 22px rgba(15,23,42,0.08);
-      transform: translateY(-1px);
+      background: #f8fafc !important;
     }
     body.va-mode #step-service-selection .svc-opt.svc-active,
     body.va-mode #step-service-selection .svc-opt[aria-pressed="true"] {
-      border-color: #f97316 !important;
-      box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+      background: #f8fafc !important;
     }
     body.va-mode #step-service-selection .va-svc-thumb {
       width: 64px;
@@ -664,8 +681,11 @@
     @media (max-width: 1023px) {
       #landingHeroContent.hero-variant-a > div.grid { gap: 2rem !important; }
       #landingHeroContent.hero-variant-a #landingHeroImage { margin-top: 0.5rem; }
+      /* Nudge ZIP/Get Quote CTA further into the thumb-reachable zone */
+      .hero-variant-a .va-cta-wrap { margin-top: 1.5rem !important; }
     }
-    .hero-variant-a .va-cta-wrap .va-zip-field { width: 100%; }
+    .hero-variant-a .va-cta-wrap { flex-direction: row !important; }
+    .hero-variant-a .va-cta-wrap .va-zip-field { width: auto !important; flex: 1 1 auto; }
 
     .hero-variant-a .va-cta-wrap input#landingZipInput {
       padding-top: 1.1rem; padding-bottom: 1.1rem; font-size: 1.0625rem;
@@ -677,9 +697,12 @@
     }
 
     #landingHeroContent.hero-variant-a .va-cta-wrap > button {
-      width: 100%;
+      width: auto !important;
+      flex: 0 0 auto;
       padding-top: 1.1rem;
       padding-bottom: 1.1rem;
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
       font-size: 1.0625rem;
       border-radius: 0.625rem;
       background: #f97316 !important;
@@ -803,11 +826,6 @@
       100% { transform: translateX(100%); }
     }
 
-    /* Variant A: hide the standalone CTA, put the arrow inside the ZIP input */
-    .hero-variant-a .va-cta-wrap > button { display: none !important; }
-    .hero-variant-a .va-cta-wrap input#landingZipInput {
-      padding-right: 4rem;
-    }
     .hero-variant-a #vaZipSubmit {
       position: absolute;
       right: 0.4rem;
@@ -1119,17 +1137,17 @@
 </div>
 
 <!-- Full-screen wizard container -->
-<div id="wizardContainer" style="display:none;position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:2000;background:#fff;">
-<div style="display:flex;flex-direction:column;min-height:100vh;">
+<div id="wizardContainer" class="wizard-outer" style="display:none;position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:2000;background:#fff;">
+<div class="wizard-column" style="display:flex;flex-direction:column;min-height:100vh;margin:0 auto;background:#fff;">
 
   <!-- Wizard Header -->
-  <div class="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 pt-3 sm:pt-4 pb-2">
-    <button id="backBtn" onclick="wizardBack()" style="display:none" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 items-center justify-center text-gray-500 flex-shrink-0" aria-label="Go back">
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-    </button>
-    <a href="/" onclick="_allowNavigation=true;store.resetAll();" class="flex items-center gap-2 sm:gap-3 cursor-pointer">
-      <img src="images/landing/quickhomefix_Logo2.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" />
-    </a>
+  <div>
+    <div class="relative flex items-center justify-center px-4 sm:px-6 pt-3 sm:pt-4 pb-2">
+      <a href="/" onclick="_allowNavigation=true;store.resetAll();" class="flex items-center cursor-pointer">
+        <img src="images/landing/quickhomefix_Logo2.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" />
+      </a>
+    </div>
+    <div class="progress-bar" style="border-radius:0; background:#e5e7eb;"><div id="wizardProgress" class="progress-bar-fill" style="width:0%;border-radius:0;"></div></div>
   </div>
 
   <!-- Wizard Steps -->
@@ -1137,22 +1155,21 @@
 
     <!-- ═══ ZIPCODE ═══ -->
     <div id="step-zipcode" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm sm:max-w-md lg:max-w-lg text-center mb-4">
+          <h2 class="wizard-step-title text-2xl sm:text-3xl font-bold">What is your zip code?</h2>
+          <p id="zipSubtitle" class="wizard-step-subtitle text-sm mt-1"></p>
+        </div>
         <div class="w-full max-w-sm sm:max-w-md lg:max-w-lg bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="progress-bar"><div id="progressZip" class="progress-bar-fill" style="width:0%"></div></div>
           <div class="p-6 sm:p-8">
             <div id="zipHeroImg" class="flex justify-center mb-5"></div>
-            <div class="text-center mb-6">
-              <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">What is your zip code?</h2>
-              <p id="zipSubtitle" class="text-sm text-gray-500 mt-1"></p>
-            </div>
             <div class="mb-6 max-w-sm mx-auto">
               <input type="text" inputmode="numeric" id="zipInput" placeholder="Enter ZIP code" maxlength="5" autofocus
                 class="w-full text-center text-xl font-semibold tracking-[0.3em] py-4 rounded-xl border border-gray-200 focus:border-blue-400 transition-colors" />
               <p id="zipError" class="text-red-500 text-sm mt-2 text-center hidden"></p>
             </div>
             <div class="flex justify-center">
-              <button id="zipNextBtn" onclick="submitZipcode()" disabled class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
+              <button id="zipNextBtn" onclick="submitZipcode()" disabled class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg disabled:opacity-50">Next</button>
             </div>
           </div>
         </div>
@@ -1161,13 +1178,13 @@
 
     <!-- ═══ SERVICE SELECTION (bathroom hub) ═══ -->
     <div id="step-service-selection" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm text-center mb-4">
+          <h2 class="wizard-step-title text-2xl sm:text-3xl font-bold">What type of service do you need?</h2>
+        </div>
         <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div class="p-6 sm:p-8">
-            <div class="text-center mb-6">
-              <h2 class="text-lg sm:text-xl font-bold text-gray-900">What type of service do you need?</h2>
-            </div>
-            <div id="serviceSelectOptions" class="border border-gray-200 rounded-xl overflow-hidden mb-6">
+            <div id="serviceSelectOptions" class="border border-gray-200 rounded-lg overflow-hidden mb-6">
               <button type="button" onclick="highlightBathroomService('bath')"
                 class="svc-opt w-full flex items-center gap-3 px-5 py-4 text-left bg-white border-b border-gray-200 transition-colors">
                 <div class="svc-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0"></div>
@@ -1186,7 +1203,7 @@
             </div>
             <div class="flex justify-center">
               <button id="svcNextBtn" onclick="selectBathroomService()" disabled
-                class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
+                class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg disabled:opacity-50">Next</button>
             </div>
           </div>
         </div>
@@ -1195,17 +1212,14 @@
 
     <!-- ═══ GENERIC RADIO STEP (reused for all service-specific questions) ═══ -->
     <div id="step-radio" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
-        <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="progress-bar"><div id="progressRadio" class="progress-bar-fill" style="width:0%"></div></div>
-          <div class="p-6 sm:p-8">
-            <div class="text-center mb-6">
-              <h2 id="radioTitle" class="text-lg sm:text-xl font-bold text-gray-900"></h2>
-            </div>
-            <div id="radioOptions" class="border border-gray-200 rounded-xl overflow-hidden mb-6"></div>
-            <div class="flex justify-center">
-              <button id="radioNextBtn" onclick="submitRadioStep()" disabled class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
-            </div>
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm text-center mb-4">
+          <h2 id="radioTitle" class="wizard-step-title text-2xl sm:text-3xl font-bold"></h2>
+        </div>
+        <div class="w-full max-w-sm">
+          <div id="radioOptions" class="border border-gray-200 rounded-lg overflow-hidden mb-6 bg-white shadow-sm"></div>
+          <div class="flex justify-center">
+            <button id="radioNextBtn" onclick="submitRadioStep()" disabled class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg disabled:opacity-50">Next</button>
           </div>
         </div>
       </div>
@@ -1213,13 +1227,12 @@
 
     <!-- ═══ EMAIL ═══ -->
     <div id="step-email" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm text-center mb-4">
+          <h2 class="wizard-step-title text-2xl sm:text-3xl font-bold">Please Enter Your Email</h2>
+        </div>
         <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="progress-bar"><div id="progressEmail" class="progress-bar-fill" style="width:0%"></div></div>
           <div class="p-6 sm:p-8">
-            <div class="text-center mb-6">
-              <h2 class="text-lg sm:text-xl font-bold text-gray-900">Please Enter Your Email</h2>
-            </div>
             <form onsubmit="submitEmail(event)">
               <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address <span class="text-red-500">*</span></label>
@@ -1232,7 +1245,7 @@
                 <p id="emailError" class="mt-1 text-sm text-red-500 hidden"></p>
               </div>
               <div class="flex justify-center">
-                <button type="submit" id="emailNextBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full">Next</button>
+                <button type="submit" id="emailNextBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg">Next</button>
               </div>
             </form>
           </div>
@@ -1242,13 +1255,12 @@
 
     <!-- ═══ DETAILS (ADDRESS) ═══ -->
     <div id="step-details" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm text-center mb-4">
+          <h2 class="wizard-step-title text-2xl sm:text-3xl font-bold">What is Your Address?</h2>
+        </div>
         <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="progress-bar"><div id="progressDetails" class="progress-bar-fill" style="width:0%"></div></div>
           <div class="p-6 sm:p-8">
-            <div class="text-center mb-4">
-              <h2 class="text-lg sm:text-xl font-bold text-gray-900">What is Your Address?</h2>
-            </div>
             <form onsubmit="submitDetails(event)" novalidate>
               <div class="mb-3 relative">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Property Address <span class="text-red-500">*</span></label>
@@ -1290,7 +1302,7 @@
                 </div>
               </div>
               <div class="flex justify-center">
-                <button type="submit" id="detailsNextBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
+                <button type="submit" id="detailsNextBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg disabled:opacity-50">Next</button>
               </div>
             </form>
           </div>
@@ -1300,13 +1312,12 @@
 
     <!-- ═══ NAME ═══ -->
     <div id="step-name" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm text-center mb-4">
+          <h2 class="wizard-step-title text-2xl sm:text-3xl font-bold">Enter Your Name</h2>
+        </div>
         <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="progress-bar"><div id="progressName" class="progress-bar-fill" style="width:0%"></div></div>
           <div class="p-6 sm:p-8">
-            <div class="text-center mb-6">
-              <h2 class="text-lg sm:text-xl font-bold text-gray-900">Enter Your Name</h2>
-            </div>
             <form onsubmit="submitName(event)">
               <div class="space-y-4 mb-6">
                 <div>
@@ -1321,7 +1332,7 @@
                 </div>
               </div>
               <div class="flex justify-center">
-                <button type="submit" id="nameNextBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full disabled:opacity-50">Next</button>
+                <button type="submit" id="nameNextBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg disabled:opacity-50">Next</button>
               </div>
             </form>
           </div>
@@ -1331,13 +1342,12 @@
 
     <!-- ═══ FINAL (PHONE) ═══ -->
     <div id="step-final" class="wizard-step">
-      <div class="flex justify-center px-4 py-4 sm:py-12">
+      <div class="flex flex-col items-center px-4 py-4 sm:py-12">
+        <div class="w-full max-w-sm text-center mb-4">
+          <h2 class="wizard-step-title text-2xl sm:text-3xl font-bold">The Last Step!</h2>
+        </div>
         <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="progress-bar"><div id="progressFinal" class="progress-bar-fill" style="width:95%"></div></div>
           <div class="p-4 sm:p-8">
-            <div class="text-center mb-4 sm:mb-6">
-              <h2 class="text-lg sm:text-xl font-bold text-gray-900">The Last Step!</h2>
-            </div>
             <form onsubmit="submitFinal(event)" novalidate>
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number <span class="text-red-500">*</span></label>
@@ -1350,7 +1360,7 @@
                 <p id="phoneError" class="text-red-500 text-xs mt-1 hidden"></p>
               </div>
               <div class="flex justify-center mt-6">
-                <button type="submit" id="finalSubmitBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-full">Submit</button>
+                <button type="submit" id="finalSubmitBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg">Submit</button>
               </div>
               <div class="flex items-center justify-center gap-1.5 mt-3 text-gray-400 text-xs">
                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -1568,7 +1578,6 @@ document.addEventListener("DOMContentLoaded", function() {
   var params = new URLSearchParams(window.location.search);
   var svc = (pathMatch && pathMatch[1]) || params.get("service");
   window._landingVariant = (pathMatch && pathMatch[2]) || "";
-  if (window._landingVariant === "a") document.body.classList.add("va-mode");
   if (!svc || !isValidService(svc)) {
     window.location.replace("/");
     return;
@@ -1578,8 +1587,10 @@ document.addEventListener("DOMContentLoaded", function() {
     svc = "bathroom";
   }
   currentLandingService = svc;
-  // Walk-in shower always uses the variant-A themed treatment
-  if (svc === "shower") document.body.classList.add("va-mode");
+  // Variant A is the default bathroom hero now; /orig opts back into the original layout.
+  if ((svc === "bathroom" && window._landingVariant !== "orig") || svc === "shower") {
+    document.body.classList.add("va-mode");
+  }
 
   // Resume in-progress wizard if user came back via upsell/switchService
   if (store.state.isFormStarted && store.formData.service === svc && store.currentStep > 0) {
@@ -1629,9 +1640,9 @@ function showLandingPage(svc) {
   document.getElementById("landingPage").style.display = "flex";
   document.getElementById("wizardContainer").style.display = "none";
 
-  // Variant A: bathroom + /a path → keep full layout, override hero words only.
+  // Variant A is now the default bathroom hero. /orig opts back into the original layout.
   // Walk-in shower uses the same variant-A treatment by default (its own banner art).
-  window._isHeroVariantA = ((window._landingVariant === "a") && (svc === "bathroom" || svc === "bath")) || (svc === "shower");
+  window._isHeroVariantA = ((window._landingVariant !== "orig") && (svc === "bathroom" || svc === "bath")) || (svc === "shower") || (svc === "windows");
   // Variant B: bathroom + /b path → keep original layout/design, only swap the copy
   window._isHeroVariantB = (window._landingVariant === "b") && (svc === "bathroom" || svc === "bath");
 
@@ -1678,30 +1689,32 @@ function showLandingPage(svc) {
   if (_heroContentEl) _heroContentEl.classList.toggle("hero-variant-a", !!window._isHeroVariantA);
   var _heroSectionEl = _heroContentEl && _heroContentEl.closest("section");
   if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-section", !!window._isHeroVariantA);
-  // Shower swaps the variant-A background illustration for its own banner
+  // Shower and windows swap the variant-A background illustration for their own banner
   if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-shower", svc === "shower");
+  if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-windows", svc === "windows");
 
   var _contractorLinkEl = document.getElementById("heroContractorLink");
   if (_contractorLinkEl) _contractorLinkEl.style.display = window._isHeroVariantA ? "none" : "";
   if (window._isHeroVariantA) {
     var _vaIsShower = (svc === "shower");
-    document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Free Walk-In Shower Quotes' : 'Free Bathroom Quotes';
-    document.getElementById("landingHeroSubtitle").textContent = 'Compare 3 verified quotes in 2 minutes.';
+    var _vaIsWindows = (svc === "windows");
+    document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Free Walk-In Shower Quotes' : _vaIsWindows ? 'Top Window Contractors Near You' : 'Top Bathroom Contractors Near You';
+    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Compare 3 verified quotes in 2 minutes.' : 'Compare 3 verified, licensed pros in your area. Free quotes in 2 minutes. Zero spam calls.';
 
     // Desktop: the banner illustration is the section background (image block hidden via CSS).
     // Mobile: render the illustration inside this block, below the text.
     var heroImgWrap = document.getElementById("landingHeroImage");
     if (heroImgWrap) {
-      var _vaMobileImg = _vaIsShower ? 'images/shower-mobile-hero.png' : 'images/landing/bath-hero-mobile.png';
-      var _vaMobileAlt = _vaIsShower ? 'Walk-in shower installation' : 'Bathroom remodel';
+      heroImgWrap.classList.toggle("va-hero-windows-img", _vaIsWindows);
+      var _vaMobileImg = _vaIsShower ? 'images/shower-mobile-hero.png' : _vaIsWindows ? 'images/ChatGPT Image May 21, 2026, 04_16_31 PM.png' : 'images/landing/bath-hero-mobile.png';
+      var _vaMobileAlt = _vaIsShower ? 'Walk-in shower installation' : _vaIsWindows ? 'Window installation' : 'Bathroom remodel';
       heroImgWrap.innerHTML =
         '<img src="' + _vaMobileImg + '" alt="' + _vaMobileAlt + '" ' +
           'loading="eager" decoding="async" width="540" height="540" />';
     }
     var ctaBtn = document.querySelector('#landingHeroContent button[onclick="startWizardFromLanding()"]');
     if (ctaBtn) {
-      ctaBtn.innerHTML =
-        'See My Free Quotes <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
+      ctaBtn.innerHTML = 'Get Quote';
     }
     // Reverse-trust line: addresses the #1 unspoken ZIP fear (contractor spam)
     var trustP = document.querySelector('#landingHeroContent .text-blue-200\\/70');
@@ -1709,64 +1722,6 @@ function showLandingPage(svc) {
       trustP.innerHTML =
         '<svg class="inline-block w-3.5 h-3.5 -mt-0.5 mr-1 text-blue-200/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>' +
         'We match you with up to 3 local pros — never 50 spammers · <span id="vaLiveCount">12,047</span> homeowners matched';
-    }
-
-    var ctaContainer = document.querySelector('#landingHeroContent .w-full.max-w-md');
-
-    // Activity ticker host moves OUT of hero — into its own strip just after the hero <section>
-    var tickerHost = document.getElementById("vaActivityStrip");
-    if (!tickerHost && _heroSectionEl) {
-      tickerHost = document.createElement("div");
-      tickerHost.id = "vaActivityStrip";
-      tickerHost.innerHTML = '<div class="va-strip-inner"></div>';
-      _heroSectionEl.parentNode.insertBefore(tickerHost, _heroSectionEl.nextSibling);
-    }
-
-    // Inline arrow submit inside the ZIP input
-    var zipField = document.querySelector('#landingHeroContent .va-zip-field');
-    if (zipField && !document.getElementById("vaZipSubmit")) {
-      var arrowBtn = document.createElement("button");
-      arrowBtn.id = "vaZipSubmit";
-      arrowBtn.type = "button";
-      arrowBtn.setAttribute("aria-label", "See my free quotes");
-      arrowBtn.onclick = function() { startWizardFromLanding(); };
-      arrowBtn.innerHTML =
-        '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">' +
-          '<path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>' +
-        '</svg>';
-      zipField.appendChild(arrowBtn);
-    }
-
-    // Live activity ticker — continuous marquee, real portrait avatars
-    var _vaActivities = [
-      { name: "Maria",    city: "Phoenix, AZ",   min: 2,  img: 47 },
-      { name: "James",    city: "Dallas, TX",    min: 4,  img: 12 },
-      { name: "Sarah",    city: "Atlanta, GA",   min: 7,  img: 23 },
-      { name: "Michael",  city: "Tampa, FL",     min: 11, img: 51 },
-      { name: "Lisa",     city: "Chicago, IL",   min: 14, img: 49 },
-      { name: "David",    city: "Denver, CO",    min: 18, img: 65 },
-      { name: "Jennifer", city: "Charlotte, NC", min: 22, img: 31 },
-      { name: "Robert",   city: "Las Vegas, NV", min: 25, img: 36 }
-    ];
-    var tickerMount = (tickerHost && tickerHost.querySelector(".va-strip-inner")) || ctaContainer;
-    if (tickerMount && !document.getElementById("vaActivity")) {
-      var items = _vaActivities.map(function(a) {
-        var src = "https://i.pravatar.cc/56?img=" + a.img;
-        return '<span class="va-item">' +
-                 '<img class="va-avatar" src="' + src + '" alt="" loading="lazy" decoding="async" width="32" height="32" />' +
-                 '<span><span class="va-name">' + a.name + '</span> in ' + a.city + ' just requested a quote ' +
-                 '<span class="va-time">· ' + a.min + ' min ago</span></span>' +
-               '</span>';
-      }).join('');
-      // Duplicate for seamless loop
-      var trackHTML = items + items;
-      var ticker = document.createElement("div");
-      ticker.id = "vaActivity";
-      ticker.className = "mt-3";
-      ticker.innerHTML =
-        '<span id="vaLiveBadge"><span class="va-dot"></span>Live</span>' +
-        '<div id="vaActivityViewport"><span id="vaActivityTrack">' + trackHTML + '</span></div>';
-      tickerMount.appendChild(ticker);
     }
 
     // Live-ticking counter — bumps every 3.5s by 1, scoped to variant A
@@ -1840,6 +1795,8 @@ function showLandingPage(svc) {
   document.getElementById("landingOverviewTitle").textContent = data.overviewTitle;
   document.getElementById("landingOverviewSubtitle").textContent = data.overviewSubtitle;
   var overviewImgEl = document.getElementById("landingOverviewImage");
+  var _hideOverviewImageOnMobile = (svc === "bath" || svc === "bathroom" || svc === "windows");
+  if (overviewImgEl) overviewImgEl.classList.toggle("hide-overview-img-mobile", _hideOverviewImageOnMobile);
   if (data.overviewImage) {
     var ovSrc = data.overviewImage;
     var ovAvif = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
@@ -1994,7 +1951,7 @@ function renderCurrentStep() {
 
   // Back button
   const backBtn = document.getElementById("backBtn");
-  backBtn.style.display = step > 1 ? "inline-flex" : "none";
+  if (backBtn) backBtn.style.display = step > 1 ? "inline-flex" : "none";
 
   // Trust badge visibility
   const trust = document.getElementById("trustBadge");
@@ -2010,7 +1967,7 @@ function renderCurrentStep() {
 
   if (stepName === "zipcode") {
     document.getElementById("step-zipcode").classList.add("active");
-    document.getElementById("progressZip").style.width = progress + "%";
+    document.getElementById("wizardProgress").style.width = progress + "%";
     const img = serviceImages[store.formData.service];
     const imgEl = document.getElementById("zipHeroImg");
     imgEl.innerHTML = img ? '<img src="'+img+'" alt="'+store.formData.service+'" class="w-full max-h-64 sm:max-h-72 lg:max-h-80 h-auto object-contain" />' : "";
@@ -2019,22 +1976,23 @@ function renderCurrentStep() {
     document.getElementById("zipNextBtn").disabled = (store.formData.zipcode||"").length < 5;
   } else if (stepName === "email") {
     document.getElementById("step-email").classList.add("active");
-    document.getElementById("progressEmail").style.width = progress + "%";
+    document.getElementById("wizardProgress").style.width = progress + "%";
     document.getElementById("emailInput").value = store.formData.email || "";
   } else if (stepName === "details") {
     document.getElementById("step-details").classList.add("active");
-    document.getElementById("progressDetails").style.width = progress + "%";
+    document.getElementById("wizardProgress").style.width = progress + "%";
     document.getElementById("addressInput").value = store.formData.address || "";
     document.getElementById("cityInput").value = store.formData.city || "";
     document.getElementById("stateInput").value = store.formData.state || "";
     document.getElementById("detailZipInput").value = store.formData.zipcode || "";
   } else if (stepName === "name") {
     document.getElementById("step-name").classList.add("active");
-    document.getElementById("progressName").style.width = progress + "%";
+    document.getElementById("wizardProgress").style.width = progress + "%";
     document.getElementById("firstNameInput").value = store.formData.firstName || "";
     document.getElementById("lastNameInput").value = store.formData.lastName || "";
   } else if (stepName === "final") {
     document.getElementById("step-final").classList.add("active");
+    document.getElementById("wizardProgress").style.width = progress + "%";
     document.getElementById("phoneInput").value = store.formData.phone || "";
     // Preload jQuery so the widget loads instantly if LP accepts
     if (!window.jQuery && !document.getElementById("airo-jquery-preload")) {
@@ -2045,7 +2003,7 @@ function renderCurrentStep() {
     }
   } else if (stepName === "complete") {
     document.getElementById("step-complete").classList.add("active");
-    backBtn.style.display = "none";
+    if (backBtn) backBtn.style.display = "none";
     var svcMap = { windows:"Window installation", solar:"Solar energy", bath:"Bath remodeling", gutter:"Gutter service", shower:"Walk-in shower", tub:"Walk-in tub", roofing:"Roofing" };
     var label = svcMap[store.formData.service] || "Home project";
     document.getElementById("completeMessage").textContent = label + " · submitted";
@@ -2081,7 +2039,7 @@ function renderCurrentStep() {
 function renderRadioStep(stepName, progress) {
   const config = radioStepConfigs[stepName];
   document.getElementById("step-radio").classList.add("active");
-  document.getElementById("progressRadio").style.width = progress + "%";
+  document.getElementById("wizardProgress").style.width = progress + "%";
   document.getElementById("radioTitle").textContent = config.title;
   currentRadioField = config.field;
   currentRadioValue = store.formData[config.field] || "";
