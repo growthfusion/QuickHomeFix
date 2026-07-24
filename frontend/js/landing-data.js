@@ -19,7 +19,8 @@ const serviceLandingData = {
     advantages: [
       { title: "Protect Your Investment", desc: "A quality roof protects your entire home from water damage, mold, and structural deterioration." },
       { title: "Energy Efficiency", desc: "Modern roofing materials reflect heat and provide better insulation, lowering your energy bills year-round." },
-      { title: "Increased Home Value", desc: "A new roof can increase your home's resale value by an average of $12,000 to $15,000." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced resale-value figure (Category 2 unsubstantiated claim)
+      { title: "Increased Home Value", desc: "A new roof can meaningfully increase your home's resale value." },
       { title: "Weather Protection", desc: "Today's roofing systems are engineered to withstand high winds, hail, and extreme weather conditions." },
       { title: "Insurance Compliance", desc: "An up-to-date roof keeps your homeowner's insurance valid and may lower your premiums." },
       { title: "Curb Appeal", desc: "A new roof instantly transforms your home's appearance with modern colors and styles to choose from." }
@@ -192,10 +193,12 @@ const serviceLandingData = {
       { title: "Low-E Glass Coatings", desc: "Low-E coatings reduce UV rays and heat transfer while letting natural light through." }
     ],
     advantages: [
-      { title: "Lower Energy Bills", desc: "Energy-efficient windows can reduce heating and cooling costs by 25-30%." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced savings figure (Category 2 unsubstantiated claim)
+      { title: "Lower Energy Bills", desc: "Energy-efficient windows can meaningfully reduce heating and cooling costs." },
       { title: "Noise Reduction", desc: "Multi-pane windows significantly reduce outside noise." },
       { title: "Increased Home Value", desc: "Window replacement offers one of the highest returns on investment." },
-      { title: "UV Protection", desc: "Low-E glass coatings block up to 99% of harmful UV rays." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced figure (Category 2 unsubstantiated claim)
+      { title: "UV Protection", desc: "Low-E glass coatings block most harmful UV rays." },
       { title: "Enhanced Security", desc: "Modern windows feature multi-point locking systems." },
       { title: "Curb Appeal", desc: "New windows instantly refresh your home's exterior appearance." }
     ],
@@ -219,24 +222,27 @@ const serviceLandingData = {
     gallery: ["images/landing/solar-1.jpg","images/landing/solar-2.jpg","images/landing/solar-3.jpg"],
     overviewTitle: "Solar Panel Installation & Energy Solutions",
     overviewSubtitle: "Start saving on your energy bills today:",
-    // ANGI EXHIBIT A COMPLIANCE: removed "Federal" and "warranties" (Categories 4/8)
-    overviewBenefits: ["Solar tax credits available","Reduce electricity bills up to 70%","Increase your home's value","Clean, renewable energy","25-year panel coverage","Net metering benefits"],
+    // ANGI EXHIBIT A COMPLIANCE: removed "Federal", "warranties", and unsourced savings figure (Categories 2/4/8)
+    overviewBenefits: ["Solar tax credits available","Reduce your electricity bills","Increase your home's value","Clean, renewable energy","25-year panel coverage","Net metering benefits"],
     features: [
       { title: "Custom System Design", desc: "Every solar system is designed specifically for your roof layout and energy needs." },
       { title: "Premium Panel Technology", desc: "High-efficiency panels that maximize energy production even on cloudy days." },
       { title: "Battery Storage Options", desc: "Add battery storage to keep your power on during outages." }
     ],
     advantages: [
-      { title: "Slash Energy Bills", desc: "Solar homeowners save an average of $1,500 per year on electricity." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced savings figure (Category 2 unsubstantiated claim)
+      { title: "Slash Energy Bills", desc: "Solar homeowners can save significantly on their electricity costs." },
       // ANGI EXHIBIT A COMPLIANCE: removed "Federal" (Category 4)
       { title: "Solar Tax Credit", desc: "Deduct 30% of the cost from your taxes." },
-      { title: "Boost Home Value", desc: "Homes with solar sell for an average of 4.1% more." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced resale-value figure (Category 2 unsubstantiated claim)
+      { title: "Boost Home Value", desc: "Homes with solar can sell for more than comparable homes without it." },
       { title: "Energy Independence", desc: "Generate your own power and reduce reliance on the grid." },
       { title: "Low Maintenance", desc: "Solar panels require minimal maintenance and last 25+ years." },
       { title: "Environmental Impact", desc: "A typical system offsets about 100,000 lbs of CO2 over 20 years." }
     ],
     reviews: [
-      { name: "James", rating: 5, text: "Our bill went from $280/month to $35. Installation team was incredible.", avatar: "https://randomuser.me/api/portraits/men/22.jpg" },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced before/after bill figures (Category 2 unsubstantiated claim)
+      { name: "James", rating: 5, text: "Our electric bill dropped dramatically. Installation team was incredible.", avatar: "https://randomuser.me/api/portraits/men/22.jpg" },
       { name: "Patricia", rating: 5, text: "Seamless process. They handled everything including permits.", avatar: "https://randomuser.me/api/portraits/women/17.jpg" },
       // ANGI EXHIBIT A COMPLIANCE: removed "financing" (Category 8)
       { name: "Richard", rating: 5, text: "Great payment options. The system paid for itself in under 5 years.", avatar: "https://randomuser.me/api/portraits/men/41.jpg" }
