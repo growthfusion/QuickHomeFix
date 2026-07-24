@@ -1084,13 +1084,7 @@
     </div>
   </section>
 
-  <!-- Reviews -->
-  <section class="py-10 sm:py-12 bg-white">
-    <div class="max-w-6xl mx-auto px-5 sm:px-6">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">Reviews from Homeowners</h2>
-      <div id="landingReviews" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-    </div>
-  </section>
+  <!-- ANGI EXHIBIT A COMPLIANCE: removed "Reviews from Homeowners" section — reviews did not include contractor name + location (Category 9E) -->
 
   <!-- FAQ -->
   <section class="py-10 sm:py-12 bg-gray-50">
@@ -1422,7 +1416,8 @@
               <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#2563eb" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
             </div>
             <div style="flex:1;min-width:0;">
-              <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#111827;">Book a Free In-Home Estimate</p>
+              <!-- ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1 prohibited incentive framing) -->
+              <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#111827;">Book an In-Home Estimate</p>
               <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">A local pro will call to confirm your appointment. Takes under 60 seconds.</p>
             </div>
           </div>
@@ -1457,8 +1452,9 @@
           </div>
           <div class="flex flex-col items-center py-4 px-1">
             <svg class="w-6 h-6 sm:w-7 sm:h-7 text-yellow-500 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
-            <span class="text-[10px] sm:text-xs font-semibold text-gray-800">Guaranteed</span>
-            <span class="text-[8px] sm:text-[10px] text-gray-400 text-center leading-tight mt-0.5">100% satisfaction</span>
+            <!-- ANGI EXHIBIT A COMPLIANCE: removed "Guaranteed" / "100% satisfaction" (Category 8 prohibited claim) -->
+            <span class="text-[10px] sm:text-xs font-semibold text-gray-800">Quality Work</span>
+            <span class="text-[8px] sm:text-[10px] text-gray-400 text-center leading-tight mt-0.5">Trusted service</span>
           </div>
           <div class="flex flex-col items-center py-4 px-1">
             <svg class="w-6 h-6 sm:w-7 sm:h-7 text-green-500 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1699,7 +1695,8 @@ function showLandingPage(svc) {
     var _vaIsShower = (svc === "shower");
     var _vaIsWindows = (svc === "windows");
     document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Free Walk-In Shower Quotes' : _vaIsWindows ? 'Top Window Contractors Near You' : 'Top Bathroom Contractors Near You';
-    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Compare 3 verified quotes in 2 minutes.' : 'Compare 3 verified, licensed pros in your area. Free quotes in 2 minutes. Zero spam calls.';
+    // ANGI EXHIBIT A COMPLIANCE: removed "licensed" (Category 2 prohibited claim)
+    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Compare 3 quotes in 2 minutes.' : 'Compare 3 quotes from pros in your area. Free quotes in 2 minutes. Zero spam calls.';
 
     // Desktop: the banner illustration is the section background (image block hidden via CSS).
     // Mobile: render the illustration inside this block, below the text.
@@ -1867,19 +1864,7 @@ function showLandingPage(svc) {
     renderGallery(0);
   }
 
-  // Reviews
-  var revEl = document.getElementById("landingReviews");
-  revEl.innerHTML = "";
-  data.reviews.forEach(function(r) {
-    var stars = "";
-    for (var s=0; s<5; s++) {
-      stars += '<svg class="w-5 h-5 '+(s < r.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200')+'" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>';
-    }
-    var avatarHtml = r.avatar
-      ? '<img src="'+r.avatar+'" alt="'+r.name+'" class="w-10 h-10 rounded-full object-cover border-2 border-gray-100" loading="lazy" />'
-      : '<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"><span class="text-sm font-bold text-blue-600">'+r.name[0]+'</span></div>';
-    revEl.innerHTML += '<div class="bg-white rounded-lg border border-gray-200 p-5"><div class="flex gap-0.5">'+stars+'</div><p class="text-[15px] text-gray-700 leading-relaxed mt-3 mb-4">"'+r.text+'"</p><div class="flex items-center gap-2.5">'+avatarHtml+'<div><span class="text-[15px] font-bold text-gray-900 block">'+r.name+'</span><span class="text-xs text-gray-400">Verified Homeowner</span></div></div></div>';
-  });
+  // ANGI EXHIBIT A COMPLIANCE: "Reviews from Homeowners" render removed with its section (Category 9E — no contractor name/location)
 
   // FAQs
   var faqEl = document.getElementById("landingFaqs");
