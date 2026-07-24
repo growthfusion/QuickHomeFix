@@ -1065,9 +1065,11 @@
   </section>
 
   <!-- Gallery -->
+  <!-- ANGI EXHIBIT A COMPLIANCE: reworded heading + added stock photo disclosure (Category 9D) -->
   <section id="landingGallerySection" class="py-10 sm:py-12 bg-gray-50 hidden">
     <div class="max-w-3xl mx-auto px-5 sm:px-6">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">Photo Gallery of Completed Projects</h2>
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-2">Project Inspiration</h2>
+      <p class="text-xs text-gray-500 text-center mb-8">Stock photos. Not representative of any specific contractor.</p>
       <div id="landingGallery">
         <div class="relative rounded-2xl overflow-hidden bg-gray-200 aspect-[4/3] sm:aspect-[16/10]">
           <img id="landingGalleryMain" src="" alt="" class="w-full h-full object-cover transition-opacity duration-300" />
@@ -1772,18 +1774,25 @@ function showLandingPage(svc) {
     var heroSrc = data.heroImage;
     var heroAvif = heroSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
     var heroWebp = heroSrc.replace(/\.(png|jpg|jpeg)$/i, ".webp");
+    // ANGI EXHIBIT A COMPLIANCE: added stock photo disclosure (Category 9D)
     heroImgEl.innerHTML = '<picture>' +
       '<source srcset="'+heroAvif+'" type="image/avif" />' +
       '<source srcset="'+heroWebp+'" type="image/webp" />' +
-      '<img src="'+heroSrc+'" alt="'+data.heroTitle+'" loading="eager" decoding="async" fetchpriority="high" width="528" height="385" class="w-full h-auto object-contain drop-shadow-xl" />' +
-      '</picture>';
+      '<img src="'+heroSrc+'" alt="Stock photo" loading="eager" decoding="async" fetchpriority="high" width="528" height="385" class="w-full h-auto object-contain drop-shadow-xl" />' +
+      '</picture>' +
+      '<span class="sr-only">Stock photo. Not representative of any specific contractor.</span>';
   } else if (data.gallery && data.gallery.length > 0) {
+    // ANGI EXHIBIT A COMPLIANCE: added stock photo disclosure (Category 9D)
     var img = document.createElement("img");
     img.src = data.gallery[0];
-    img.alt = "Project";
+    img.alt = "Stock photo";
     img.className = "w-full h-64 lg:h-72 object-cover";
     heroImgEl.textContent = "";
     heroImgEl.appendChild(img);
+    var heroCaption = document.createElement("span");
+    heroCaption.className = "sr-only";
+    heroCaption.textContent = "Stock photo. Not representative of any specific contractor.";
+    heroImgEl.appendChild(heroCaption);
   } else {
     heroImgEl.textContent = "";
   }
@@ -1798,11 +1807,13 @@ function showLandingPage(svc) {
     var ovSrc = data.overviewImage;
     var ovAvif = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
     var ovWebp = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".webp");
+    // ANGI EXHIBIT A COMPLIANCE: added stock photo disclosure (Category 9D)
     overviewImgEl.innerHTML = '<picture>' +
       '<source srcset="'+ovAvif+'" type="image/avif" />' +
       '<source srcset="'+ovWebp+'" type="image/webp" />' +
-      '<img src="'+ovSrc+'" alt="'+data.overviewTitle+'" loading="lazy" decoding="async" class="w-full h-48 sm:h-64 lg:h-72 object-cover" />' +
-      '</picture>';
+      '<img src="'+ovSrc+'" alt="Stock photo" loading="lazy" decoding="async" class="w-full h-48 sm:h-64 lg:h-72 object-cover" />' +
+      '</picture>' +
+      '<span class="sr-only">Stock photo. Not representative of any specific contractor.</span>';
   }
   var benefitsEl = document.getElementById("landingOverviewBenefits");
   benefitsEl.innerHTML = data.overviewBenefits.map(function(b) {
@@ -1835,7 +1846,7 @@ function showLandingPage(svc) {
     function renderGallery(idx) {
       current = (idx + gallery.length) % gallery.length;
       mainImg.src = gallery[current];
-      mainImg.alt = "Project " + (current + 1);
+      mainImg.alt = "Stock photo";
       var dotsHtml = "";
       for (var i = 0; i < gallery.length; i++) {
         var active = i === current;
@@ -1845,7 +1856,7 @@ function showLandingPage(svc) {
       var thumbsHtml = "";
       for (var j = 0; j < gallery.length; j++) {
         var activeThumb = j === current;
-        thumbsHtml += '<button type="button" data-gallery-thumb="'+j+'" class="rounded-xl overflow-hidden border '+(activeThumb ? 'border-gray-800 ring-2 ring-gray-800' : 'border-gray-200 opacity-85 hover:opacity-100')+' transition"><img src="'+gallery[j]+'" alt="Thumbnail '+(j+1)+'" loading="lazy" class="w-full h-20 sm:h-24 lg:h-28 object-cover" /></button>';
+        thumbsHtml += '<button type="button" data-gallery-thumb="'+j+'" class="rounded-xl overflow-hidden border '+(activeThumb ? 'border-gray-800 ring-2 ring-gray-800' : 'border-gray-200 opacity-85 hover:opacity-100')+' transition"><img src="'+gallery[j]+'" alt="Stock photo" loading="lazy" class="w-full h-20 sm:h-24 lg:h-28 object-cover" /></button>';
       }
       thumbsEl.innerHTML = thumbsHtml;
     }
