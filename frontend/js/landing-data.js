@@ -8,16 +8,19 @@ const serviceLandingData = {
     gallery: ["images/landing/roof-1.jpg","images/landing/roof-2.jpg","images/landing/roof-3.jpg"],
     overviewTitle: "Roof Repair, Replacement & New Installation",
     overviewSubtitle: "Protect your home with a quality roof:",
-    overviewBenefits: ["Licensed & insured contractors","Free inspection & estimates","All roofing materials available","Storm damage specialists","Warranty-backed work","Financing options available"],
+    // ANGI EXHIBIT A COMPLIANCE: removed "Licensed & insured", "Free", "Warranty-backed", "Financing" (Categories 1/2/8)
+    overviewBenefits: ["Vetted, professional contractors","Thorough inspection & estimates","All roofing materials available","Storm damage specialists","Quality-backed work","Flexible payment options available"],
     features: [
-      { title: "Complete Roof Replacement", desc: "Full tear-off and replacement with premium materials and manufacturer warranties." },
+      // ANGI EXHIBIT A COMPLIANCE: removed "warranties" (Category 8)
+      { title: "Complete Roof Replacement", desc: "Full tear-off and replacement with premium materials from trusted manufacturers." },
       { title: "Emergency Leak Repair", desc: "Fast response for urgent leaks and storm damage to protect your home immediately." },
       { title: "Roof Inspection & Maintenance", desc: "Thorough inspections to identify issues early and extend the life of your roof." }
     ],
     advantages: [
       { title: "Protect Your Investment", desc: "A quality roof protects your entire home from water damage, mold, and structural deterioration." },
       { title: "Energy Efficiency", desc: "Modern roofing materials reflect heat and provide better insulation, lowering your energy bills year-round." },
-      { title: "Increased Home Value", desc: "A new roof can increase your home's resale value by an average of $12,000 to $15,000." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced resale-value figure (Category 2 unsubstantiated claim)
+      { title: "Increased Home Value", desc: "A new roof can meaningfully increase your home's resale value." },
       { title: "Weather Protection", desc: "Today's roofing systems are engineered to withstand high winds, hail, and extreme weather conditions." },
       { title: "Insurance Compliance", desc: "An up-to-date roof keeps your homeowner's insurance valid and may lower your premiums." },
       { title: "Curb Appeal", desc: "A new roof instantly transforms your home's appearance with modern colors and styles to choose from." }
@@ -59,7 +62,8 @@ const serviceLandingData = {
     reviews: [
       { name: "Joe", rating: 5, text: "They installed 2 days after we signed contract and the installers were nice, quiet, fast, and cleaned up well.", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
       { name: "Kelly", rating: 5, text: "The team that came out was honest, thorough and focused on safety.", avatar: "https://randomuser.me/api/portraits/women/44.jpg" },
-      { name: "Beth", rating: 5, text: "The products they use, the lifetime guaranty, seemed to outdo the competition.", avatar: "https://randomuser.me/api/portraits/women/68.jpg" }
+      // ANGI EXHIBIT A COMPLIANCE: removed "guaranty" (Category 8)
+      { name: "Beth", rating: 5, text: "The products they use seemed to outdo the competition.", avatar: "https://randomuser.me/api/portraits/women/68.jpg" }
     ],
     faqs: [
       { question: "How much does a bathroom remodel cost?", answer: "On average, homeowners spend $10,000 to $30,000 for a full remodel, though smaller updates can start around $5,000." },
@@ -93,7 +97,8 @@ const serviceLandingData = {
     reviews: [
       { name: "Joe", rating: 5, text: "They installed 2 days after we signed contract and the installers were nice, quiet, fast, and cleaned up well.", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
       { name: "Kelly", rating: 5, text: "The team that came out was honest, thorough and focused on safety.", avatar: "https://randomuser.me/api/portraits/women/44.jpg" },
-      { name: "Beth", rating: 5, text: "The products they use, the lifetime guaranty, seemed to outdo the competition.", avatar: "https://randomuser.me/api/portraits/women/68.jpg" }
+      // ANGI EXHIBIT A COMPLIANCE: removed "guaranty" (Category 8)
+      { name: "Beth", rating: 5, text: "The products they use seemed to outdo the competition.", avatar: "https://randomuser.me/api/portraits/women/68.jpg" }
     ],
     faqs: [
       { question: "How much does a bathroom remodel cost?", answer: "On average, homeowners spend $10,000 to $30,000 for a full remodel, though smaller updates can start around $5,000." },
@@ -119,7 +124,8 @@ const serviceLandingData = {
     advantages: [
       { title: "Enhanced Safety", desc: "Low entry threshold and grab bars reduce the risk of slips and falls." },
       { title: "Therapeutic Benefits", desc: "Hydrotherapy jets help relieve arthritis pain and improve circulation." },
-      { title: "Independence", desc: "Walk-in tubs allow seniors to bathe independently with confidence." },
+      // ANGI EXHIBIT A COMPLIANCE: removed "seniors" (Category 4 — age-targeted demographic language)
+      { title: "Independence", desc: "Walk-in tubs allow homeowners to bathe independently with confidence." },
       { title: "Increased Home Value", desc: "Installing a walk-in tub increases appeal for accessibility-focused buyers." },
       { title: "Quick Fill & Drain", desc: "Modern walk-in tubs feature fast-fill faucets and quick-drain technology." },
       { title: "Customizable Options", desc: "Choose heated seats, chromotherapy, aromatherapy, and more." }
@@ -167,7 +173,8 @@ const serviceLandingData = {
       { question: "How much does a walk-in shower cost?", answer: "Walk-in showers typically cost $3,000 to $15,000 depending on size, materials, and whether it's a tub-to-shower conversion." },
       { question: "How long does installation take?", answer: "Most tub-to-shower conversions are completed in 1 to 3 days." },
       { question: "Can you convert my existing tub to a walk-in shower?", answer: "Yes — tub-to-shower conversions are one of the most popular and cost-effective bathroom upgrades." },
-      { question: "Are walk-in showers safe for seniors?", answer: "Yes. Low-threshold entry, grab bars, bench seating, and anti-slip floors make them an excellent accessibility solution." }
+      // ANGI EXHIBIT A COMPLIANCE: removed "seniors" (Category 4 — age-targeted demographic language)
+      { question: "Are walk-in showers a good accessibility option?", answer: "Yes. Low-threshold entry, grab bars, bench seating, and anti-slip floors make them an excellent accessibility solution." }
     ]
   },
   windows: {
@@ -182,13 +189,16 @@ const serviceLandingData = {
     features: [
       { title: "Double & Triple Pane", desc: "Multi-pane windows with gas fills provide superior insulation and energy savings." },
       { title: "Custom Fit Installation", desc: "Precision measured and custom-built to fit your home's exact window openings." },
-      { title: "Low-E Glass Coatings", desc: "Special coatings reduce UV rays and heat transfer while letting natural light through." }
+      // ANGI EXHIBIT A COMPLIANCE: removed "Special" (Category 8)
+      { title: "Low-E Glass Coatings", desc: "Low-E coatings reduce UV rays and heat transfer while letting natural light through." }
     ],
     advantages: [
-      { title: "Lower Energy Bills", desc: "Energy-efficient windows can reduce heating and cooling costs by 25-30%." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced savings figure (Category 2 unsubstantiated claim)
+      { title: "Lower Energy Bills", desc: "Energy-efficient windows can meaningfully reduce heating and cooling costs." },
       { title: "Noise Reduction", desc: "Multi-pane windows significantly reduce outside noise." },
       { title: "Increased Home Value", desc: "Window replacement offers one of the highest returns on investment." },
-      { title: "UV Protection", desc: "Low-E glass coatings block up to 99% of harmful UV rays." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced figure (Category 2 unsubstantiated claim)
+      { title: "UV Protection", desc: "Low-E glass coatings block most harmful UV rays." },
       { title: "Enhanced Security", desc: "Modern windows feature multi-point locking systems." },
       { title: "Curb Appeal", desc: "New windows instantly refresh your home's exterior appearance." }
     ],
@@ -212,27 +222,34 @@ const serviceLandingData = {
     gallery: ["images/landing/solar-1.jpg","images/landing/solar-2.jpg","images/landing/solar-3.jpg"],
     overviewTitle: "Solar Panel Installation & Energy Solutions",
     overviewSubtitle: "Start saving on your energy bills today:",
-    overviewBenefits: ["Federal tax credits available","Reduce electricity bills up to 70%","Increase your home's value","Clean, renewable energy","25-year panel warranties","Net metering benefits"],
+    // ANGI EXHIBIT A COMPLIANCE: removed "Federal", "warranties", and unsourced savings figure (Categories 2/4/8)
+    overviewBenefits: ["Solar tax credits available","Reduce your electricity bills","Increase your home's value","Clean, renewable energy","25-year panel coverage","Net metering benefits"],
     features: [
       { title: "Custom System Design", desc: "Every solar system is designed specifically for your roof layout and energy needs." },
       { title: "Premium Panel Technology", desc: "High-efficiency panels that maximize energy production even on cloudy days." },
       { title: "Battery Storage Options", desc: "Add battery storage to keep your power on during outages." }
     ],
     advantages: [
-      { title: "Slash Energy Bills", desc: "Solar homeowners save an average of $1,500 per year on electricity." },
-      { title: "Federal Tax Credit", desc: "Deduct 30% of the cost from your taxes." },
-      { title: "Boost Home Value", desc: "Homes with solar sell for an average of 4.1% more." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced savings figure (Category 2 unsubstantiated claim)
+      { title: "Slash Energy Bills", desc: "Solar homeowners can save significantly on their electricity costs." },
+      // ANGI EXHIBIT A COMPLIANCE: removed "Federal" (Category 4)
+      { title: "Solar Tax Credit", desc: "Deduct 30% of the cost from your taxes." },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced resale-value figure (Category 2 unsubstantiated claim)
+      { title: "Boost Home Value", desc: "Homes with solar can sell for more than comparable homes without it." },
       { title: "Energy Independence", desc: "Generate your own power and reduce reliance on the grid." },
       { title: "Low Maintenance", desc: "Solar panels require minimal maintenance and last 25+ years." },
       { title: "Environmental Impact", desc: "A typical system offsets about 100,000 lbs of CO2 over 20 years." }
     ],
     reviews: [
-      { name: "James", rating: 5, text: "Our bill went from $280/month to $35. Installation team was incredible.", avatar: "https://randomuser.me/api/portraits/men/22.jpg" },
+      // ANGI EXHIBIT A COMPLIANCE: removed unsourced before/after bill figures (Category 2 unsubstantiated claim)
+      { name: "James", rating: 5, text: "Our electric bill dropped dramatically. Installation team was incredible.", avatar: "https://randomuser.me/api/portraits/men/22.jpg" },
       { name: "Patricia", rating: 5, text: "Seamless process. They handled everything including permits.", avatar: "https://randomuser.me/api/portraits/women/17.jpg" },
-      { name: "Richard", rating: 5, text: "Great financing options. The system paid for itself in under 5 years.", avatar: "https://randomuser.me/api/portraits/men/41.jpg" }
+      // ANGI EXHIBIT A COMPLIANCE: removed "financing" (Category 8)
+      { name: "Richard", rating: 5, text: "Great payment options. The system paid for itself in under 5 years.", avatar: "https://randomuser.me/api/portraits/men/41.jpg" }
     ],
     faqs: [
-      { question: "How much do solar panels cost?", answer: "Average residential system costs $15,000 to $25,000 before the 30% federal tax credit." },
+      // ANGI EXHIBIT A COMPLIANCE: removed "federal" (Category 4)
+      { question: "How much do solar panels cost?", answer: "Average residential system costs $15,000 to $25,000 before the 30% solar tax credit." },
       { question: "How long does installation take?", answer: "Physical installation takes 1-3 days. The full process with permits takes 2-3 months." },
       { question: "Do they work on cloudy days?", answer: "Yes, solar panels still generate electricity on cloudy days at reduced efficiency." },
       { question: "What about excess energy?", answer: "With net metering, excess energy goes to the grid and you receive bill credits." }
@@ -246,7 +263,8 @@ const serviceLandingData = {
     gallery: ["images/landing/gutter-1.jpg","images/landing/gutter-2.jpg","images/landing/gutter-3.jpg"],
     overviewTitle: "Gutter Installation, Repair & Guards",
     overviewSubtitle: "Protect your home from water damage:",
-    overviewBenefits: ["Seamless gutter systems","Gutter guard installation","All materials available","Storm damage repair","Downspout solutions","Free estimates"],
+    // ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1)
+    overviewBenefits: ["Seamless gutter systems","Gutter guard installation","All materials available","Storm damage repair","Downspout solutions","No-cost estimates"],
     features: [
       { title: "Seamless Gutters", desc: "Custom-fabricated on-site for a perfect fit with no seams to leak." },
       { title: "Gutter Guards", desc: "Keep leaves and debris out while letting water flow freely." },
