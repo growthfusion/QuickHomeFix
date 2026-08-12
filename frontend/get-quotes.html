@@ -1025,7 +1025,7 @@
               </button>
             </div>
             <!-- ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1 prohibited incentive framing) -->
-            <p class="mt-2.5 text-sm text-center lg:text-left text-blue-200/70">No-obligation estimates. Takes less than 2 minutes.</p>
+            <p class="mt-2.5 text-sm text-center lg:text-left text-blue-200/70">Takes less than 2 minutes.</p> <!-- QHF-FIX: word change -->
           </div>
         </div>
         <div id="landingHeroImage" class="flex justify-center items-center"></div>
@@ -1687,9 +1687,9 @@ function showLandingPage(svc) {
     var _vaIsShower = (svc === "shower");
     var _vaIsWindows = (svc === "windows");
     // ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1 prohibited incentive framing)
-    document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Walk-In Shower Quotes' : _vaIsWindows ? 'Top Window Contractors Near You' : 'Top Bathroom Contractors Near You';
+    document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Walk-In Shower Quotes' : _vaIsWindows ? 'Window Replacement Quotes Near You' : 'Bathroom Remodeling Quotes Near You'; // QHF-FIX: word change
     // ANGI EXHIBIT A COMPLIANCE: removed "licensed", "Free", absolute "Zero spam calls" claim, and "Compare 3 quotes" (unsubstantiated specific-count claim)
-    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Get matched with local pros in 2 minutes.' : 'Get matched with local pros in your area. Takes 2 minutes.';
+    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Request walk-in shower quotes in your area. Takes 2 minutes.' : _vaIsWindows ? 'Request window quotes in your area. Takes 2 minutes.' : 'Request bathroom quotes in your area. Takes 2 minutes.'; // QHF-FIX: word change
 
     // Desktop: the banner illustration is the section background (image block hidden via CSS).
     // Mobile: render the illustration inside this block, below the text.
