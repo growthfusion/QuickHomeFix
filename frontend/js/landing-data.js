@@ -11,16 +11,16 @@ const serviceLandingData = {
     // ANGI EXHIBIT A COMPLIANCE: removed "Licensed & insured", "Free", "Warranty-backed", "Financing", "All roofing materials available" (Categories 1/2/8)
     overviewBenefits: ["Professional contractors","Thorough inspection & estimates","Storm damage specialists","Wide range of roofing materials","Emergency leak repair","Roof maintenance plans"],
     features: [
-      // ANGI EXHIBIT A COMPLIANCE: removed "warranties" (Category 8)
-      { title: "Complete Roof Replacement", desc: "Full tear-off and replacement with premium materials from trusted manufacturers." },
-      { title: "Emergency Leak Repair", desc: "Fast response for urgent leaks and storm damage to protect your home immediately." },
-      { title: "Roof Inspection & Maintenance", desc: "Thorough inspections to identify issues early and extend the life of your roof." }
+      { title: "Full Tear-Off & Replacement", desc: "Old roofing material is removed down to the deck before new material goes on." },
+      { title: "Emergency Leak Repair", desc: "Fast response for urgent leaks and storm damage." },
+      { title: "Roof Inspections", desc: "A close look at your roof's condition to identify problem areas." },
+      { title: "Material Options", desc: "A range of roofing materials and styles to choose from." },
+      { title: "Cleanup & Haul-Away", desc: "Removal of old roofing debris once the job is done." }
     ],
     advantages: [
       { title: "Protect Your Home", desc: "A well-maintained roof helps shield your home's structure from water damage and mold." },
       { title: "Energy Efficiency", desc: "Modern roofing materials help reflect heat and improve insulation." },
       { title: "Weather Protection", desc: "Today's roofing systems are built to hold up against wind, hail, and storms." },
-      { title: "Insurance Compliance", desc: "An up-to-date roof can help keep your homeowner's insurance policy current." },
       { title: "Curb Appeal", desc: "A new roof can refresh your home's look with a range of colors and styles." },
       { title: "Noise Reduction", desc: "A solid roofing system can help dampen sound from rain and hail." }
     ],
@@ -42,17 +42,18 @@ const serviceLandingData = {
     overviewSubtitle: "Transform your bathroom into a beautiful, functional space:",
     overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Custom vanities & fixtures","Modern tile & flooring","Superior style and comfort"],
     features: [
-      { title: "Custom Design", desc: "Personalized bathroom layouts tailored to your style, space, and daily needs." },
-      { title: "Quality Fixtures", desc: "Premium faucets, showerheads, and hardware that combine style with durability." },
-      { title: "Modern Tile & Flooring", desc: "Beautiful tile work for floors, walls, and showers with waterproof installation." }
+      { title: "Custom Layouts", desc: "Bathroom layouts designed around your space and daily routine." },
+      { title: "Fixture Selection", desc: "Faucets, showerheads, and hardware in a range of styles." },
+      { title: "Tile & Flooring", desc: "Tile work for floors, walls, and showers with waterproof installation." },
+      { title: "Vanity Installation", desc: "New vanities and cabinetry sized to fit your bathroom." },
+      { title: "Lighting Updates", desc: "Updated lighting fixtures to brighten the space." }
     ],
     advantages: [
       { title: "Improved Functionality", desc: "A better layout can add storage, lighting, and fixtures where you need them." },
-      { title: "Energy Efficiency", desc: "Low-flow fixtures, LED lighting, and efficient water heaters can help lower utility bills." },
+      { title: "Energy Efficiency", desc: "Low-flow fixtures and LED lighting can help lower utility bills." },
       { title: "Updated Style", desc: "Swap outdated tile, vanities, and fixtures for a more modern look." },
-      { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smarter storage options." },
-      { title: "Enhanced Comfort", desc: "Options like heated floors and rain showerheads add everyday comfort." },
-      { title: "Water Efficiency", desc: "Newer fixtures can help reduce water usage compared to older models." }
+      { title: "Better Storage", desc: "Custom cabinets and shelving for a more organized space." },
+      { title: "Everyday Comfort", desc: "Options like heated floors and rain showerheads add comfort to daily routines." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -72,18 +73,18 @@ const serviceLandingData = {
     overviewSubtitle: "Transform your bathroom into a beautiful, functional space:",
     overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Walk-in tub & shower installs","Custom vanities & fixtures","Superior style and comfort"],
     features: [
-      { title: "Bathroom Remodeling", desc: "Full bathroom renovations tailored to your style, space, and daily needs." },
-      { title: "Walk-In Tubs", desc: "Safe, therapeutic walk-in tubs with low step-in entry and hydrotherapy jets." },
-      { title: "Walk-In Showers", desc: "Custom walk-in shower installations with modern tile, glass, and fixtures." }
+      { title: "Full Renovations", desc: "Bathroom renovations tailored to your style, space, and daily needs." },
+      { title: "Walk-In Tubs", desc: "Walk-in tubs with a low step-in entry and hydrotherapy jets." },
+      { title: "Walk-In Showers", desc: "Walk-in shower installations with modern tile, glass, and fixtures." },
+      { title: "Vanity & Fixture Updates", desc: "New vanities, faucets, and hardware to match your style." },
+      { title: "Flooring Installation", desc: "Waterproof flooring options built for bathroom use." }
     ],
     advantages: [
-      // ANGI EXHIBIT A COMPLIANCE: removed "Home Value" advantage box entirely (Category 2 — avoids any residual home-value/ROI claim)
-      { title: "Improved Safety", desc: "Walk-in tubs and showers reduce the risk of slips and falls." },
-      { title: "Energy Efficiency", desc: "Modern low-flow fixtures and LED lighting reduce your utility bills." },
-      { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with modern designs." },
-      { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smart storage solutions." },
-      { title: "Enhanced Comfort", desc: "Heated floors, rain showerheads, and spa-like features." },
-      { title: "Water Efficiency", desc: "Newer fixtures can help reduce water usage compared to older models." }
+      { title: "Improved Safety", desc: "Walk-in tubs and showers can help reduce the risk of slips and falls." },
+      { title: "Energy Efficiency", desc: "Low-flow fixtures and LED lighting can help lower utility bills." },
+      { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with a modern design." },
+      { title: "Better Storage", desc: "Custom cabinets and shelving for a more organized space." },
+      { title: "Everyday Comfort", desc: "Heated floors and rain showerheads add comfort to daily routines." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -103,16 +104,16 @@ const serviceLandingData = {
     overviewSubtitle: "Safe, comfortable bathing solutions for your home:",
     overviewBenefits: ["Available in most States","Competitive local pricing","Therapeutic hydrotherapy jets","Low step-in entry door","Built-in safety features","ADA compliant options"],
     features: [
-      { title: "Low Step-In Entry", desc: "A door with a low threshold makes getting in and out safe and simple." },
-      { title: "Hydrotherapy Jets", desc: "Built-in water and air jets provide therapeutic relief for sore muscles." },
-      { title: "Anti-Slip Surfaces", desc: "Textured flooring and built-in grab bars ensure maximum safety." }
+      { title: "Low Step-In Entry", desc: "A door with a low threshold for getting in and out." },
+      { title: "Hydrotherapy Jets", desc: "Built-in water and air jets." },
+      { title: "Anti-Slip Surfaces", desc: "Textured flooring and built-in grab bars." },
+      { title: "Fast-Fill & Drain", desc: "Faucets and drain systems built to save time." },
+      { title: "Customizable Add-Ons", desc: "Options like heated seats and aromatherapy." }
     ],
     advantages: [
-      { title: "Enhanced Safety", desc: "A low entry threshold and grab bars help reduce the risk of slips and falls." },
-      { title: "Therapeutic Benefits", desc: "Hydrotherapy jets can offer relief for sore muscles and joints." },
+      { title: "Enhanced Safety", desc: "A low entry threshold and grab bars can help reduce the risk of slips and falls." },
+      { title: "Comfort Features", desc: "Hydrotherapy jets and heated seating add comfort to bath time." },
       { title: "Independence", desc: "A walk-in tub can make bathing on your own more comfortable." },
-      { title: "Quick Fill & Drain", desc: "Fast-fill faucets and quick-drain technology cut down on wait time." },
-      { title: "Customizable Options", desc: "Choose from heated seats, chromotherapy, aromatherapy, and more." },
       { title: "Space-Conscious Design", desc: "Many models are built to fit within an existing tub footprint." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
@@ -133,17 +134,17 @@ const serviceLandingData = {
     overviewSubtitle: "Safe, low-maintenance showers built for accessibility and style:",
     overviewBenefits: ["Available in most States","Competitive local pricing","Low-threshold barrier-free entry","Built-in seating & grab bars","Anti-slip flooring options","Modern glass & tile finishes"],
     features: [
-      { title: "Barrier-Free Entry", desc: "Low or zero-threshold designs make stepping in safe and effortless for all ages." },
-      { title: "Built-In Safety", desc: "Sturdy grab bars, fold-down seating, and slip-resistant floors for peace of mind." },
-      { title: "Custom Glass & Tile", desc: "Frameless glass, modern tile, and sleek fixtures tailored to your space and style." }
+      { title: "Barrier-Free Entry", desc: "Low or zero-threshold designs for stepping in." },
+      { title: "Built-In Safety", desc: "Grab bars, fold-down seating, and slip-resistant floors." },
+      { title: "Custom Glass & Tile", desc: "Frameless glass, tile, and fixtures tailored to your space." },
+      { title: "Bench Seating", desc: "Built-in seating options for added comfort." },
+      { title: "Storage Niches", desc: "Built-in niches for shampoo and shower essentials." }
     ],
     advantages: [
-      { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars help reduce the risk of slips and falls." },
-      { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options make showering easier for everyone." },
+      { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars can help reduce the risk of slips and falls." },
+      { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options make showering easier for many households." },
       { title: "Low Maintenance", desc: "Seamless walls and quality finishes resist mold and wipe clean easily." },
-      { title: "Space Saving", desc: "Converting an old tub to a walk-in shower can open up a cramped bathroom." },
-      { title: "Customizable Options", desc: "Choose from rain showerheads, built-in niches, bench seating, and more." },
-      { title: "Water Efficiency", desc: "Modern showerheads can help reduce water usage compared to older fixtures." }
+      { title: "Space Saving", desc: "Converting an old tub to a walk-in shower can open up a cramped bathroom." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -163,18 +164,17 @@ const serviceLandingData = {
     overviewSubtitle: "Upgrade your home with energy-efficient windows:",
     overviewBenefits: ["Energy-efficient options","Noise reduction technology","UV protection coatings","Custom sizes & styles","Professional installation"],
     features: [
-      { title: "Double & Triple Pane", desc: "Multi-pane windows with gas fills provide superior insulation and energy savings." },
-      { title: "Custom Fit Installation", desc: "Precision measured and custom-built to fit your home's exact window openings." },
-      // ANGI EXHIBIT A COMPLIANCE: removed "Special" (Category 8)
-      { title: "Low-E Glass Coatings", desc: "Low-E coatings reduce UV rays and heat transfer while letting natural light through." }
+      { title: "Double & Triple Pane Options", desc: "Multi-pane windows with gas fills." },
+      { title: "Custom Fit Installation", desc: "Measured and installed to fit your home's window openings." },
+      { title: "Low-E Glass Coatings", desc: "Coatings that reduce UV rays and heat transfer." },
+      { title: "Multi-Point Locking", desc: "Modern locking hardware on new window units." },
+      { title: "Tilt-In Sashes", desc: "Sashes that tilt in for cleaning from inside your home." }
     ],
     advantages: [
       { title: "Lower Energy Bills", desc: "Energy-efficient windows can help reduce heating and cooling costs." },
-      { title: "Noise Reduction", desc: "Multi-pane windows help cut down on outside noise." },
-      { title: "UV Protection", desc: "Low-E glass coatings help block harmful UV rays." },
-      { title: "Enhanced Security", desc: "Modern windows feature multi-point locking systems." },
-      { title: "Curb Appeal", desc: "New windows can refresh your home's exterior look." },
-      { title: "Easy Maintenance", desc: "Many modern windows tilt in for easy cleaning from inside your home." }
+      { title: "Noise Reduction", desc: "Multi-pane windows can help cut down on outside noise." },
+      { title: "UV Protection", desc: "Low-E glass coatings can help block harmful UV rays." },
+      { title: "Curb Appeal", desc: "New windows can refresh your home's exterior look." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -195,9 +195,10 @@ const serviceLandingData = {
     // ANGI EXHIBIT A COMPLIANCE: removed "Federal", "warranties", unsourced savings figure, and tax-credit claim (Categories 2/4/8)
     overviewBenefits: ["Reduce your electricity bills","Clean, renewable energy","Custom system design","Battery storage options","Net metering benefits"],
     features: [
-      { title: "Custom System Design", desc: "Every solar system is designed specifically for your roof layout and energy needs." },
-      { title: "Premium Panel Technology", desc: "High-efficiency panels that maximize energy production even on cloudy days." },
-      { title: "Battery Storage Options", desc: "Add battery storage to keep your power on during outages." }
+      { title: "Custom System Design", desc: "Solar systems designed around your roof layout and energy needs." },
+      { title: "Panel Installation", desc: "Panels sized and positioned for your home." },
+      { title: "Battery Storage Options", desc: "Add battery storage to keep power available during outages." },
+      { title: "Net Metering Setup", desc: "Coordination with your utility for net metering where available." }
     ],
     advantages: [
       { title: "Reduce Energy Bills", desc: "Solar can help offset a portion of your monthly electricity costs." },
@@ -224,17 +225,17 @@ const serviceLandingData = {
     // ANGI EXHIBIT A COMPLIANCE: removed "Free", "All materials available" (Category 1)
     overviewBenefits: ["Seamless gutter systems","Gutter guard installation","Storm damage repair","Downspout solutions","Gutter guard options"],
     features: [
-      { title: "Seamless Gutters", desc: "Custom-fabricated on-site for a perfect fit with no seams to leak." },
-      { title: "Gutter Guards", desc: "Keep leaves and debris out while letting water flow freely." },
-      { title: "Downspout Systems", desc: "Properly designed drainage that directs water away from your foundation." }
+      { title: "Seamless Gutters", desc: "Fabricated on-site for a fit with no seams to leak." },
+      { title: "Gutter Guards", desc: "Guards that help keep leaves and debris out." },
+      { title: "Downspout Systems", desc: "Drainage designed to direct water away from your foundation." },
+      { title: "Repair Services", desc: "Fixes for leaks, sagging, and damaged sections." },
+      { title: "Storm Damage Repair", desc: "Repairs for gutters damaged by storms." }
     ],
     advantages: [
       { title: "Foundation Protection", desc: "Gutters help channel water away from your foundation, reducing the risk of cracks and flooding." },
       { title: "Prevent Water Damage", desc: "Without gutters, water can cause staining, rot, and exterior damage over time." },
-      { title: "Landscape Preservation", desc: "Controlled drainage helps prevent soil erosion around your landscaping." },
-      { title: "Prevent Ice Dams", desc: "Properly installed gutters can help reduce ice dams in winter." },
-      { title: "Low Maintenance", desc: "Seamless gutters with guards need minimal cleaning." },
-      { title: "Long Lifespan", desc: "Quality gutters are built to last for decades with proper care." }
+      { title: "Landscape Preservation", desc: "Controlled drainage can help prevent soil erosion around your landscaping." },
+      { title: "Low Maintenance", desc: "Seamless gutters with guards need minimal cleaning." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
