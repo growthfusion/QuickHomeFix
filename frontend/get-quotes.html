@@ -1383,8 +1383,9 @@
                 </div>
                 <span class="qhf-congrats-text">Congratulations!</span>
               </div>
-              <h1 class="qhf-banner-heading">We Found Trusted <span id="qhfServiceName" class="qhf-service-highlight">Pros</span> Near You</h1>
-              <p class="qhf-banner-sub">Compare local pros and get your best quote in minutes.</p>
+              <!-- ANGI EXHIBIT A COMPLIANCE: removed "Trusted", "Compare", "best quote" unsubstantiated superlatives (Category 2) -->
+              <h1 class="qhf-banner-heading">We Found <span id="qhfServiceName" class="qhf-service-highlight">Pros</span> Near You</h1>
+              <p class="qhf-banner-sub">Get connected with local pros and request a quote in minutes.</p>
               <div id="completeMessage" style="display:none"></div>
             </div>
           </div>
@@ -1655,8 +1656,9 @@ function showLandingPage(svc) {
     }
     // ANGI EXHIBIT A COMPLIANCE: removed "Free", "verified" (Category 1/2), and unsourced "12,000+ homeowners matched" figure (Category 2)
     titleElB.innerHTML = 'Get Your <span class="text-orange-500">Bathroom</span> Quotes Today';
+    // ANGI EXHIBIT A COMPLIANCE: removed "Compare 3 quotes" (unsubstantiated specific-count claim)
     document.getElementById("landingHeroSubtitle").textContent =
-      "Don't let bad contractors overcharge you. Compare 3 quotes, takes 2 minutes.";
+      "Get matched with local bathroom pros. Takes 2 minutes.";
 
     var ctaBtnB = document.querySelector('#landingHeroContent button[onclick="startWizardFromLanding()"]');
     if (ctaBtnB) {
@@ -1686,8 +1688,8 @@ function showLandingPage(svc) {
     var _vaIsWindows = (svc === "windows");
     // ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1 prohibited incentive framing)
     document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Walk-In Shower Quotes' : _vaIsWindows ? 'Top Window Contractors Near You' : 'Top Bathroom Contractors Near You';
-    // ANGI EXHIBIT A COMPLIANCE: removed "licensed", "Free", and absolute "Zero spam calls" claim (Category 1/2)
-    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Compare 3 quotes in 2 minutes.' : 'Compare 3 quotes from pros in your area. Takes 2 minutes.';
+    // ANGI EXHIBIT A COMPLIANCE: removed "licensed", "Free", absolute "Zero spam calls" claim, and "Compare 3 quotes" (unsubstantiated specific-count claim)
+    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Get matched with local pros in 2 minutes.' : 'Get matched with local pros in your area. Takes 2 minutes.';
 
     // Desktop: the banner illustration is the section background (image block hidden via CSS).
     // Mobile: render the illustration inside this block, below the text.
@@ -2742,7 +2744,7 @@ function buildBizCard(biz) {
         : '') +
     '</div>' +
     (safeCta
-      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '">Compare Quotes</a>'
+      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '">Request Quote</a>'
       : '');
 
   return card;
@@ -2984,9 +2986,9 @@ function _deadcode_oldBizCard() {
     sendPath.setAttribute("stroke-linejoin", "round");
     sendPath.setAttribute("d", "M12 19l9 2-9-18-9 18 9-2zm0 0v-8");
     sendSvg.appendChild(sendPath);
-    // ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1 prohibited incentive framing)
+    // ANGI EXHIBIT A COMPLIANCE: removed "Free" and "Compare" (Category 1)
     var ctaLabel = document.createElement("span");
-    ctaLabel.textContent = "Compare Quote";
+    ctaLabel.textContent = "Request Quote";
     ctaEl.appendChild(sendSvg);
     ctaEl.appendChild(ctaLabel);
     body.appendChild(ctaEl);
