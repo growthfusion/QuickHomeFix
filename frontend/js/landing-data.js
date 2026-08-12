@@ -17,13 +17,12 @@ const serviceLandingData = {
       { title: "Roof Inspection & Maintenance", desc: "Thorough inspections to identify issues early and extend the life of your roof." }
     ],
     advantages: [
-      { title: "Protect Your Investment", desc: "A quality roof protects your entire home from water damage, mold, and structural deterioration." },
-      { title: "Energy Efficiency", desc: "Modern roofing materials reflect heat and provide better insulation, lowering your energy bills year-round." },
-      // ANGI EXHIBIT A COMPLIANCE: removed unsourced resale-value figure (Category 2 unsubstantiated claim)
-      { title: "Home Value", desc: "A new roof is often considered one of the more impactful exterior updates homeowners make." },
-      { title: "Weather Protection", desc: "Today's roofing systems are engineered to withstand high winds, hail, and extreme weather conditions." },
-      { title: "Insurance Compliance", desc: "An up-to-date roof helps keep your homeowner's insurance policy current." },
-      { title: "Curb Appeal", desc: "A new roof refreshes your home's appearance with modern colors and styles to choose from." }
+      { title: "Protect Your Home", desc: "A well-maintained roof helps shield your home's structure from water damage and mold." },
+      { title: "Energy Efficiency", desc: "Modern roofing materials help reflect heat and improve insulation." },
+      { title: "Home Value", desc: "A new roof is a common exterior update homeowners consider before selling." },
+      { title: "Weather Protection", desc: "Today's roofing systems are built to hold up against wind, hail, and storms." },
+      { title: "Insurance Compliance", desc: "An up-to-date roof can help keep your homeowner's insurance policy current." },
+      { title: "Curb Appeal", desc: "A new roof can refresh your home's look with a range of colors and styles." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -48,13 +47,12 @@ const serviceLandingData = {
       { title: "Modern Tile & Flooring", desc: "Beautiful tile work for floors, walls, and showers with waterproof installation." }
     ],
     advantages: [
-      // ANGI EXHIBIT A COMPLIANCE: removed unsourced ROI ranking claim (Category 2 unsubstantiated claim)
-      { title: "Home Value", desc: "A bathroom remodel is a popular upgrade among homeowners looking to update their space." },
-      { title: "Improved Functionality", desc: "Upgrade your layout with better storage, lighting, and fixtures." },
-      { title: "Energy Efficiency", desc: "Modern low-flow toilets, LED lighting, and efficient water heaters reduce your utility bills." },
-      { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with modern designs." },
-      { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smart storage solutions." },
-      { title: "Enhanced Comfort", desc: "Heated floors, rain showerheads, and spa-like features." }
+      { title: "Home Value", desc: "A bathroom remodel is a common upgrade for homeowners looking to refresh their space." },
+      { title: "Improved Functionality", desc: "A better layout can add storage, lighting, and fixtures where you need them." },
+      { title: "Energy Efficiency", desc: "Low-flow fixtures, LED lighting, and efficient water heaters can help lower utility bills." },
+      { title: "Updated Style", desc: "Swap outdated tile, vanities, and fixtures for a more modern look." },
+      { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smarter storage options." },
+      { title: "Enhanced Comfort", desc: "Options like heated floors and rain showerheads add everyday comfort." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -110,13 +108,12 @@ const serviceLandingData = {
       { title: "Anti-Slip Surfaces", desc: "Textured flooring and built-in grab bars ensure maximum safety." }
     ],
     advantages: [
-      { title: "Enhanced Safety", desc: "Low entry threshold and grab bars reduce the risk of slips and falls." },
-      { title: "Therapeutic Benefits", desc: "Hydrotherapy jets help relieve arthritis pain and improve circulation." },
-      // ANGI EXHIBIT A COMPLIANCE: removed "seniors" (Category 4 — age-targeted demographic language)
-      { title: "Independence", desc: "Walk-in tubs allow homeowners to bathe independently with confidence." },
-      { title: "Home Value", desc: "Installing a walk-in tub can add appeal for accessibility-focused buyers." },
-      { title: "Quick Fill & Drain", desc: "Modern walk-in tubs feature fast-fill faucets and quick-drain technology." },
-      { title: "Customizable Options", desc: "Choose heated seats, chromotherapy, aromatherapy, and more." }
+      { title: "Enhanced Safety", desc: "A low entry threshold and grab bars help reduce the risk of slips and falls." },
+      { title: "Therapeutic Benefits", desc: "Hydrotherapy jets can offer relief for sore muscles and joints." },
+      { title: "Independence", desc: "A walk-in tub can make bathing on your own more comfortable." },
+      { title: "Home Value", desc: "A walk-in tub can add appeal for accessibility-focused buyers." },
+      { title: "Quick Fill & Drain", desc: "Fast-fill faucets and quick-drain technology cut down on wait time." },
+      { title: "Customizable Options", desc: "Choose from heated seats, chromotherapy, aromatherapy, and more." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -141,12 +138,12 @@ const serviceLandingData = {
       { title: "Custom Glass & Tile", desc: "Frameless glass, modern tile, and sleek fixtures tailored to your space and style." }
     ],
     advantages: [
-      { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars dramatically reduce the risk of slips and falls." },
-      { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options let everyone shower with confidence and independence." },
-      { title: "Low Maintenance", desc: "Seamless walls and quality finishes resist mold and wipe clean in seconds." },
+      { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars help reduce the risk of slips and falls." },
+      { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options make showering easier for everyone." },
+      { title: "Low Maintenance", desc: "Seamless walls and quality finishes resist mold and wipe clean easily." },
       { title: "Home Value", desc: "A modern walk-in shower can add appeal for accessibility-focused and design-minded buyers." },
-      { title: "Space Saving", desc: "Converting an old tub to a walk-in shower opens up cramped bathrooms." },
-      { title: "Customizable Options", desc: "Choose rain showerheads, built-in niches, bench seating, and spa-like finishes." }
+      { title: "Space Saving", desc: "Converting an old tub to a walk-in shower can open up a cramped bathroom." },
+      { title: "Customizable Options", desc: "Choose from rain showerheads, built-in niches, bench seating, and more." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -173,14 +170,12 @@ const serviceLandingData = {
       { title: "Low-E Glass Coatings", desc: "Low-E coatings reduce UV rays and heat transfer while letting natural light through." }
     ],
     advantages: [
-      // ANGI EXHIBIT A COMPLIANCE: removed unsourced savings figure (Category 2 unsubstantiated claim)
-      { title: "Lower Energy Bills", desc: "Energy-efficient windows can meaningfully reduce heating and cooling costs." },
-      { title: "Noise Reduction", desc: "Multi-pane windows significantly reduce outside noise." },
-      // ANGI EXHIBIT A COMPLIANCE: removed unsourced ROI ranking claim (Category 2 unsubstantiated claim)
-      { title: "Home Value", desc: "New windows are a popular upgrade among homeowners looking to modernize their home." },
+      { title: "Lower Energy Bills", desc: "Energy-efficient windows can help reduce heating and cooling costs." },
+      { title: "Noise Reduction", desc: "Multi-pane windows help cut down on outside noise." },
+      { title: "Home Value", desc: "New windows are a common upgrade for homeowners looking to modernize their home." },
       { title: "UV Protection", desc: "Low-E glass coatings help block harmful UV rays." },
       { title: "Enhanced Security", desc: "Modern windows feature multi-point locking systems." },
-      { title: "Curb Appeal", desc: "New windows refresh your home's exterior appearance." }
+      { title: "Curb Appeal", desc: "New windows can refresh your home's exterior look." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
@@ -207,9 +202,9 @@ const serviceLandingData = {
       { title: "Battery Storage Options", desc: "Add battery storage to keep your power on during outages." }
     ],
     advantages: [
-      { title: "Reduce Energy Bills", desc: "Solar homeowners can offset a portion of their electricity costs." },
-      { title: "Energy Independence", desc: "Generate your own power and reduce reliance on the grid." },
-      { title: "Low Maintenance", desc: "Solar panels require minimal maintenance and last 25+ years." },
+      { title: "Reduce Energy Bills", desc: "Solar can help offset a portion of your monthly electricity costs." },
+      { title: "Energy Independence", desc: "Generate your own power and rely less on the grid." },
+      { title: "Low Maintenance", desc: "Solar panels require minimal upkeep and are built to last for decades." },
       { title: "Environmental Impact", desc: "Solar panels generate electricity without ongoing emissions." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews with unsourced figures and financing language (Categories 2/8/9E)
@@ -237,12 +232,12 @@ const serviceLandingData = {
       { title: "Downspout Systems", desc: "Properly designed drainage that directs water away from your foundation." }
     ],
     advantages: [
-      { title: "Foundation Protection", desc: "Gutters channel water away from your foundation, preventing cracks and flooding." },
-      { title: "Prevent Water Damage", desc: "Without gutters, water causes staining, rot, and exterior damage." },
-      { title: "Landscape Preservation", desc: "Controlled drainage prevents soil erosion and protects landscaping." },
-      { title: "Prevent Ice Dams", desc: "Properly installed gutters help prevent ice dams in winter." },
-      { title: "Low Maintenance", desc: "Seamless gutters with guards require minimal cleaning." },
-      { title: "Long Lifespan", desc: "Quality gutters last 20-30+ years of reliable protection." }
+      { title: "Foundation Protection", desc: "Gutters help channel water away from your foundation, reducing the risk of cracks and flooding." },
+      { title: "Prevent Water Damage", desc: "Without gutters, water can cause staining, rot, and exterior damage over time." },
+      { title: "Landscape Preservation", desc: "Controlled drainage helps prevent soil erosion around your landscaping." },
+      { title: "Prevent Ice Dams", desc: "Properly installed gutters can help reduce ice dams in winter." },
+      { title: "Low Maintenance", desc: "Seamless gutters with guards need minimal cleaning." },
+      { title: "Long Lifespan", desc: "Quality gutters are built to last for decades with proper care." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
