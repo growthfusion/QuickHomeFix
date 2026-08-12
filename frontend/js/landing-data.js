@@ -19,7 +19,6 @@ const serviceLandingData = {
     advantages: [
       { title: "Protect Your Home", desc: "A well-maintained roof helps shield your home's structure from water damage and mold." },
       { title: "Energy Efficiency", desc: "Modern roofing materials help reflect heat and improve insulation." },
-      { title: "Home Value", desc: "A new roof is a common exterior update homeowners consider before selling." },
       { title: "Weather Protection", desc: "Today's roofing systems are built to hold up against wind, hail, and storms." },
       { title: "Insurance Compliance", desc: "An up-to-date roof can help keep your homeowner's insurance policy current." },
       { title: "Curb Appeal", desc: "A new roof can refresh your home's look with a range of colors and styles." }
@@ -47,7 +46,6 @@ const serviceLandingData = {
       { title: "Modern Tile & Flooring", desc: "Beautiful tile work for floors, walls, and showers with waterproof installation." }
     ],
     advantages: [
-      { title: "Home Value", desc: "A bathroom remodel is a common upgrade for homeowners looking to refresh their space." },
       { title: "Improved Functionality", desc: "A better layout can add storage, lighting, and fixtures where you need them." },
       { title: "Energy Efficiency", desc: "Low-flow fixtures, LED lighting, and efficient water heaters can help lower utility bills." },
       { title: "Updated Style", desc: "Swap outdated tile, vanities, and fixtures for a more modern look." },
@@ -77,8 +75,7 @@ const serviceLandingData = {
       { title: "Walk-In Showers", desc: "Custom walk-in shower installations with modern tile, glass, and fixtures." }
     ],
     advantages: [
-      // ANGI EXHIBIT A COMPLIANCE: removed unsourced ROI ranking claim (Category 2 unsubstantiated claim)
-      { title: "Home Value", desc: "A bathroom remodel is a popular upgrade among homeowners looking to update their space." },
+      // ANGI EXHIBIT A COMPLIANCE: removed "Home Value" advantage box entirely (Category 2 — avoids any residual home-value/ROI claim)
       { title: "Improved Safety", desc: "Walk-in tubs and showers reduce the risk of slips and falls." },
       { title: "Energy Efficiency", desc: "Modern low-flow fixtures and LED lighting reduce your utility bills." },
       { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with modern designs." },
@@ -111,7 +108,6 @@ const serviceLandingData = {
       { title: "Enhanced Safety", desc: "A low entry threshold and grab bars help reduce the risk of slips and falls." },
       { title: "Therapeutic Benefits", desc: "Hydrotherapy jets can offer relief for sore muscles and joints." },
       { title: "Independence", desc: "A walk-in tub can make bathing on your own more comfortable." },
-      { title: "Home Value", desc: "A walk-in tub can add appeal for accessibility-focused buyers." },
       { title: "Quick Fill & Drain", desc: "Fast-fill faucets and quick-drain technology cut down on wait time." },
       { title: "Customizable Options", desc: "Choose from heated seats, chromotherapy, aromatherapy, and more." }
     ],
@@ -141,7 +137,6 @@ const serviceLandingData = {
       { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars help reduce the risk of slips and falls." },
       { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options make showering easier for everyone." },
       { title: "Low Maintenance", desc: "Seamless walls and quality finishes resist mold and wipe clean easily." },
-      { title: "Home Value", desc: "A modern walk-in shower can add appeal for accessibility-focused and design-minded buyers." },
       { title: "Space Saving", desc: "Converting an old tub to a walk-in shower can open up a cramped bathroom." },
       { title: "Customizable Options", desc: "Choose from rain showerheads, built-in niches, bench seating, and more." }
     ],
@@ -171,7 +166,6 @@ const serviceLandingData = {
     advantages: [
       { title: "Lower Energy Bills", desc: "Energy-efficient windows can help reduce heating and cooling costs." },
       { title: "Noise Reduction", desc: "Multi-pane windows help cut down on outside noise." },
-      { title: "Home Value", desc: "New windows are a common upgrade for homeowners looking to modernize their home." },
       { title: "UV Protection", desc: "Low-E glass coatings help block harmful UV rays." },
       { title: "Enhanced Security", desc: "Modern windows feature multi-point locking systems." },
       { title: "Curb Appeal", desc: "New windows can refresh your home's exterior look." }
