@@ -1,46 +1,46 @@
 /* ─── Service Landing Page Data ─── */
 const serviceLandingData = {
   roof: {
-    heroTitle: "Top Roofing Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top roofing professionals near you.",
+    heroTitle: "Roofing Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request roofing quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png",
     overviewImage: "images/landing/roof-1.jpg",
     gallery: ["images/landing/roof-1.jpg","images/landing/roof-2.jpg","images/landing/roof-3.jpg"],
-    overviewTitle: "Roof Repair, Replacement & New Installation",
-    overviewSubtitle: "Protect your home with a quality roof:",
+    overviewTitle: "Roof Repair & Replacement", // QHF-FIX: word change
+    overviewSubtitle: "Roofing services available in your area:", // QHF-FIX: word change
     // ANGI EXHIBIT A COMPLIANCE: removed "Licensed & insured", "Free", "Warranty-backed", "Financing", "All roofing materials available" (Categories 1/2/8)
-    overviewBenefits: ["Professional contractors","Thorough inspection & estimates","Storm damage specialists","Wide range of roofing materials","Emergency leak repair","Roof maintenance plans"],
+    overviewBenefits: ["Roofing services available","Roof inspection & estimates","Storm damage services","Wide range of roofing materials","Emergency leak repair available","Roof maintenance services"], // QHF-FIX: word change
     features: [
       // ANGI EXHIBIT A COMPLIANCE: removed "warranties" (Category 8)
-      { title: "Complete Roof Replacement", desc: "Full tear-off and replacement with premium materials from trusted manufacturers." },
-      { title: "Emergency Leak Repair", desc: "Fast response for urgent leaks and storm damage to protect your home immediately." },
-      { title: "Roof Inspection & Maintenance", desc: "Thorough inspections to identify issues early and extend the life of your roof." }
+      { title: "Roof Replacement", desc: "Old roof removed and new roof installed." }, // QHF-FIX: word change
+      { title: "Leak Repair", desc: "Damaged areas repaired to stop leaks." }, // QHF-FIX: word change
+      { title: "Roof Inspection", desc: "Roof checked for damage and wear." } // QHF-FIX: word change
     ],
     advantages: [
-      { title: "Protect Your Home", desc: "A well-maintained roof helps shield your home's structure from water damage and mold." },
-      { title: "Energy Efficiency", desc: "Modern roofing materials help reflect heat and improve insulation." },
-      { title: "Weather Protection", desc: "Today's roofing systems are built to hold up against wind, hail, and storms." },
-      { title: "Insurance Compliance", desc: "An up-to-date roof can help keep your homeowner's insurance policy current." },
-      { title: "Curb Appeal", desc: "A new roof can refresh your home's look with a range of colors and styles." },
-      { title: "Noise Reduction", desc: "A solid roofing system can help dampen sound from rain and hail." }
+      // QHF-FIX: word change
+      { title: "Weather Protection", desc: "Keeps rain, wind, and heat out of your home." },
+      { title: "Energy Efficiency", desc: "Good roofing helps maintain indoor temperature." },
+      { title: "Durability", desc: "A new roof protects your home for years to come." },
+      { title: "Curb Appeal", desc: "A clean roof improves the look of your home." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a new roof cost?", answer: "Cost depends on the size of the home, the material chosen, and local labor rates. A local contractor can give you an exact price after seeing your roof." },
-      { question: "How long does a roof replacement take?", answer: "A typical replacement takes 1 to 3 days once work begins, though larger or more complex roofs can take longer." },
-      { question: "How do I know if I need a new roof?", answer: "Common signs include missing or curling shingles, granules collecting in gutters, daylight visible through the roof boards, sagging areas, and a roof over 20-25 years old." },
-      { question: "Will my insurance cover roof replacement?", answer: "Homeowner's insurance often covers roof damage from storms, hail, or fallen trees, but typically not damage from normal wear and tear. Check your specific policy to be sure." }
+      // QHF-FIX: word change
+      { question: "How do I know if I need a new roof?", answer: "Look for missing shingles, leaks, or visible damage." },
+      { question: "How long does a roof last?", answer: "It depends on the material and condition." },
+      { question: "What types of roofing are available?", answer: "Asphalt, metal, tile, and flat roofing are common options." },
+      { question: "Does weather affect my roof?", answer: "Yes, storms, wind, and heat can cause wear over time." }
     ]
   },
   bath: {
-    heroTitle: "Top Bath Remodeling Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",
+    heroTitle: "Bathroom Remodeling Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request bathroom quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
     overviewImage: "images/landing/bath-1.jpg",
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Bathroom Remodeling & Renovation",
-    overviewSubtitle: "Transform your bathroom into a beautiful, functional space:",
-    overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Custom vanities & fixtures","Modern tile & flooring","Superior style and comfort"],
+    overviewSubtitle: "Bathroom options available in your area:", // QHF-FIX: word change
+    overviewBenefits: ["Available in most States","Bathroom remodeling options","Complete bathroom makeovers","Custom vanities & fixtures","Modern tile & flooring","Style and comfort options"], // QHF-FIX: word change
     features: [
       { title: "Custom Design", desc: "Personalized bathroom layouts tailored to your style, space, and daily needs." },
       { title: "Quality Fixtures", desc: "Premium faucets, showerheads, and hardware that combine style with durability." },
@@ -56,192 +56,194 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a bathroom remodel cost?", answer: "Cost depends on the scope of work, from smaller updates to a full renovation. A contractor can give you an exact price after seeing your space." },
-      { question: "How long does a bathroom remodel take?", answer: "Most remodels take 2 to 4 weeks, though the timeline can stretch longer for bigger layout changes or custom work." },
-      { question: "What does a full bathroom remodel include?", answer: "A full remodel usually covers new flooring, tile work, a vanity, fixtures, lighting, plumbing updates, and painting." },
-      { question: "Do I need permits for a bathroom remodel?", answer: "Plumbing or electrical changes usually require a permit — your contractor can confirm what your local codes require." }
+      // QHF-FIX: word change
+      { question: "What is included in a bathroom remodel?", answer: "Tile, fixtures, vanity, shower, and layout changes." },
+      { question: "What is a walk-in tub?", answer: "A tub with a door for easy entry without climbing." },
+      { question: "Is a walk-in shower good for seniors?", answer: "Yes, it reduces the risk of slips and falls." },
+      { question: "How disruptive is a bathroom remodel?", answer: "Work is typically done room by room to minimise disruption." }
     ]
   },
   bathroom: {
-    heroTitle: "Top Bathroom Remodeling Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top bathroom professionals near you.",
+    heroTitle: "Bathroom Remodeling Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request bathroom quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
     overviewImage: "images/landing/bath-1.jpg",
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Bathroom Remodeling, Walk-In Tubs & Walk-In Showers",
-    overviewSubtitle: "Transform your bathroom into a beautiful, functional space:",
-    overviewBenefits: ["Available in most States","Competitive local pricing","Complete bathroom makeovers","Walk-in tub & shower installs","Custom vanities & fixtures","Superior style and comfort"],
+    overviewSubtitle: "Bathroom options available in your area:", // QHF-FIX: word change
+    overviewBenefits: ["Available in most States","Bathroom remodeling options","Complete bathroom remodeling","Walk-in tub & shower installation","Custom vanities & fixtures available","Style and comfort options"], // QHF-FIX: word change
     features: [
-      { title: "Bathroom Remodeling", desc: "Full bathroom renovations tailored to your style, space, and daily needs." },
-      { title: "Walk-In Tubs", desc: "Safe, therapeutic walk-in tubs with low step-in entry and hydrotherapy jets." },
-      { title: "Walk-In Showers", desc: "Custom walk-in shower installations with modern tile, glass, and fixtures." }
+      { title: "Bathroom Remodeling", desc: "Full bathroom updated with new tile and fixtures." }, // QHF-FIX: word change
+      { title: "Walk-In Tub", desc: "Tub with a door for easy and safe entry." }, // QHF-FIX: word change
+      { title: "Walk-In Shower", desc: "Open shower with no step for easy access." } // QHF-FIX: word change
     ],
     advantages: [
-      // ANGI EXHIBIT A COMPLIANCE: removed "Home Value" advantage box entirely (Category 2 — avoids any residual home-value/ROI claim)
-      { title: "Improved Safety", desc: "Walk-in tubs and showers reduce the risk of slips and falls." },
-      { title: "Energy Efficiency", desc: "Modern low-flow fixtures and LED lighting reduce your utility bills." },
-      { title: "Updated Style", desc: "Replace outdated tile, vanities, and fixtures with modern designs." },
-      { title: "Better Storage", desc: "Custom cabinets, built-in shelving, and smart storage solutions." },
-      { title: "Enhanced Comfort", desc: "Heated floors, rain showerheads, and spa-like features." },
-      { title: "Water Efficiency", desc: "Newer fixtures can help reduce water usage compared to older models." }
+      // QHF-FIX: word change
+      { title: "Improved Safety", desc: "Easier entry reduces the risk of slips and falls." },
+      { title: "Modern Look", desc: "Updated bathrooms look clean and fresh." },
+      { title: "Better Comfort", desc: "A better bathroom improves your daily routine." },
+      { title: "Fresh Space", desc: "A remodeled bathroom makes daily routines more comfortable." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a bathroom remodel cost?", answer: "Cost depends on the scope of work, from smaller updates to a full renovation. A contractor can give you an exact price after seeing your space." },
-      { question: "How much does a walk-in tub cost?", answer: "Cost depends on the features and installation involved. A contractor can give you an exact price for your setup." },
-      { question: "How long does installation take?", answer: "Most projects take 1 to 4 weeks depending on the scope of work involved." },
-      { question: "Do I need permits?", answer: "Plumbing or electrical changes usually require a permit — your contractor can confirm what your local codes require." }
+      // QHF-FIX: word change
+      { question: "What is included in a bathroom remodel?", answer: "Tile, fixtures, vanity, shower, and layout changes." },
+      { question: "What is a walk-in tub?", answer: "A tub with a door for easy entry without climbing." },
+      { question: "Is a walk-in shower good for seniors?", answer: "Yes, it reduces the risk of slips and falls." },
+      { question: "How disruptive is a bathroom remodel?", answer: "Work is typically done room by room to minimise disruption." }
     ]
   },
   tub: {
-    heroTitle: "Top Walk-In Tub Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",
+    heroTitle: "Walk-In Tub Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request walk-in tub quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png",
     overviewImage: "images/landing/tub-1.jpg",
     gallery: ["images/landing/tub-1.jpg","images/landing/tub-2.jpg","images/landing/tub-3.jpg"],
     overviewTitle: "Walk-In Tub Installation & Conversion",
     overviewSubtitle: "Safe, comfortable bathing solutions for your home:",
-    overviewBenefits: ["Available in most States","Competitive local pricing","Therapeutic hydrotherapy jets","Low step-in entry door","Built-in safety features","ADA compliant options"],
+    overviewBenefits: ["Available in most States","Walk-in tub options","Therapeutic hydrotherapy jets","Low step-in entry door","Built-in safety features","Accessibility options"], // QHF-FIX: word change
     features: [
-      { title: "Low Step-In Entry", desc: "A door with a low threshold makes getting in and out safe and simple." },
-      { title: "Hydrotherapy Jets", desc: "Built-in water and air jets provide therapeutic relief for sore muscles." },
-      { title: "Anti-Slip Surfaces", desc: "Textured flooring and built-in grab bars ensure maximum safety." }
+      { title: "Walk-In Tub", desc: "Tub with a door so no climbing is needed." }, // QHF-FIX: word change
+      { title: "Hydrotherapy Jets", desc: "Jets that help relax muscles and joints." }, // QHF-FIX: word change
+      { title: "Safety Features", desc: "Grab bars and non-slip floor included." } // QHF-FIX: word change
     ],
     advantages: [
-      { title: "Enhanced Safety", desc: "A low entry threshold and grab bars help reduce the risk of slips and falls." },
-      { title: "Therapeutic Benefits", desc: "Hydrotherapy jets can offer relief for sore muscles and joints." },
-      { title: "Independence", desc: "A walk-in tub can make bathing on your own more comfortable." },
-      { title: "Quick Fill & Drain", desc: "Fast-fill faucets and quick-drain technology cut down on wait time." },
-      { title: "Customizable Options", desc: "Choose from heated seats, chromotherapy, aromatherapy, and more." },
-      { title: "Space-Conscious Design", desc: "Many models are built to fit within an existing tub footprint." }
+      // QHF-FIX: word change
+      { title: "Safe Entry", desc: "Door entry removes the need to step over the tub wall." },
+      { title: "Comfortable Soak", desc: "Jets help soothe muscles and improve relaxation." },
+      { title: "Easy to Use", desc: "Simple design for independent and comfortable bathing." },
+      { title: "Peace of Mind", desc: "Built-in safety features reduce the risk of accidents." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a walk-in tub cost?", answer: "Cost depends on the features and installation involved. A contractor can give you an exact price for your setup." },
-      { question: "How long does installation take?", answer: "Most installations are completed in 1 to 2 days." },
-      { question: "Will it fit in my existing bathroom?", answer: "Many models are built to fit a standard bathtub alcove, but a contractor can confirm what will work for your space." },
-      { question: "Are walk-in tubs covered by insurance?", answer: "Some insurance plans may cover part of the cost when medically necessary — check with your provider for specifics." }
+      // QHF-FIX: word change
+      { question: "What is a walk-in tub?", answer: "A tub with a door so you do not have to climb over the side." },
+      { question: "Is it safe for seniors?", answer: "Yes, it is designed for safe and easy bathing." },
+      { question: "What are hydrotherapy jets?", answer: "Water jets that help relax muscles and joints." },
+      { question: "Are safety features included?", answer: "Most models include grab bars and non-slip flooring." }
     ]
   },
   shower: {
-    heroTitle: "Top Walk-In Shower Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top professionals near you.",
+    heroTitle: "Walk-In Shower Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request walk-in shower quotes in your area.", // QHF-FIX: word change
     heroImage: "images/walk-in-shower.png",
     overviewImage: "images/landing/bath-1.jpg",
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Walk-In Shower Installation & Conversion",
-    overviewSubtitle: "Safe, low-maintenance showers built for accessibility and style:",
-    overviewBenefits: ["Available in most States","Competitive local pricing","Low-threshold barrier-free entry","Built-in seating & grab bars","Anti-slip flooring options","Modern glass & tile finishes"],
+    overviewSubtitle: "Safe, low-maintenance walk-in showers for accessibility and style:", // QHF-FIX: word change
+    overviewBenefits: ["Available in most States","Shower remodeling options","Low-threshold barrier-free entry","Built-in seating & grab bars","Anti-slip flooring options","Modern glass & tile finishes"], // QHF-FIX: word change
     features: [
-      { title: "Barrier-Free Entry", desc: "Low or zero-threshold designs make stepping in safe and effortless for all ages." },
-      { title: "Built-In Safety", desc: "Sturdy grab bars, fold-down seating, and slip-resistant floors for peace of mind." },
-      { title: "Custom Glass & Tile", desc: "Frameless glass, modern tile, and sleek fixtures tailored to your space and style." }
+      { title: "Walk-In Shower", desc: "Shower with no step or barrier at entry." }, // QHF-FIX: word change
+      { title: "Barrier-Free Entry", desc: "Flat floor entry for full accessibility." }, // QHF-FIX: word change
+      { title: "Custom Finishes", desc: "Tile and glass options in many styles." } // QHF-FIX: word change
     ],
     advantages: [
-      { title: "Enhanced Safety", desc: "Low-threshold entry and grab bars help reduce the risk of slips and falls." },
-      { title: "Easy Accessibility", desc: "Barrier-free and ADA-compliant options make showering easier for everyone." },
-      { title: "Low Maintenance", desc: "Seamless walls and quality finishes resist mold and wipe clean easily." },
-      { title: "Space Saving", desc: "Converting an old tub to a walk-in shower can open up a cramped bathroom." },
-      { title: "Customizable Options", desc: "Choose from rain showerheads, built-in niches, bench seating, and more." },
-      { title: "Water Efficiency", desc: "Modern showerheads can help reduce water usage compared to older fixtures." }
+      // QHF-FIX: word change
+      { title: "Easy Access", desc: "No step makes getting in and out simple." },
+      { title: "Modern Look", desc: "Open showers give a clean, spacious feel." },
+      { title: "Easy Cleaning", desc: "Simple design is easy to keep clean." },
+      { title: "Accessibility", desc: "Good option for anyone with mobility needs." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a walk-in shower cost?", answer: "Cost depends on size, materials, and whether it's a tub-to-shower conversion. A contractor can give you an exact price for your project." },
-      { question: "How long does installation take?", answer: "Most tub-to-shower conversions are completed in 1 to 3 days." },
-      { question: "Can you convert my existing tub to a walk-in shower?", answer: "Yes — tub-to-shower conversions are a common and cost-effective bathroom upgrade." },
-      { question: "Are walk-in showers a good accessibility option?", answer: "Yes. Low-threshold entry, grab bars, bench seating, and anti-slip floors can make a shower easier and safer to use." }
+      // QHF-FIX: word change
+      { question: "What is a walk-in shower?", answer: "A shower with no step or barrier for easy access." },
+      { question: "Can I convert my bathtub to a shower?", answer: "Yes, this is a common bathroom upgrade." },
+      { question: "What finishes are available?", answer: "Tile, glass, and fixture options in many styles." },
+      { question: "Are walk-in showers easy to clean?", answer: "Yes, the open design makes cleaning simple." }
     ]
   },
   windows: {
-    heroTitle: "Top Window Replacement Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top window professionals near you.",
+    heroTitle: "Window Replacement Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request window quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png",
     overviewImage: "images/landing/window-1.jpg",
     gallery: ["images/landing/window-1.jpg","images/landing/window-2.jpg","images/landing/window-3.jpg"],
     overviewTitle: "Window Replacement & Installation",
-    overviewSubtitle: "Upgrade your home with energy-efficient windows:",
-    overviewBenefits: ["Energy-efficient options","Noise reduction technology","UV protection coatings","Custom sizes & styles","Professional installation"],
+    overviewSubtitle: "Window options available in your area:", // QHF-FIX: word change
+    overviewBenefits: ["Energy-efficient options","Noise reduction technology","UV protection coatings","Custom window sizes & styles","Window installation available"], // QHF-FIX: word change
     features: [
-      { title: "Double & Triple Pane", desc: "Multi-pane windows with gas fills provide superior insulation and energy savings." },
-      { title: "Custom Fit Installation", desc: "Precision measured and custom-built to fit your home's exact window openings." },
+      { title: "Window Replacement", desc: "Old windows removed and new ones fitted." }, // QHF-FIX: word change
+      { title: "Custom Sizing", desc: "Windows sized to fit your exact openings." }, // QHF-FIX: word change
       // ANGI EXHIBIT A COMPLIANCE: removed "Special" (Category 8)
-      { title: "Low-E Glass Coatings", desc: "Low-E coatings reduce UV rays and heat transfer while letting natural light through." }
+      { title: "Glass Options", desc: "Single, double, and triple pane available." } // QHF-FIX: word change
     ],
     advantages: [
-      { title: "Lower Energy Bills", desc: "Energy-efficient windows can help reduce heating and cooling costs." },
-      { title: "Noise Reduction", desc: "Multi-pane windows help cut down on outside noise." },
-      { title: "UV Protection", desc: "Low-E glass coatings help block harmful UV rays." },
-      { title: "Enhanced Security", desc: "Modern windows feature multi-point locking systems." },
-      { title: "Curb Appeal", desc: "New windows can refresh your home's exterior look." },
-      { title: "Easy Maintenance", desc: "Many modern windows tilt in for easy cleaning from inside your home." }
+      // QHF-FIX: word change
+      { title: "Energy Savings", desc: "New windows reduce heat and cold coming in." },
+      { title: "Noise Reduction", desc: "Thicker glass reduces outside noise." },
+      { title: "UV Protection", desc: "Special glass blocks harmful UV rays." },
+      { title: "Curb Appeal", desc: "New windows improve the look of your home." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does window replacement cost?", answer: "Cost depends on the number of windows, materials, and installation complexity. A contractor can give you an exact price for your home." },
-      { question: "How long does installation take?", answer: "Most windows take 30-60 minutes each to install, so a full-home job can often be completed in 1 to 2 days." },
-      { question: "What type is most energy efficient?", answer: "Double or triple-pane windows with Low-E coatings and argon gas fills are commonly recommended for energy efficiency. Look for the ENERGY STAR label when comparing options." },
-      { question: "Should I replace all windows at once?", answer: "Replacing all windows in one project is often more cost-effective, but doing it in phases can help spread out the budget." }
+      // QHF-FIX: word change
+      { question: "How do I know if I need new windows?", answer: "Look for drafts, condensation, or difficulty opening." },
+      { question: "What is a double pane window?", answer: "Two layers of glass for better insulation." },
+      { question: "Do new windows save energy?", answer: "Yes, modern windows reduce heating and cooling loss." },
+      { question: "Are custom sizes available?", answer: "Yes, windows can be fitted to any opening." }
     ]
   },
   solar: {
-    heroTitle: "Top Solar Installation Experts Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top solar professionals near you.",
+    heroTitle: "Solar Installation Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request solar quotes in your area.", // QHF-FIX: word change
     heroImage: null,
     overviewImage: "images/landing/solar-1.jpg",
     gallery: ["images/landing/solar-1.jpg","images/landing/solar-2.jpg","images/landing/solar-3.jpg"],
     overviewTitle: "Solar Panel Installation & Energy Solutions",
-    overviewSubtitle: "Start saving on your energy bills today:",
+    overviewSubtitle: "Solar options available in your area:", // QHF-FIX: word change
     // ANGI EXHIBIT A COMPLIANCE: removed "Federal", "warranties", unsourced savings figure, and tax-credit claim (Categories 2/4/8)
-    overviewBenefits: ["Reduce your electricity bills","Clean, renewable energy","Custom system design","Battery storage options","Net metering benefits"],
+    overviewBenefits: ["Lower electricity usage","Clean, renewable energy","Custom system design","Battery storage options","Net metering options"], // QHF-FIX: word change
     features: [
-      { title: "Custom System Design", desc: "Every solar system is designed specifically for your roof layout and energy needs." },
-      { title: "Premium Panel Technology", desc: "High-efficiency panels that maximize energy production even on cloudy days." },
-      { title: "Battery Storage Options", desc: "Add battery storage to keep your power on during outages." }
+      { title: "Panel Installation", desc: "Solar panels fitted to your roof." }, // QHF-FIX: word change
+      { title: "Energy Savings", desc: "Reduces your monthly electricity usage." }, // QHF-FIX: word change
+      { title: "Battery Storage", desc: "Stores power for use when needed." } // QHF-FIX: word change
     ],
     advantages: [
-      { title: "Reduce Energy Bills", desc: "Solar can help offset a portion of your monthly electricity costs." },
-      { title: "Energy Independence", desc: "Generate your own power and rely less on the grid." },
-      { title: "Low Maintenance", desc: "Solar panels require minimal upkeep and are built to last for decades." },
-      { title: "Environmental Impact", desc: "Solar panels generate electricity without ongoing emissions." }
+      // QHF-FIX: word change
+      { title: "Lower Bills", desc: "Solar reduces your electricity costs." },
+      { title: "Clean Energy", desc: "No ongoing emissions from solar power." },
+      { title: "Energy Independence", desc: "Generate your own power instead of relying on the grid." },
+      { title: "Low Maintenance", desc: "Very little upkeep needed after installation." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews with unsourced figures and financing language (Categories 2/8/9E)
     faqs: [
-      { question: "How much do solar panels cost?", answer: "Cost depends on your home's energy needs and the equipment used. A local installer can give you an exact quote, and a tax professional can walk you through any credits that may apply." },
-      { question: "How long does installation take?", answer: "Physical installation usually takes 1-3 days, but the full process including permits can take 2-3 months." },
-      { question: "Do they work on cloudy days?", answer: "Yes, solar panels still generate electricity on cloudy days, just at reduced efficiency compared to full sun." },
-      { question: "What about excess energy?", answer: "With net metering, excess energy you generate goes back to the grid and you receive bill credits in return." }
+      // QHF-FIX: word change
+      { question: "How do solar panels work?", answer: "They convert sunlight into electricity for your home." },
+      { question: "Do solar panels work on cloudy days?", answer: "Yes, they still generate power in low light." },
+      { question: "How much roof space is needed?", answer: "It depends on your home size and energy use." },
+      { question: "Are solar panels low maintenance?", answer: "Yes, they require very little upkeep." }
     ]
   },
   gutter: {
-    heroTitle: "Top Gutter Contractors Near You",
-    heroSubtitle: "Enter your ZIP Code to get matched with the top gutter professionals near you.",
+    heroTitle: "Gutter Installation Quotes Near You", // QHF-FIX: word change
+    heroSubtitle: "Enter your ZIP Code to request gutter quotes in your area.", // QHF-FIX: word change
     heroImage: null,
     overviewImage: "images/landing/gutter-1.jpg",
     gallery: ["images/landing/gutter-1.jpg","images/landing/gutter-2.jpg","images/landing/gutter-3.jpg"],
     overviewTitle: "Gutter Installation, Repair & Guards",
     overviewSubtitle: "Protect your home from water damage:",
     // ANGI EXHIBIT A COMPLIANCE: removed "Free", "All materials available" (Category 1)
-    overviewBenefits: ["Seamless gutter systems","Gutter guard installation","Storm damage repair","Downspout solutions","Gutter guard options"],
+    overviewBenefits: ["Seamless gutter systems available","Gutter guard installation available","Storm damage repair available","Downspout solutions","Gutter guard options"], // QHF-FIX: word change
     features: [
-      { title: "Seamless Gutters", desc: "Custom-fabricated on-site for a perfect fit with no seams to leak." },
-      { title: "Gutter Guards", desc: "Keep leaves and debris out while letting water flow freely." },
-      { title: "Downspout Systems", desc: "Properly designed drainage that directs water away from your foundation." }
+      { title: "Gutter Installation", desc: "New gutters fitted along your roofline." }, // QHF-FIX: word change
+      { title: "Gutter Guards", desc: "Covers that keep debris out of gutters." }, // QHF-FIX: word change
+      { title: "Downspout Systems", desc: "Directs water away from your home." } // QHF-FIX: word change
     ],
     advantages: [
-      { title: "Foundation Protection", desc: "Gutters help channel water away from your foundation, reducing the risk of cracks and flooding." },
-      { title: "Prevent Water Damage", desc: "Without gutters, water can cause staining, rot, and exterior damage over time." },
-      { title: "Landscape Preservation", desc: "Controlled drainage helps prevent soil erosion around your landscaping." },
-      { title: "Prevent Ice Dams", desc: "Properly installed gutters can help reduce ice dams in winter." },
-      { title: "Low Maintenance", desc: "Seamless gutters with guards need minimal cleaning." },
-      { title: "Long Lifespan", desc: "Quality gutters are built to last for decades with proper care." }
+      // QHF-FIX: word change
+      { title: "Home Protection", desc: "Gutters keep water away from your walls and foundation." },
+      { title: "Less Cleaning", desc: "Gutter guards reduce how often you need to clean." },
+      { title: "Better Drainage", desc: "Water flows away properly with a good gutter system." },
+      { title: "Curb Appeal", desc: "Clean gutters improve the appearance of your home." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much do new gutters cost?", answer: "Cost depends on the length of your home and the material used. A contractor can give you an exact price for your project." },
-      { question: "How long does installation take?", answer: "Most gutter installations are completed in a single day." },
-      { question: "Are gutter guards worth it?", answer: "Gutter guards can reduce how often you need to clean your gutters and help prevent clogs." },
-      { question: "What material is best?", answer: "Aluminum is a popular choice for being lightweight, rust-resistant, and affordable, though the best option depends on your home and budget." }
+      // QHF-FIX: word change
+      { question: "Why do I need gutters?", answer: "They direct rainwater away from your home foundation." },
+      { question: "What are gutter guards?", answer: "Covers that stop leaves and debris blocking your gutters." },
+      { question: "How often should gutters be cleaned?", answer: "At least twice a year is recommended." },
+      { question: "What is a seamless gutter?", answer: "A single piece gutter with no joints to reduce leaks." }
     ]
   }
 };
