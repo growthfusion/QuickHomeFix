@@ -26,10 +26,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a new roof cost?", answer: "A new roof typically costs between $5,000 and $15,000, depending on the size of your home, roofing material, and your location." },
-      { question: "How long does a roof replacement take?", answer: "Most residential roof replacements are completed in 1 to 3 days, depending on the size and complexity." },
-      { question: "How do I know if I need a new roof?", answer: "Signs include missing or curling shingles, granules in gutters, daylight through roof boards, sagging areas, and a roof older than 20-25 years." },
-      { question: "Will my insurance cover roof replacement?", answer: "Homeowner's insurance typically covers roof damage from storms, hail, and fallen trees. Regular wear and tear is usually not covered." }
+      { question: "How much does a new roof cost?", answer: "Roof costs vary widely based on the size of your home, the roofing material, and your location. A local contractor can give you an exact quote for your project." },
+      { question: "How long does a roof replacement take?", answer: "Timelines depend on the size and complexity of the job. Your contractor can walk you through what to expect for your specific roof." },
+      { question: "How do I know if I need a new roof?", answer: "Common signs include missing or curling shingles, granules in gutters, daylight through roof boards, and sagging areas. A contractor can inspect your roof and let you know your options." },
+      { question: "Will my insurance cover roof replacement?", answer: "Coverage depends on your policy and the cause of the damage. Check with your insurance provider to understand what's covered." }
     ]
   },
   bath: {
@@ -56,10 +56,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a bathroom remodel cost?", answer: "On average, homeowners spend $10,000 to $30,000 for a full remodel, though smaller updates can start around $5,000." },
-      { question: "How long does a bathroom remodel take?", answer: "A typical bathroom remodel takes 2 to 4 weeks depending on the scope of work." },
-      { question: "What does a full bathroom remodel include?", answer: "New flooring, tile work, vanity, fixtures, lighting, plumbing updates, and painting." },
-      { question: "Do I need permits for a bathroom remodel?", answer: "Permits are typically required for plumbing or electrical changes. Your contractor will handle the permitting." }
+      { question: "How much does a bathroom remodel cost?", answer: "Remodel costs vary depending on the scope of work, from smaller updates to a full renovation. A contractor can provide a quote based on your project." },
+      { question: "How long does a bathroom remodel take?", answer: "Timelines depend on the scope of work — your contractor can give you an estimate for your specific remodel." },
+      { question: "What does a full bathroom remodel include?", answer: "A full remodel can include new flooring, tile work, vanity, fixtures, lighting, plumbing updates, and painting, depending on your goals." },
+      { question: "Do I need permits for a bathroom remodel?", answer: "Permits may be required for plumbing or electrical changes, depending on your local codes. Your contractor can help you determine what's needed." }
     ]
   },
   bathroom: {
@@ -87,10 +87,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a bathroom remodel cost?", answer: "On average, homeowners spend $10,000 to $30,000 for a full remodel, though smaller updates can start around $5,000." },
-      { question: "How much does a walk-in tub cost?", answer: "Walk-in tub prices range from $2,000 to $10,000 depending on features. Installation adds $1,500 to $5,000." },
-      { question: "How long does installation take?", answer: "Most projects are completed in 1 to 4 weeks depending on scope of work." },
-      { question: "Do I need permits?", answer: "Permits are typically required for plumbing or electrical changes. Your contractor will handle the permitting." }
+      { question: "How much does a bathroom remodel cost?", answer: "Remodel costs vary depending on the scope of work, from smaller updates to a full renovation. A contractor can provide a quote based on your project." },
+      { question: "How much does a walk-in tub cost?", answer: "Walk-in tub pricing depends on the features and installation involved. A contractor can give you a quote for your specific setup." },
+      { question: "How long does installation take?", answer: "Timelines depend on the scope of work — your contractor can give you an estimate for your specific project." },
+      { question: "Do I need permits?", answer: "Permits may be required for plumbing or electrical changes, depending on your local codes. Your contractor can help you determine what's needed." }
     ]
   },
   tub: {
@@ -117,10 +117,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a walk-in tub cost?", answer: "Walk-in tub prices range from $2,000 to $10,000 depending on features. Installation adds $1,500 to $5,000." },
-      { question: "How long does installation take?", answer: "Most installations are completed in 1 to 2 days." },
-      { question: "Will it fit in my existing bathroom?", answer: "Many models are designed to fit in a standard bathtub alcove." },
-      { question: "Are walk-in tubs covered by insurance?", answer: "Some plans may cover part of the cost if medically necessary." }
+      { question: "How much does a walk-in tub cost?", answer: "Walk-in tub pricing depends on the features and installation involved. A contractor can give you a quote for your specific setup." },
+      { question: "How long does installation take?", answer: "Timelines depend on the scope of work — your contractor can give you an estimate for your specific project." },
+      { question: "Will it fit in my existing bathroom?", answer: "Many models are designed to fit standard bathtub spaces, but a contractor can confirm what will work for your bathroom." },
+      { question: "Are walk-in tubs covered by insurance?", answer: "Coverage depends on your policy. Check with your insurance provider to see what may apply." }
     ]
   },
   shower: {
@@ -147,11 +147,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does a walk-in shower cost?", answer: "Walk-in showers typically cost $3,000 to $15,000 depending on size, materials, and whether it's a tub-to-shower conversion." },
-      { question: "How long does installation take?", answer: "Most tub-to-shower conversions are completed in 1 to 3 days." },
-      { question: "Can you convert my existing tub to a walk-in shower?", answer: "Yes — tub-to-shower conversions are one of the most popular and cost-effective bathroom upgrades." },
-      // ANGI EXHIBIT A COMPLIANCE: removed "seniors" (Category 4 — age-targeted demographic language)
-      { question: "Are walk-in showers a good accessibility option?", answer: "Yes. Low-threshold entry, grab bars, bench seating, and anti-slip floors make them an excellent accessibility solution." }
+      { question: "How much does a walk-in shower cost?", answer: "Costs vary depending on size, materials, and whether it's a tub-to-shower conversion. A contractor can give you a quote for your project." },
+      { question: "How long does installation take?", answer: "Timelines depend on the scope of work — your contractor can give you an estimate for your specific conversion." },
+      { question: "Can you convert my existing tub to a walk-in shower?", answer: "Yes — tub-to-shower conversions are a common bathroom upgrade. A contractor can walk you through the process." },
+      { question: "Are walk-in showers a good accessibility option?", answer: "Features like low-threshold entry, grab bars, bench seating, and anti-slip floors can make a shower more accessible for many households." }
     ]
   },
   windows: {
@@ -179,11 +178,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much does window replacement cost?", answer: "Window replacement costs $300 to $1,200 per window. A full-home replacement ranges from $3,000 to $20,000." },
-      { question: "How long does installation take?", answer: "Most installations take 30-60 minutes per window. A full home can be completed in 1 to 2 days." },
-      // ANGI EXHIBIT A COMPLIANCE: reworded to avoid "certified" (Category 2)
-      { question: "What type is most energy efficient?", answer: "Double or triple-pane with Low-E coatings and argon gas fills. Look for the ENERGY STAR label." },
-      { question: "Should I replace all windows at once?", answer: "Replacing all at once is more cost-effective, but you can do it in phases." }
+      { question: "How much does window replacement cost?", answer: "Window replacement costs vary based on the number of windows, materials, and installation complexity. A contractor can provide a quote for your home." },
+      { question: "How long does installation take?", answer: "Timelines depend on the number of windows and scope of the project — your contractor can give you an estimate." },
+      { question: "What type is most energy efficient?", answer: "Double or triple-pane windows with Low-E coatings and argon gas fills are commonly recommended for energy efficiency. Look for the ENERGY STAR label." },
+      { question: "Should I replace all windows at once?", answer: "It depends on your budget and goals — some homeowners prefer to replace windows in phases. A contractor can help you decide what works best." }
     ]
   },
   solar: {
@@ -209,11 +207,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews with unsourced figures and financing language (Categories 2/8/9E)
     faqs: [
-      // ANGI EXHIBIT A COMPLIANCE: removed "federal" and tax-credit percentage claim (Category 4)
-      { question: "How much do solar panels cost?", answer: "Average residential system costs $15,000 to $25,000 before incentives. Consult a tax professional about available credits." },
-      { question: "How long does installation take?", answer: "Physical installation takes 1-3 days. The full process with permits takes 2-3 months." },
-      { question: "Do they work on cloudy days?", answer: "Yes, solar panels still generate electricity on cloudy days at reduced efficiency." },
-      { question: "What about excess energy?", answer: "With net metering, excess energy goes to the grid and you receive bill credits." }
+      { question: "How much do solar panels cost?", answer: "System costs vary based on your home's energy needs and the equipment used. Consult a tax professional about any credits that may apply, and get a quote from a local installer." },
+      { question: "How long does installation take?", answer: "Physical installation is typically quick, though the full process with permits can take longer. A local installer can give you a timeline for your project." },
+      { question: "Do they work on cloudy days?", answer: "Solar panels can still generate electricity on cloudy days, generally at reduced output compared to sunny conditions." },
+      { question: "What about excess energy?", answer: "Depending on your utility's net metering program, excess energy may go to the grid in exchange for bill credits. Check with your utility provider for details." }
     ]
   },
   gutter: {
@@ -241,10 +238,10 @@ const serviceLandingData = {
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)
     faqs: [
-      { question: "How much do new gutters cost?", answer: "Seamless gutters cost $6 to $15 per linear foot. Average home total: $900 to $3,000." },
-      { question: "How long does installation take?", answer: "Most installations are completed in a single day." },
-      { question: "Are gutter guards worth it?", answer: "Yes — they reduce cleaning frequency and prevent clogs." },
-      { question: "What material is best?", answer: "Aluminum is most popular — lightweight, rust-resistant, affordable." }
+      { question: "How much do new gutters cost?", answer: "Gutter costs vary based on the length of your home and the material used. A contractor can give you a quote for your project." },
+      { question: "How long does installation take?", answer: "Timelines depend on the size of your home and scope of work — your contractor can give you an estimate." },
+      { question: "Are gutter guards worth it?", answer: "Gutter guards can help reduce cleaning frequency and lower the risk of clogs, though the right choice depends on your home and surroundings." },
+      { question: "What material is best?", answer: "Aluminum is a common choice for its weight, rust resistance, and cost, but the best material depends on your home and budget. A contractor can help you decide." }
     ]
   }
 };
