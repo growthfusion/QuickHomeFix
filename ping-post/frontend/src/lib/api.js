@@ -8,8 +8,15 @@
 
 // Same-origin by default: the dev server proxies /api to the backend,
 // and in production the two are served together. An absolute URL is
-// only needed if they are ever deployed apart.
-const BASE = import.meta.env.VITE_API_URL ?? '/api'
+// only needed if they are ever deployed apart -- as the ping-post API,
+// which is its own Cloud Run service. VITE_API_URL there is set to
+// that service's bare origin (no /api suffix, since it is not this
+// app's concern which path the API mounts under), so /api is always
+// appended here rather than assumed to be part of the given value.
+// Getting this wrong is silent: every call still "succeeds" against
+// the deployed origin, just at the wrong path, and 404s from the
+// server's catch-all handler rather than failing to connect.
+const BASE = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
