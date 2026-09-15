@@ -1,0 +1,64 @@
+# Build + deploy the sync service.
+#
+# It pulls LeadProsper into the ping_post ClickHouse database that the
+# dashboard API reads. Cloud Scheduler is the clock — it POSTs /sync on
+# a schedule; the container does not schedule its own work, so it scales
+# to zero between runs. Creating that Scheduler job is a one-off, not
+# part of this build: see sync/DEPLOY.md step 6.
+#
+# Build context is ping-post/, not sync/ — the service ships the
+# migrations, which live outside that folder.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - sync/Dockerfile
+      - -t
+      - ${_IMAGE}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args: [push, '${_IMAGE}']
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_IMAGE}
+      - --region=${_REGION}
+      - --platform=managed
+      # Only the Scheduler's service account may invoke it. A public
+      # sync endpoint is a free way for anyone to burn the LeadProsper
+      # rate limit.
+      - --no-allow-unauthenticated
+      # A first-run 180-day backfill across many campaigns runs long;
+      # the 300s default would kill it partway.
+      - --timeout=3600
+      - --memory=1Gi
+      # The rate limiter in httpClient.js paces calls within one
+      # process. Two instances would double the real rate and trip
+      # LeadProsper's 100/min ceiling.
+      - --max-instances=1
+      - --set-env-vars=LEADPROSPER_MODE=live,LP_TIMEZONE=${_TZ},CLICKHOUSE_URL=${_CH_URL},CLICKHOUSE_DB=${_CH_DB},CLICKHOUSE_USER=${_CH_USER},BACKFILL_DAYS=${_BACKFILL_DAYS}
+      - --set-secrets=LEADPROSPER_API_KEY=${_LP_SECRET}:latest,CLICKHOUSE_PASSWORD=${_CH_SECRET}:latest
+
+substitutions:
+  _SERVICE: quickhomefix-pingpost-sync
+  _REGION: us-central1
+  _IMAGE: gcr.io/${PROJECT_ID}/quickhomefix-pingpost-sync
+  _CH_DB: ping_post
+  _CH_USER: default
+  _CH_URL: ''
+  _TZ: America/New_York
+  _BACKFILL_DAYS: '180'
+  # Existing project secret, shared with the main site.
+  _CH_SECRET: CLICKHOUSE_PASSWORD
+  # Must be created once — no LeadProsper secret exists in the project
+  # yet. See sync/DEPLOY.md.
+  _LP_SECRET: LEADPROSPER_API_KEY
+
+images:
+  - ${_IMAGE}

@@ -1,0 +1,16 @@
+{
+  "name": "hsp-sync",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node src/migrate.js",
+    "seed": "node src/seed.js",
+    "sync": "node src/runOnce.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^1.7.0"
+  }
+}
