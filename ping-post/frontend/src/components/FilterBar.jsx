@@ -4,7 +4,7 @@ import { clsx } from 'clsx'
 import { Filter, RotateCcw } from 'lucide-react'
 
 import { useMeta } from '../lib/useMeta.jsx'
-import { daysAgo, isoDay } from '../lib/format.js'
+import { daysAgo, isoDay, periodRange } from '../lib/format.js'
 import { Toolbar, ToolButton, selectCls } from './ui.jsx'
 
 /**
@@ -19,12 +19,13 @@ export function useFilters() {
 
   const filters = useMemo(
     () => ({
-      from: params.get('from') ?? daysAgo(29),
-      to: params.get('to') ?? isoDay(new Date()),
+      from: params.get('from') ?? periodRange('mtd').from,
+      to: params.get('to') ?? periodRange('mtd').to,
       campaign: params.get('campaign') ?? '',
       affiliate_id: params.get('affiliate_id') ?? '',
       buyer_id: params.get('buyer_id') ?? '',
       status: params.get('status') ?? '',
+      vertical: params.get('vertical') ?? '',
     }),
     [params],
   )
@@ -43,9 +44,20 @@ export function useFilters() {
     setParams(next, { replace: true })
   }
 
+  // Several keys in one write: two successive set* calls would each
+  // start from the same stale params and the second would undo the first.
+  const setMany = (values) => {
+    const next = new URLSearchParams(params)
+    for (const [k, v] of Object.entries(values)) {
+      if (v) next.set(k, v)
+      else next.delete(k)
+    }
+    setParams(next, { replace: true })
+  }
+
   const reset = () => setParams(new URLSearchParams(), { replace: true })
 
-  return { filters, setFilter, setRange, reset }
+  return { filters, setFilter, setRange, setMany, reset }
 }
 
 const PRESETS = [

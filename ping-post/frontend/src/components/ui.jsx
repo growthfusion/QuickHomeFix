@@ -8,11 +8,11 @@ import { signClass } from '../lib/format.js'
  */
 export function Panel({ title, icon: Icon, actions, children, className, bodyClass }) {
   return (
-    <div className={clsx('flex flex-col rounded-sm border border-grid bg-white', className)}>
+    <div className={clsx('flex flex-col border border-grid bg-white', className)}>
       {title && (
-        <div className="flex h-[27px] shrink-0 items-center gap-1.5 border-b border-grid bg-chrome px-2">
-          {Icon && <Icon size={12} className="text-text-secondary" />}
-          <span className="text-[12px] font-medium text-text-primary">{title}</span>
+        <div className="flex h-[32px] shrink-0 items-center gap-2 border-b border-grid bg-white px-3">
+          {Icon && <Icon size={14} className="text-text-secondary" />}
+          <span className="text-[13px] text-text-primary">{title}</span>
           {actions && <div className="ml-auto flex items-center gap-1">{actions}</div>}
         </div>
       )}
@@ -24,34 +24,39 @@ export function Panel({ title, icon: Icon, actions, children, className, bodyCla
 /** Toolbar strip above a table: filters on the left, actions on the right. */
 export function Toolbar({ children, actions }) {
   return (
-    <div className="flex h-[32px] shrink-0 flex-wrap items-center gap-1.5 border-b border-grid bg-chrome px-2">
+    <div className="flex h-[38px] shrink-0 flex-wrap items-center gap-2 bg-chrome px-2">
       {children}
       {actions && <div className="ml-auto flex items-center gap-1">{actions}</div>}
     </div>
   )
 }
 
-export function ToolButton({ icon: Icon, children, onClick, disabled, title, primary }) {
+/**
+ * `ghost` is the platform's text-button: blue label and icon, no box.
+ * Used for toolbar verbs (Filter Data, Reset) where a bordered button
+ * would compete with the selects beside it.
+ */
+export function ToolButton({ icon: Icon, children, onClick, disabled, title, primary, ghost }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={title}
       className={clsx(
-        'flex h-[23px] items-center gap-1.5 rounded-sm border px-2 text-[11.5px] transition-colors disabled:opacity-40',
-        primary
-          ? 'border-primary bg-primary text-white hover:bg-primary-hover'
-          : 'border-grid bg-white text-text-primary hover:bg-chrome-hover',
+        'flex h-[26px] items-center gap-1.5 px-2.5 text-[13px] transition-colors disabled:opacity-40',
+        ghost && 'text-primary hover:bg-chrome-hover hover:text-primary-hover',
+        !ghost && primary && 'border border-primary bg-primary text-white hover:bg-primary-hover',
+        !ghost && !primary && 'border border-grid bg-white text-text-primary hover:bg-chrome-hover',
       )}
     >
-      {Icon && <Icon size={12} />}
+      {Icon && <Icon size={14} />}
       {children}
     </button>
   )
 }
 
 export const selectCls =
-  'h-[23px] rounded-sm border border-grid bg-white px-1.5 text-[11.5px] ' +
+  'h-[26px] border border-grid bg-white px-2 text-[13px] ' +
   'text-text-primary outline-none hover:border-text-muted focus:border-primary'
 
 /**
@@ -254,9 +259,38 @@ export function ErrorState({ error, onRetry }) {
   )
 }
 
-/** Wraps a panel body: spinner, error, or content. */
-export function AsyncBody({ loading, error, onRetry, children, label }) {
+/**
+ * Wraps a panel body: spinner, error, or content.
+ *
+ * With `hasData`, an error does not replace the content: the last good
+ * figures stay and a one-line notice sits above them. Five panels each
+ * shouting "Cannot reach the API" for a two-second backend restart is
+ * worse than briefly stale numbers.
+ */
+export function AsyncBody({ loading, error, onRetry, children, label, hasData = false, compact = false }) {
   if (loading) return <Loading label={label} />
-  if (error) return <ErrorState error={error} onRetry={onRetry} />
+  if (error && hasData) {
+    return (
+      <>
+        <StaleNotice error={error} onRetry={onRetry} />
+        {children}
+      </>
+    )
+  }
+  if (error) return compact ? <StaleNotice error={error} onRetry={onRetry} /> : <ErrorState error={error} onRetry={onRetry} />
   return children
+}
+
+function StaleNotice({ error, onRetry }) {
+  const offline = error?.offline === true || error?.status === 502 ||
+    (!error?.status && /failed to fetch|networkerror|load failed/i.test(error?.message ?? ''))
+  return (
+    <div className="flex h-[24px] items-center gap-2 border-b border-accent/30 bg-accent-light px-2 text-[11px] text-accent-hover">
+      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+      {offline ? 'API not reachable — showing last loaded figures.' : `Could not refresh: ${error?.message ?? 'unknown error'}`}
+      {onRetry && (
+        <button onClick={onRetry} className="ml-auto font-medium underline-offset-2 hover:underline">Retry</button>
+      )}
+    </div>
+  )
 }

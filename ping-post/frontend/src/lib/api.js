@@ -23,25 +23,86 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
  * Only connection failures are retried. An HTTP error is a real answer
  * and repeating it would just waste the rate limit.
  */
-async function fetchWithRetry(url, attempts = 3) {
+async function fetchWithRetry(url, attempts = 4) {
   for (let i = 0; ; i++) {
     try {
-      return await fetch(url)
+      const res = await fetch(url)
+      // 502/503 through the dev proxy is the backend restarting under
+      // `node --watch` -- gone for a second or two, not gone. Treat it
+      // like a refused connection and try again.
+      if ((res.status === 502 || res.status === 503) && i < attempts - 1) {
+        await sleep(500 * (i + 1))
+        continue
+      }
+      return res
     } catch (err) {
       if (i >= attempts - 1) throw err
-      await sleep(400 * (i + 1))
+      await sleep(500 * (i + 1))
     }
   }
 }
 
-async function get(path, params = {}) {
+/**
+ * Response cache, keyed by full URL.
+ *
+ * Every navigation back to a page used to refetch everything and show
+ * spinners for figures that had not changed. Successful GETs are kept
+ * for TTL_MS in memory and in sessionStorage (so a reload or a tab
+ * round-trip still paints instantly); callers get the cached body at
+ * once and useApi refreshes in the background.
+ */
+const TTL_MS = 5 * 60_000
+const memCache = new Map()
+
+function cacheKey(url) { return 'hsp:' + url }
+
+function readCache(url) {
+  const hit = memCache.get(url)
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.body
+  try {
+    const raw = sessionStorage.getItem(cacheKey(url))
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (Date.now() - parsed.at >= TTL_MS) return null
+    memCache.set(url, parsed)
+    return parsed.body
+  } catch { return null }
+}
+
+function writeCache(url, body) {
+  const entry = { at: Date.now(), body }
+  memCache.set(url, entry)
+  try { sessionStorage.setItem(cacheKey(url), JSON.stringify(entry)) } catch { /* quota: memory only */ }
+}
+
+/** Manual refresh: drop everything so the next fetches hit the API. */
+export function clearCache() {
+  memCache.clear()
+  try {
+    for (const k of Object.keys(sessionStorage)) if (k.startsWith('hsp:')) sessionStorage.removeItem(k)
+  } catch { /* nothing to clear */ }
+}
+
+function buildUrl(path, params) {
   const url = new URL(BASE + path, window.location.origin)
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v))
   }
+  return url
+}
+
+async function get(path, params = {}, { fresh = false } = {}) {
+  const url = buildUrl(path, params)
+  const key = url.toString()
+
+  if (!fresh) {
+    const cached = readCache(key)
+    if (cached) return cached
+  }
 
   const res = await fetchWithRetry(url)
   const body = await res.json().catch(() => ({}))
+  if (res.ok) writeCache(key, body)
 
   if (!res.ok) {
     // The backend sets a real status and message -- 400 for a bad
@@ -62,10 +123,16 @@ async function get(path, params = {}) {
 export const api = {
   health: () => get('/health'),
 
-  summary: ({ from, to }) => get('/summary', { from, to }),
-  affiliates: ({ from, to }) => get('/affiliates', { from, to }),
-  buyers: ({ from, to }) => get('/buyers', { from, to }),
+  summary: ({ from, to, vertical }) => get('/summary', { from, to, vertical }),
+  summaryHourly: ({ vertical } = {}) => get('/summary/hourly', { vertical }),
+  summarySnapshot: ({ vertical } = {}) => get('/summary/snapshot', { vertical }),
+  verticals: ({ from, to } = {}) => get('/verticals', { from, to }),
+  affiliates: ({ from, to, vertical }) => get('/affiliates', { from, to, vertical }),
+  buyers: ({ from, to, vertical }) => get('/buyers', { from, to, vertical }),
   accounting: ({ from, to }) => get('/accounting', { from, to }),
+
+  affiliateCampaigns: (client_id, { from, to }) => get(`/affiliates/${client_id}/by-campaign`, { from, to }),
+  buyerCampaigns: (client_id, { from, to }) => get(`/buyers/${client_id}/by-campaign`, { from, to }),
 
   campaigns: () => get('/campaigns'),
 
@@ -79,4 +146,9 @@ export const api = {
 
   zipList: ({ from, to, campaign, maxPages }) =>
     get('/zip-list', { from, to, campaign, maxPages }),
+
+  zipPerformance: ({ from, to, vertical }) =>
+    get('/zip-performance', { from, to, vertical }),
+  zipPerformanceByBuyer: ({ from, to, vertical, buyer_id }) =>
+    get('/zip-performance/by-buyer', { from, to, vertical, buyer_id }),
 }

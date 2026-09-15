@@ -128,6 +128,7 @@ export function normalizeLead(raw, syncedAt = new Date(), vertical = '') {
 export function normalizeLeadBuyers(raw, syncedAt = new Date(), vertical = '') {
   const receivedAt = chDateTime(new Date(Number(raw.lead_date_ms)))
   const at = chDateTime(syncedAt)
+  const ld = raw.lead_data ?? {}
 
   return (raw.buyers ?? []).map((b) => ({
     lead_id: str(raw.id),
@@ -147,6 +148,10 @@ export function normalizeLeadBuyers(raw, syncedAt = new Date(), vertical = '') {
     campaign_id: int(raw.campaign_id),
     supplier_id: int(raw.supplier?.id),
     vertical: str(vertical),
+    // Denormalised from the lead, same as campaign_id/supplier_id above --
+    // lets hs_buyer_geo_rollup group by zip without joining lp_leads.
+    zip_code: str(ld.zip_code),
+    state: str(ld.state),
 
     synced_at: at,
   }))

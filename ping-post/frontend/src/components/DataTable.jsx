@@ -21,6 +21,7 @@ export function DataTable({
   footer,
   maxHeight,
   groups,
+  fill = false,
   emptyMessage = 'No records match the current filters.',
 }) {
   const [sort, setSort] = useState(initialSort ?? null)
@@ -52,8 +53,10 @@ export function DataTable({
     )
 
   return (
-    <div className="overflow-auto" style={maxHeight ? { maxHeight } : undefined}>
-      <table className="grid-table w-full text-[12px]">
+    // `fill` lets the table take the panel's remaining height and scroll
+    // inside it -- the page itself then never scrolls.
+    <div className={clsx('overflow-auto', fill && 'min-h-0 flex-1')} style={maxHeight ? { maxHeight } : undefined}>
+      <table className="grid-table w-full text-[13px]">
         <thead className="sticky top-0 z-10">
           {/* Optional band row: groups related columns under one label,
               as in the Leads / Calls / Conversions bands of the source
@@ -86,7 +89,7 @@ export function DataTable({
                   style={c.width ? { width: c.width } : undefined}
                   onClick={() => c.sortable !== false && toggle(c.key)}
                   className={clsx(
-                    'h-[27px] whitespace-nowrap px-2 font-medium',
+                    'h-[30px] whitespace-nowrap px-3 font-normal',
                     !groups && 'border-t border-grid',
                     c.align === 'right' ? 'text-right' : 'text-left',
                     c.sortable !== false && 'cursor-pointer select-none hover:bg-chrome-hover',
@@ -139,7 +142,7 @@ export function DataTable({
                   <td
                     key={c.key}
                     className={clsx(
-                      'h-[26px] whitespace-nowrap px-2',
+                      'h-[32px] whitespace-nowrap px-3',
                       c.align === 'right' ? 'text-right' : 'text-left',
                       c.className,
                     )}
@@ -154,12 +157,12 @@ export function DataTable({
 
         {footer && sorted.length > 0 && (
           <tfoot className="sticky bottom-0">
-            <tr className="bg-chrome font-semibold text-text-primary">
+            <tr className="bg-white font-bold text-text-primary">
               {columns.map((c) => (
                 <td
                   key={c.key}
                   className={clsx(
-                    'h-[27px] whitespace-nowrap border-t-2 border-t-grid px-2',
+                    'h-[32px] whitespace-nowrap border-t border-t-grid px-3',
                     c.align === 'right' ? 'text-right' : 'text-left',
                   )}
                 >
@@ -183,16 +186,16 @@ export function Pager({ page, totalPages, total, pageSize, onPage, onRefresh, on
   const to = Math.min(page * pageSize, total)
 
   const btn =
-    'flex h-[20px] w-[20px] items-center justify-center rounded-sm border border-grid ' +
+    'flex h-[22px] w-[22px] items-center justify-center border border-grid ' +
     'bg-white text-text-secondary hover:bg-chrome-hover disabled:opacity-35 ' +
-    'disabled:hover:bg-white text-[11px]'
+    'disabled:hover:bg-white text-[13px]'
 
   return (
-    <div className="flex h-[28px] shrink-0 items-center justify-between border-t border-grid bg-chrome px-2">
+    <div className="flex h-[34px] shrink-0 items-center justify-between border-t border-grid bg-chrome px-2">
       <div className="flex items-center gap-1">
         <button className={btn} disabled={page === 1} onClick={() => onPage(1)}>«</button>
         <button className={btn} disabled={page === 1} onClick={() => onPage(page - 1)}>‹</button>
-        <span className="mx-1.5 flex items-center gap-1.5 text-[11px] text-text-secondary">
+        <span className="mx-1.5 flex items-center gap-1.5 text-[12.5px] text-text-primary">
           Page
           <input
             value={page}
@@ -200,27 +203,27 @@ export function Pager({ page, totalPages, total, pageSize, onPage, onRefresh, on
               const n = Number(e.target.value)
               if (Number.isInteger(n) && n >= 1 && n <= totalPages) onPage(n)
             }}
-            className="tnum h-[20px] w-[38px] rounded-sm border border-grid bg-white px-1 text-center outline-none focus:border-primary"
+            className="tnum h-[22px] w-[42px] border border-grid bg-white px-1 text-center outline-none focus:border-primary"
           />
           of {totalPages}
         </span>
         <button className={btn} disabled={page >= totalPages} onClick={() => onPage(page + 1)}>›</button>
         <button className={btn} disabled={page >= totalPages} onClick={() => onPage(totalPages)}>»</button>
 
-        {(onRefresh || onExport) && <span className="mx-1 h-[14px] w-px bg-grid" />}
+        {(onRefresh || onExport) && <span className="mx-1 h-[16px] w-px bg-grid" />}
         {onRefresh && (
-          <button className={btn} onClick={onRefresh} title="Refresh">
-            <RefreshCw size={11} />
+          <button className={clsx(btn, 'border-0 bg-transparent text-primary hover:bg-chrome-hover')} onClick={onRefresh} title="Refresh">
+            <RefreshCw size={13} />
           </button>
         )}
         {onExport && (
-          <button className={btn} onClick={onExport} title="Export CSV">
-            <Download size={11} />
+          <button className={clsx(btn, 'border-0 bg-transparent text-primary hover:bg-chrome-hover')} onClick={onExport} title="Export CSV">
+            <Download size={13} />
           </button>
         )}
       </div>
 
-      <span className="tnum text-[11px] text-text-secondary">
+      <span className="tnum text-[12.5px] text-text-primary">
         Displaying {from.toLocaleString()} – {to.toLocaleString()} of {total.toLocaleString()}
       </span>
     </div>

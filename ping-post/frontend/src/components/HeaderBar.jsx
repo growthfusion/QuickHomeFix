@@ -10,25 +10,21 @@ import logo from '../assets/logo.png'
  */
 export function HeaderBar({ user = 'Arun Rajendran', accountId = '15501825', ip = '107.180.130.1' }) {
   return (
-    <div className="flex h-[54px] shrink-0 items-center justify-between border-b border-grid bg-white px-4">
+    <div className="flex h-[62px] shrink-0 items-center justify-between bg-white px-5">
       {/* The source image is 2085x626 with heavy transparent padding
           top and bottom, so sizing by height alone renders the wordmark
           tiny. Scale it up and crop the padding away instead. */}
-      <div className="flex items-center gap-3 overflow-hidden">
+      <div className="flex items-center overflow-hidden">
         <img
           src={logo}
           alt="GrowthFusion"
-          className="h-[74px] w-auto shrink-0 object-contain"
-          style={{ clipPath: 'inset(32% 0 32% 0)', marginBlock: '-24px' }}
+          className="h-[90px] w-auto shrink-0 object-contain"
+          style={{ clipPath: 'inset(32% 0 32% 0)', marginBlock: '-30px' }}
         />
-        <span className="h-[18px] w-px shrink-0 bg-grid" />
-        <span className="whitespace-nowrap text-[12.5px] font-medium text-text-secondary">
-          Ping Post
-        </span>
       </div>
 
-      <div className="text-right text-[11px] leading-[1.45] text-text-secondary">
-        <div className="font-medium text-text-primary">{user}</div>
+      <div className="text-right text-[12.5px] leading-[1.5] text-text-primary">
+        <div>{user}</div>
         <div className="tnum">Account ID: {accountId}</div>
         <div className="tnum">IP Address: {ip}</div>
       </div>

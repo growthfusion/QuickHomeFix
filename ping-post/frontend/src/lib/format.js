@@ -35,6 +35,56 @@ export function daysAgo(n) {
   return isoDay(d)
 }
 
+export const hourLabel = (iso) =>
+  new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+
+/**
+ * Named reporting periods, as a {from, to} pair each. Weeks start on
+ * Sunday and everything is computed in local time, matching how the
+ * team reads "today" -- the backend snapshot uses the same boundaries.
+ */
+export const PERIODS = [
+  { key: 'today', label: 'Today' },
+  { key: 'yesterday', label: 'Yesterday' },
+  { key: 'wtd', label: 'Week To Date' },
+  { key: 'last_week', label: 'Last Week' },
+  { key: 'mtd', label: 'Month To Date' },
+  { key: 'last_month', label: 'Last Month' },
+  { key: '7d', label: 'Last 7 Days' },
+  { key: '30d', label: 'Last 30 Days' },
+]
+
+// Local calendar date. isoDay() goes through UTC, which turns a local
+// midnight into the previous day anywhere east of Greenwich.
+const localDay = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+export function periodRange(key) {
+  const today = new Date()
+  const isoDay = localDay
+  const shift = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+  const weekStart = shift(today, -today.getDay())
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  const lastMonthEnd = shift(monthStart, -1)
+  const lastMonthStart = new Date(lastMonthEnd.getFullYear(), lastMonthEnd.getMonth(), 1)
+
+  switch (key) {
+    case 'today': return { from: isoDay(today), to: isoDay(today) }
+    case 'yesterday': return { from: isoDay(shift(today, -1)), to: isoDay(shift(today, -1)) }
+    case 'wtd': return { from: isoDay(weekStart), to: isoDay(today) }
+    case 'last_week': return { from: isoDay(shift(weekStart, -7)), to: isoDay(shift(weekStart, -1)) }
+    case 'mtd': return { from: isoDay(monthStart), to: isoDay(today) }
+    case 'last_month': return { from: isoDay(lastMonthStart), to: isoDay(lastMonthEnd) }
+    case '7d': return { from: daysAgo(6), to: isoDay(today) }
+    case '30d': return { from: daysAgo(29), to: isoDay(today) }
+    default: return null
+  }
+}
+
+/** Which named period a {from, to} pair is, or 'custom'. */
+export const periodKeyFor = ({ from, to }) =>
+  PERIODS.find((p) => { const r = periodRange(p.key); return r.from === from && r.to === to })?.key ?? 'custom'
+
 // Profit is the one figure that is meaningfully signed -- red when we
 // lost money on a slice, green when we made it.
 export const signClass = (n) =>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowDownLeft, ArrowUpRight, Scale, ChevronRight, ChevronDown, Download,
@@ -13,22 +13,57 @@ import { num, usd } from '../lib/format.js'
 
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
 
+// The accounting row only carries a campaign *count* -- the breakdown
+// is fetched lazily per client on expand, from whichever endpoint
+// matches that side of the ledger.
+const CAMPAIGNS_FETCHER = {
+  owed: (client_id, range) => api.affiliateCampaigns(client_id, range).then((d) => d.rows.map((c) => ({
+    campaign_id: c.campaign_id,
+    campaign_name: c.campaign_name,
+    leads: c.leads,
+    returned_leads: c.returned,
+    net_leads: c.leads - c.returned,
+    amount: c.cost,
+    avg_price: (c.leads - c.returned) ? c.cost / (c.leads - c.returned) : 0,
+  }))),
+  due: (client_id, range) => api.buyerCampaigns(client_id, range).then((d) => d.rows),
+}
+
 /**
  * One side of the ledger, with each client expandable to its campaigns.
  *
  * The campaign breakdown is what makes a figure checkable: "we owe
  * Upyield $2,252.50" is only actionable once you can see it is 89 leads
- * at $10.85 on Bathroom plus 48 at $14.69 on Roofing.
+ * at $10.85 on Bathroom plus 48 at $14.69 on Roofing. The accounting
+ * endpoint only gives a count though, so the actual rows are fetched
+ * per client the first time it's expanded, and cached here after that.
  */
-function Ledger({ title, icon: Icon, side, tone }) {
+function Ledger({ title, icon: Icon, side, tone, direction, range }) {
   const [open, setOpen] = useState(() => new Set())
+  const [campaigns, setCampaigns] = useState({}) // client_id -> { loading, error, rows }
 
-  const toggle = (id) =>
+  // A cached campaign breakdown is keyed by client only, not by date
+  // range -- if the filter changes, stale rows from the old range would
+  // otherwise keep showing under an already-expanded client.
+  useEffect(() => {
+    setOpen(new Set())
+    setCampaigns({})
+  }, [range.from, range.to, direction])
+
+  const toggle = (client_id) => {
     setOpen((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      next.has(client_id) ? next.delete(client_id) : next.add(client_id)
       return next
     })
+
+    if (!campaigns[client_id]) {
+      setCampaigns((prev) => ({ ...prev, [client_id]: { loading: true, error: null, rows: null } }))
+      CAMPAIGNS_FETCHER[direction](client_id, range)
+        .then((rows) => setCampaigns((prev) => ({ ...prev, [client_id]: { loading: false, error: null, rows } })))
+        .catch((error) => setCampaigns((prev) => ({ ...prev, [client_id]: { loading: false, error, rows: null } })))
+    }
+  }
 
   if (!side?.rows?.length) {
     return (
@@ -53,6 +88,9 @@ function Ledger({ title, icon: Icon, side, tone }) {
         <tbody>
           {side.rows.map((r) => {
             const expanded = open.has(r.client_id)
+            const detail = campaigns[r.client_id]
+            const campaignCount = r.campaigns ?? 0
+
             return [
               <tr
                 key={r.client_id}
@@ -66,7 +104,7 @@ function Ledger({ title, icon: Icon, side, tone }) {
                       : <ChevronRight size={11} className="text-text-muted" />}
                     <span className="text-text-primary">{r.name}</span>
                     <span className="text-[10.5px] text-text-muted">
-                      ({r.campaigns.length} {r.campaigns.length === 1 ? 'campaign' : 'campaigns'})
+                      ({campaignCount} {campaignCount === 1 ? 'campaign' : 'campaigns'})
                     </span>
                   </span>
                 </td>
@@ -83,7 +121,19 @@ function Ledger({ title, icon: Icon, side, tone }) {
                 </td>
               </tr>,
 
-              ...(expanded ? r.campaigns.map((c) => (
+              ...(!expanded ? [] : !detail || detail.loading ? [
+                <tr key={`${r.client_id}-loading`} className="bg-surface">
+                  <td colSpan={5} className="h-[24px] py-0 pl-7 pr-2 text-[11.5px] text-text-muted">
+                    Loading campaigns…
+                  </td>
+                </tr>,
+              ] : detail.error ? [
+                <tr key={`${r.client_id}-error`} className="bg-surface">
+                  <td colSpan={5} className="h-[24px] py-0 pl-7 pr-2 text-[11.5px] text-loss">
+                    Could not load campaigns: {detail.error.message}
+                  </td>
+                </tr>,
+              ] : detail.rows.map((c) => (
                 <tr key={`${r.client_id}-${c.campaign_id}`} className="bg-surface">
                   <td className="h-[24px] py-0 pl-7 pr-2 text-[11.5px] text-text-secondary">
                     {c.campaign_name}
@@ -97,7 +147,7 @@ function Ledger({ title, icon: Icon, side, tone }) {
                     <Money value={c.amount} cents className="text-[11.5px] text-text-secondary" />
                   </td>
                 </tr>
-              )) : []),
+              ))),
             ]
           })}
         </tbody>
@@ -137,28 +187,42 @@ export default function Finance() {
   const due = data?.due
   const netPosition = (due?.total ?? 0) - (owed?.total ?? 0)
 
-  const exportCsv = () => {
-    const lines = [
-      ['Direction', 'Client', 'Campaign', 'Gross Leads', 'Returned', 'Net Leads', 'Avg Price', 'Amount']
-        .join(','),
-    ]
-    for (const [label, sideData] of [['Owed', owed], ['Due', due]]) {
-      for (const r of sideData?.rows ?? []) {
-        for (const c of r.campaigns) {
-          lines.push([
-            label, r.name, c.campaign_name,
-            c.leads, c.returned_leads, c.net_leads, c.avg_price, c.amount,
-          ].map(csvCell).join(','))
-        }
+  const [exporting, setExporting] = useState(false)
+
+  // The accounting rows only carry a campaign count, so the CSV's
+  // per-campaign lines need the same lazy fetch the expand rows use --
+  // just for every client up front instead of one at a time.
+  const exportCsv = async () => {
+    setExporting(true)
+    try {
+      const lines = [
+        ['Direction', 'Client', 'Campaign', 'Gross Leads', 'Returned', 'Net Leads', 'Avg Price', 'Amount']
+          .join(','),
+      ]
+      for (const [label, direction, sideData] of [['Owed', 'owed', owed], ['Due', 'due', due]]) {
+        const rows = sideData?.rows ?? []
+        const detail = await Promise.all(
+          rows.map((r) => CAMPAIGNS_FETCHER[direction](r.client_id, { from, to })),
+        )
+        rows.forEach((r, i) => {
+          for (const c of detail[i]) {
+            lines.push([
+              label, r.name, c.campaign_name,
+              c.leads, c.returned_leads, c.net_leads, c.avg_price, c.amount,
+            ].map(csvCell).join(','))
+          }
+        })
       }
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `finance-${from}-to-${to}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
     }
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `finance-${from}-to-${to}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   return (
@@ -166,8 +230,8 @@ export default function Finance() {
       <PageHeader
         title="Finance"
         actions={
-          <ToolButton icon={Download} onClick={exportCsv} disabled={!data}>
-            Export CSV
+          <ToolButton icon={Download} onClick={exportCsv} disabled={!data || exporting}>
+            {exporting ? 'Exporting…' : 'Export CSV'}
           </ToolButton>
         }
       />
@@ -194,12 +258,16 @@ export default function Finance() {
             icon={ArrowUpRight}
             side={owed}
             tone="text-text-primary"
+            direction="owed"
+            range={{ from, to }}
           />
           <Ledger
             title="Due from Buyers"
             icon={ArrowDownLeft}
             side={due}
             tone="text-primary"
+            direction="due"
+            range={{ from, to }}
           />
         </div>
       </AsyncBody>

@@ -9,6 +9,25 @@ import { Panel, PageHeader, Kpi, Money, AsyncBody } from '../components/ui.jsx'
 import { usd, num, pct } from '../lib/format.js'
 
 /**
+ * The affiliates/buyers list rows carry no per-campaign breakdown --
+ * only the dedicated by-campaign endpoints do, and their shapes differ
+ * (affiliate rows are cost-based, buyer rows are already what the
+ * ledger CSV export expects), so each side is normalised to the same
+ * columns this page renders.
+ */
+const CAMPAIGNS_FETCHER = {
+  affiliate: (client_id, range) => api.affiliateCampaigns(client_id, range).then((d) => d.rows),
+  buyer: (client_id, range) => api.buyerCampaigns(client_id, range).then((d) => d.rows.map((c) => ({
+    campaign_id: c.campaign_id,
+    campaign_name: c.campaign_name,
+    leads: c.leads,
+    accepted: c.leads - c.returned_leads,
+    returned: c.returned_leads,
+    revenue: c.amount,
+  }))),
+}
+
+/**
  * One detail page for both sides.
  *
  * An affiliate and a buyer are the same kind of record in LeadProsper --
@@ -27,6 +46,11 @@ export default function ClientDetail({ side }) {
   )
 
   const row = (data?.rows ?? []).find((r) => String(r.client_id) === String(clientId))
+
+  const campaigns = useApi(
+    () => CAMPAIGNS_FETCHER[side](clientId, { from, to }),
+    [side, clientId, from, to],
+  )
 
   const campaignCols = [
     { key: 'campaign_name', header: 'Campaign', render: (r) => <span className="text-text-primary">{r.campaign_name}</span> },
@@ -70,12 +94,15 @@ export default function ClientDetail({ side }) {
             </Panel>
 
             <Panel title="By Campaign" icon={Megaphone} className="mt-2 overflow-hidden">
-              <DataTable
-                columns={campaignCols}
-                rows={row.campaigns ?? []}
-                getRowId={(r) => r.campaign_id}
-                initialSort={{ key: 'revenue', dir: 'desc' }}
-              />
+              <AsyncBody loading={campaigns.loading} error={campaigns.error} onRetry={campaigns.reload} label="Loading campaigns">
+                <DataTable
+                  columns={campaignCols}
+                  rows={campaigns.data ?? []}
+                  getRowId={(r) => r.campaign_id}
+                  initialSort={{ key: 'revenue', dir: 'desc' }}
+                  emptyMessage="No campaign activity for this record in the selected period."
+                />
+              </AsyncBody>
             </Panel>
           </>
         )}

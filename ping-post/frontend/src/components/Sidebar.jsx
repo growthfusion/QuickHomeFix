@@ -87,28 +87,28 @@ export function Sidebar({ collapsed, onToggle, onCreate }) {
 
   if (collapsed) {
     return (
-      <aside className="flex w-[26px] shrink-0 flex-col items-center border-r border-grid bg-white pt-1.5">
+      <aside className="flex w-[30px] shrink-0 flex-col items-center border-r border-grid bg-white pt-2">
         <button
           onClick={onToggle}
           title="Expand menu"
-          className="rounded-sm p-1 text-text-muted hover:bg-chrome hover:text-text-primary"
+          className="p-1 text-primary hover:bg-chrome"
         >
-          <ChevronRight size={13} />
+          <ChevronRight size={16} />
         </button>
       </aside>
     )
   }
 
   return (
-    <aside className="flex w-[186px] shrink-0 flex-col border-r border-grid bg-white">
-      <div className="flex h-[26px] shrink-0 items-center justify-between border-b border-grid bg-chrome px-2">
-        <span className="text-[11.5px] font-semibold text-text-primary">Main Menu</span>
+    <aside className="flex w-[210px] shrink-0 flex-col border-r border-grid bg-white">
+      <div className="flex h-[34px] shrink-0 items-center justify-between border-b border-grid px-3">
+        <span className="text-[13px] font-semibold text-text-primary">Main Menu</span>
         <button
           onClick={onToggle}
           title="Collapse menu"
-          className="rounded-sm p-0.5 text-text-muted hover:bg-chrome-hover hover:text-text-primary"
+          className="p-0.5 text-primary hover:bg-chrome"
         >
-          <ChevronLeft size={13} />
+          <ChevronLeft size={15} />
         </button>
       </div>
 
@@ -121,14 +121,14 @@ export function Sidebar({ collapsed, onToggle, onCreate }) {
             <div key={group.label}>
               <button
                 onClick={() => setOpen((o) => ({ ...o, [group.label]: !o[group.label] }))}
-                className="flex w-full items-center gap-1.5 px-2 py-[5px] text-[11.5px] text-text-primary hover:bg-chrome"
+                className="flex w-full items-center gap-2.5 px-3 py-[6px] text-[13px] text-text-primary hover:bg-chrome"
               >
-                <GroupIcon size={12} className="text-text-secondary" />
+                <GroupIcon size={14} className="text-text-secondary" />
                 {group.label}
                 <ChevronDown
-                  size={11}
+                  size={13}
                   className={clsx(
-                    'ml-auto text-text-muted transition-transform',
+                    'ml-auto text-primary transition-transform',
                     !isOpen && '-rotate-90',
                   )}
                 />
@@ -143,13 +143,13 @@ export function Sidebar({ collapsed, onToggle, onCreate }) {
                     key={(item.to ?? item.create) + item.label}
                     onClick={() => (item.create ? onCreate?.(item.create) : navigate(item.to))}
                     className={clsx(
-                      'flex w-full items-center gap-1.5 py-[4px] pl-6 pr-2 text-left text-[11.5px]',
+                      'flex w-full items-center gap-2.5 py-[5px] pl-8 pr-3 text-left text-[13px]',
                       active
-                        ? 'border-l-2 border-primary bg-primary-light pl-[22px] font-medium text-primary'
-                        : 'text-text-secondary hover:bg-row-hover hover:text-text-primary',
+                        ? 'bg-primary-light text-primary'
+                        : 'text-text-primary hover:bg-row-hover',
                     )}
                   >
-                    <ItemIcon size={11} className={active ? 'text-primary' : 'text-text-muted'} />
+                    <ItemIcon size={13} className={active ? 'text-primary' : 'text-text-secondary'} />
                     {item.label}
                   </button>
                 )

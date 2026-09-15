@@ -98,36 +98,34 @@ export function MenuBar({ onOpen }) {
   return (
     <div
       ref={barRef}
-      className="flex h-[34px] shrink-0 items-center border-b border-grid bg-chrome px-1.5"
+      className="flex h-[40px] shrink-0 items-stretch border-b border-grid bg-white px-2"
     >
       {MENUS.map((menu, i) => {
         const Icon = menu.icon
         const isOpen = open === i
 
         return (
-          <div key={menu.label} className="relative">
+          <div key={menu.label} className="relative flex">
             <button
               onClick={() => (menu.to ? go(menu) : setOpen(isOpen ? null : i))}
               onMouseEnter={() => open !== null && !menu.to && setOpen(i)}
               className={clsx(
-                'flex h-[26px] items-center gap-1.5 rounded-sm px-2.5 text-[12px] transition-colors',
-                isOpen
-                  ? 'bg-white text-primary shadow-[0_1px_2px_rgba(17,24,39,.08)]'
-                  : 'text-text-primary hover:bg-chrome-hover',
+                'flex items-center gap-2 px-3 text-[13px] transition-colors',
+                isOpen ? 'bg-chrome text-primary' : 'text-text-primary hover:bg-chrome',
               )}
             >
-              <Icon size={13} className={isOpen ? 'text-primary' : 'text-text-secondary'} />
+              <Icon size={15} className={isOpen ? 'text-primary' : 'text-text-secondary'} />
               {menu.label}
               {menu.items && (
                 <ChevronDown
-                  size={11}
-                  className={clsx('transition-transform', isOpen && 'rotate-180')}
+                  size={12}
+                  className={clsx('text-text-secondary transition-transform', isOpen && 'rotate-180')}
                 />
               )}
             </button>
 
             {isOpen && menu.items && (
-              <div className="absolute left-0 top-[30px] z-50 min-w-[196px] rounded-sm border border-grid bg-white py-1 shadow-[0_6px_20px_rgba(17,24,39,.14)]">
+              <div className="absolute left-0 top-[40px] z-50 min-w-[200px] border border-grid bg-white py-1 shadow-[0_6px_20px_rgba(17,24,39,.14)]">
                 {menu.items.map((item, j) =>
                   item.divider ? (
                     <div key={j} className="my-1 border-t border-grid" />
@@ -135,7 +133,7 @@ export function MenuBar({ onOpen }) {
                     <button
                       key={j}
                       onClick={() => go(item)}
-                      className="flex w-full items-center px-3 py-[5px] text-left text-[12px] text-text-primary hover:bg-row-hover hover:text-primary"
+                      className="flex w-full items-center px-3 py-[6px] text-left text-[13px] text-text-primary hover:bg-row-hover hover:text-primary"
                     >
                       {item.label}
                     </button>
@@ -147,13 +145,13 @@ export function MenuBar({ onOpen }) {
         )
       })}
 
-      <div className="ml-auto flex items-center gap-1 pr-1">
-        <button className="flex h-[26px] items-center gap-1.5 rounded-sm px-2.5 text-[12px] text-text-secondary hover:bg-chrome-hover">
-          <SettingsIcon size={13} />
+      <div className="ml-auto flex items-stretch">
+        <button className="flex items-center gap-2 px-3 text-[13px] text-text-primary hover:bg-chrome">
+          <SettingsIcon size={15} className="text-text-secondary" />
           Settings
         </button>
-        <button className="flex h-[26px] items-center gap-1.5 rounded-sm px-2.5 text-[12px] text-text-secondary hover:bg-chrome-hover">
-          <LogOut size={13} />
+        <button className="flex items-center gap-2 px-3 text-[13px] text-text-primary hover:bg-chrome">
+          <LogOut size={15} className="text-text-secondary" />
           Logout
         </button>
       </div>

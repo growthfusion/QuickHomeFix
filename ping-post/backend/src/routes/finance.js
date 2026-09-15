@@ -46,13 +46,111 @@ const BUYER_CLIENT = `
   (SELECT buyer_id, any(client_id) AS cid, any(client_name) AS cname
    FROM lp_buyers FINAL GROUP BY buyer_id)`
 
+/** Optional vertical filter shared by the dashboard endpoints. */
+function verticalFilter(q, alias = '') {
+  if (!q.vertical) return { sql: '', params: {} }
+  const p = alias ? alias + '.' : ''
+  return { sql: ` AND ${p}vertical = {vertical:String}`, params: { vertical: String(q.vertical) } }
+}
+
+/**
+ * GET /api/summary/hourly -- the last 24 hours, one row per hour, from
+ * lp_leads directly. The rollups are daily, so "what happened since
+ * this morning" has to come from the lead table; 24h of leads is small.
+ */
+finance.get('/summary/hourly', asyncRoute(async (req, res) => {
+  const v = verticalFilter(req.query)
+
+  const rows = await query(`
+    SELECT toStartOfHour(received_at)     AS hour,
+           count()                        AS t_leads,
+           countIf(status = 'ACCEPTED')   AS t_accepted,
+           sum(cost)                      AS t_cost,
+           sum(revenue)                   AS t_revenue,
+           sum(profit)                    AS t_profit
+    FROM lp_leads FINAL
+    WHERE received_at >= toStartOfHour(now() - INTERVAL 23 HOUR)
+      AND is_test = 0 ${v.sql}
+    GROUP BY hour ORDER BY hour`, v.params)
+
+  const byHour = new Map(rows.map((r) => [new Date(r.hour + 'Z').getTime(), r]))
+  const start = new Date(); start.setUTCMinutes(0, 0, 0); start.setUTCHours(start.getUTCHours() - 23)
+
+  // Every hour is emitted, empty ones as zeros, so the chart has 24
+  // evenly spaced bars and a quiet hour reads as quiet rather than missing.
+  const trend = []
+  for (let i = 0; i < 24; i++) {
+    const t = new Date(start.getTime() + i * 3600_000)
+    const r = byHour.get(t.getTime()) ?? {}
+    trend.push({
+      hour: t.toISOString(),
+      leads: int(r.t_leads), accepted: int(r.t_accepted),
+      cost: num(r.t_cost), revenue: num(r.t_revenue), profit: num(r.t_profit),
+    })
+  }
+  res.json({ trend })
+}))
+
+/**
+ * GET /api/summary/snapshot -- the Financial Snapshot periods in one
+ * query: conditional sums over the widest window, so six periods cost
+ * one scan rather than six requests.
+ */
+finance.get('/summary/snapshot', asyncRoute(async (req, res) => {
+  const v = verticalFilter(req.query)
+
+  const today = new Date()
+  const iso = (d) => d.toISOString().slice(0, 10)
+  const shift = (d, n) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x }
+  const weekStart = shift(today, -today.getUTCDay())
+  const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
+  const lastMonthEnd = shift(monthStart, -1)
+  const lastMonthStart = new Date(Date.UTC(lastMonthEnd.getUTCFullYear(), lastMonthEnd.getUTCMonth(), 1))
+
+  const periods = [
+    { key: 'today', label: 'Today', from: iso(today), to: iso(today) },
+    { key: 'yesterday', label: 'Yesterday', from: iso(shift(today, -1)), to: iso(shift(today, -1)) },
+    { key: 'wtd', label: 'Week To Date', from: iso(weekStart), to: iso(today) },
+    { key: 'last_week', label: 'Last Week', from: iso(shift(weekStart, -7)), to: iso(shift(weekStart, -1)) },
+    { key: 'mtd', label: 'Month To Date', from: iso(monthStart), to: iso(today) },
+    { key: 'last_month', label: 'Last Month', from: iso(lastMonthStart), to: iso(lastMonthEnd) },
+  ]
+
+  const params = { ...v.params }
+  const selects = periods.flatMap((p, i) => {
+    params[`f${i}`] = p.from; params[`t${i}`] = p.to
+    const c = `day BETWEEN {f${i}:Date} AND {t${i}:Date}`
+    return [
+      `sumIf(leads_total, ${c}) AS l${i}`, `sumIf(accepted_count, ${c}) AS a${i}`,
+      `sumIf(cost, ${c}) AS c${i}`, `sumIf(revenue, ${c}) AS r${i}`, `sumIf(profit, ${c}) AS p${i}`,
+    ]
+  })
+  const earliest = periods.map((p) => p.from).sort()[0]
+  params.earliest = earliest
+
+  const [k] = await query(`
+    SELECT ${selects.join(', ')}
+    FROM hs_daily_rollup
+    WHERE day >= {earliest:Date} ${v.sql}`, params)
+
+  res.json({
+    periods: periods.map((p, i) => ({
+      ...p,
+      leads: int(k?.[`l${i}`]), accepted: int(k?.[`a${i}`]),
+      cost: num(k?.[`c${i}`]), revenue: num(k?.[`r${i}`]), profit: num(k?.[`p${i}`]),
+      margin: pct(k?.[`p${i}`], k?.[`r${i}`]),
+    })),
+  })
+}))
+
 /**
  * GET /api/summary -- KPIs, daily trend, campaigns and verticals.
  */
 finance.get('/summary', asyncRoute(async (req, res) => {
   const { from, to } = dateRange(req.query)
-  const params = { from, to }
-  const where = 'day BETWEEN {from:Date} AND {to:Date}'
+  const v = verticalFilter(req.query)
+  const params = { from, to, ...v.params }
+  const where = 'day BETWEEN {from:Date} AND {to:Date}' + v.sql
 
   const [k] = await query(`
     SELECT
@@ -200,7 +298,8 @@ async function adjustmentsFor(entity_type, from, to) {
  */
 finance.get('/affiliates', asyncRoute(async (req, res) => {
   const { from, to } = dateRange(req.query)
-  const params = { from, to }
+  const v = verticalFilter(req.query, 'r')
+  const params = { from, to, ...v.params }
 
   const base = await query(`
     SELECT
@@ -216,7 +315,7 @@ finance.get('/affiliates', asyncRoute(async (req, res) => {
       sum(r.profit)          AS t_profit
     FROM hs_daily_rollup r
     LEFT JOIN ${SUPPLIER_CLIENT} s USING (supplier_id)
-    WHERE r.day BETWEEN {from:Date} AND {to:Date}
+    WHERE r.day BETWEEN {from:Date} AND {to:Date} ${v.sql}
     GROUP BY s.cid ORDER BY t_cost DESC`, params)
 
   const pings = await query(`
@@ -227,7 +326,7 @@ finance.get('/affiliates', asyncRoute(async (req, res) => {
       sum(r.revenue)        AS t_ping_revenue
     FROM hs_supplier_buyer_rollup r
     LEFT JOIN ${SUPPLIER_CLIENT} s USING (supplier_id)
-    WHERE r.day BETWEEN {from:Date} AND {to:Date}
+    WHERE r.day BETWEEN {from:Date} AND {to:Date} ${v.sql}
     GROUP BY s.cid`, params)
 
   // Returned revenue is not in the rollups -- a return is a per-ping
@@ -307,7 +406,8 @@ finance.get('/affiliates', asyncRoute(async (req, res) => {
  */
 finance.get('/buyers', asyncRoute(async (req, res) => {
   const { from, to } = dateRange(req.query)
-  const params = { from, to }
+  const v = verticalFilter(req.query, 'r')
+  const params = { from, to, ...v.params }
 
   const base = await query(`
     SELECT
@@ -320,7 +420,7 @@ finance.get('/buyers', asyncRoute(async (req, res) => {
       sum(r.revenue)        AS t_revenue
     FROM hs_supplier_buyer_rollup r
     LEFT JOIN ${BUYER_CLIENT} b USING (buyer_id)
-    WHERE r.day BETWEEN {from:Date} AND {to:Date}
+    WHERE r.day BETWEEN {from:Date} AND {to:Date} ${v.sql}
     GROUP BY b.cid ORDER BY t_revenue DESC`, params)
 
   const returns = await query(`
@@ -424,6 +524,59 @@ finance.get('/buyers/:client_id/by-affiliate', asyncRoute(async (req, res) => {
       returned: int(r.t_returned),
       accept_rate: pct(r.t_sold, r.t_sent),
       revenue: num(r.t_revenue),
+    })),
+  })
+}))
+
+/**
+ * GET /api/buyers/:client_id/by-campaign -- one buyer's campaigns, for
+ * the Finance ledger's expand-to-see-campaigns row.
+ *
+ * Buyer money lives only in hs_supplier_buyer_rollup (a lead is bought
+ * by at most one buyer, but hs_daily_rollup is keyed by supplier), so
+ * this mirrors /affiliates/:client_id/by-campaign against that table
+ * instead.
+ */
+finance.get('/buyers/:client_id/by-campaign', asyncRoute(async (req, res) => {
+  const { from, to } = dateRange(req.query)
+  const client_id = Number(req.params.client_id)
+
+  if (!Number.isInteger(client_id) || client_id <= 0) {
+    const err = new Error('client_id must be a positive integer')
+    err.status = 400
+    throw err
+  }
+
+  const rows = await query(`
+    SELECT
+      r.campaign_id          AS campaign_id,
+      any(c.name)            AS t_name,
+      sum(r.accepted_count)  AS t_accepted,
+      sum(r.returned_count)  AS t_returned,
+      sum(r.revenue)         AS t_revenue
+    FROM hs_supplier_buyer_rollup r
+    LEFT JOIN ${BUYER_CLIENT} b USING (buyer_id)
+    LEFT JOIN (SELECT campaign_id, any(name) AS name FROM lp_campaigns FINAL GROUP BY campaign_id) c
+      USING (campaign_id)
+    WHERE b.cid = {client_id:UInt64}
+      AND r.day BETWEEN {from:Date} AND {to:Date}
+    GROUP BY campaign_id ORDER BY t_revenue DESC`, { client_id, from, to })
+
+  res.json({
+    client_id,
+    range: { from, to },
+    rows: rows.map((r) => ({
+      campaign_id: int(r.campaign_id),
+      campaign_name: r.t_name || `#${r.campaign_id}`,
+      name: r.t_name || `#${r.campaign_id}`,
+      // "Leads" for a buyer's campaign breakdown means leads bought
+      // (accepted), matching the ledger row it expands under -- the
+      // ledger's own "leads" column for a buyer is net_leads, not offers.
+      leads: int(r.t_accepted),
+      returned_leads: int(r.t_returned),
+      net_leads: int(r.t_accepted) - int(r.t_returned),
+      amount: num(r.t_revenue),
+      avg_price: int(r.t_accepted) ? num(Number(r.t_revenue) / Number(r.t_accepted)) : 0,
     })),
   })
 }))

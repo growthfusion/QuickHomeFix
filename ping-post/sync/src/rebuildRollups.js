@@ -63,6 +63,18 @@ const SOURCES = {
     FROM lp_leads FINAL
     WHERE is_test = 0 AND zip_code != ''
     GROUP BY toDate(received_at), vertical, state, zip_code`,
+
+  // Buyer x zip. zip_code/state are only populated on lp_lead_buyers
+  // rows synced after 002_buyer_geo.sql landed, so this stays empty for
+  // older leads until a backfill (node src/runOnce.js --backfill-days=N)
+  // re-syncs them -- same "populated going forward" shape hs_geo_rollup
+  // has for lp_leads.
+  hs_buyer_geo_rollup: `
+    SELECT toDate(received_at), buyer_id, vertical, state, zip_code,
+           count(), countIf(status = 'ACCEPTED'), sumIf(sell_price, status = 'ACCEPTED')
+    FROM lp_lead_buyers FINAL
+    WHERE zip_code != ''
+    GROUP BY toDate(received_at), buyer_id, vertical, state, zip_code`,
 }
 
 export async function rebuildRollups({ log = console.log } = {}) {

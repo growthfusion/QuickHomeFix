@@ -7,9 +7,12 @@
    Keep these in sync if the marketing palette changes. */
 
 @theme {
-  --color-primary: #00a99d;
-  --color-primary-hover: #00877e;
-  --color-primary-light: #e6f7f5;
+  /* Application blue. The marketing teal stays on the public site; the
+     operations screens use a cooler, lower-chroma blue that reads as a
+     tool rather than a landing page and sits well with money figures. */
+  --color-primary: #1f6fc0;
+  --color-primary-hover: #185a9c;
+  --color-primary-light: #e9f1fb;
 
   --color-accent: #f59e0b;
   --color-accent-hover: #d97706;
@@ -19,19 +22,28 @@
   --color-surface: #fafafa;
   --color-secondary: #fafafa;
 
-  --color-text-primary: #111827;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-text-primary: #1f2429;
+  --color-text-secondary: #4a5561;
+  --color-text-muted: #8a96a3;
 
-  --color-border: #e2e8f0;
-  --color-border-light: #eef2f6;
+  --color-border: #d9dee4;
+  --color-border-light: #e9edf1;
+
+  /* Operations screens are square-cornered, like the platform they
+     replace. Zero radius everywhere; nothing here needs to feel soft. */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
 
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
 
-  --font-sans: "DM Sans", system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque", "DM Sans", sans-serif;
+  /* System UI stack: this is a work tool, and it should look like the
+     rest of the operator's desktop, not like the marketing site. */
+  --font-sans: "Segoe UI", Tahoma, Verdana, system-ui, -apple-system, sans-serif;
+  --font-display: "Segoe UI", Tahoma, Verdana, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --shadow-soft: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px rgba(17, 24, 39, 0.06);
@@ -56,8 +68,11 @@ body {
   background: var(--color-surface);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
+
+select, input, button { font-family: inherit; }
 
 /* Tabular figures everywhere money appears -- without this, digits shift
    width between rows and columns of numbers stop lining up. */
@@ -88,25 +103,26 @@ body {
    --------------------------------------------------------------------- */
 
 @theme {
-  --color-chrome: #f4f6f8;        /* menu bars, toolbars, table headers */
-  --color-chrome-hover: #e9edf1;
-  --color-grid: #dfe4ea;          /* table cell borders */
-  --color-link: #1668b3;          /* clickable record names */
-  --color-link-hover: #0d4f8c;
-  --color-row-hover: #eef7f6;     /* teal-tinted, not grey */
-  --color-row-selected: #e6f7f5;
+  --color-chrome: #f5f6f8;        /* menu bars, toolbars, table headers */
+  --color-chrome-hover: #e8ebef;
+  --color-grid: #d9dee4;          /* table borders */
+  --color-link: #1f6fc0;          /* clickable record names */
+  --color-link-hover: #165294;
+  --color-row-hover: #f2f6fb;
+  --color-row-selected: #e9f1fb;
 }
 
-/* Every table cell carries a grid line, as in the source screens. This is
-   what makes a dense table scannable -- without it rows blur together. */
+/* Header cells are separated by vertical rules; body rows by horizontal
+   ones only, as in the source platform. Body verticals made dense money
+   tables read as a spreadsheet rather than a report. */
 .grid-table { border-collapse: collapse; }
-.grid-table th,
-.grid-table td {
+.grid-table th {
   border-right: 1px solid var(--color-grid);
   border-bottom: 1px solid var(--color-grid);
 }
-.grid-table th:last-child,
-.grid-table td:last-child { border-right: 0; }
+.grid-table th:last-child { border-right: 0; }
+.grid-table td { border-bottom: 1px solid var(--color-border-light); }
+.grid-table tfoot td { border-bottom: 0; }
 
 .app-link { color: var(--color-link); }
 .app-link:hover { color: var(--color-link-hover); text-decoration: underline; }

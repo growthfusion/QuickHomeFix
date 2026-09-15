@@ -17,6 +17,14 @@ const asyncRoute = (fn) => (req, res, next) => fn(req, res, next).catch(next)
 const num = (v) => Math.round(Number(v ?? 0) * 100) / 100
 const int = (v) => Number(v ?? 0)
 
+// Same helper as finance.js's BUYER_CLIENT: a buyer row is per campaign
+// participation, so one client can appear several times under
+// different buyer_ids. Grouping by the resolved client id, not
+// buyer_id, keeps "Modernize" as one row instead of several.
+const BUYER_CLIENT = `
+  (SELECT buyer_id, any(client_id) AS cid, any(client_name) AS cname
+   FROM lp_buyers FINAL GROUP BY buyer_id)`
+
 // A page size cap exists because the UI's page selector is user
 // input: without it a request for 1,000,000 rows would try to
 // serialise the whole table into one response.
@@ -263,5 +271,135 @@ leads.get('/zip-list', asyncRoute(async (req, res) => {
     truncated: false,
     truncated_campaigns: [],
     rows,
+  })
+}))
+
+/**
+ * GET /api/zip-performance -- one row per zip code, for finding which
+ * zips are worth targeting and which are worth excluding.
+ *
+ * Served from hs_geo_rollup, which is pre-aggregated by (day, vertical,
+ * state, zip) -- unlike /zip-list this never touches lp_leads directly,
+ * so it stays fast even over a wide date range. Cost is tracked here
+ * (what we pay affiliates), so this is the vertical-wise / overall view;
+ * see /zip-performance/by-buyer below for the buyer-wise one, which has
+ * revenue only -- a buyer's cost to us doesn't exist as a concept.
+ */
+leads.get('/zip-performance', asyncRoute(async (req, res) => {
+  const { from, to } = dateRange(req.query)
+  const params = { from, to }
+
+  const clauses = []
+  if (req.query.vertical) { clauses.push('vertical = {vertical:String}'); params.vertical = req.query.vertical }
+  if (req.query.state) { clauses.push('state = {state:String}'); params.state = req.query.state }
+
+  const rows = await query(`
+    SELECT
+      zip_code,
+      any(state)            AS t_state,
+      groupUniqArray(vertical) AS t_verticals,
+      sum(leads_total)      AS t_leads,
+      sum(accepted_count)   AS t_accepted,
+      sum(cost)             AS t_cost,
+      sum(revenue)          AS t_revenue
+    FROM hs_geo_rollup
+    WHERE day BETWEEN {from:Date} AND {to:Date}
+    ${clauses.length ? 'AND ' + clauses.join(' AND ') : ''}
+    GROUP BY zip_code
+    ORDER BY t_revenue DESC`, params)
+
+  const shaped = rows.map((r) => {
+    const leads = int(r.t_leads)
+    const accepted = int(r.t_accepted)
+    const cost = num(r.t_cost)
+    const revenue = num(r.t_revenue)
+    const profit = num(revenue - cost)
+    return {
+      zip_code: r.zip_code,
+      state: r.t_state,
+      verticals: r.t_verticals ?? [],
+      leads,
+      accepted,
+      accept_rate: leads ? Math.round((accepted / leads) * 1000) / 10 : 0,
+      cost,
+      revenue,
+      profit,
+      margin: revenue ? Math.round((profit / revenue) * 1000) / 10 : 0,
+    }
+  })
+
+  res.json({
+    range: { from, to },
+    rows: shaped,
+    totals: {
+      leads: shaped.reduce((a, r) => a + r.leads, 0),
+      accepted: shaped.reduce((a, r) => a + r.accepted, 0),
+      cost: num(shaped.reduce((a, r) => a + r.cost, 0)),
+      revenue: num(shaped.reduce((a, r) => a + r.revenue, 0)),
+      profit: num(shaped.reduce((a, r) => a + r.profit, 0)),
+    },
+  })
+}))
+
+/**
+ * GET /api/zip-performance/by-buyer -- one row per (zip, buyer), for
+ * finding which zips are worth targeting for a specific buyer.
+ *
+ * Served from hs_buyer_geo_rollup (see 002_buyer_geo.sql). zip_code and
+ * state are only populated on leads synced after that migration landed,
+ * so this is sparse -- possibly empty -- until a backfill re-syncs
+ * older leads. Revenue only, no cost: a buyer's cost to us isn't a
+ * concept LeadProsper exposes at ping-post grain.
+ */
+leads.get('/zip-performance/by-buyer', asyncRoute(async (req, res) => {
+  const { from, to } = dateRange(req.query)
+  const params = { from, to }
+
+  const clauses = []
+  if (req.query.vertical) { clauses.push('r.vertical = {vertical:String}'); params.vertical = req.query.vertical }
+  if (req.query.buyer_id) { clauses.push('b.cid = {buyer_id:UInt64}'); params.buyer_id = Number(req.query.buyer_id) }
+
+  const rows = await query(`
+    SELECT
+      r.zip_code               AS zip_code,
+      any(r.state)              AS t_state,
+      any(b.cid)                AS buyer_client_id,
+      any(b.cname)               AS t_buyer_name,
+      groupUniqArray(r.vertical) AS t_verticals,
+      sum(r.leads_total)        AS t_leads,
+      sum(r.accepted_count)     AS t_accepted,
+      sum(r.revenue)             AS t_revenue
+    FROM hs_buyer_geo_rollup r
+    LEFT JOIN ${BUYER_CLIENT} b USING (buyer_id)
+    WHERE r.day BETWEEN {from:Date} AND {to:Date}
+    ${clauses.length ? 'AND ' + clauses.join(' AND ') : ''}
+    GROUP BY r.zip_code, b.cid
+    ORDER BY t_revenue DESC`, params)
+
+  const shaped = rows.map((r) => {
+    const leads = int(r.t_leads)
+    const accepted = int(r.t_accepted)
+    return {
+      zip_code: r.zip_code,
+      state: r.t_state,
+      buyer_id: int(r.buyer_client_id),
+      buyer_name: r.t_buyer_name || `#${r.buyer_client_id}`,
+      verticals: r.t_verticals ?? [],
+      leads,
+      accepted,
+      accept_rate: leads ? Math.round((accepted / leads) * 1000) / 10 : 0,
+      revenue: num(r.t_revenue),
+    }
+  })
+
+  res.json({
+    range: { from, to },
+    backfilled: shaped.length > 0,
+    rows: shaped,
+    totals: {
+      leads: shaped.reduce((a, r) => a + r.leads, 0),
+      accepted: shaped.reduce((a, r) => a + r.accepted, 0),
+      revenue: num(shaped.reduce((a, r) => a + r.revenue, 0)),
+    },
   })
 }))

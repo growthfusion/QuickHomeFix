@@ -196,6 +196,8 @@ CREATE TABLE IF NOT EXISTS ping_post.lp_lead_buyers
     campaign_id    UInt64,
     supplier_id    UInt64,
     vertical       LowCardinality(String),
+    zip_code       String,
+    state          LowCardinality(String),
 
     synced_at      DateTime
 )
@@ -402,6 +404,26 @@ CREATE TABLE IF NOT EXISTS ping_post.hs_supplier_buyer_rollup
 ENGINE = SummingMergeTree
 PARTITION BY toYYYYMM(day)
 ORDER BY (day, campaign_id, supplier_id, buyer_id, vertical);
+
+-- Buyer x zip -- "which zips is Modernize buying well from". Mirrors
+-- hs_supplier_buyer_rollup's shape, grouped by zip instead of supplier.
+-- Populated going forward only until a backfill re-syncs older leads;
+-- see 002_buyer_geo.sql.
+CREATE TABLE IF NOT EXISTS ping_post.hs_buyer_geo_rollup
+(
+    day             Date,
+    buyer_id        UInt64,
+    vertical        LowCardinality(String),
+    state           LowCardinality(String),
+    zip_code        String,
+
+    leads_total     UInt64,
+    accepted_count  UInt64,
+    revenue         Decimal(18, 2)
+)
+ENGINE = SummingMergeTree
+PARTITION BY toYYYYMM(day)
+ORDER BY (day, buyer_id, zip_code, vertical);
 
 -- Rejection-reason breakdown. Phase 2 per the HLD, but the rollup is
 -- cheap and the data is already arriving -- building it now means the

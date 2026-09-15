@@ -13,7 +13,7 @@ export function TabBar({ tabs, activeKey, onSelect, onClose }) {
   if (tabs.length === 0) return null
 
   return (
-    <div className="flex h-[30px] shrink-0 items-end gap-px border-b border-grid bg-chrome px-1.5">
+    <div className="flex h-[34px] shrink-0 items-stretch border-b border-grid bg-chrome pl-2">
       {tabs.map((tab) => {
         const active = tab.key === activeKey
         return (
@@ -21,14 +21,14 @@ export function TabBar({ tabs, activeKey, onSelect, onClose }) {
             key={tab.key}
             onClick={() => onSelect(tab)}
             className={clsx(
-              'group flex h-[25px] cursor-pointer items-center gap-1.5 rounded-t-sm border border-b-0 px-2.5 text-[12px]',
+              'group flex cursor-pointer items-center gap-2 border-r border-grid px-3.5 text-[13px]',
               active
-                ? 'border-grid bg-white font-medium text-primary'
-                : 'border-transparent text-text-secondary hover:bg-chrome-hover',
+                ? 'relative -mb-px border-b border-b-white bg-white text-primary shadow-[inset_0_2px_0_0_var(--color-primary)]'
+                : 'text-text-secondary hover:bg-chrome-hover',
             )}
           >
             {tab.icon && (
-              <tab.icon size={12} className={active ? 'text-primary' : 'text-text-muted'} />
+              <tab.icon size={14} className={active ? 'text-primary' : 'text-text-muted'} />
             )}
             <span className="max-w-[150px] truncate">{tab.title}</span>
 
