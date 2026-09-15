@@ -34,7 +34,12 @@ app.use(express.json())
 // two are deployed to different hosts -- a single named origin, never a
 // wildcard, since these responses carry payout figures.
 app.use(cors({
-  origin: (process.env.ALLOWED_ORIGIN ?? 'http://localhost:5180').split(','),
+  // '+', not ',' -- gcloud's --substitutions is itself a comma-separated
+  // key=value list, so a comma here splits into a second, invalid
+  // substitution instead of a second origin. '|' looked safer but is a
+  // shell pipe operator when this value reaches an unquoted command
+  // line, which truncates the whole gcloud invocation after it.
+  origin: (process.env.ALLOWED_ORIGIN ?? 'http://localhost:5180').split('+'),
 }))
 
 app.get('/api/health', async (_req, res) => {
