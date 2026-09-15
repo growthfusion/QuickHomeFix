@@ -1,0 +1,73 @@
+# Two sites, one box.
+#
+#   growthfusion.fun           marketing site, public
+#   pingpost.growthfusion.fun  dashboard + API, password-gated
+#
+# Caddy obtains and renews Let's Encrypt certificates on its own -- that
+# is the reason it is here rather than a plain file server. Both names
+# must already resolve to this box or the challenge fails.
+
+# --- marketing site (public) -------------------------------------
+{$GF_DOMAIN}, www.{$GF_DOMAIN} {
+	encode gzip
+
+	root * /srv/site
+	# SPA fallback: React Router owns the paths, so a deep link like
+	# /contact must return index.html rather than a 404.
+	try_files {path} /index.html
+	file_server
+
+	# Hashed asset filenames are immutable, so they can be cached hard.
+	# index.html must not be, or a deploy is invisible until the browser
+	# happens to revalidate.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# --- dashboard (password-gated) ----------------------------------
+{$HSP_DOMAIN} {
+	encode gzip
+
+	# Checked before anything is served -- HTML, JS or API alike. Unlike
+	# a login screen in JavaScript there is nothing to bypass: a request
+	# for affiliate payout figures cannot reach the backend without it.
+	basic_auth {
+		{$HSP_BASIC_AUTH_USER} {$HSP_BASIC_AUTH_HASH}
+	}
+
+	# Same origin as the UI, so there is no CORS to configure and the
+	# password covers the API too.
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle {
+		root * /srv/dashboard
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

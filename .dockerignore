@@ -1,0 +1,24 @@
+# The frontend image builds from the repo root so it can reach both
+# frontend/ and ping-post/. Without this the whole tree — node_modules,
+# git history, and every .env — would be uploaded to Cloud Build.
+
+.env
+.env.*
+**/.env
+**/.env.*
+
+node_modules/
+**/node_modules/
+
+.git/
+.github/
+.claude/
+.vscode/
+
+# Built by the image itself; a stale local copy would overwrite it.
+ping-post/frontend/dist/
+
+docs/
+reports/
+**/tests/
+*.log

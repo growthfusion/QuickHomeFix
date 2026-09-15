@@ -1,0 +1,30 @@
+# Build the site image from the repo root.
+#
+# Root context rather than frontend/ because the image also builds the
+# ping-post dashboard from ping-post/frontend and serves it at
+# /ping-post. --tag cannot pass build args, so this config exists to
+# hand VITE_API_URL to the Vite build.
+#
+#   gcloud builds submit . --config cloudbuild.frontend.yaml \
+#     --substitutions _IMAGE=gcr.io/PROJECT/quickhomefix-frontend-prod,_PING_POST_API=https://...
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - frontend/Dockerfile
+      - --build-arg
+      - VITE_API_URL=${_PING_POST_API}
+      - -t
+      - ${_IMAGE}
+      - .
+
+substitutions:
+  _IMAGE: gcr.io/${PROJECT_ID}/quickhomefix-frontend
+  # The ping-post API origin. Baked into the bundle at build time, so it
+  # must be the deployed backend URL — a wrong value here surfaces as
+  # "Cannot reach the API" in the dashboard, not as a build failure.
+  _PING_POST_API: ''
+
+images:
+  - ${_IMAGE}

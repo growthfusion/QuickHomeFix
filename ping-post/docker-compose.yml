@@ -1,0 +1,72 @@
+# Hetzner deployment: two containers, nothing else.
+#
+#   caddy    serves both sites + terminates TLS
+#   backend  the read-only API over ClickHouse
+#
+# Deliberately NOT here:
+#   clickhouse -- runs in ClickHouse Cloud. Self-hosting it would take
+#                 2GB of a 4GB box and make backups your problem.
+#   sync       -- runs on GCP Cloud Run, triggered by Cloud Scheduler.
+#                 See sync/DEPLOY.md.
+#
+# Footprint is about 770M, leaving the box mostly idle. That headroom is
+# the point: ClickHouse queries are answered in the Cloud, so this box
+# only has to serve files and proxy JSON.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: gf-backend
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      # ClickHouse Cloud. Needs the scheme AND port -- a bare hostname
+      # silently fails to connect.
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL:?set CLICKHOUSE_URL in .env}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-ping_post}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?set CLICKHOUSE_PASSWORD in .env}
+    # No ports here. The backend is reachable only through caddy on the
+    # docker network -- publishing 8080 would expose the API, and with it
+    # every payout figure, straight to the internet.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: gf-caddy
+    environment:
+      GF_DOMAIN: ${GF_DOMAIN:-growthfusion.fun}
+      HSP_DOMAIN: ${HSP_DOMAIN:-pingpost.growthfusion.fun}
+      # Guards the dashboard only. The marketing site stays public.
+      HSP_BASIC_AUTH_USER: ${HSP_BASIC_AUTH_USER:-admin}
+      HSP_BASIC_AUTH_HASH: ${HSP_BASIC_AUTH_HASH:?generate with: docker run --rm caddy:2-alpine caddy hash-password --plaintext yourpass}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Both sites are static builds, mounted read-only. Rebuilding is a
+      # matter of replacing these folders -- no container restart needed.
+      - ./site/growthfusion:/srv/site:ro
+      - ./site/dashboard:/srv/dashboard:ro
+      # Certificates live here. Losing this volume means re-issuing them,
+      # and Let's Encrypt rate-limits that, so it must persist.
+      - caddy-data:/data
+      - caddy-config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:

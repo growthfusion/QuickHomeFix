@@ -1,0 +1,41 @@
+<clickhouse>
+    <!--
+      Tuned for a 4GB shared VPS. ClickHouse defaults assume it owns the
+      machine; here it shares with the API, the sync job and the proxy.
+      Without these caps a single wide query can OOM the box.
+    -->
+
+    <!-- Hard ceiling: ~40% of a 4GB box, leaving room for everything else. -->
+    <max_server_memory_usage_to_ram_ratio>0.4</max_server_memory_usage_to_ram_ratio>
+
+    <!-- Small mark/uncompressed caches; the working set here is tiny. -->
+    <mark_cache_size>268435456</mark_cache_size>
+    <uncompressed_cache_size>134217728</uncompressed_cache_size>
+
+    <!-- A handful of internal users, not a public app. Concurrency is the
+         real risk on this box, not data volume. -->
+    <max_concurrent_queries>16</max_concurrent_queries>
+
+    <!-- Background merges compete with queries for RAM on a small box. -->
+    <background_pool_size>4</background_pool_size>
+    <background_schedule_pool_size>4</background_schedule_pool_size>
+
+    <profiles>
+        <default>
+            <!-- Per-query ceiling. A runaway scan fails loudly instead of
+                 taking down the server. -->
+            <max_memory_usage>1500000000</max_memory_usage>
+            <max_bytes_before_external_group_by>750000000</max_bytes_before_external_group_by>
+            <max_execution_time>60</max_execution_time>
+            <!-- Dashboard reads must see deduplicated ReplacingMergeTree
+                 state without every query spelling out FINAL. -->
+            <final>1</final>
+        </default>
+    </profiles>
+
+    <logger>
+        <level>warning</level>
+        <size>100M</size>
+        <count>3</count>
+    </logger>
+</clickhouse>

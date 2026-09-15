@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/* Theme tokens copied from the GrowthFusion marketing site
+   (../../Growthfusion/src/index.css) so the dashboard reads as the same
+   product. Brand teal, amber accent, DM Sans / Bricolage Grotesque.
+
+   Keep these in sync if the marketing palette changes. */
+
+@theme {
+  --color-primary: #00a99d;
+  --color-primary-hover: #00877e;
+  --color-primary-light: #e6f7f5;
+
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+  --color-accent-light: #fef3e2;
+
+  --color-background: #ffffff;
+  --color-surface: #fafafa;
+  --color-secondary: #fafafa;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  --color-border: #e2e8f0;
+  --color-border-light: #eef2f6;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --shadow-soft: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px rgba(17, 24, 39, 0.06);
+  --shadow-soft-lg: 0 4px 12px rgba(17, 24, 39, 0.05), 0 16px 40px rgba(17, 24, 39, 0.08);
+  --shadow-glow: 0 0 0 1px rgba(0, 169, 157, 0.08), 0 8px 30px rgba(0, 169, 157, 0.12);
+
+  /* Finance-specific additions. The marketing palette has no notion of
+     money moving in two directions, so gain/loss are derived from its
+     success/error rather than invented. */
+  --color-gain: #10b981;
+  --color-gain-strong: #059669;
+  --color-loss: #ef4444;
+  --color-loss-strong: #dc2626;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures everywhere money appears -- without this, digits shift
+   width between rows and columns of numbers stop lining up. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+  border: 2px solid var(--color-surface);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ---------------------------------------------------------------------
+   Dense application chrome.
+
+   Modelled on the LeadProsper screens the team already works in: compact
+   rows, visible cell grid, toolbar strips, tabbed workspaces. The scale is
+   deliberately small -- these screens are read for hours and every row that
+   fits is a row someone does not have to scroll to.
+
+   Colours stay GrowthFusion (teal #00a99d, DM Sans); only the density and
+   layout are borrowed.
+   --------------------------------------------------------------------- */
+
+@theme {
+  --color-chrome: #f4f6f8;        /* menu bars, toolbars, table headers */
+  --color-chrome-hover: #e9edf1;
+  --color-grid: #dfe4ea;          /* table cell borders */
+  --color-link: #1668b3;          /* clickable record names */
+  --color-link-hover: #0d4f8c;
+  --color-row-hover: #eef7f6;     /* teal-tinted, not grey */
+  --color-row-selected: #e6f7f5;
+}
+
+/* Every table cell carries a grid line, as in the source screens. This is
+   what makes a dense table scannable -- without it rows blur together. */
+.grid-table { border-collapse: collapse; }
+.grid-table th,
+.grid-table td {
+  border-right: 1px solid var(--color-grid);
+  border-bottom: 1px solid var(--color-grid);
+}
+.grid-table th:last-child,
+.grid-table td:last-child { border-right: 0; }
+
+.app-link { color: var(--color-link); }
+.app-link:hover { color: var(--color-link-hover); text-decoration: underline; }

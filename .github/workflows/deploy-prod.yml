@@ -24,10 +24,14 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2.1.4
 
+      # Context is the repo root, not frontend/: the image also builds
+      # the ping-post dashboard from ping-post/frontend and serves it
+      # at /ping-post.
       - name: Build frontend image
         run: |
-          gcloud builds submit frontend/ \
-            --tag gcr.io/$PROJECT_ID/quickhomefix-frontend-prod \
+          gcloud builds submit . \
+            --config cloudbuild.frontend.yaml \
+            --substitutions _IMAGE=gcr.io/$PROJECT_ID/quickhomefix-frontend-prod,_PING_POST_API=${{ secrets.PING_POST_API_URL_PROD }} \
             --project $PROJECT_ID
 
       - name: Deploy frontend to Cloud Run
@@ -69,4 +73,52 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --update-env-vars "NODE_ENV=production" \
+            --project $PROJECT_ID
+
+  # The ping-post dashboard API. Its own service rather than part of the
+  # main backend: it queries a different ClickHouse database and its
+  # traffic should not share a scaling profile with the public site.
+  deploy-pingpost-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.7
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2.1.4
+
+      - name: Build and deploy ping-post API
+        run: |
+          gcloud builds submit ping-post/ \
+            --config ping-post/cloudbuild.deploy.yaml \
+            --substitutions _SERVICE=quickhomefix-pingpost-api,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-api,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }},_ALLOWED_ORIGIN=${{ secrets.SITE_ORIGIN_PROD }} \
+            --project $PROJECT_ID
+
+  # Pulls LeadProsper into the ping_post ClickHouse database the
+  # dashboard reads. Cloud Scheduler POSTs /sync on a schedule; that
+  # Scheduler job is a one-off setup step, not created here.
+  deploy-pingpost-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.7
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2.1.4
+
+      - name: Build and deploy ping-post sync
+        run: |
+          gcloud builds submit ping-post/ \
+            --config ping-post/cloudbuild.sync.yaml \
+            --substitutions _SERVICE=quickhomefix-pingpost-sync,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-sync,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }} \
             --project $PROJECT_ID

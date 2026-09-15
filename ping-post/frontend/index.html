@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ping Post Dashboard - GrowthFusion</title>
+
+    <!-- In head and not a module, so it runs and can redirect before the
+         dashboard paints. Vite hoists module scripts above anything in
+         body, so placing it there would not guarantee this order. -->
+    <script src="%BASE_URL%auth.js"></script>
+
+    <!-- Same font stack as the marketing site, so the dashboard reads as
+         one product rather than a separate tool. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
