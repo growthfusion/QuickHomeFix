@@ -28,11 +28,14 @@ jobs:
       # the ping-post dashboard from ping-post/frontend and serves it
       # at /ping-post.
       - name: Build frontend image
+        # --project first: a trailing newline in a secret (easy to pick
+        # up pasting into GitHub's UI) truncates this block right where
+        # it is interpolated, dropping anything after it on the line.
         run: |
           gcloud builds submit . \
+            --project $PROJECT_ID \
             --config cloudbuild.frontend.yaml \
-            --substitutions _IMAGE=gcr.io/$PROJECT_ID/quickhomefix-frontend-test,_PING_POST_API=${{ secrets.PING_POST_API_URL_TEST }} \
-            --project $PROJECT_ID
+            --substitutions _IMAGE=gcr.io/$PROJECT_ID/quickhomefix-frontend-test,_PING_POST_API=${{ secrets.PING_POST_API_URL_TEST }}
 
       - name: Deploy frontend to Cloud Run
         run: |
@@ -92,11 +95,17 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2.1.4
 
       - name: Build and deploy ping-post API
+        # A secret value carrying a trailing newline (easy to pick up
+        # pasting into GitHub's UI) truncates a `run: |` block right
+        # where it is interpolated -- everything after it on the same
+        # logical line drops off, which silently lost --project here.
+        # --project first side-steps that: nothing after it depends on
+        # a secret's exact trailing bytes.
         run: |
           gcloud builds submit ping-post/ \
+            --project $PROJECT_ID \
             --config ping-post/cloudbuild.deploy.yaml \
-            --substitutions _SERVICE=quickhomefix-pingpost-api-test,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-api-test,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }},_ALLOWED_ORIGIN=${{ secrets.SITE_ORIGIN_TEST }} \
-            --project $PROJECT_ID
+            --substitutions _SERVICE=quickhomefix-pingpost-api-test,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-api-test,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }},_ALLOWED_ORIGIN=${{ secrets.SITE_ORIGIN_TEST }}
 
   # Pulls LeadProsper into the ping_post ClickHouse database the
   # dashboard reads. Cloud Scheduler POSTs /sync on a schedule; that
@@ -118,6 +127,6 @@ jobs:
       - name: Build and deploy ping-post sync
         run: |
           gcloud builds submit ping-post/ \
+            --project $PROJECT_ID \
             --config ping-post/cloudbuild.sync.yaml \
-            --substitutions _SERVICE=quickhomefix-pingpost-sync-test,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-sync-test,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }} \
-            --project $PROJECT_ID
+            --substitutions _SERVICE=quickhomefix-pingpost-sync-test,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-sync-test,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }}

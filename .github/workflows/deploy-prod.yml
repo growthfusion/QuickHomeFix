@@ -28,11 +28,14 @@ jobs:
       # the ping-post dashboard from ping-post/frontend and serves it
       # at /ping-post.
       - name: Build frontend image
+        # --project first: a trailing newline in a secret (easy to pick
+        # up pasting into GitHub's UI) truncates this block right where
+        # it is interpolated, dropping anything after it on the line.
         run: |
           gcloud builds submit . \
+            --project $PROJECT_ID \
             --config cloudbuild.frontend.yaml \
-            --substitutions _IMAGE=gcr.io/$PROJECT_ID/quickhomefix-frontend-prod,_PING_POST_API=${{ secrets.PING_POST_API_URL_PROD }} \
-            --project $PROJECT_ID
+            --substitutions _IMAGE=gcr.io/$PROJECT_ID/quickhomefix-frontend-prod,_PING_POST_API=${{ secrets.PING_POST_API_URL_PROD }}
 
       - name: Deploy frontend to Cloud Run
         run: |
@@ -95,9 +98,9 @@ jobs:
       - name: Build and deploy ping-post API
         run: |
           gcloud builds submit ping-post/ \
+            --project $PROJECT_ID \
             --config ping-post/cloudbuild.deploy.yaml \
-            --substitutions _SERVICE=quickhomefix-pingpost-api,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-api,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }},_ALLOWED_ORIGIN=${{ secrets.SITE_ORIGIN_PROD }} \
-            --project $PROJECT_ID
+            --substitutions _SERVICE=quickhomefix-pingpost-api,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-api,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }},_ALLOWED_ORIGIN=${{ secrets.SITE_ORIGIN_PROD }}
 
   # Pulls LeadProsper into the ping_post ClickHouse database the
   # dashboard reads. Cloud Scheduler POSTs /sync on a schedule; that
@@ -119,6 +122,6 @@ jobs:
       - name: Build and deploy ping-post sync
         run: |
           gcloud builds submit ping-post/ \
+            --project $PROJECT_ID \
             --config ping-post/cloudbuild.sync.yaml \
-            --substitutions _SERVICE=quickhomefix-pingpost-sync,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-sync,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }} \
-            --project $PROJECT_ID
+            --substitutions _SERVICE=quickhomefix-pingpost-sync,_IMAGE=gcr.io/$PROJECT_ID/quickhomefix-pingpost-sync,_REGION=$REGION,_CH_URL=${{ secrets.CLICKHOUSE_URL }}
