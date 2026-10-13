@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Building2, Users, Megaphone, List, MapPin, Wallet,
+  LayoutDashboard, Building2, Users, Megaphone, List, MapPin, Wallet, Settings as SettingsIcon,
 } from 'lucide-react'
 
 
@@ -21,6 +21,7 @@ import Leads from './pages/Leads.jsx'
 import LeadDetail from './pages/LeadDetail.jsx'
 import Campaigns from './pages/Campaigns.jsx'
 import ZipList from './pages/ZipList.jsx'
+import Settings from './pages/Settings.jsx'
 
 // Maps a pathname to its tab identity. Detail routes fold into one tab
 // per record, so opening three affiliates gives three tabs rather than
@@ -38,6 +39,7 @@ function tabFor(pathname) {
     campaigns:  { title: 'Campaigns',  icon: Megaphone },
     leads:      { title: 'Leads',      icon: List },
     'zip-list': { title: 'Zip List',   icon: MapPin },
+    settings:   { title: 'Settings',   icon: SettingsIcon },
   }[root]
 
   if (!base) return null
@@ -89,13 +91,12 @@ export default function App() {
     <MetaProvider>
     <div className="flex h-full flex-col bg-surface">
       <HeaderBar />
-      <MenuBar />
+      <MenuBar onCreate={setCreating} />
 
       <div className="flex min-h-0 flex-1">
         <Sidebar
           collapsed={menuCollapsed}
           onToggle={() => setMenuCollapsed((c) => !c)}
-          onCreate={setCreating}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="/leads" element={<Leads />} />
               <Route path="/leads/:leadId" element={<LeadDetail />} />
               <Route path="/zip-list" element={<ZipList />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

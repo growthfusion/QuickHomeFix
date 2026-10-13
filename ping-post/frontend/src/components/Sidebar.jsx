@@ -2,54 +2,32 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { clsx } from 'clsx'
 import {
-  ChevronLeft, ChevronRight, ChevronDown, Monitor, Plus,
-  Users, Building2, List, CheckCircle2, XCircle, RotateCcw,
-  Clock, MapPin, Megaphone, Layers, Wallet, FileText, Tag, SlidersHorizontal,
+  ChevronLeft, ChevronRight, ChevronDown, Monitor,
+  Users, Building2, List, CheckCircle2, XCircle, RotateCcw, Wallet,
 } from 'lucide-react'
 
 /**
  * Left "Main Menu" tree, as in the source screens.
  *
- * Duplicates what the top menu bar offers, deliberately: the top bar is
- * for jumping between areas, this is for living inside one. Groups stay
- * open so an operator working through leads keeps the whole lead
- * workflow in view.
+ * Only the areas someone lives inside for a while: Overview, Leads,
+ * Finance. Everything else (Zip List, Create, Performance) moved to the
+ * top menu bar, which is for jumping between areas rather than working
+ * through one. Every group starts collapsed -- none is more "default"
+ * than another, and a reload always resets to the same closed state
+ * rather than remembering what was open.
  */
 const GROUPS = [
   {
-    label: 'Zip List',
-    icon: MapPin,
-    defaultOpen: true,
-    items: [
-      { label: 'All Zips', to: '/zip-list', icon: MapPin },
-    ],
-  },
-  {
     label: 'Overview',
     icon: Monitor,
-    defaultOpen: true,
     items: [
       { label: 'Dashboard', to: '/', icon: Monitor },
       { label: 'Finance', to: '/finance', icon: Wallet },
     ],
   },
   {
-    label: 'Create',
-    icon: Plus,
-    items: [
-      { label: 'Advertiser', create: 'advertiser', icon: Building2 },
-      { label: 'Contract',   create: 'contract',   icon: FileText },
-      { label: 'Affiliate',  create: 'affiliate',  icon: Users },
-      { label: 'Campaign',   create: 'campaign',   icon: Megaphone },
-      { label: 'Vertical',   create: 'vertical',   icon: Layers },
-      { label: 'Offer',      create: 'offer',      icon: Tag },
-      { label: 'Adjustment', create: 'adjustment', icon: SlidersHorizontal },
-    ],
-  },
-  {
     label: 'Leads',
     icon: List,
-    defaultOpen: true,
     items: [
       { label: 'All Leads', to: '/leads', icon: List },
       { label: 'Accepted', to: '/leads?status=accepted', icon: CheckCircle2 },
@@ -60,23 +38,14 @@ const GROUPS = [
   {
     label: 'Finance',
     icon: Wallet,
-    defaultOpen: true,
     items: [
-      { label: 'Ledger', to: '/finance', icon: Wallet },
       { label: 'Affiliates', to: '/affiliates', icon: Users },
       { label: 'Buyers', to: '/buyers', icon: Building2 },
     ],
   },
-  {
-    label: 'Performance',
-    icon: Layers,
-    items: [
-      { label: 'Campaigns', to: '/campaigns', icon: Megaphone },
-    ],
-  },
 ]
 
-export function Sidebar({ collapsed, onToggle, onCreate }) {
+export function Sidebar({ collapsed, onToggle }) {
   const navigate = useNavigate()
   const { pathname, search } = useLocation()
   const here = pathname + search
@@ -136,12 +105,12 @@ export function Sidebar({ collapsed, onToggle, onCreate }) {
 
               {isOpen && group.items.map((item) => {
                 const ItemIcon = item.icon
-                const active = Boolean(item.to) && here === item.to
+                const active = here === item.to
 
                 return (
                   <button
-                    key={(item.to ?? item.create) + item.label}
-                    onClick={() => (item.create ? onCreate?.(item.create) : navigate(item.to))}
+                    key={item.to}
+                    onClick={() => navigate(item.to)}
                     className={clsx(
                       'flex w-full items-center gap-2.5 py-[5px] pl-8 pr-3 text-left text-[13px]',
                       active

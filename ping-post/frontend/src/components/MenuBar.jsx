@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import {
-  LayoutDashboard, Building2, Users, Megaphone, List, Layers,
+  LayoutDashboard, Building2, Users, Megaphone, List, Layers, Plus,
   MapPin, BarChart3, Settings as SettingsIcon, ChevronDown, LogOut, Wallet,
+  FileText, Tag, SlidersHorizontal,
 } from 'lucide-react'
 
 /**
@@ -24,6 +25,19 @@ const MENUS = [
     label: 'Zip List',
     icon: MapPin,
     to: '/zip-list',
+  },
+  {
+    label: 'Create',
+    icon: Plus,
+    items: [
+      { label: 'Advertiser', create: 'advertiser' },
+      { label: 'Contract', create: 'contract' },
+      { label: 'Affiliate', create: 'affiliate' },
+      { label: 'Campaign', create: 'campaign' },
+      { label: 'Vertical', create: 'vertical' },
+      { label: 'Offer', create: 'offer' },
+      { label: 'Adjustment', create: 'adjustment' },
+    ],
   },
   {
     label: 'Finance',
@@ -70,7 +84,7 @@ const MENUS = [
   },
 ]
 
-export function MenuBar({ onOpen }) {
+export function MenuBar({ onOpen, onCreate }) {
   const [open, setOpen] = useState(null)
   const navigate = useNavigate()
   const barRef = useRef(null)
@@ -91,6 +105,7 @@ export function MenuBar({ onOpen }) {
 
   const go = (item) => {
     setOpen(null)
+    if (item.create) { onCreate?.(item.create); return }
     onOpen?.(item)
     navigate(item.to)
   }
@@ -146,12 +161,13 @@ export function MenuBar({ onOpen }) {
       })}
 
       <div className="ml-auto flex items-stretch">
-        <button className="flex items-center gap-2 px-3 text-[13px] text-text-primary hover:bg-chrome">
+        <button onClick={() => go({ to: '/settings' })} className="flex items-center gap-2 px-3 text-[13px] text-text-primary hover:bg-chrome">
           <SettingsIcon size={15} className="text-text-secondary" />
           Settings
         </button>
-        <button className="flex items-center gap-2 px-3 text-[13px] text-text-primary hover:bg-chrome">
-          <LogOut size={15} className="text-text-secondary" />
+        <button title="Not wired up -- there is no login to sign out of yet" disabled
+                className="flex cursor-not-allowed items-center gap-2 px-3 text-[13px] text-text-muted opacity-50">
+          <LogOut size={15} />
           Logout
         </button>
       </div>

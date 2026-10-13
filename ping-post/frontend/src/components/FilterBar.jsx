@@ -5,6 +5,7 @@ import { Filter, RotateCcw } from 'lucide-react'
 
 import { useMeta } from '../lib/useMeta.jsx'
 import { daysAgo, isoDay, periodRange } from '../lib/format.js'
+import { getPreferences } from '../lib/preferences.js'
 import { Toolbar, ToolButton, selectCls } from './ui.jsx'
 
 /**
@@ -18,15 +19,19 @@ export function useFilters() {
   const [params, setParams] = useSearchParams()
 
   const filters = useMemo(
-    () => ({
-      from: params.get('from') ?? periodRange('mtd').from,
-      to: params.get('to') ?? periodRange('mtd').to,
-      campaign: params.get('campaign') ?? '',
-      affiliate_id: params.get('affiliate_id') ?? '',
-      buyer_id: params.get('buyer_id') ?? '',
-      status: params.get('status') ?? '',
-      vertical: params.get('vertical') ?? '',
-    }),
+    () => {
+      const prefs = getPreferences()
+      const defaultRange = periodRange(prefs.defaultPeriod) ?? periodRange('mtd')
+      return {
+        from: params.get('from') ?? defaultRange.from,
+        to: params.get('to') ?? defaultRange.to,
+        campaign: params.get('campaign') ?? '',
+        affiliate_id: params.get('affiliate_id') ?? '',
+        buyer_id: params.get('buyer_id') ?? '',
+        status: params.get('status') ?? '',
+        vertical: params.get('vertical') ?? prefs.defaultVertical,
+      }
+    },
     [params],
   )
 
