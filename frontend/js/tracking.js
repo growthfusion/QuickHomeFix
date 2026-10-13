@@ -356,6 +356,9 @@ function submitFullLead(formData) {
     rt_ad: getRtAd(),
     fbclid: getFbclid(),
     source_id: getSourceId(),
+    // Variant attribution: /get-quotes/:service/:variant lives in the path,
+    // and the backend already stores landing_page_url on every lead.
+    landing_page_url: window.location.href,
   });
 
   function pushLeadEvent() {

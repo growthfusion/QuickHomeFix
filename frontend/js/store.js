@@ -16,6 +16,11 @@ const initialFormData = {
 
 
 const STORAGE_KEY = "roofing-form-storage";
+// Bump STATE_VERSION whenever the step flow or formData shape changes so a
+// visitor's saved progress from an older deploy is dropped, not resumed.
+const STATE_VERSION = 2;
+const HUB_TOTAL_STEPS = 7;
+const STATE_TTL_MS = 30 * 60 * 1000;
 
 /* ─── Service Flows ─── */
 const serviceFlows = {
@@ -42,13 +47,18 @@ function isValidService(serviceId) {
 function loadStore() {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      const fresh = saved && saved._v === STATE_VERSION && saved._t && (Date.now() - saved._t) < STATE_TTL_MS;
+      if (fresh) return saved;
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
   } catch (e) { /* ignore */ }
   return { formData: { ...initialFormData }, currentStep: 0, isFormStarted: false, isFormCompleted: false };
 }
 
 function saveStore(state) {
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, _v: STATE_VERSION, _t: Date.now() })); } catch (e) { /* ignore */ }
 }
 
 let _state = loadStore();
@@ -101,7 +111,9 @@ const store = {
   getProgress() {
     if (!_state.formData.service) return 0;
     var flow = getServiceFlow(_state.formData.service);
-    var totalVisible = flow.steps.length - 1;
+    // The bathroom hub is only the lead-in to a real service flow (~6 steps),
+    // so measure it against that, not its own 2-step list (that read 100%).
+    var totalVisible = _state.formData.service === "bathroom" ? HUB_TOTAL_STEPS : flow.steps.length - 1;
     var stepNum = _state.currentStep;
     var stepName = this.getCurrentStepName();
     if (stepName === "final") return 95;

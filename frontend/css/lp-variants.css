@@ -1,0 +1,2704 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   QuickHomeFix — Landing Page Variants v1 / v2 / v3
+   Routes: /get-quotes/:service/v1 | v2 | v3
+   Scoped under html.lp-v1 / html.lp-v2 / html.lp-v3 (class is set on
+   <html> by the early head script before first paint — no FOUC).
+
+   v1 "Clarity"  — Modernize-inspired: light, airy, navy ink + orange CTA.
+   v2 "Warmth"   — HomeBuddy-inspired: cream, deep green, amber CTA, round.
+   v3 "Bold"     — Thumbtack/Angi energy: indigo field, lime CTA, chips.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────── Design tokens ───────────────────────── */
+html.lp-v1 {
+  /* "Navy & Gold" — navy is blue's trust register (America's favorite
+     color, YouGov/Hallock); gold CTA = maximum salience on navy, and the
+     disliked orange is gone. Dark text on #fbbf24 ≈ 10:1 — passes AAA. */
+  --lp-bg:            #ffffff;
+  --lp-bg-soft:       #f4f6fb;
+  --lp-hero-bg:       linear-gradient(180deg, #f7f9fc 0%, #edf2f9 100%);
+  --lp-ink:           #10213f;
+  --lp-ink-soft:      #44536b;
+  --lp-ink-faint:     #7b89a0;
+  --lp-primary:       #16337a;
+  --lp-cta:           #fbbf24;
+  --lp-cta-hover:     #f59e0b;
+  --lp-cta-text:      #271a00;
+  --lp-accent-soft:   #fef3c7;
+  --lp-card-bg:       #ffffff;
+  --lp-card-border:   #e3e9f4;
+  --lp-radius:        12px;
+  --lp-radius-btn:    10px;
+  --lp-footer-bg:     #0c1a33;
+  --lp-font:          'Inter', 'DM Sans', system-ui, sans-serif;
+  --lp-focus-ring:    0 0 0 3px rgba(22, 51, 122, 0.25);
+}
+html.lp-v2 {
+  /* "Fresh Lake" — built on US color-preference research: blue is
+     America's favorite color (YouGov/Hallock), green the trusted action
+     color; beige and orange (the old theme) rank among the most disliked. */
+  --lp-bg:            #f3f9fb;
+  --lp-bg-soft:       #ffffff;
+  --lp-hero-bg:       #f3f9fb;
+  --lp-ink:           #0b3a4a;
+  --lp-ink-soft:      #44626e;
+  --lp-ink-faint:     #7d98a2;
+  --lp-primary:       #0e7490;
+  /* green CTA: 18px-bold white on #16a34a passes AA large-text */
+  --lp-cta:           #16a34a;
+  --lp-cta-hover:     #15803d;
+  --lp-cta-text:      #ffffff;
+  --lp-accent-soft:   #dff1f6;
+  --lp-card-bg:       #ffffff;
+  --lp-card-border:   #dcebf0;
+  --lp-radius:        20px;
+  --lp-radius-btn:    999px;
+  --lp-footer-bg:     #0c2f3a;
+  --lp-font:          'Manrope', 'DM Sans', system-ui, sans-serif;
+  --lp-focus-ring:    0 0 0 3px rgba(14, 116, 144, 0.25);
+}
+html.lp-v3 {
+  --lp-bg:            #ffffff;
+  --lp-bg-soft:       #f5f4fb;
+  --lp-hero-bg:       linear-gradient(145deg, #3d2db7 0%, #2a1e8f 70%, #231874 100%);
+  --lp-ink:           #171233;
+  --lp-ink-soft:      #4c4668;
+  --lp-ink-faint:     #817b9c;
+  --lp-primary:       #3d2db7;
+  --lp-cta:           #c6f432;
+  --lp-cta-hover:     #b4e320;
+  --lp-cta-text:      #171233;
+  --lp-accent-soft:   #eceafb;
+  --lp-card-bg:       #ffffff;
+  --lp-card-border:   #e6e3f2;
+  --lp-radius:        14px;
+  --lp-radius-btn:    12px;
+  --lp-footer-bg:     #14102e;
+  --lp-font:          'Plus Jakarta Sans', 'DM Sans', system-ui, sans-serif;
+  --lp-focus-ring:    0 0 0 3px rgba(61, 45, 183, 0.25);
+}
+
+/* ───────────────────────── Shared base ───────────────────────── */
+html.lp-v1 body, html.lp-v2 body, html.lp-v3 body {
+  font-family: var(--lp-font);
+}
+html.lp-v1 #landingPage, html.lp-v2 #landingPage, html.lp-v3 #landingPage {
+  background: var(--lp-bg) !important;
+}
+/* Kill the legacy decorative orbs + variant-A chrome */
+html.lp-v1 .va-orb, html.lp-v2 .va-orb, html.lp-v3 .va-orb,
+html.lp-v1 #vaActivityStrip, html.lp-v2 #vaActivityStrip, html.lp-v3 #vaActivityStrip {
+  display: none !important;
+}
+
+/* ───────────────────────── Hero section ───────────────────────── */
+html.lp-v1 section.lp-hero, html.lp-v2 section.lp-hero, html.lp-v3 section.lp-hero {
+  background: var(--lp-hero-bg) !important;
+}
+
+/* v1 + v2 have light heroes → dark header links and dark hero text */
+html.lp-v1 section.lp-hero a[href="/contractor"],
+html.lp-v1 section.lp-hero a[href="/affiliate"],
+html.lp-v2 section.lp-hero a[href="/contractor"],
+html.lp-v2 section.lp-hero a[href="/affiliate"] {
+  color: var(--lp-ink-soft) !important;
+}
+html.lp-v1 section.lp-hero a[href="/contractor"]:hover,
+html.lp-v1 section.lp-hero a[href="/affiliate"]:hover,
+html.lp-v2 section.lp-hero a[href="/contractor"]:hover,
+html.lp-v2 section.lp-hero a[href="/affiliate"]:hover {
+  color: var(--lp-ink) !important;
+}
+html.lp-v1 #landingHeroTitle, html.lp-v2 #landingHeroTitle {
+  color: var(--lp-ink) !important;
+  letter-spacing: -0.025em;
+}
+html.lp-v1 #landingHeroSubtitle, html.lp-v2 #landingHeroSubtitle {
+  color: var(--lp-ink-soft) !important;
+}
+html.lp-v1 .lp-hero-micro, html.lp-v2 .lp-hero-micro {
+  color: var(--lp-ink-faint) !important;
+}
+/* v3 keeps white hero text on the indigo field */
+html.lp-v3 #landingHeroTitle { color: #ffffff !important; letter-spacing: -0.02em; }
+html.lp-v3 #landingHeroSubtitle { color: rgba(255, 255, 255, 0.82) !important; }
+html.lp-v3 .lp-hero-micro { color: rgba(255, 255, 255, 0.65) !important; }
+
+/* Eyebrow pill above the H1 (injected by lp-variants.js) */
+.lp-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; border-radius: 999px;
+  padding: 6px 14px; margin-bottom: 16px;
+}
+html.lp-v1 .lp-eyebrow { background: var(--lp-accent-soft); color: var(--lp-cta-hover); }
+html.lp-v2 .lp-eyebrow { background: var(--lp-accent-soft); color: var(--lp-primary); }
+html.lp-v3 .lp-eyebrow { background: rgba(255,255,255,0.12); color: #e3defc; border: 1px solid rgba(255,255,255,0.2); }
+
+/* ZIP capture card */
+html.lp-v1 .va-cta-wrap, html.lp-v2 .va-cta-wrap, html.lp-v3 .va-cta-wrap {
+  background: var(--lp-card-bg) !important;
+  border: 1px solid var(--lp-card-border) !important;
+  border-radius: calc(var(--lp-radius) + 4px) !important;
+  box-shadow: 0 12px 32px rgba(15, 42, 67, 0.10);
+  padding: 10px !important;
+}
+html.lp-v2 .va-cta-wrap { box-shadow: 0 12px 28px rgba(11, 58, 74, 0.10); }
+html.lp-v3 .va-cta-wrap { box-shadow: 0 16px 40px rgba(16, 10, 60, 0.35); border-color: rgba(255,255,255,0.25) !important; }
+
+html.lp-v1 #landingZipInput, html.lp-v2 #landingZipInput, html.lp-v3 #landingZipInput {
+  background: var(--lp-bg-soft) !important;
+  border-radius: var(--lp-radius-btn) !important;
+  color: var(--lp-ink) !important;
+  font-size: 16px !important;
+}
+html.lp-v2 #landingZipInput { background: #eef6f9 !important; }
+html.lp-v3 #landingZipInput { background: #f5f4fb !important; }
+html.lp-v1 #landingZipInput:focus, html.lp-v2 #landingZipInput:focus, html.lp-v3 #landingZipInput:focus {
+  box-shadow: var(--lp-focus-ring) !important;
+}
+
+/* Every "start wizard" CTA on the landing page */
+html.lp-v1 #landingPage button[onclick^="startWizardFromLanding"],
+html.lp-v2 #landingPage button[onclick^="startWizardFromLanding"],
+html.lp-v3 #landingPage button[onclick^="startWizardFromLanding"] {
+  background: var(--lp-cta) !important;
+  color: var(--lp-cta-text) !important;
+  border-radius: var(--lp-radius-btn) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+html.lp-v1 #landingPage button[onclick^="startWizardFromLanding"]:hover,
+html.lp-v2 #landingPage button[onclick^="startWizardFromLanding"]:hover,
+html.lp-v3 #landingPage button[onclick^="startWizardFromLanding"]:hover {
+  background: var(--lp-cta-hover) !important;
+}
+
+/* Hero trust chips (injected) */
+.lp-trust-chips {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: 18px; justify-content: center;
+}
+@media (min-width: 1024px) { .lp-trust-chips { justify-content: flex-start; } }
+.lp-trust-chips span {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; border-radius: 999px; padding: 7px 13px;
+}
+.lp-trust-chips svg { width: 14px; height: 14px; flex-shrink: 0; }
+html.lp-v1 .lp-trust-chips span { background: #ffffff; color: var(--lp-ink-soft); border: 1px solid var(--lp-card-border); }
+html.lp-v1 .lp-trust-chips svg { color: #1a9d60; }
+html.lp-v2 .lp-trust-chips span { background: var(--lp-accent-soft); color: var(--lp-primary); }
+html.lp-v2 .lp-trust-chips svg { color: var(--lp-primary); }
+html.lp-v3 .lp-trust-chips span { background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.18); }
+html.lp-v3 .lp-trust-chips svg { color: var(--lp-cta); }
+
+/* Hero image treatment */
+html.lp-v2 #landingHeroImage img { filter: drop-shadow(0 18px 30px rgba(11, 58, 74, 0.16)); }
+html.lp-v3 #landingHeroImage img { filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.35)); }
+
+/* ───────────────────────── How-it-works (injected) ───────────────────── */
+.lp-how {
+  padding: 44px 0 48px;
+}
+html.lp-v1 .lp-how { background: #ffffff; border-bottom: 1px solid var(--lp-card-border); }
+html.lp-v2 .lp-how { background: #ffffff; }
+html.lp-v3 .lp-how { background: var(--lp-bg-soft); }
+.lp-how-inner { max-width: 72rem; margin: 0 auto; padding: 0 20px; }
+.lp-how h2 {
+  text-align: center; font-size: 24px; font-weight: 800;
+  color: var(--lp-ink); margin: 0 0 6px; letter-spacing: -0.02em;
+}
+.lp-how .lp-how-sub {
+  text-align: center; font-size: 15px; color: var(--lp-ink-soft); margin: 0 0 28px;
+}
+.lp-how-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 640px) { .lp-how-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
+.lp-how-card {
+  background: var(--lp-card-bg); border: 1px solid var(--lp-card-border);
+  border-radius: var(--lp-radius); padding: 22px 20px;
+}
+html.lp-v2 .lp-how-card { box-shadow: 0 4px 14px rgba(11, 58, 74, 0.05); border-radius: var(--lp-radius); }
+.lp-how-num {
+  width: 38px; height: 38px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; margin-bottom: 12px;
+}
+html.lp-v1 .lp-how-num { background: var(--lp-accent-soft); color: var(--lp-cta-hover); }
+html.lp-v2 .lp-how-num { background: var(--lp-accent-soft); color: var(--lp-primary); }
+html.lp-v3 .lp-how-num { background: var(--lp-accent-soft); color: var(--lp-primary); }
+.lp-how-card h3 { font-size: 16px; font-weight: 700; color: var(--lp-ink); margin: 0 0 6px; }
+.lp-how-card p { font-size: 14.5px; line-height: 1.55; color: var(--lp-ink-soft); margin: 0; }
+
+/* ───────────────────────── Content sections restyle ───────────────────── */
+/* Alternate section backgrounds per theme */
+html.lp-v1 #landingPage section.bg-gray-50 { background: var(--lp-bg-soft) !important; }
+html.lp-v2 #landingPage section.bg-white { background: #ffffff !important; }
+html.lp-v2 #landingPage section.bg-gray-50 { background: var(--lp-bg) !important; }
+html.lp-v3 #landingPage section.bg-gray-50 { background: var(--lp-bg-soft) !important; }
+
+/* Section headings */
+html.lp-v1 #landingPage h2, html.lp-v2 #landingPage h2, html.lp-v3 #landingPage h2 {
+  color: var(--lp-ink) !important; letter-spacing: -0.02em;
+}
+
+/* Cards: features / advantages / faq rows */
+html.lp-v1 #landingFeatures > div, html.lp-v1 #landingAdvantages > div, html.lp-v1 #landingFaqs > div,
+html.lp-v2 #landingFeatures > div, html.lp-v2 #landingAdvantages > div, html.lp-v2 #landingFaqs > div,
+html.lp-v3 #landingFeatures > div, html.lp-v3 #landingAdvantages > div, html.lp-v3 #landingFaqs > div {
+  border-radius: var(--lp-radius) !important;
+  border-color: var(--lp-card-border) !important;
+  background: var(--lp-card-bg) !important;
+}
+html.lp-v2 #landingFeatures > div, html.lp-v2 #landingAdvantages > div {
+  box-shadow: 0 4px 14px rgba(11, 58, 74, 0.05);
+}
+/* Feature number badges pick up the theme */
+html.lp-v1 #landingFeatures .bg-blue-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v1 #landingFeatures .text-blue-600 { color: var(--lp-cta-hover) !important; }
+html.lp-v2 #landingFeatures .bg-blue-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v2 #landingFeatures .text-blue-600 { color: var(--lp-primary) !important; }
+html.lp-v3 #landingFeatures .bg-blue-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v3 #landingFeatures .text-blue-600 { color: var(--lp-primary) !important; }
+/* Benefit + advantage check icons */
+html.lp-v2 #landingPage .text-green-500 { color: var(--lp-primary) !important; }
+html.lp-v2 #landingPage .bg-green-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v3 #landingPage .text-green-500 { color: var(--lp-primary) !important; }
+html.lp-v3 #landingPage .bg-green-50 { background: var(--lp-accent-soft) !important; }
+
+/* Overview image card */
+html.lp-v1 #landingOverviewImage, html.lp-v2 #landingOverviewImage, html.lp-v3 #landingOverviewImage {
+  border-radius: var(--lp-radius) !important;
+  border-color: var(--lp-card-border) !important;
+}
+
+/* ───────────────────────── Footer ───────────────────────── */
+html.lp-v1 #landingPage footer, html.lp-v2 #landingPage footer, html.lp-v3 #landingPage footer {
+  background: var(--lp-footer-bg) !important;
+}
+
+/* ───────────────────────── Sticky mobile CTA (injected) ───────────────── */
+.lp-sticky-cta {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-top: 1px solid var(--lp-card-border);
+  display: none;
+}
+@media (max-width: 767px) { .lp-sticky-cta { display: block; } }
+.lp-sticky-cta button {
+  width: 100%; padding: 14px 20px;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  font-weight: 800; font-size: 16px; border: none;
+  border-radius: var(--lp-radius-btn); cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  font-family: var(--lp-font);
+}
+/* Give page content breathing room above the sticky bar on mobile */
+@media (max-width: 767px) {
+  html.lp-v1 #landingPage footer, html.lp-v2 #landingPage footer, html.lp-v3 #landingPage footer {
+    padding-bottom: 92px !important;
+  }
+}
+
+/* ───────────────────────── Wizard theming ───────────────────────── */
+/* Progress bar */
+html.lp-v1 #wizardProgress { background: linear-gradient(to right, #f58238, var(--lp-cta)) !important; }
+html.lp-v2 #wizardProgress { background: linear-gradient(to right, #1a7a5c, var(--lp-primary)) !important; }
+html.lp-v3 #wizardProgress { background: linear-gradient(to right, #6b5de8, var(--lp-primary)) !important; }
+
+/* Primary wizard action buttons */
+html.lp-v1 #zipNextBtn, html.lp-v1 #svcNextBtn, html.lp-v1 #radioNextBtn,
+html.lp-v1 #emailNextBtn, html.lp-v1 #detailsNextBtn, html.lp-v1 #nameNextBtn,
+html.lp-v1 #finalSubmitBtn,
+html.lp-v2 #zipNextBtn, html.lp-v2 #svcNextBtn, html.lp-v2 #radioNextBtn,
+html.lp-v2 #emailNextBtn, html.lp-v2 #detailsNextBtn, html.lp-v2 #nameNextBtn,
+html.lp-v2 #finalSubmitBtn,
+html.lp-v3 #zipNextBtn, html.lp-v3 #svcNextBtn, html.lp-v3 #radioNextBtn,
+html.lp-v3 #emailNextBtn, html.lp-v3 #detailsNextBtn, html.lp-v3 #nameNextBtn,
+html.lp-v3 #finalSubmitBtn {
+  background: var(--lp-cta) !important;
+  color: var(--lp-cta-text) !important;
+  border-radius: var(--lp-radius-btn) !important;
+  font-weight: 800 !important;
+  font-family: var(--lp-font);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+html.lp-v1 #finalSubmitBtn:hover, html.lp-v2 #finalSubmitBtn:hover, html.lp-v3 #finalSubmitBtn:hover {
+  background: var(--lp-cta-hover) !important;
+}
+
+/* Wizard inputs: themed focus ring */
+html.lp-v1 #wizardContainer input:focus,
+html.lp-v2 #wizardContainer input:focus,
+html.lp-v3 #wizardContainer input:focus {
+  box-shadow: var(--lp-focus-ring) !important;
+  border-color: var(--lp-primary) !important;
+}
+html.lp-v1 #wizardContainer input, html.lp-v2 #wizardContainer input, html.lp-v3 #wizardContainer input {
+  border-radius: var(--lp-radius-btn) !important;
+  font-family: var(--lp-font);
+}
+/* Pill-radius inputs look odd fully round — cap for v2 */
+html.lp-v2 #wizardContainer input { border-radius: 14px !important; }
+html.lp-v2 #zipNextBtn, html.lp-v2 #svcNextBtn, html.lp-v2 #radioNextBtn,
+html.lp-v2 #emailNextBtn, html.lp-v2 #detailsNextBtn, html.lp-v2 #nameNextBtn,
+html.lp-v2 #finalSubmitBtn { border-radius: 999px !important; }
+
+/* Wizard step titles */
+html.lp-v1 .wizard-step-title { color: var(--lp-ink) !important; font-family: var(--lp-font); }
+html.lp-v2 .wizard-step-title { color: var(--lp-ink) !important; font-family: var(--lp-font); }
+html.lp-v3 .wizard-step-title { color: var(--lp-ink) !important; font-family: var(--lp-font); }
+
+/* Radio option selection colors (both legacy .radio-option and inline-built rows) */
+html.lp-v1 .radio-option.selected { background: var(--lp-accent-soft); }
+html.lp-v1 .radio-option.selected .radio-dot { border-color: var(--lp-cta); }
+html.lp-v1 .radio-option.selected .radio-dot-inner { background: var(--lp-cta); }
+html.lp-v1 .radio-option.selected .radio-label { color: var(--lp-cta-hover); }
+html.lp-v2 .radio-option.selected { background: var(--lp-accent-soft); }
+html.lp-v2 .radio-option.selected .radio-dot { border-color: var(--lp-primary); }
+html.lp-v2 .radio-option.selected .radio-dot-inner { background: var(--lp-primary); }
+html.lp-v2 .radio-option.selected .radio-label { color: var(--lp-primary); }
+html.lp-v3 .radio-option.selected { background: var(--lp-accent-soft); }
+html.lp-v3 .radio-option.selected .radio-dot { border-color: var(--lp-primary); }
+html.lp-v3 .radio-option.selected .radio-dot-inner { background: var(--lp-primary); }
+html.lp-v3 .radio-option.selected .radio-label { color: var(--lp-primary); }
+
+/* Inline-built radio rows in #radioOptions use tailwind blue classes */
+html.lp-v1 #radioOptions .bg-blue-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v1 #radioOptions .border-blue-600 { border-color: var(--lp-cta) !important; }
+html.lp-v1 #radioOptions .bg-blue-600 { background: var(--lp-cta) !important; }
+html.lp-v1 #radioOptions .text-blue-600 { color: var(--lp-cta-hover) !important; }
+html.lp-v2 #radioOptions .bg-blue-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v2 #radioOptions .border-blue-600 { border-color: var(--lp-primary) !important; }
+html.lp-v2 #radioOptions .bg-blue-600 { background: var(--lp-primary) !important; }
+html.lp-v2 #radioOptions .text-blue-600 { color: var(--lp-primary) !important; }
+html.lp-v3 #radioOptions .bg-blue-50 { background: var(--lp-accent-soft) !important; }
+html.lp-v3 #radioOptions .border-blue-600 { border-color: var(--lp-primary) !important; }
+html.lp-v3 #radioOptions .bg-blue-600 { background: var(--lp-primary) !important; }
+html.lp-v3 #radioOptions .text-blue-600 { color: var(--lp-primary) !important; }
+
+/* Owner / changes yes-no toggles in details step */
+html.lp-v1 #ownerYes.bg-blue-600, html.lp-v1 #changesYes.bg-blue-600,
+html.lp-v1 #ownerNo.bg-blue-600, html.lp-v1 #changesNo.bg-blue-600 {
+  background: var(--lp-primary) !important; border-color: var(--lp-primary) !important;
+}
+html.lp-v2 #ownerYes.bg-blue-600, html.lp-v2 #changesYes.bg-blue-600,
+html.lp-v2 #ownerNo.bg-blue-600, html.lp-v2 #changesNo.bg-blue-600 {
+  background: var(--lp-primary) !important; border-color: var(--lp-primary) !important;
+}
+html.lp-v3 #ownerYes.bg-blue-600, html.lp-v3 #changesYes.bg-blue-600,
+html.lp-v3 #ownerNo.bg-blue-600, html.lp-v3 #changesNo.bg-blue-600 {
+  background: var(--lp-primary) !important; border-color: var(--lp-primary) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Uniqueness + accessibility layer
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── CTA labels at 18px bold: with the v1 orange this is what makes the
+      white-on-orange combination pass WCAG AA (large-text 3:1 rule). ── */
+html.lp-v1 #landingPage button[onclick^="startWizardFromLanding"],
+html.lp-v2 #landingPage button[onclick^="startWizardFromLanding"],
+html.lp-v3 #landingPage button[onclick^="startWizardFromLanding"],
+html.lp-v1 #zipNextBtn, html.lp-v1 #svcNextBtn, html.lp-v1 #radioNextBtn,
+html.lp-v1 #emailNextBtn, html.lp-v1 #detailsNextBtn, html.lp-v1 #nameNextBtn,
+html.lp-v1 #finalSubmitBtn,
+.lp-sticky-cta button {
+  font-size: 18px !important;
+}
+
+/* ── Visible keyboard focus (styles.css globally kills outlines; the ID in
+      these selectors out-ranks that rule). ── */
+html.lp-v1 #landingPage a:focus-visible, html.lp-v1 #landingPage button:focus-visible,
+html.lp-v1 #wizardContainer button:focus-visible,
+html.lp-v2 #landingPage a:focus-visible, html.lp-v2 #landingPage button:focus-visible,
+html.lp-v2 #wizardContainer button:focus-visible,
+html.lp-v3 #landingPage a:focus-visible, html.lp-v3 #landingPage button:focus-visible,
+html.lp-v3 #wizardContainer button:focus-visible,
+html.lp-v1 #lpStickyCta button:focus-visible,
+html.lp-v2 #lpStickyCta button:focus-visible,
+html.lp-v3 #lpStickyCta button:focus-visible {
+  outline: 3px solid var(--lp-primary) !important;
+  outline-offset: 2px !important;
+}
+html.lp-v3 #landingPage section.lp-hero a:focus-visible,
+html.lp-v3 #landingPage section.lp-hero button:focus-visible {
+  outline-color: var(--lp-cta) !important; /* indigo outline invisible on indigo hero */
+}
+
+/* ── Reduced motion: no shimmer, no smooth scroll, no bouncing ── */
+@media (prefers-reduced-motion: reduce) {
+  html.lp-v1, html.lp-v2, html.lp-v3 { scroll-behavior: auto; }
+  html.lp-v1 *, html.lp-v2 *, html.lp-v3 * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── v1 "Clarity": full-bleed real-photo hero, centered single column.
+      The photo is set per-service by lp-variants.js via --lp-hero-photo. ── */
+html.lp-v1 section.lp-hero {
+  background:
+    linear-gradient(180deg, rgba(8, 22, 38, 0.80) 0%, rgba(8, 22, 38, 0.60) 45%, rgba(8, 22, 38, 0.84) 100%),
+    var(--lp-hero-photo, linear-gradient(180deg, #0f2a43, #0b1f33)) center / cover no-repeat !important;
+}
+html.lp-v1 section.lp-hero .grid {
+  grid-template-columns: 1fr !important;
+  justify-items: center;
+  text-align: center;
+}
+html.lp-v1 section.lp-hero .grid > div:first-child { max-width: 46rem; text-align: center !important; }
+html.lp-v1 #landingHeroImage { display: none !important; }
+html.lp-v1 #landingHeroContent { padding-top: 3.5rem !important; padding-bottom: 4rem !important; }
+/* White text on the photo overlay */
+html.lp-v1 #landingHeroTitle { color: #ffffff !important; }
+html.lp-v1 #landingHeroSubtitle { color: rgba(255, 255, 255, 0.85) !important; margin-left: auto !important; margin-right: auto !important; }
+html.lp-v1 .lp-eyebrow { background: rgba(255, 255, 255, 0.12); color: #ffd9c0; border: 1px solid rgba(255, 255, 255, 0.22); }
+html.lp-v1 section.lp-hero a[href="/contractor"],
+html.lp-v1 section.lp-hero a[href="/affiliate"] { color: rgba(255, 255, 255, 0.85) !important; }
+html.lp-v1 .va-cta-wrap { margin-left: auto; margin-right: auto; }
+html.lp-v1 .lp-trust-chips { justify-content: center; }
+html.lp-v1 .lp-trust-chips span { background: rgba(255, 255, 255, 0.12); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); }
+html.lp-v1 .lp-trust-chips svg { color: #8fe3b4; }
+html.lp-v1 #landingPage section.lp-hero a:focus-visible,
+html.lp-v1 #landingPage section.lp-hero button:focus-visible { outline-color: #ffffff !important; }
+
+/* ── v2 "Warmth": the text column becomes a white paper card on cream;
+      the real photo sits in an arch-shaped frame (stationery feel). ── */
+html.lp-v2 section.lp-hero .grid { align-items: center; }
+html.lp-v2 section.lp-hero .grid > div:first-child {
+  background: #ffffff;
+  border: 1px solid var(--lp-card-border);
+  border-radius: 28px;
+  padding: 34px 30px;
+  box-shadow: 0 18px 44px rgba(11, 58, 74, 0.10);
+}
+@media (max-width: 1023px) { html.lp-v2 section.lp-hero .grid > div:first-child { padding: 26px 20px; } }
+html.lp-v2 #landingHeroImage { padding: 0; }
+html.lp-v2 #landingHeroImage img {
+  width: 100%;
+  max-height: 540px;
+  object-fit: cover;
+  border-radius: 999px 999px 28px 28px / 460px 460px 28px 28px;
+  border: 6px solid #ffffff;
+  box-shadow: 0 18px 44px rgba(11, 58, 74, 0.14);
+}
+
+/* ── v3 "Bold": split screen — indigo content left, edge-to-edge photo
+      panel right with a lime base edge. App-like, energetic. ── */
+html.lp-v3 section.lp-hero {
+  background-image:
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 22px),
+    radial-gradient(640px 320px at 85% 0%, rgba(198, 244, 50, 0.14), transparent 70%),
+    linear-gradient(145deg, #3d2db7 0%, #2a1e8f 70%, #231874 100%) !important;
+}
+html.lp-v3 section.lp-hero .grid { align-items: stretch; }
+html.lp-v3 #landingHeroImage {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 6px solid var(--lp-cta);
+  box-shadow: 0 24px 60px rgba(10, 6, 50, 0.45);
+  background: rgba(255, 255, 255, 0.05);
+}
+html.lp-v3 #landingHeroImage picture { width: 100%; height: 100%; display: block; }
+html.lp-v3 #landingHeroImage img {
+  width: 100%; height: 100%;
+  min-height: 360px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Hero value-prop rows (injected as #lpHeroProps) — density per variant
+   ═══════════════════════════════════════════════════════════════════════ */
+.lp-hero-props { display: grid; gap: 10px; margin-top: 22px; }
+.lp-hero-props > div { display: grid; gap: 1px; text-align: left; }
+.lp-hero-props b { font-size: 14px; font-weight: 700; }
+.lp-hero-props span { font-size: 12.5px; }
+/* v1: three frosted mini-cards in a row on the photo */
+html.lp-v1 .lp-hero-props { grid-template-columns: repeat(3, 1fr); max-width: 40rem; margin-left: auto; margin-right: auto; }
+html.lp-v1 .lp-hero-props > div {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px; padding: 10px 12px;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+html.lp-v1 .lp-hero-props b { color: #ffffff; }
+html.lp-v1 .lp-hero-props span { color: rgba(255, 255, 255, 0.72); }
+@media (max-width: 640px) { html.lp-v1 .lp-hero-props { grid-template-columns: 1fr; } }
+/* v2: checklist inside the paper card */
+html.lp-v2 .lp-hero-props > div {
+  grid-template-columns: 18px 1fr; align-items: baseline; column-gap: 10px;
+  padding: 2px 0;
+}
+html.lp-v2 .lp-hero-props > div::before {
+  content: "✓"; grid-row: span 2; align-self: start;
+  color: var(--lp-primary); font-weight: 800; font-size: 14px;
+}
+html.lp-v2 .lp-hero-props b { color: var(--lp-ink); }
+html.lp-v2 .lp-hero-props span { color: var(--lp-ink-soft); }
+/* v3: lime-dot strip */
+html.lp-v3 .lp-hero-props { gap: 8px; }
+html.lp-v3 .lp-hero-props > div {
+  grid-template-columns: 10px 1fr; align-items: baseline; column-gap: 10px;
+}
+html.lp-v3 .lp-hero-props > div::before {
+  content: ""; width: 8px; height: 8px; border-radius: 2px;
+  background: var(--lp-cta); grid-row: span 2; margin-top: 4px;
+}
+html.lp-v3 .lp-hero-props b { color: #ffffff; }
+html.lp-v3 .lp-hero-props span { color: rgba(255, 255, 255, 0.66); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WIZARD — a different world per variant
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Wizard surface ── */
+html.lp-v1 #wizardContainer, html.lp-v1 .wizard-column { background: #f3f6fa !important; }
+html.lp-v2 #wizardContainer, html.lp-v2 .wizard-column { background: #f3f9fb !important; }
+html.lp-v3 #wizardContainer, html.lp-v3 .wizard-column { background: #f5f4fb !important; }
+html.lp-v1 .wizard-column, html.lp-v2 .wizard-column, html.lp-v3 .wizard-column { max-width: 640px; }
+
+/* Hide the legacy top progress bar — each variant draws its own indicator */
+html.lp-v1 #wizardContainer .progress-bar,
+html.lp-v2 #wizardContainer .progress-bar,
+html.lp-v3 #wizardContainer .progress-bar { display: none !important; }
+
+/* ── Photo banner (injected #lpWizBanner) ── */
+.lp-wiz-banner { position: relative; overflow: hidden; }
+.lp-wiz-banner picture, .lp-wiz-banner img {
+  display: block; width: 100%; height: 108px; object-fit: cover;
+}
+.lp-wiz-banner-ov {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 12px; padding: 10px 16px;
+}
+.lp-wiz-svc {
+  font-weight: 800; font-size: 15px; color: #ffffff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+.lp-wiz-ind { display: flex; align-items: center; }
+html.lp-v1 .lp-wiz-banner-ov { background: linear-gradient(180deg, rgba(8,22,38,0.15), rgba(8,22,38,0.72)); }
+html.lp-v2 .lp-wiz-banner-ov { background: linear-gradient(180deg, rgba(14,52,38,0.10), rgba(14,52,38,0.68)); }
+html.lp-v3 .lp-wiz-banner-ov { background: linear-gradient(180deg, rgba(26,16,88,0.25), rgba(26,16,88,0.78)); }
+html.lp-v2 .lp-wiz-banner { border-radius: 0 0 26px 26px; }
+html.lp-v3 .lp-wiz-banner { border-bottom: 4px solid var(--lp-cta); }
+
+/* ── Progress concept 1 (v1): counter + thin meter ── */
+.lp-ind-count { font-size: 12.5px; font-weight: 700; color: #ffffff; text-shadow: 0 1px 6px rgba(0,0,0,0.4); }
+.lp-ind-meter {
+  display: inline-block; width: 110px; height: 6px; margin-left: 10px;
+  background: rgba(255, 255, 255, 0.30); border-radius: 999px; overflow: hidden;
+  vertical-align: middle;
+}
+.lp-ind-meter i { display: block; height: 100%; background: var(--lp-cta); border-radius: 999px; transition: width 0.5s ease; }
+
+/* ── Progress concept 2 (v2): segment pills ── */
+.lp-ind-segs { display: inline-flex; gap: 5px; margin-right: 8px; }
+.lp-ind-segs i {
+  width: 18px; height: 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.3s ease;
+}
+.lp-ind-segs i.on { background: #86efac; }
+
+/* ── v3 PROMINENT tracker strip (pizza-tracker / Duolingo pattern) ── */
+.lp-trk {
+  background: #ffffff;
+  border-bottom: 1px solid var(--lp-card-border);
+  padding: 14px 20px 18px;
+}
+.lp-trk-top {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px;
+}
+.lp-trk-mood {
+  font-family: var(--lp-display);
+  font-size: 16px; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--lp-ink);
+}
+.lp-trk-pct {
+  font-family: var(--lp-display);
+  font-size: 15px; font-weight: 800;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  border-radius: 999px; padding: 3px 12px;
+}
+.lp-trk-track {
+  position: relative;
+  height: 14px;
+  background: #e9e6f7;
+  border-radius: 999px;
+  margin-right: 26px;
+}
+.lp-trk-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a8e016, var(--lp-cta));
+  overflow: hidden;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px rgba(198, 244, 50, 0.55);
+}
+.lp-trk-fill::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; width: 46px;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: lpTrkShine 1.8s ease-in-out infinite;
+}
+@keyframes lpTrkShine { 0% { left: -46px; } 60%, 100% { left: 100%; } }
+.lp-trk-walker {
+  position: absolute; top: 50%;
+  width: 38px; height: 38px; margin-left: -19px;
+  transform: translateY(-50%);
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(23, 18, 51, 0.30);
+  transition: left 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lpTrkPulse 2s ease-in-out infinite;
+}
+@keyframes lpTrkPulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(23, 18, 51, 0.30), 0 0 0 0 rgba(198, 244, 50, 0.55); }
+  50% { box-shadow: 0 4px 14px rgba(23, 18, 51, 0.30), 0 0 0 9px rgba(198, 244, 50, 0); }
+}
+.lp-trk-walker svg { width: 20px; height: 20px; }
+.lp-trk-flag {
+  position: absolute; right: -26px; top: 50%;
+  width: 22px; height: 22px;
+  transform: translateY(-58%);
+  color: #c9c4e0;
+  transition: color 0.3s ease;
+}
+.lp-trk-flag.on { color: var(--lp-primary); }
+@media (prefers-reduced-motion: reduce) {
+  .lp-trk-fill::after { animation: none; display: none; }
+  .lp-trk-walker { animation: none; }
+}
+@media (max-width: 560px) {
+  .lp-trk { padding: 12px 16px 15px; }
+  .lp-trk-mood { font-size: 14.5px; }
+  .lp-trk-track { height: 12px; }
+  .lp-trk-walker { width: 32px; height: 32px; margin-left: -16px; }
+  .lp-trk-walker svg { width: 17px; height: 17px; }
+}
+
+/* ═══ v3 wizard rhythm — one vertical system for every step ═══
+   tracker → 28px → title → 6px → subtitle → 22px → card → button zone */
+html.lp-v3 #wizardMain { padding-top: 0; }
+/* No dead sea of space: the step must NOT stretch to fill the viewport —
+   the trust badge rides directly under the content instead */
+html.lp-v3 #wizardMain { flex: 0 0 auto !important; }
+html.lp-v3 #trustBadge { padding-bottom: 26px !important; }
+html.lp-v3 .wizard-step > div:first-child {
+  padding-top: 30px !important;
+  padding-bottom: 16px !important;
+}
+html.lp-v3 .wizard-step-title {
+  font-size: clamp(1.45rem, 2.6vw, 1.85rem) !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  margin-bottom: 6px !important;
+}
+html.lp-v3 .wizard-step-subtitle {
+  font-size: 15px !important;
+  color: var(--lp-ink-faint) !important;
+}
+/* every answer surface: same width, same offset from the title */
+html.lp-v3 #radioOptions, html.lp-v3 #serviceSelectOptions {
+  max-width: 560px;
+  margin-left: auto !important; margin-right: auto !important;
+  margin-top: 22px !important; margin-bottom: 10px !important;
+}
+/* Step cards: white blocks that are NOT buttons and NOT the option-list
+   containers (those have their own treatment) */
+html.lp-v3 .wizard-step .bg-white:not(button):not(#radioOptions):not(#serviceSelectOptions) {
+  max-width: 560px;
+  margin-left: auto !important; margin-right: auto !important;
+  margin-top: 22px !important;
+  padding: 26px 22px !important;
+}
+/* Option-list containers carry bg-white in markup — keep them transparent
+   frames, never padded cards */
+html.lp-v3 #radioOptions, html.lp-v3 #serviceSelectOptions {
+  padding: 0 !important;
+}
+/* The Yes/No toggle rows INSIDE the details card stay compact rows (v2+v3) */
+html.lp-v2 #step-details .bg-white .bg-white:not(button),
+html.lp-v3 #step-details .bg-white .bg-white:not(button) {
+  max-width: none;
+  margin: 0 0 10px !important;
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+html.lp-v2 #step-details .bg-white .bg-white:not(button) > span,
+html.lp-v2 #step-details .bg-white .bg-white:not(button) > p,
+html.lp-v2 #step-details .bg-white .bg-white:not(button) > label,
+html.lp-v3 #step-details .bg-white .bg-white:not(button) > span,
+html.lp-v3 #step-details .bg-white .bg-white:not(button) > p,
+html.lp-v3 #step-details .bg-white .bg-white:not(button) > label {
+  flex: 1; min-width: 0; margin: 0;
+}
+/* v2's step-card rule must also skip the nested toggle rows */
+html.lp-v2 .wizard-step .bg-white .bg-white:not(button) {
+  max-width: none !important;
+  margin: 0 0 10px !important;
+  padding: 12px 14px !important;
+  box-shadow: none !important;
+}
+/* comfortable toggle sizes everywhere */
+html.lp-v2 #ownerYes, html.lp-v2 #ownerNo, html.lp-v2 #changesYes, html.lp-v2 #changesNo,
+html.lp-v3 #ownerYes, html.lp-v3 #ownerNo, html.lp-v3 #changesYes, html.lp-v3 #changesNo {
+  min-height: 44px; min-width: 60px;
+  font-size: 13px !important; font-weight: 800 !important;
+}
+/* Option rows: fixed comfortable height, icons never stretch */
+html.lp-v3 #radioOptions > button .lp-opt-ic,
+html.lp-v3 #serviceSelectOptions button .lp-opt-ic {
+  flex: none !important; width: 38px !important;
+}
+/* Yes/No toggles: one fixed size, full 44px touch height */
+html.lp-v3 #ownerYes, html.lp-v3 #ownerNo,
+html.lp-v3 #changesYes, html.lp-v3 #changesNo {
+  width: 62px !important; min-width: 62px;
+  min-height: 44px;
+  padding: 11px 0 !important;
+  font-size: 13px !important;
+  border-radius: 11px !important;
+  flex: none;
+}
+/* uniform trust-badge breathing on every step */
+html.lp-v3 #trustBadge { padding-top: 30px !important; }
+@media (max-width: 640px) {
+  html.lp-v3 .wizard-step > div:first-child { padding-top: 22px !important; }
+  html.lp-v3 .wizard-step .bg-white { padding: 22px 18px !important; }
+}
+
+/* ── Progress concept 3 (v3): house-on-its-way tracker ── */
+.lp-ind3 { display: flex; align-items: center; gap: 10px; }
+.lp-ind3-track {
+  position: relative; display: inline-block;
+  width: 230px; height: 8px;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+.lp-ind3-track i {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(198, 244, 50, 0.65), var(--lp-cta));
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-ind3-track b {
+  position: absolute; top: 50%;
+  width: 30px; height: 30px; margin-left: -15px;
+  transform: translateY(-50%);
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  transition: left 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-ind3-track b svg { width: 17px; height: 17px; }
+.lp-ind3-meta {
+  font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+}
+.lp-ind3-meta b { font-weight: 800; color: #ffffff; }
+@media (max-width: 560px) {
+  .lp-ind3-track { width: 120px; }
+  .lp-ind3-track b { width: 24px; height: 24px; margin-left: -12px; }
+  .lp-ind3-track b svg { width: 14px; height: 14px; }
+  .lp-ind3-meta { font-size: 11.5px; }
+}
+
+/* v3 wizard: ALL primary buttons live in the thumb zone on phones —
+   fixed to the bottom edge of the screen on every step */
+@media (max-width: 640px) {
+  html.lp-v3 #zipNextBtn, html.lp-v3 #emailNextBtn, html.lp-v3 #detailsNextBtn,
+  html.lp-v3 #nameNextBtn, html.lp-v3 #finalSubmitBtn,
+  html.lp-v3 #radioNextBtn, html.lp-v3 #svcNextBtn {
+    position: fixed;
+    left: 16px; right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    z-index: 2100;
+    box-shadow: 0 12px 32px rgba(23, 18, 51, 0.38) !important;
+    padding-top: 16px !important; padding-bottom: 16px !important;
+  }
+  /* content never hides behind the pinned button — clearance lives on the
+     column so the trust badge and footer clear the bar too */
+  html.lp-v3 #wizardMain { padding-bottom: 10px; }
+  html.lp-v3 .wizard-column { padding-bottom: 120px; }
+  /* the load animation's persisted transform (fill:forwards) would turn
+     #wizardMain into the containing block for fixed buttons — kill it;
+     the per-step animations already handle motion */
+  html.lp-v3 #wizardMain { animation: none !important; }
+}
+@media (min-width: 1024px) {
+  html.lp-v3 .wizard-column {
+    max-width: 680px;
+    box-shadow: 0 0 0 1px var(--lp-card-border), 0 24px 70px rgba(23, 18, 51, 0.10);
+  }
+}
+
+/* ── (legacy) numbered chips + connectors ── */
+.lp-ind-chips { display: inline-flex; align-items: center; }
+.lp-ind-chips b {
+  width: 22px; height: 22px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  background: rgba(255, 255, 255, 0.18); color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.lp-ind-chips b.on { background: var(--lp-cta); color: var(--lp-cta-text); border-color: var(--lp-cta); }
+.lp-ind-chips b.done { background: rgba(198, 244, 50, 0.35); border-color: rgba(198, 244, 50, 0.6); }
+.lp-ind-chips u { width: 10px; height: 2px; background: rgba(255, 255, 255, 0.35); text-decoration: none; }
+.lp-ind-chips u.done { background: var(--lp-cta); }
+@media (max-width: 480px) { .lp-ind-chips b { width: 18px; height: 18px; font-size: 10px; } .lp-ind-chips u { width: 6px; } }
+
+/* ── Step titles & card feel ── */
+html.lp-v1 .wizard-step-title, html.lp-v2 .wizard-step-title, html.lp-v3 .wizard-step-title {
+  letter-spacing: -0.02em;
+}
+html.lp-v2 .wizard-step-title { font-weight: 800; }
+
+/* ── Option rows (#radioOptions + #serviceSelectOptions): separated cards ── */
+html.lp-v1 #radioOptions, html.lp-v1 #serviceSelectOptions,
+html.lp-v2 #radioOptions, html.lp-v2 #serviceSelectOptions,
+html.lp-v3 #radioOptions, html.lp-v3 #serviceSelectOptions {
+  border: none !important; box-shadow: none !important; background: transparent !important;
+  overflow: visible !important; display: grid; gap: 10px;
+}
+html.lp-v1 #radioOptions > button, html.lp-v1 #serviceSelectOptions button,
+html.lp-v2 #radioOptions > button, html.lp-v2 #serviceSelectOptions button,
+html.lp-v3 #radioOptions > button, html.lp-v3 #serviceSelectOptions button {
+  border: 1.5px solid var(--lp-card-border) !important;
+  border-radius: var(--lp-radius) !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+html.lp-v2 #radioOptions > button, html.lp-v2 #serviceSelectOptions button { border-radius: 16px !important; }
+html.lp-v1 #radioOptions > button:hover, html.lp-v1 #serviceSelectOptions button:hover,
+html.lp-v2 #radioOptions > button:hover, html.lp-v2 #serviceSelectOptions button:hover,
+html.lp-v3 #radioOptions > button:hover, html.lp-v3 #serviceSelectOptions button:hover {
+  border-color: var(--lp-primary) !important;
+}
+/* Selected row: accent fill + accent border (rows carry .bg-blue-50 when selected) */
+html.lp-v1 #radioOptions > button.bg-blue-50, html.lp-v1 #serviceSelectOptions button.bg-blue-50 {
+  border-color: var(--lp-cta) !important; background: var(--lp-accent-soft) !important;
+  box-shadow: 0 2px 10px rgba(232, 86, 7, 0.14);
+}
+html.lp-v2 #radioOptions > button.bg-blue-50, html.lp-v2 #serviceSelectOptions button.bg-blue-50 {
+  border-color: var(--lp-primary) !important; background: var(--lp-accent-soft) !important;
+  box-shadow: 0 2px 10px rgba(14, 90, 67, 0.14);
+}
+html.lp-v3 #radioOptions > button.bg-blue-50, html.lp-v3 #serviceSelectOptions button.bg-blue-50 {
+  border-color: var(--lp-primary) !important; background: var(--lp-accent-soft) !important;
+  box-shadow: 0 2px 10px rgba(61, 45, 183, 0.16);
+}
+
+/* ── Form step cards: lift the white blocks off the tinted background ── */
+html.lp-v1 .wizard-step .bg-white, html.lp-v2 .wizard-step .bg-white, html.lp-v3 .wizard-step .bg-white {
+  border-radius: var(--lp-radius) !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07) !important;
+  border: 1px solid var(--lp-card-border) !important;
+}
+html.lp-v2 .wizard-step .bg-white { border-radius: 22px !important; }
+
+/* ── Thank-you page per variant ── */
+/* The banner behind the heading is light, so the highlight needs a dark
+   tone of each theme's colour — the light CTA tints were unreadable there. */
+html.lp-v1 #step-complete .qhf-service-highlight { color: #9a3412; }
+html.lp-v2 #step-complete .qhf-service-highlight { color: #155e75; }
+html.lp-v3 #step-complete .qhf-service-highlight { color: var(--lp-primary); }
+html.lp-v1 #step-complete { background: #f3f6fa; }
+html.lp-v2 #step-complete { background: #f3f9fb; }
+html.lp-v3 #step-complete { background: #f5f4fb; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Round 3 — distinct interaction concepts, speed, hero density, devices
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Snappy step transitions (distinct per variant) ── */
+@keyframes lpFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes lpPop    { from { opacity: 0; transform: scale(0.96); }      to { opacity: 1; transform: none; } }
+@keyframes lpSlide  { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+html.lp-v1 .wizard-step.active { animation: lpFadeUp 0.26s ease-out; }
+html.lp-v2 .wizard-step.active { animation: lpPop 0.28s cubic-bezier(0.34, 1.35, 0.64, 1); }
+html.lp-v3 .wizard-step.active { animation: lpSlide 0.20s ease-out; }
+
+/* ── Concept 1 (v1): compact professional checklist — tight rows, visible
+      radio, Next stays (belt and braces) ── */
+html.lp-v1 #radioOptions { gap: 8px; }
+html.lp-v1 #radioOptions > button, html.lp-v1 #serviceSelectOptions button {
+  padding-top: 14px !important; padding-bottom: 14px !important;
+}
+
+/* ── Concept 2 (v2): big friendly tap-tiles, two columns, no radio dot ── */
+html.lp-v2 #radioOptions, html.lp-v2 #serviceSelectOptions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+html.lp-v2 #radioOptions > button, html.lp-v2 #serviceSelectOptions button {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center;
+  gap: 4px !important;
+  min-height: 78px;
+  padding: 18px 12px !important;
+}
+html.lp-v2 #radioOptions > button > div:first-of-type,
+html.lp-v2 #serviceSelectOptions button > div:first-of-type,
+html.lp-v2 #radioOptions > button .radio-dot { display: none !important; }
+html.lp-v2 #radioOptions > button span, html.lp-v2 #serviceSelectOptions button span {
+  font-weight: 700 !important; font-size: 15.5px !important;
+}
+html.lp-v2 #radioOptions > button.bg-blue-50::after,
+html.lp-v2 #serviceSelectOptions button.bg-blue-50::after {
+  content: "✓"; color: var(--lp-primary); font-weight: 800; font-size: 14px; line-height: 1;
+}
+
+/* ── Concept 3 (v3): full-width app bars with chevron, tap = go (no Next) ── */
+html.lp-v3 #radioOptions > button, html.lp-v3 #serviceSelectOptions button {
+  position: relative;
+  padding: 17px 46px 17px 18px !important;
+}
+html.lp-v3 #radioOptions > button > div:first-of-type,
+html.lp-v3 #serviceSelectOptions button > div:first-of-type { display: none !important; }
+html.lp-v3 #radioOptions > button span, html.lp-v3 #serviceSelectOptions button span {
+  font-weight: 700 !important;
+}
+html.lp-v3 #radioOptions > button::after, html.lp-v3 #serviceSelectOptions button::after {
+  content: "";
+  position: absolute; right: 18px; top: 50%;
+  width: 9px; height: 9px;
+  border-right: 2.5px solid var(--lp-primary);
+  border-top: 2.5px solid var(--lp-primary);
+  transform: translateY(-50%) rotate(45deg);
+  transition: right 0.15s ease;
+}
+html.lp-v3 #radioOptions > button:hover::after, html.lp-v3 #serviceSelectOptions button:hover::after { right: 14px; }
+html.lp-v3 #radioNextBtn, html.lp-v3 #svcNextBtn { display: none !important; }
+
+/* ── Hero density + rhythm (kill the empty gaps) ── */
+html.lp-v1 #landingHeroContent { padding-top: 2.75rem !important; padding-bottom: 3rem !important; }
+html.lp-v3 #landingHeroContent { padding-top: 2.75rem !important; padding-bottom: 3.25rem !important; }
+html.lp-v2 #landingHeroContent { padding-top: 2rem !important; padding-bottom: 2.5rem !important; }
+html.lp-v1 #landingHeroTitle { font-size: clamp(2.1rem, 4.6vw, 3.6rem) !important; line-height: 1.08 !important; }
+html.lp-v2 #landingHeroTitle { font-size: clamp(1.9rem, 4vw, 3rem) !important; line-height: 1.1 !important; }
+html.lp-v3 #landingHeroTitle { font-size: clamp(2rem, 4.4vw, 3.4rem) !important; line-height: 1.08 !important; }
+html.lp-v1 #landingHeroTitle, html.lp-v2 #landingHeroTitle, html.lp-v3 #landingHeroTitle { margin-bottom: 0.65rem !important; }
+html.lp-v1 #landingHeroSubtitle, html.lp-v2 #landingHeroSubtitle, html.lp-v3 #landingHeroSubtitle { margin-bottom: 1.1rem !important; }
+.lp-trust-chips { margin-top: 12px; }
+.lp-hero-props { margin-top: 16px; }
+
+/* Cross-service chip row (injected #lpHeroSvcRow) */
+.lp-hero-svcrow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 18px; padding-top: 14px;
+}
+.lp-hero-svcrow span { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.lp-hero-svcrow a {
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  border-radius: 999px; padding: 6px 13px;
+  transition: background 0.15s ease;
+}
+html.lp-v1 .lp-hero-svcrow { border-top: 1px solid rgba(255, 255, 255, 0.18); justify-content: center; }
+html.lp-v1 .lp-hero-svcrow span { color: rgba(255, 255, 255, 0.55); }
+html.lp-v1 .lp-hero-svcrow a { color: #ffffff; background: rgba(255, 255, 255, 0.10); border: 1px solid rgba(255, 255, 255, 0.2); }
+html.lp-v1 .lp-hero-svcrow a:hover { background: rgba(255, 255, 255, 0.2); }
+html.lp-v3 .lp-hero-svcrow { border-top: 1px solid rgba(255, 255, 255, 0.14); }
+html.lp-v3 .lp-hero-svcrow span { color: rgba(255, 255, 255, 0.5); }
+html.lp-v3 .lp-hero-svcrow a { color: #ffffff; background: rgba(255, 255, 255, 0.10); border: 1px solid rgba(255, 255, 255, 0.18); }
+html.lp-v3 .lp-hero-svcrow a:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* v2 floating badge over the arch photo (layered depth) */
+html.lp-v2 #landingHeroImage { position: relative; }
+.lp-photo-badge {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  background: #ffffff; border: 1px solid var(--lp-card-border);
+  border-radius: 14px; padding: 10px 18px;
+  box-shadow: 0 10px 28px rgba(11, 58, 74, 0.18);
+  display: grid; gap: 1px; text-align: center; white-space: nowrap;
+}
+.lp-photo-badge b { font-size: 14px; color: var(--lp-ink); }
+.lp-photo-badge span { font-size: 12px; color: var(--lp-ink-soft); }
+
+/* ── All-device polish ── */
+@media (max-width: 480px) {
+  .lp-wiz-banner picture, .lp-wiz-banner img { height: 86px; }
+  .lp-wiz-svc { font-size: 13.5px; }
+  .lp-ind-meter { width: 72px; }
+  html.lp-v2 #radioOptions > button, html.lp-v2 #serviceSelectOptions button { min-height: 64px; padding: 13px 10px !important; }
+  html.lp-v1 #landingHeroContent, html.lp-v2 #landingHeroContent, html.lp-v3 #landingHeroContent {
+    padding-top: 1.6rem !important; padding-bottom: 2rem !important;
+  }
+  .lp-photo-badge { padding: 8px 14px; }
+  .lp-how { padding: 32px 0 36px; }
+}
+/* Tablet: keep the two-column hero from feeling stretched */
+@media (min-width: 641px) and (max-width: 1023px) {
+  html.lp-v2 section.lp-hero .grid > div:first-child { padding: 30px 26px; }
+  html.lp-v2 #landingHeroImage img { max-height: 420px; }
+  html.lp-v3 #landingHeroImage img { min-height: 300px; }
+}
+/* ── Option icons (injected .lp-opt-ic) ── */
+.lp-opt-ic {
+  width: 38px; height: 38px; border-radius: 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  background: var(--lp-accent-soft);
+  color: var(--lp-primary);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.lp-opt-ic svg { width: 20px; height: 20px; }
+/* Icons replace the abstract radio dots in every variant */
+html.lp-v1 #radioOptions > button > div:first-of-type,
+html.lp-v1 #serviceSelectOptions button > div:first-of-type,
+html.lp-v1 #radioOptions .radio-dot { display: none !important; }
+html.lp-v1 .lp-opt-ic { color: var(--lp-cta-hover); }
+html.lp-v2 .lp-opt-ic { width: 42px; height: 42px; border-radius: 999px; }
+html.lp-v2 .lp-opt-ic svg { width: 21px; height: 21px; }
+/* Selected row: icon chip flips to solid accent */
+html.lp-v1 #radioOptions > button.bg-blue-50 .lp-opt-ic,
+html.lp-v1 #serviceSelectOptions button.bg-blue-50 .lp-opt-ic { background: var(--lp-cta); color: #ffffff; }
+html.lp-v2 #radioOptions > button.bg-blue-50 .lp-opt-ic,
+html.lp-v2 #serviceSelectOptions button.bg-blue-50 .lp-opt-ic { background: var(--lp-primary); color: #ffffff; }
+html.lp-v3 #radioOptions > button.bg-blue-50 .lp-opt-ic,
+html.lp-v3 #serviceSelectOptions button.bg-blue-50 .lp-opt-ic { background: var(--lp-primary); color: #ffffff; }
+
+/* Large touch targets everywhere (WCAG 2.5.8) */
+html.lp-v1 #radioOptions > button, html.lp-v2 #radioOptions > button, html.lp-v3 #radioOptions > button,
+html.lp-v1 #serviceSelectOptions button, html.lp-v2 #serviceSelectOptions button, html.lp-v3 #serviceSelectOptions button {
+  min-height: 52px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Round 4 — vertical hero architectures (no left/right split anywhere),
+   duotone icons, form-step personality, designed thank-you
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Duotone icons render larger than strokes at the same box */
+.lp-opt-ic svg { width: 22px; height: 22px; }
+html.lp-v2 .lp-opt-ic svg { width: 24px; height: 24px; }
+
+/* ── v2 hero rebuilt: centered paper card overlapping a full-width
+      arch-top photo band. ── */
+html.lp-v2 section.lp-hero .grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+html.lp-v2 section.lp-hero .grid > div:first-child {
+  max-width: 660px;
+  margin: 0 auto;
+  position: relative; z-index: 2;
+  text-align: center !important;
+}
+html.lp-v2 section.lp-hero .grid > div:first-child > div { margin-left: auto; margin-right: auto; }
+html.lp-v2 #landingHeroTitle, html.lp-v2 #landingHeroSubtitle { text-align: center !important; }
+html.lp-v2 #landingHeroSubtitle { margin-left: auto !important; margin-right: auto !important; }
+html.lp-v2 .lp-trust-chips { justify-content: center; }
+html.lp-v2 .lp-hero-props { max-width: 430px; margin-left: auto; margin-right: auto; text-align: left; }
+html.lp-v2 #landingHeroContent { padding-bottom: 0 !important; }
+html.lp-v2 #landingHeroImage {
+  width: 100vw; position: relative; left: 50%; transform: translateX(-50%);
+  margin-top: -56px; z-index: 1; padding: 0;
+}
+html.lp-v2 #landingHeroImage picture { display: block; width: 100%; }
+html.lp-v2 #landingHeroImage img {
+  width: 100%; height: 360px; max-height: none;
+  object-fit: cover;
+  border-radius: 50% 50% 0 0 / 130px 130px 0 0;
+  border: none; border-top: 8px solid #ffffff;
+  box-shadow: none;
+}
+html.lp-v2 .lp-photo-badge { bottom: 22px; z-index: 2; }
+
+/* ── v3 hero rebuilt: centered stage + full-bleed slanted cinema band ── */
+html.lp-v3 section.lp-hero .grid { grid-template-columns: 1fr !important; gap: 0 !important; align-items: start; }
+html.lp-v3 section.lp-hero .grid > div:first-child {
+  max-width: 46rem; margin: 0 auto;
+  text-align: center !important;
+}
+html.lp-v3 #landingHeroTitle, html.lp-v3 #landingHeroSubtitle { text-align: center !important; }
+html.lp-v3 #landingHeroSubtitle { margin-left: auto !important; margin-right: auto !important; }
+html.lp-v3 .va-cta-wrap { margin-left: auto; margin-right: auto; }
+html.lp-v3 .lp-trust-chips { justify-content: center; }
+html.lp-v3 .lp-hero-props {
+  max-width: 620px; margin-left: auto; margin-right: auto;
+  grid-template-columns: repeat(3, 1fr); gap: 14px;
+}
+html.lp-v3 .lp-hero-props > div { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+html.lp-v3 .lp-hero-props > div::before { grid-row: auto; margin-top: 0; margin-bottom: 2px; }
+html.lp-v3 .lp-hero-svcrow { justify-content: center; }
+html.lp-v3 #landingHeroContent { padding-bottom: 0 !important; }
+html.lp-v3 #landingHeroImage {
+  width: 100vw; position: relative; left: 50%; transform: translateX(-50%);
+  margin-top: 2.25rem;
+  border: none; border-radius: 0; box-shadow: none; background: none;
+  border-bottom: 6px solid var(--lp-cta);
+  clip-path: polygon(0 34px, 100% 0, 100% 100%, 0 100%);
+}
+html.lp-v3 #landingHeroImage img {
+  width: 100%; height: 320px; min-height: 0;
+  object-fit: cover; display: block;
+}
+@media (max-width: 640px) {
+  html.lp-v2 #landingHeroImage img { height: 240px; border-radius: 50% 50% 0 0 / 70px 70px 0 0; }
+  html.lp-v2 #landingHeroImage { margin-top: -36px; }
+  html.lp-v3 #landingHeroImage img { height: 210px; }
+  html.lp-v3 .lp-hero-props { grid-template-columns: 1fr; gap: 8px; max-width: 420px; }
+  html.lp-v3 .lp-hero-props > div { grid-template-columns: 10px 1fr; text-align: left; justify-items: start; }
+}
+
+/* ── Form-step input personality per variant ── */
+html.lp-v1 #wizardContainer input {
+  border: 1.5px solid #d4dde8 !important; background: #ffffff;
+}
+html.lp-v2 #wizardContainer input {
+  border-radius: 999px !important;
+  border: 1.5px solid var(--lp-card-border) !important;
+  background: #fbfdfe;
+  padding-left: 18px;
+}
+html.lp-v2 #emailInput, html.lp-v2 #phoneInput, html.lp-v2 #addressInput { padding-left: 2.5rem !important; } /* room for their icons — never overridden */
+html.lp-v3 #wizardContainer input {
+  background: #efedfa !important;
+  border: 1.5px solid transparent !important;
+  border-radius: 12px !important;
+}
+html.lp-v3 #wizardContainer input:focus {
+  background: #ffffff !important;
+  border-color: var(--lp-primary) !important;
+}
+html.lp-v1 #wizardContainer label, html.lp-v2 #wizardContainer label, html.lp-v3 #wizardContainer label {
+  font-weight: 700 !important; color: var(--lp-ink) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Round 5 — real typography, fixed full-bleed bands, hero-to-footer
+   section identity per variant
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Display faces ── */
+html.lp-v1 { --lp-display: 'Fraunces', Georgia, serif; }
+html.lp-v2 { --lp-display: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif; }
+html.lp-v3 { --lp-display: 'Archivo', 'Plus Jakarta Sans', system-ui, sans-serif; }
+html.lp-v1 #landingHeroTitle, html.lp-v2 #landingHeroTitle, html.lp-v3 #landingHeroTitle,
+html.lp-v1 #landingPage h2, html.lp-v2 #landingPage h2, html.lp-v3 #landingPage h2,
+html.lp-v1 .wizard-step-title, html.lp-v2 .wizard-step-title, html.lp-v3 .wizard-step-title,
+html.lp-v1 .qhf-banner-heading, html.lp-v2 .qhf-banner-heading, html.lp-v3 .qhf-banner-heading,
+html.lp-v1 .lp-how h2, html.lp-v2 .lp-how h2, html.lp-v3 .lp-how h2 {
+  font-family: var(--lp-display) !important;
+}
+html.lp-v1 #landingHeroTitle { font-weight: 700 !important; letter-spacing: -0.01em !important; }
+html.lp-v3 #landingHeroTitle, html.lp-v3 #landingPage h2 { font-weight: 800 !important; letter-spacing: -0.01em !important; text-transform: none; }
+
+/* ── Full-bleed photo bands: now direct children of the hero section,
+      so plain width:100% — no translate hack, no track inflation. ── */
+html.lp-v2 #landingHeroImage, html.lp-v3 #landingHeroImage {
+  width: 100% !important; left: auto !important; transform: none !important;
+}
+
+/* ── v1 hero recomposed: left-anchored editorial block on the photo,
+      no boxes, no chips row (they moved into the white strip below). ── */
+html.lp-v1 section.lp-hero .grid { justify-items: start; text-align: left; }
+html.lp-v1 section.lp-hero .grid > div:first-child {
+  max-width: 44rem; text-align: left !important; margin: 0;
+}
+html.lp-v1 #landingHeroTitle { text-align: left !important; }
+html.lp-v1 #landingHeroSubtitle {
+  text-align: left !important;
+  margin-left: 0 !important;
+  max-width: 34rem !important;
+  font-size: 1.05rem !important;
+}
+html.lp-v1 .va-cta-wrap { margin-left: 0; }
+html.lp-v1 .lp-trust-chips { justify-content: flex-start; }
+html.lp-v1 #landingHeroContent { padding-top: 4rem !important; padding-bottom: 4.5rem !important; }
+/* heavier left-weighted scrim so the type sits on a legible field */
+html.lp-v1 section.lp-hero {
+  background:
+    linear-gradient(100deg, rgba(7, 19, 33, 0.92) 0%, rgba(7, 19, 33, 0.72) 42%, rgba(7, 19, 33, 0.28) 100%),
+    var(--lp-hero-photo, linear-gradient(180deg, #0f2a43, #0b1f33)) center / cover no-repeat !important;
+}
+@media (max-width: 640px) {
+  html.lp-v1 section.lp-hero {
+    background:
+      linear-gradient(180deg, rgba(7, 19, 33, 0.88), rgba(7, 19, 33, 0.66)),
+      var(--lp-hero-photo, linear-gradient(180deg, #0f2a43, #0b1f33)) center / cover no-repeat !important;
+  }
+}
+
+/* v1 white trust strip under the hero (replaces the glass boxes) */
+.lp-strip { background: #ffffff; border-bottom: 1px solid var(--lp-card-border); }
+.lp-strip-inner { max-width: 72rem; margin: 0 auto; padding: 22px 20px 18px; }
+.lp-strip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 640px) { .lp-strip-grid { grid-template-columns: 1fr; gap: 12px; } }
+.lp-strip-grid > div {
+  display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto;
+  column-gap: 12px; align-items: center;
+}
+.lp-strip-grid .lp-prop-ic {
+  grid-row: span 2;
+  width: 44px; height: 44px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lp-accent-soft); color: var(--lp-cta-hover);
+}
+.lp-strip-grid .lp-prop-ic svg { width: 24px; height: 24px; }
+.lp-strip-grid b { font-size: 14.5px; color: var(--lp-ink); }
+.lp-strip-grid span { font-size: 13px; color: var(--lp-ink-faint); }
+.lp-strip .lp-hero-svcrow {
+  border-top: 1px solid var(--lp-card-border);
+  margin-top: 16px; padding-top: 14px; justify-content: flex-start;
+}
+.lp-strip .lp-hero-svcrow span { color: var(--lp-ink-faint); }
+.lp-strip .lp-hero-svcrow a {
+  color: var(--lp-ink); background: var(--lp-bg-soft);
+  border: 1px solid var(--lp-card-border);
+}
+.lp-strip .lp-hero-svcrow a:hover { border-color: var(--lp-cta); color: var(--lp-cta-hover); background: #ffffff; }
+
+/* ── Below-hero sections get per-variant identity ── */
+/* Section headings: v1 left + rule, v2 centered + accent underline, v3 left + lime slash */
+html.lp-v1 #landingPage section > div > h2 {
+  text-align: left !important; font-size: 28px !important;
+  padding-bottom: 10px; border-bottom: 2px solid var(--lp-ink);
+  display: inline-block;
+}
+html.lp-v2 #landingPage section > div > h2 { font-size: 27px !important; position: relative; padding-bottom: 14px; }
+html.lp-v2 #landingPage section > div > h2::after {
+  content: ""; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: 52px; height: 4px; border-radius: 999px; background: var(--lp-cta);
+}
+/* v3 headings: centered, clean, no slash bars anywhere */
+html.lp-v3 #landingPage section > div > h2 {
+  text-align: center !important; font-size: 28px !important;
+  padding-left: 0; border-left: none;
+}
+
+/* How-it-works: v1 connected timeline · v2 warm cards (as-is) · v3 dark band */
+html.lp-v1 .lp-how-grid { position: relative; }
+@media (min-width: 640px) {
+  html.lp-v1 .lp-how-grid::before {
+    content: ""; position: absolute; top: 41px; left: 8%; right: 8%;
+    border-top: 2px dashed var(--lp-card-border);
+  }
+}
+html.lp-v1 .lp-how-card { border: none; background: transparent; position: relative; }
+html.lp-v1 .lp-how-num {
+  background: var(--lp-primary); color: #ffffff;
+  width: 42px; height: 42px; font-size: 17px;
+  box-shadow: 0 0 0 6px #ffffff;
+}
+html.lp-v1 .lp-how { border-bottom: none; }
+html.lp-v3 .lp-how { background: var(--lp-footer-bg); }
+html.lp-v3 .lp-how h2 { color: #ffffff; }
+html.lp-v3 .lp-how .lp-how-sub { color: rgba(255, 255, 255, 0.6); }
+html.lp-v3 .lp-how-card { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.12); }
+html.lp-v3 .lp-how-num { background: var(--lp-cta); color: var(--lp-cta-text); }
+html.lp-v3 .lp-how-card h3 { color: #ffffff; }
+html.lp-v3 .lp-how-card p { color: rgba(255, 255, 255, 0.62); }
+
+/* FAQ identity: v1 divider list · v2 soft cards · v3 left-accent rows */
+html.lp-v1 #landingFaqs > div { border: none !important; border-bottom: 1px solid var(--lp-card-border) !important; border-radius: 0 !important; background: transparent !important; }
+html.lp-v2 #landingFaqs > div { box-shadow: 0 3px 12px rgba(11, 58, 74, 0.05); }
+/* v3 FAQ: two-column accordion, soft cards, lime circle indicators */
+html.lp-v3 #landingFaqs {
+  max-width: 64rem !important;
+  columns: 2; column-gap: 14px;
+}
+html.lp-v3 #landingFaqs > div {
+  break-inside: avoid;
+  margin: 0 0 14px !important;
+  background: #ffffff;
+  border: 1.5px solid var(--lp-card-border) !important;
+  border-radius: 16px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+html.lp-v3 #landingFaqs > div:hover {
+  border-color: var(--lp-primary) !important;
+  box-shadow: 0 8px 22px rgba(61, 45, 183, 0.08);
+}
+html.lp-v3 #landingFaqs > div > button { padding: 16px 18px !important; }
+html.lp-v3 #landingFaqs > div > button > span {
+  font-family: var(--lp-font);
+  font-weight: 700 !important;
+  font-size: 15.5px !important;
+  color: var(--lp-ink) !important;
+}
+html.lp-v3 #landingFaqs > div > button svg {
+  width: 28px !important; height: 28px !important;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--lp-cta);
+  color: var(--lp-cta-text) !important;
+}
+html.lp-v3 #landingFaqs > div > div p { color: var(--lp-ink-soft) !important; }
+@media (max-width: 760px) {
+  html.lp-v3 #landingFaqs { columns: 1; }
+}
+
+/* Footer identity */
+html.lp-v1 #landingPage footer { border-top: 4px solid var(--lp-cta); }
+html.lp-v2 #landingPage footer { border-top: none; border-radius: 28px 28px 0 0; }
+html.lp-v3 #landingPage footer { border-top: 4px solid var(--lp-cta); }
+
+/* v2/v3 photo badge sits over its band — keep above the arch border */
+html.lp-v2 .lp-photo-badge { z-index: 3; }
+
+/* Specificity fixes: the old on-photo svcrow rules outrank the strip ones */
+html.lp-v1 .lp-strip .lp-hero-svcrow { border-top-color: var(--lp-card-border); justify-content: flex-start; }
+html.lp-v1 .lp-strip .lp-hero-svcrow span { color: var(--lp-ink-faint); }
+html.lp-v1 .lp-strip .lp-hero-svcrow a {
+  color: var(--lp-ink); background: var(--lp-bg-soft); border: 1px solid var(--lp-card-border);
+}
+html.lp-v1 .lp-strip .lp-hero-svcrow a:hover { background: #ffffff; color: var(--lp-cta-hover); border-color: var(--lp-cta); }
+/* v3 dark how-it-works band: force legible text over the earlier ink rule
+   (that one carries an ID selector, so match it: #landingPage + classes) */
+html.lp-v3 #landingPage .lp-how h2, html.lp-v3 .lp-how h2 { color: #ffffff !important; border-left-color: var(--lp-cta) !important; }
+html.lp-v3 .lp-how .lp-how-sub { color: rgba(255, 255, 255, 0.62) !important; }
+/* v1: left-align the how-it-works kicker line under its left heading */
+html.lp-v1 .lp-how h2 { display: inline-block; }
+html.lp-v1 .lp-how .lp-how-sub { text-align: left; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Round 6 — photo-driven body, CTA band, content rhythm, mobile pass
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Consistent section rhythm (kills the cramped stacked-list feel) ── */
+html.lp-v1 #landingPage section.py-10, html.lp-v2 #landingPage section.py-10, html.lp-v3 #landingPage section.py-10 {
+  padding-top: 3.5rem !important; padding-bottom: 3.5rem !important;
+}
+@media (max-width: 640px) {
+  html.lp-v1 #landingPage section.py-10, html.lp-v2 #landingPage section.py-10, html.lp-v3 #landingPage section.py-10 {
+    padding-top: 2.25rem !important; padding-bottom: 2.25rem !important;
+  }
+}
+
+/* ── "What's included": real photo cards ── */
+html.lp-v1 #landingFeatures, html.lp-v2 #landingFeatures, html.lp-v3 #landingFeatures { gap: 18px; }
+.lp-photocard {
+  background: var(--lp-card-bg);
+  border: 1px solid var(--lp-card-border);
+  border-radius: var(--lp-radius);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.lp-photocard:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12); }
+.lp-photocard-img { aspect-ratio: 16 / 10; overflow: hidden; }
+.lp-photocard-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lp-photocard-body { padding: 16px 18px 18px; }
+.lp-photocard-body h3 {
+  margin: 0 0 5px; font-size: 17px; font-weight: 700; color: var(--lp-ink);
+  font-family: var(--lp-display);
+}
+.lp-photocard-body p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--lp-ink-soft); }
+html.lp-v2 .lp-photocard { border-radius: 22px; box-shadow: 0 6px 18px rgba(11, 58, 74, 0.06); border: none; }
+html.lp-v3 .lp-photocard { border-bottom: 4px solid var(--lp-cta); }
+
+/* ── "Why it's worth doing": compact duotone icon grid ── */
+html.lp-v1 #landingAdvantages, html.lp-v2 #landingAdvantages, html.lp-v3 #landingAdvantages {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px;
+}
+@media (max-width: 640px) {
+  html.lp-v1 #landingAdvantages, html.lp-v2 #landingAdvantages, html.lp-v3 #landingAdvantages {
+    grid-template-columns: 1fr !important;
+  }
+}
+.lp-adv {
+  display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: start;
+  background: var(--lp-card-bg); border: 1px solid var(--lp-card-border);
+  border-radius: var(--lp-radius); padding: 16px 18px;
+}
+.lp-adv .lp-prop-ic {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lp-accent-soft); color: var(--lp-primary);
+}
+html.lp-v1 .lp-adv .lp-prop-ic { color: var(--lp-cta-hover); }
+.lp-adv .lp-prop-ic svg { width: 24px; height: 24px; }
+.lp-adv h3 { margin: 0 0 3px; font-size: 15.5px; font-weight: 700; color: var(--lp-ink); }
+.lp-adv p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--lp-ink-soft); }
+html.lp-v2 .lp-adv { border-radius: 18px; border: none; box-shadow: 0 4px 14px rgba(11, 58, 74, 0.05); }
+
+/* ── Overview section polish: rounded photo, 2-col checklist ── */
+html.lp-v1 #landingOverviewImage img, html.lp-v2 #landingOverviewImage img, html.lp-v3 #landingOverviewImage img {
+  height: 100% !important; min-height: 280px; object-fit: cover;
+}
+html.lp-v2 #landingOverviewImage { border-radius: 26px !important; border: none !important; box-shadow: 0 10px 30px rgba(11, 58, 74, 0.10); }
+html.lp-v3 #landingOverviewImage { border-bottom: 5px solid var(--lp-cta) !important; }
+html.lp-v1 #landingOverviewBenefits, html.lp-v2 #landingOverviewBenefits, html.lp-v3 #landingOverviewBenefits {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px;
+}
+@media (max-width: 560px) {
+  html.lp-v1 #landingOverviewBenefits, html.lp-v2 #landingOverviewBenefits, html.lp-v3 #landingOverviewBenefits {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Mid-page CTA band ── */
+.lp-ctaband { padding: 0 20px; }
+.lp-ctaband-inner {
+  max-width: 72rem; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+  padding: 34px 38px;
+  border-radius: 22px;
+}
+.lp-ctaband h2 {
+  margin: 0 0 4px; font-size: 24px; font-weight: 800; letter-spacing: -0.01em;
+  font-family: var(--lp-display);
+}
+.lp-ctaband p { margin: 0; font-size: 15px; }
+.lp-ctaband button {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 800; font-family: var(--lp-font);
+  border: none; cursor: pointer;
+  padding: 15px 28px; border-radius: var(--lp-radius-btn);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  transition: transform 0.12s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.lp-ctaband button:hover { transform: translateY(-1px); }
+html.lp-v1 .lp-ctaband-inner { background: var(--lp-primary); }
+html.lp-v1 #landingPage .lp-ctaband h2, html.lp-v1 .lp-ctaband h2 { color: #ffffff !important; border: none !important; padding: 0 !important; }
+html.lp-v1 .lp-ctaband p { color: rgba(255, 255, 255, 0.75); }
+html.lp-v1 .lp-ctaband button { background: var(--lp-cta) !important; color: #ffffff !important; }
+html.lp-v1 .lp-ctaband button:hover { background: var(--lp-cta-hover) !important; }
+html.lp-v2 .lp-ctaband-inner { background: var(--lp-primary); border-radius: 28px; }
+html.lp-v2 #landingPage .lp-ctaband h2, html.lp-v2 .lp-ctaband h2 { color: #ffffff !important; }
+html.lp-v2 .lp-ctaband p { color: rgba(255, 255, 255, 0.78); }
+html.lp-v2 .lp-ctaband button { background: var(--lp-cta) !important; color: var(--lp-cta-text) !important; border-radius: 999px !important; }
+html.lp-v3 .lp-ctaband-inner { background: var(--lp-cta); }
+html.lp-v3 #landingPage .lp-ctaband h2, html.lp-v3 .lp-ctaband h2 { color: var(--lp-cta-text) !important; border: none !important; padding: 0 !important; }
+html.lp-v3 .lp-ctaband p { color: rgba(23, 18, 51, 0.72); }
+html.lp-v3 .lp-ctaband button { background: var(--lp-primary) !important; color: #ffffff !important; }
+html.lp-v3 .lp-ctaband button:hover { background: #32249c !important; }
+@media (max-width: 640px) {
+  .lp-ctaband-inner { padding: 26px 22px; }
+  .lp-ctaband button { width: 100%; justify-content: center; }
+}
+
+/* ── v3 content-depth sections ── */
+.lp3-sec { padding: 56px 0; }
+.lp3-inner { max-width: 72rem; margin: 0 auto; padding: 0 20px; }
+.lp3-sec h2 {
+  font-family: var(--lp-display) !important;
+  font-size: 28px; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--lp-ink); margin: 0 0 6px;
+  text-align: center;
+}
+.lp3-sub { margin: 0 0 26px; font-size: 15px; color: var(--lp-ink-soft); text-align: center; }
+
+/* Cost factors: 3-col educational cards */
+.lp3-factors { background: var(--lp-bg-soft); }
+.lp3-factor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+.lp3-factor-grid > div {
+  background: #ffffff; border: 1px solid var(--lp-card-border);
+  border-radius: 14px; padding: 18px;
+  display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto;
+  column-gap: 12px; align-items: center;
+}
+.lp3-factor-grid .lp-prop-ic { grid-row: span 2; width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--lp-accent-soft); color: var(--lp-primary); }
+.lp3-factor-grid .lp-prop-ic svg { width: 24px; height: 24px; }
+.lp3-factor-grid b { font-size: 15px; color: var(--lp-ink); }
+.lp3-factor-grid p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--lp-ink-faint); }
+
+/* Options: 4 comparison cards with a "Common choice" tag */
+.lp3-options { background: #ffffff; }
+.lp3-option-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 24px; }
+.lp3-option-grid > div {
+  position: relative;
+  background: var(--lp-bg-soft); border: 1.5px solid var(--lp-card-border);
+  border-radius: 16px; padding: 22px 18px 18px;
+  display: grid; gap: 8px; justify-items: start;
+}
+.lp3-option-grid > div:first-child { border-color: var(--lp-primary); background: #ffffff; box-shadow: 0 10px 26px rgba(61, 45, 183, 0.10); }
+.lp3-tag {
+  position: absolute; top: -11px; left: 14px;
+  font-style: normal; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  border-radius: 999px; padding: 4px 10px;
+}
+.lp3-option-grid .lp-prop-ic { width: 46px; height: 46px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; background: var(--lp-accent-soft); color: var(--lp-primary); }
+.lp3-option-grid .lp-prop-ic svg { width: 25px; height: 25px; }
+.lp3-option-grid b { font-size: 16px; color: var(--lp-ink); }
+.lp3-option-grid p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--lp-ink-soft); }
+
+/* Signs: lean centered dark band — no photo, no button, no slash bar */
+.lp3-signs { background: #170f3d; padding: 48px 0; }
+html.lp-v3 #landingPage .lp3-signs h2, .lp3-signs h2 {
+  color: #ffffff !important;
+  border-left: none !important; padding-left: 0 !important;
+  text-align: center !important;
+  margin-bottom: 26px;
+}
+.lp3-signs-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px 28px;
+  max-width: 58rem; margin: 0 auto;
+}
+.lp3-signs-grid > div {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 15px; color: rgba(255, 255, 255, 0.86); line-height: 1.5;
+}
+.lp3-signs-grid svg { width: 20px; height: 20px; color: var(--lp-cta); flex-shrink: 0; margin-top: 1px; }
+@media (max-width: 900px) { .lp3-signs-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .lp3-signs-grid { grid-template-columns: 1fr; gap: 10px; } }
+
+/* ── v3 footer identity ── */
+html.lp-v3 #landingPage footer { background: #120d29 !important; }
+html.lp-v3 #landingPage footer h4 {
+  color: var(--lp-cta) !important;
+  font-size: 11.5px !important; font-weight: 800 !important;
+  letter-spacing: 0.09em; text-transform: uppercase;
+}
+html.lp-v3 #landingPage footer a { color: rgba(255, 255, 255, 0.62); transition: color 0.15s ease; }
+html.lp-v3 #landingPage footer a:hover { color: var(--lp-cta); }
+html.lp-v3 #landingPage footer p.text-sm { color: rgba(255, 255, 255, 0.55); }
+html.lp-v3 #landingPage footer .border-gray-800 { border-color: rgba(255, 255, 255, 0.08) !important; }
+.lp3-foot-cta {
+  margin-top: 14px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  font-family: var(--lp-font); font-size: 13.5px; font-weight: 800;
+  border: none; border-radius: 999px; padding: 9px 18px; cursor: pointer;
+}
+.lp3-foot-cta:hover { background: var(--lp-cta-hover); }
+
+/* Footer disclosure */
+.lp3-disclosure {
+  margin: 18px 0 0; padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px; line-height: 1.6; color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── v3 "What's included": centered heading + magazine-cover cards ── */
+html.lp-v3 #landingPage .lp3-feat h2, html.lp-v3 .lp3-feat h2 {
+  border-left: none !important; padding-left: 0 !important;
+  text-align: center !important; display: block;
+}
+.lp3-ovcard {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  min-height: 380px;
+  box-shadow: 0 14px 36px rgba(23, 18, 51, 0.16);
+}
+.lp3-ovcard picture, .lp3-ovcard img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform 0.35s ease;
+}
+.lp3-ovcard:hover img { transform: scale(1.05); }
+.lp3-ovcard::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(23, 18, 51, 0) 38%, rgba(23, 18, 51, 0.55) 68%, rgba(23, 18, 51, 0.92) 100%);
+  pointer-events: none;
+}
+.lp3-ovcard-body {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  padding: 20px 22px 20px;
+  border-bottom: 5px solid var(--lp-cta);
+}
+.lp3-ovcard-body h3 {
+  margin: 0 0 5px; font-size: 20px; font-weight: 800;
+  color: #ffffff; font-family: var(--lp-display);
+  letter-spacing: -0.01em;
+}
+.lp3-ovcard-body p { margin: 0; font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.78); }
+@media (max-width: 640px) {
+  .lp3-ovcard { min-height: 260px; }
+  .lp3-ovcard-body h3 { font-size: 18px; }
+}
+
+/* ── "Good to know" strip: three label→chip rows, titles only ── */
+.lp3-know { background: var(--lp-bg-soft); }
+.lp3-know h2 { margin-bottom: 22px; }
+.lp3-knowrow {
+  display: grid; grid-template-columns: 190px 1fr;
+  gap: 14px; align-items: start;
+  padding: 16px 0;
+}
+.lp3-knowrow + .lp3-knowrow { border-top: 1px solid var(--lp-card-border); }
+.lp3-knowlabel {
+  font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--lp-ink-faint); padding-top: 10px;
+}
+.lp3-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lp3-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #ffffff; border: 1.5px solid var(--lp-card-border);
+  border-radius: 999px; padding: 7px 14px 7px 8px;
+}
+.lp3-chip .lp-prop-ic {
+  width: 26px; height: 26px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lp-accent-soft); color: var(--lp-primary);
+}
+.lp3-chip .lp-prop-ic svg { width: 14px; height: 14px; }
+.lp3-chip b { font-size: 13.5px; font-weight: 700; color: var(--lp-ink); white-space: nowrap; }
+.lp3-chip i {
+  font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  border-radius: 999px; padding: 3px 8px;
+}
+@media (max-width: 720px) {
+  .lp3-knowrow { grid-template-columns: 1fr; gap: 8px; padding: 13px 0; }
+  .lp3-knowlabel { padding-top: 0; }
+  .lp3-chip b { white-space: normal; }
+}
+
+/* Signs band: checklist + framed photo */
+.lp3-signs-flex { display: grid; grid-template-columns: 1.35fr 1fr; gap: 36px; align-items: center; }
+.lp3-signs-photo { position: relative; }
+.lp3-signs-photo img {
+  width: 100%; height: 320px; object-fit: cover; display: block;
+  border-radius: 18px; border-bottom: 5px solid var(--lp-cta);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+@media (max-width: 900px) {
+  .lp3-signs-flex { grid-template-columns: 1fr; gap: 22px; }
+  .lp3-signs-photo img { height: 200px; }
+}
+
+/* ── Hero photo band: blend into the indigo field (lighter feel) ── */
+html.lp-v3 #landingHeroImage::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 130px;
+  background: linear-gradient(180deg, rgba(42, 30, 143, 0.55), transparent);
+  z-index: 1; pointer-events: none;
+}
+
+/* ── Laptop pass: 1024–1440 wide and short viewports. Goal: the ZIP form
+      stays above the fold on a 1366×768 laptop. ── */
+@media (min-width: 1024px) and (max-height: 880px) {
+  html.lp-v3 #landingHeroContent { padding-top: 1.4rem !important; }
+  html.lp-v3 .lp-eyebrow { margin-bottom: 10px; padding: 4px 11px; font-size: 12px; }
+  html.lp-v3 #landingHeroTitle { font-size: 2.45rem !important; margin-bottom: 0.4rem !important; }
+  html.lp-v3 #landingHeroSubtitle { font-size: 1rem !important; margin-bottom: 0.85rem !important; }
+  html.lp-v3 .va-cta-wrap { padding: 8px !important; }
+  html.lp-v3 .lp-trust-chips { margin-top: 10px; }
+  html.lp-v3 .lp-trust-chips span { padding: 6px 11px; font-size: 12.5px; }
+  html.lp-v3 .lp-hero-props { margin-top: 12px; gap: 10px; }
+  html.lp-v3 .lp-hero-props b { font-size: 13px; }
+  html.lp-v3 .lp-hero-props span { font-size: 11.5px; }
+  html.lp-v3 .lp-hero-svcrow { margin-top: 12px; padding-top: 10px; }
+  html.lp-v3 #landingHeroImage { margin-top: 1.4rem; }
+  html.lp-v3 #landingHeroImage img { height: 230px; }
+}
+/* Narrow laptops / small desktops: don't cram four option cards */
+@media (min-width: 901px) and (max-width: 1280px) {
+  .lp3-option-grid { grid-template-columns: repeat(2, 1fr); }
+  .lp3-factor-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .lp3-factor-grid { grid-template-columns: repeat(2, 1fr); }
+  .lp3-option-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .lp3-sec { padding: 38px 0; }
+  .lp3-sec h2 { font-size: 23px; }
+  .lp3-factor-grid { grid-template-columns: 1fr; }
+  .lp3-option-grid { grid-template-columns: 1fr; gap: 20px; }
+  .lp3-signs-grid { grid-template-columns: 1fr; }
+  .lp3-signs-cta { width: 100%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Round 7 — v3 hero rebuilt as a "console panel": one white rounded panel
+   on the indigo backdrop, left-aligned content, photo inside the panel's
+   right cell. Nothing floats on the field anymore.
+   ═══════════════════════════════════════════════════════════════════════ */
+html.lp-v3 section.lp-hero .grid {
+  grid-template-columns: 1.15fr 0.95fr !important;
+  gap: 0 !important;
+  background: #ffffff;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(10, 6, 50, 0.5);
+  border-top: 6px solid var(--lp-cta);
+  align-items: stretch;
+}
+html.lp-v3 section.lp-hero .grid > div:first-child {
+  max-width: none !important; margin: 0 !important;
+  text-align: left !important;
+  padding: 42px 44px 38px;
+}
+html.lp-v3 #landingHeroTitle {
+  color: var(--lp-ink) !important; text-align: left !important;
+  font-size: clamp(1.9rem, 3.1vw, 2.8rem) !important;
+}
+html.lp-v3 #landingHeroSubtitle {
+  color: var(--lp-ink-soft) !important; text-align: left !important;
+  margin-left: 0 !important; margin-right: 0 !important;
+}
+html.lp-v3 .lp-eyebrow { background: var(--lp-accent-soft); color: var(--lp-primary); border: none; }
+html.lp-v3 .va-cta-wrap {
+  margin: 0 !important;
+  background: var(--lp-bg-soft) !important;
+  border: 1.5px solid var(--lp-card-border) !important;
+  box-shadow: none;
+}
+html.lp-v3 #landingZipInput { background: #ffffff !important; }
+html.lp-v3 .lp-trust-chips { justify-content: flex-start; }
+html.lp-v3 .lp-trust-chips span { background: var(--lp-accent-soft); color: var(--lp-primary); border: none; }
+html.lp-v3 .lp-trust-chips svg { color: var(--lp-primary); }
+/* The verbose props block is clutter here — the sections below carry it */
+html.lp-v3 .lp-hero-props { display: none; }
+/* v3 has no sticky bottom bar, so drop the footer padding reserved for it */
+@media (max-width: 767px) {
+  html.lp-v3 #landingPage footer { padding-bottom: 1.5rem !important; }
+}
+/* Vertically center the slim content in the panel; ZIP bar spans the column */
+html.lp-v3 section.lp-hero .grid > div:first-child {
+  display: flex; flex-direction: column; justify-content: center;
+}
+html.lp-v3 section.lp-hero .grid > div:first-child > div { width: 100%; max-width: 30rem; margin-left: 0 !important; margin-right: 0 !important; }
+html.lp-v3 #landingHeroTitle { margin-bottom: 0.7rem !important; }
+html.lp-v3 #landingHeroSubtitle { margin-bottom: 1.4rem !important; font-size: 1.1rem !important; }
+html.lp-v3 .va-cta-wrap { padding: 10px !important; }
+@media (max-width: 1023px) {
+  html.lp-v3 section.lp-hero .grid > div:first-child > div { max-width: none; }
+}
+/* Project chips: now inside the white panel */
+html.lp-v3 .lp-hero-svcrow { border-top: 1px solid var(--lp-card-border); justify-content: flex-start; margin-top: 18px; padding-top: 14px; }
+html.lp-v3 .lp-hero-svcrow span { color: var(--lp-ink-faint); }
+html.lp-v3 .lp-hero-svcrow a { color: var(--lp-ink); background: var(--lp-bg-soft); border: 1px solid var(--lp-card-border); }
+html.lp-v3 .lp-hero-svcrow a:hover { border-color: var(--lp-primary); color: var(--lp-primary); background: #ffffff; }
+/* Photo cell: resets every band treatment */
+html.lp-v3 #landingHeroImage {
+  margin: 0 !important; width: 100% !important;
+  clip-path: none !important;
+  border: none !important; border-left: 1px solid var(--lp-card-border) !important;
+  box-shadow: none !important;
+  position: relative; left: auto !important; transform: none !important;
+}
+html.lp-v3 #landingHeroImage::before { display: none; }
+html.lp-v3 #landingHeroImage picture { height: 100%; }
+html.lp-v3 #landingHeroImage img { height: 100% !important; min-height: 430px; object-fit: cover; }
+html.lp-v3 #landingHeroContent { padding-top: 3rem !important; padding-bottom: 3.25rem !important; }
+/* Backdrop: calmer field with a glow behind the panel */
+html.lp-v3 section.lp-hero {
+  background-image:
+    radial-gradient(900px 480px at 50% 30%, rgba(107, 93, 232, 0.35), transparent 70%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 26px),
+    linear-gradient(160deg, #332597 0%, #251a7e 60%, #1d1468 100%) !important;
+}
+@media (max-width: 1023px) {
+  /* Thumb-zone composition: photo on top, headline under it, ZIP + button
+     pinned to the bottom of the first screen where the thumb rests. */
+  html.lp-v3 section.lp-hero .grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto 1fr;
+    /* thumb-zone: fill the first screen, but never stretch beyond a
+       sensible card height on tall tablets */
+    min-height: min(calc(100vh - 150px), 720px);
+    min-height: min(calc(100svh - 150px), 720px);
+  }
+  html.lp-v3 #landingHeroImage {
+    order: -1;
+    border-left: none !important;
+    border-bottom: 1px solid var(--lp-card-border) !important;
+  }
+  html.lp-v3 #landingHeroImage img { min-height: 230px; height: 230px !important; }
+  html.lp-v3 section.lp-hero .grid > div:first-child {
+    padding: 22px 22px 22px;
+    display: flex; flex-direction: column;
+    justify-content: flex-start;
+  }
+  /* the ZIP block (the inner column) drops to the panel bottom */
+  html.lp-v3 section.lp-hero .grid > div:first-child > div {
+    margin-top: auto !important;
+    padding-top: 16px;
+  }
+  html.lp-v3 .va-cta-wrap button { padding-top: 16px !important; padding-bottom: 16px !important; }
+  html.lp-v3 #landingHeroContent { padding-top: 1.25rem !important; padding-bottom: 1.75rem !important; }
+}
+@media (min-width: 1024px) and (max-height: 880px) {
+  html.lp-v3 section.lp-hero .grid > div:first-child { padding: 30px 34px 28px; }
+  html.lp-v3 #landingHeroImage img { min-height: 360px; }
+  html.lp-v3 #landingHeroContent { padding-top: 1.75rem !important; padding-bottom: 2rem !important; }
+}
+
+/* ── Mobile content pass ── */
+@media (max-width: 640px) {
+  html.lp-v1 #landingPage section > div > h2, html.lp-v3 #landingPage section > div > h2 { font-size: 23px !important; }
+  html.lp-v2 #landingPage section > div > h2 { font-size: 22px !important; }
+  .lp-photocard-img { aspect-ratio: 16 / 9; }
+  html.lp-v1 #landingHeroContent { padding-top: 2rem !important; padding-bottom: 2.5rem !important; }
+  html.lp-v1 #landingHeroTitle { font-size: 1.9rem !important; }
+  html.lp-v2 section.lp-hero .grid > div:first-child { padding: 22px 16px; border-radius: 22px; }
+  .lp-strip-inner { padding: 16px 16px 14px; }
+  html.lp-v3 .lp-hero-svcrow, html.lp-v1 .lp-hero-svcrow { gap: 6px; }
+  .lp-hero-svcrow a { padding: 5px 11px; font-size: 12.5px; }
+}
+
+/* ── v3 overview rebuilt as a bento mosaic ── */
+.lp3-bento-sec { background: #ffffff; }
+html.lp-v3 #landingPage .lp3-bento-sec h2, .lp3-bento-sec h2 {
+  border-left: none !important; padding-left: 0 !important; text-align: center !important;
+}
+.lp3-bento-sec .lp3-sub { text-align: center; padding-left: 0; margin-bottom: 30px; }
+.lp3-bento {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr;
+  grid-auto-rows: minmax(118px, auto);
+  gap: 14px;
+}
+.lp3-bento-photo {
+  grid-row: span 2;
+  border-radius: 18px; overflow: hidden;
+  border-bottom: 5px solid var(--lp-cta);
+  box-shadow: 0 14px 36px rgba(23, 18, 51, 0.14);
+}
+.lp3-bento-photo picture, .lp3-bento-photo img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.lp3-bento-tile {
+  background: var(--lp-bg-soft);
+  border: 1.5px solid var(--lp-card-border);
+  border-radius: 18px;
+  padding: 18px;
+  display: grid; gap: 10px; align-content: center; justify-items: start;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.lp3-bento-tile:hover { border-color: var(--lp-primary); transform: translateY(-2px); }
+.lp3-bento-tile .lp-prop-ic {
+  width: 40px; height: 40px; border-radius: 11px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lp-accent-soft); color: var(--lp-primary);
+}
+.lp3-bento-tile .lp-prop-ic svg { width: 21px; height: 21px; }
+.lp3-bento-tile span { font-size: 14.5px; font-weight: 600; color: var(--lp-ink); line-height: 1.35; }
+.lp3-bento-cta {
+  background: var(--lp-primary);
+  border-radius: 18px;
+  padding: 20px;
+  display: grid; gap: 12px; align-content: center; justify-items: start;
+}
+.lp3-bento-cta b { color: #ffffff; font-size: 16.5px; line-height: 1.3; font-family: var(--lp-display); }
+.lp3-bento-cta button {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--lp-cta) !important; color: var(--lp-cta-text) !important;
+  font-family: var(--lp-font); font-size: 15px; font-weight: 800;
+  border: none; border-radius: 11px !important; padding: 11px 20px; cursor: pointer;
+}
+.lp3-bento-cta button:hover { background: var(--lp-cta-hover) !important; }
+@media (max-width: 1100px) {
+  .lp3-bento { grid-template-columns: 1fr 1fr 1fr; }
+  .lp3-bento-photo { grid-column: span 3; grid-row: span 1; min-height: 220px; }
+}
+@media (max-width: 640px) {
+  .lp3-bento { grid-template-columns: 1fr 1fr; grid-auto-rows: auto; gap: 10px; }
+  .lp3-bento-photo { grid-column: span 2; min-height: 180px; }
+  .lp3-bento-tile { padding: 14px; }
+  .lp3-bento-tile span { font-size: 13.5px; }
+  .lp3-bento-cta { grid-column: span 2; }
+}
+
+/* ── v3 "How it works" redesign: photo + vertical lime timeline ── */
+html.lp-v3 #landingPage .lp-how3 h2, html.lp-v3 .lp-how3 h2 {
+  border-left: none !important; padding-left: 0 !important;
+  text-align: center !important; display: block;
+  font-size: 30px;
+}
+html.lp-v3 .lp-how3 .lp-how-sub { text-align: center; margin-bottom: 36px; }
+.lp-how3-grid {
+  display: grid; grid-template-columns: 1.05fr 1fr;
+  gap: 48px; align-items: center;
+  max-width: 64rem; margin: 0 auto;
+}
+.lp-how3-photo img {
+  width: 100%; height: 400px; object-fit: cover; display: block;
+  border-radius: 20px; border-bottom: 5px solid var(--lp-cta);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.lp-how3-steps { list-style: none; margin: 0; padding: 0; display: grid; }
+.lp-how3-steps li {
+  position: relative;
+  display: grid; grid-template-columns: 46px 1fr;
+  column-gap: 18px; align-items: start;
+  padding-bottom: 30px;
+}
+.lp-how3-steps li:last-child { padding-bottom: 0; }
+.lp-how3-steps li:not(:last-child)::after {
+  content: ""; position: absolute;
+  left: 22px; top: 50px; bottom: 6px;
+  border-left: 2px dashed rgba(198, 244, 50, 0.35);
+}
+.lp-how3-n {
+  width: 46px; height: 46px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  font-weight: 800; font-size: 18px; font-family: var(--lp-display);
+  box-shadow: 0 6px 18px rgba(198, 244, 50, 0.25);
+}
+.lp-how3-steps h3 { margin: 2px 0 6px; font-size: 18px; font-weight: 700; color: #ffffff; font-family: var(--lp-display); }
+.lp-how3-steps p { margin: 0; font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, 0.62); }
+/* the old 3-card grid styles must not leak in */
+.lp-how3 .lp-how-grid { display: none; }
+@media (max-width: 900px) {
+  .lp-how3-grid { grid-template-columns: 1fr; gap: 26px; }
+  /* Full-bleed image moment on mobile: photo runs edge to edge */
+  .lp-how3-photo { margin-left: -20px; margin-right: -20px; }
+  .lp-how3-photo img { height: 240px; border-radius: 0; }
+  html.lp-v3 #landingPage .lp-how3 h2, html.lp-v3 .lp-how3 h2 { font-size: 24px; }
+}
+
+/* ═══ v3 balance pass — 8px rhythm, one type scale, AA contrast ═══ */
+/* Section rhythm: every band breathes the same (64px / 40px mobile) */
+html.lp-v3 #landingPage section.py-10,
+html.lp-v3 .lp3-sec, html.lp-v3 .lp-how, html.lp-v3 .lp3-signs {
+  padding-top: 4rem !important; padding-bottom: 4rem !important;
+}
+/* One H2 size everywhere */
+html.lp-v3 #landingPage section > div > h2,
+html.lp-v3 .lp3-sec h2, html.lp-v3 .lp-how h2, html.lp-v3 .lp-how3 h2 {
+  font-size: 30px !important;
+}
+.lp3-sub, html.lp-v3 .lp-how-sub { margin-bottom: 34px; }
+/* AA contrast on dark bands (was ~4.2:1, now ≥ 4.5:1) */
+html.lp-v3 .lp-how-card p, html.lp-v3 .lp-how .lp-how-sub { color: rgba(255, 255, 255, 0.74) !important; }
+.lp-how3-steps p { color: rgba(255, 255, 255, 0.74); }
+html.lp-v3 #landingPage footer a { color: rgba(255, 255, 255, 0.74); }
+html.lp-v3 #landingPage footer p.text-sm { color: rgba(255, 255, 255, 0.64); }
+html.lp-v3 .lp3-disclosure { color: rgba(255, 255, 255, 0.55); }
+@media (max-width: 640px) {
+  html.lp-v3 #landingPage section.py-10,
+  html.lp-v3 .lp3-sec, html.lp-v3 .lp-how, html.lp-v3 .lp3-signs {
+    padding-top: 2.5rem !important; padding-bottom: 2.5rem !important;
+  }
+  html.lp-v3 #landingPage section > div > h2,
+  html.lp-v3 .lp3-sec h2, html.lp-v3 .lp-how h2, html.lp-v3 .lp-how3 h2 {
+    font-size: 24px !important;
+  }
+}
+/* All variants: the cartoon illustration on the ZIP step is off-brand —
+   v3/v2 have the photo banner, v1 is the clean Modernize stage */
+html.lp-v1 #zipHeroImg, html.lp-v2 #zipHeroImg, html.lp-v3 #zipHeroImg { display: none !important; }
+
+/* Visible field labels in the v3 wizard (web.dev form guidance) */
+.lp3-label {
+  display: block; text-align: left;
+  font-size: 13px; font-weight: 700; color: var(--lp-ink);
+  margin: 0 0 6px;
+  font-family: var(--lp-font);
+}
+
+/* ═══ v3 balance pass 2 — proportion fixes seen in full-page audit.
+       Hero proportion rules are DESKTOP-ONLY: mobile keeps the thumb-zone
+       composition (photo 230px on top, ZIP pinned to the first screen). ═══ */
+@media (min-width: 1024px) {
+  html.lp-v3 #landingHeroTitle { font-size: clamp(2.1rem, 3.5vw, 3rem) !important; }
+  html.lp-v3 #landingHeroSubtitle { font-size: 1.15rem !important; max-width: 26rem; }
+  html.lp-v3 #landingHeroImage img { min-height: 380px; }
+  html.lp-v3 section.lp-hero .grid > div:first-child { padding: 40px 48px; }
+}
+html.lp-v3 #landingZipInput { font-size: 17px !important; padding-top: 1rem !important; padding-bottom: 1rem !important; }
+/* How-band: steps must hold their own against the photo */
+.lp-how3-grid { gap: 56px; }
+.lp-how3-photo img { height: 360px; }
+.lp-how3-steps li { padding-bottom: 34px; column-gap: 20px; grid-template-columns: 50px 1fr; }
+.lp-how3-steps li:not(:last-child)::after { left: 24px; top: 54px; }
+.lp-how3-n { width: 50px; height: 50px; font-size: 19px; }
+.lp-how3-steps h3 { font-size: 20px; margin-bottom: 7px; }
+.lp-how3-steps p { font-size: 15.5px; line-height: 1.65; }
+/* CTA band joins the 64px rhythm instead of floating */
+html.lp-v3 .lp-ctaband { padding-top: 4rem; padding-bottom: 4rem; background: #ffffff; }
+@media (max-width: 640px) { html.lp-v3 .lp-ctaband { padding-top: 2.5rem; padding-bottom: 2.5rem; } }
+/* Bento CTA button: no awkward two-line wrap */
+.lp3-bento-cta button { white-space: nowrap; font-size: 14px; padding: 11px 16px; }
+
+/* v2 + v3 headers: drop the contractor/affiliate links, center the logo */
+html.lp-v3 #heroContractorLink, html.lp-v3 #heroAffiliateLink,
+html.lp-v2 #heroContractorLink, html.lp-v2 #heroAffiliateLink { display: none !important; }
+html.lp-v3 section.lp-hero > .relative.z-20.flex,
+html.lp-v2 section.lp-hero > .relative.z-20.flex { justify-content: center !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v2 hero rebuilt — the "wash" pattern: real photo faded under a warm
+   cream veil (atmosphere, not content), one centered headline, one white
+   card asking one labeled question. Nothing else above the fold.
+   ═══════════════════════════════════════════════════════════════════════ */
+html.lp-v2 section.lp-hero {
+  background:
+    linear-gradient(180deg, rgba(243, 249, 251, 0.94) 0%, rgba(243, 249, 251, 0.80) 50%, rgba(243, 249, 251, 0.96) 100%),
+    var(--lp-hero-photo, #f3f9fb) center / cover no-repeat !important;
+}
+/* the arch photo band is gone — the photo IS the hero background now */
+html.lp-v2 #landingHeroImage { display: none !important; }
+/* the paper card chrome moves off the column and onto the form card */
+html.lp-v2 section.lp-hero .grid > div:first-child {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  max-width: 780px !important;
+}
+html.lp-v2 #landingHeroContent { padding-top: 3.5rem !important; padding-bottom: 4.25rem !important; }
+html.lp-v2 #landingHeroTitle {
+  font-size: clamp(2.1rem, 4.2vw, 3.2rem) !important;
+  margin-bottom: 0.6rem !important;
+}
+html.lp-v2 #landingHeroSubtitle { font-size: 1.1rem !important; margin-bottom: 1.6rem !important; }
+/* strip every extra: one message per screen */
+html.lp-v2 .lp-eyebrow, html.lp-v2 .lp-trust-chips, html.lp-v2 .lp-hero-props,
+html.lp-v2 .lp-photo-badge, html.lp-v2 .lp-hero-micro { display: none !important; }
+/* the ONE white card: visible question label + field + button */
+html.lp-v2 section.lp-hero .grid > div:first-child > div {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 26px 70px rgba(11, 58, 74, 0.14);
+  max-width: 560px;
+  margin: 0 auto;
+}
+.lp2-form-label {
+  display: block;
+  font-family: var(--lp-font);
+  font-size: 15.5px; font-weight: 800;
+  color: var(--lp-ink);
+  text-align: left;
+  margin: 2px 2px 10px;
+}
+html.lp-v2 .va-cta-wrap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+html.lp-v2 #landingZipInput {
+  background: var(--lp-bg) !important;
+  border: 1.5px solid var(--lp-card-border) !important;
+  font-size: 17px !important;
+  padding-top: 0.95rem !important; padding-bottom: 0.95rem !important;
+}
+/* quiet monochrome outcome strip below the fold */
+.lp2-strip { background: #ffffff; border-bottom: 1px solid var(--lp-card-border); }
+.lp2-strip-inner {
+  max-width: 58rem; margin: 0 auto;
+  padding: 26px 20px 24px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+}
+.lp2-strip-item { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.lp2-strip-item svg { width: 30px; height: 30px; color: var(--lp-primary); }
+.lp2-strip-item span { font-size: 13.5px; font-weight: 700; color: var(--lp-ink); }
+@media (max-width: 640px) {
+  .lp2-strip-inner { grid-template-columns: repeat(2, 1fr); gap: 16px 10px; padding: 20px 16px; }
+  html.lp-v2 #landingHeroContent { padding-top: 2.25rem !important; padding-bottom: 2.75rem !important; }
+  html.lp-v2 #landingHeroTitle { font-size: 1.9rem !important; }
+  html.lp-v2 section.lp-hero .grid > div:first-child > div { padding: 18px 16px 16px; }
+}
+/* laptop: keep the single screen feel */
+@media (min-width: 1024px) and (max-height: 880px) {
+  html.lp-v2 #landingHeroContent { padding-top: 2.25rem !important; padding-bottom: 2.75rem !important; }
+  html.lp-v2 #landingHeroTitle { font-size: 2.4rem !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v2 body — box-less editorial. No card chrome anywhere: ghost numerals,
+   caption galleries, plain check columns, hairline dividers, one tinted
+   full-width band. Content breathes on white.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* flatten section backgrounds: white everywhere except the band */
+html.lp-v2 #landingPage section.bg-gray-50 { background: #ffffff !important; }
+
+/* ── v1 wizard (Modernize model): slim bar, big centered options ── */
+.lp1-bar {
+  display: flex; align-items: center; gap: 14px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--lp-card-border);
+  padding: 13px 18px;
+}
+.lp1-bar-svc {
+  font-family: var(--lp-font);
+  font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--lp-primary); white-space: nowrap;
+}
+.lp1-bar-track {
+  flex: 1; position: relative;
+  height: 10px; border-radius: 999px;
+  background: #edf1f8; overflow: hidden;
+}
+.lp1-bar-track i {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp1-bar-count {
+  font-family: var(--lp-font);
+  font-size: 12.5px; font-weight: 800;
+  color: var(--lp-ink-soft); white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* clean white stage, Modernize-style */
+html.lp-v1 #wizardContainer, html.lp-v1 .wizard-column { background: #ffffff !important; }
+html.lp-v1 .wizard-column { max-width: 600px; }
+html.lp-v1 #wizardMain { flex: 0 0 auto !important; }
+html.lp-v1 #trustBadge { padding-top: 30px !important; }
+/* big centered option buttons (tap = advance; no Next) */
+html.lp-v1 #radioNextBtn, html.lp-v1 #svcNextBtn { display: none !important; }
+html.lp-v1 #radioOptions { gap: 12px; }
+html.lp-v1 #radioOptions > button, html.lp-v1 #serviceSelectOptions button {
+  justify-content: center !important;
+  text-align: center;
+  padding: 19px 20px !important;
+  min-height: 64px;
+  border: 2px solid var(--lp-card-border) !important;
+  border-radius: 12px !important;
+  transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+}
+html.lp-v1 #radioOptions > button span, html.lp-v1 #serviceSelectOptions button span {
+  font-size: 17px !important; font-weight: 800 !important;
+}
+html.lp-v1 #radioOptions > button:hover, html.lp-v1 #serviceSelectOptions button:hover {
+  border-color: var(--lp-cta-hover) !important;
+  transform: translateY(-1px);
+}
+html.lp-v1 #radioOptions > button.bg-blue-50, html.lp-v1 #serviceSelectOptions button.bg-blue-50 {
+  border-color: var(--lp-cta-hover) !important;
+  background: var(--lp-accent-soft) !important;
+}
+/* thumb-zone action buttons on phones */
+@media (max-width: 640px) {
+  html.lp-v1 #zipNextBtn, html.lp-v1 #emailNextBtn, html.lp-v1 #detailsNextBtn,
+  html.lp-v1 #nameNextBtn, html.lp-v1 #finalSubmitBtn {
+    position: fixed;
+    left: 16px; right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    z-index: 2100;
+    box-shadow: 0 12px 32px rgba(16, 33, 63, 0.30) !important;
+    padding-top: 16px !important; padding-bottom: 16px !important;
+  }
+  html.lp-v1 #wizardMain { padding-bottom: 10px; animation: none !important; }
+  html.lp-v1 .wizard-column { padding-bottom: 120px; }
+}
+
+/* Inline validation (all variants): green border + ✓ when a field is valid */
+html.lp-v1 #wizardContainer input.lp1-valid,
+html.lp-v2 #wizardContainer input.lp1-valid,
+html.lp-v3 #wizardContainer input.lp1-valid {
+  border-color: #16a34a !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316a34a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 13l4 4L19 7'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 20px 20px !important;
+  padding-right: 44px !important;
+}
+
+/* ── v1 form steps, Modernize-style: NO cards — bare fields on the page ── */
+html.lp-v1 .wizard-step .bg-white:not(button):not(#radioOptions):not(#serviceSelectOptions) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  max-width: 480px !important;
+  margin: 18px auto 0 !important;
+}
+/* big bare inputs */
+html.lp-v1 #wizardContainer input {
+  min-height: 58px;
+  font-size: 17px !important;
+  background: #ffffff !important;
+  border: 2px solid var(--lp-card-border) !important;
+  border-radius: 12px !important;
+}
+html.lp-v1 #wizardContainer input:focus {
+  border-color: var(--lp-primary) !important;
+  box-shadow: var(--lp-focus-ring) !important;
+}
+html.lp-v1 #wizardContainer label {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--lp-ink) !important;
+  margin-bottom: 6px !important;
+  display: block;
+}
+/* full-width gold action button under the field (desktop) */
+@media (min-width: 641px) {
+  html.lp-v1 #zipNextBtn, html.lp-v1 #emailNextBtn, html.lp-v1 #detailsNextBtn,
+  html.lp-v1 #nameNextBtn, html.lp-v1 #finalSubmitBtn {
+    display: block;
+    width: 100%; max-width: 480px;
+    margin: 24px auto 0;
+    padding-top: 16px !important; padding-bottom: 16px !important;
+  }
+}
+/* details step: the Yes/No toggle rows become bare hairline rows */
+html.lp-v1 #step-details .bg-white .bg-white:not(button) {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 14px 2px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--lp-card-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+html.lp-v1 #step-details .bg-white .bg-white:not(button) > span,
+html.lp-v1 #step-details .bg-white .bg-white:not(button) > p,
+html.lp-v1 #step-details .bg-white .bg-white:not(button) > label {
+  flex: 1; min-width: 0; margin: 0 !important;
+}
+html.lp-v1 #ownerYes, html.lp-v1 #ownerNo, html.lp-v1 #changesYes, html.lp-v1 #changesNo {
+  min-height: 44px; min-width: 60px;
+  border-radius: 10px !important;
+  font-size: 13px !important; font-weight: 800 !important;
+}
+
+/* ── v2 wizard: progress RING (Zeigarnik — the almost-closed loop) ── */
+.lp2-trk {
+  background: #ffffff;
+  border-bottom: 1px solid var(--lp-card-border);
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+}
+.lp2-ring-wrap { position: relative; width: 84px; height: 84px; flex: none; }
+.lp2-ring { width: 84px; height: 84px; transform: rotate(-90deg); }
+.lp2-ring-bg { fill: none; stroke: #e4edf1; stroke-width: 6.5; }
+.lp2-ring-fg {
+  fill: none; stroke: url(#lp2rg); stroke-width: 6.5; stroke-linecap: round;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 5px rgba(22, 163, 74, 0.45));
+}
+.lp2-ring-pct {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--lp-display);
+  font-size: 19px; font-weight: 800;
+  color: var(--lp-ink);
+}
+.lp2-ring-text { display: grid; gap: 3px; min-width: 0; text-align: left; }
+.lp2-ring-text b {
+  font-family: var(--lp-display);
+  font-size: 20px; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--lp-ink);
+}
+.lp2-ring-text span {
+  font-family: var(--lp-font);
+  font-size: 14px; font-weight: 700;
+  color: #15803d;
+}
+@media (max-width: 560px) {
+  .lp2-trk { padding: 12px 14px; gap: 14px; }
+  .lp2-ring-wrap, .lp2-ring { width: 72px; height: 72px; }
+  .lp2-ring-pct { font-size: 16px; }
+  .lp2-ring-text b { font-size: 17.5px; }
+  .lp2-ring-text span { font-size: 12.5px; }
+}
+
+/* ── v2 wizard: thumb-zone + rhythm (same discipline as v3) ── */
+html.lp-v2 #radioNextBtn, html.lp-v2 #svcNextBtn { display: none !important; }
+@media (max-width: 640px) {
+  html.lp-v2 #zipNextBtn, html.lp-v2 #emailNextBtn, html.lp-v2 #detailsNextBtn,
+  html.lp-v2 #nameNextBtn, html.lp-v2 #finalSubmitBtn {
+    position: fixed;
+    left: 16px; right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    z-index: 2100;
+    box-shadow: 0 12px 32px rgba(11, 58, 74, 0.30) !important;
+    padding-top: 16px !important; padding-bottom: 16px !important;
+  }
+  html.lp-v2 #wizardMain { padding-bottom: 10px; animation: none !important; }
+  html.lp-v2 .wizard-column { padding-bottom: 120px; }
+}
+/* content hugs the top — no dead stretch */
+html.lp-v2 #wizardMain { flex: 0 0 auto !important; }
+html.lp-v2 #trustBadge { padding-top: 30px !important; }
+
+/* ── v2 middle: zig-zag editorial bands ── */
+.lp2-zig-sec { background: #ffffff; padding: 56px 0 !important; }
+.lp2-zig-sec.lp2-zig-alt { background: var(--lp-bg); }
+.lp2-zig {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 54px; align-items: center;
+  max-width: 68rem;
+}
+.lp2-zig.lp2-rev .lp2-zigimg { order: 2; }
+.lp2-zigimg { border-radius: 24px; overflow: hidden; box-shadow: 0 18px 44px rgba(11, 58, 74, 0.14); }
+.lp2-zigimg picture, .lp2-zigimg img { width: 100%; height: 360px; object-fit: cover; display: block; }
+.lp2-zigtext h2 {
+  text-align: left !important; font-size: 27px !important;
+  margin: 0 0 10px; padding: 0 !important;
+}
+.lp2-zigtext h2::after { display: none !important; }
+.lp2-zigtext > p { margin: 0 0 16px; font-size: 15.5px; line-height: 1.6; color: var(--lp-ink-soft); }
+.lp2-zigchecks { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 10px; }
+.lp2-zigchecks li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 15px; font-weight: 600; color: var(--lp-ink);
+}
+.lp2-zigchecks svg { width: 20px; height: 20px; color: var(--lp-cta); flex-shrink: 0; margin-top: 1px; }
+.lp2-ziglist { display: grid; gap: 14px; margin-bottom: 22px; }
+.lp2-ziglist b { display: block; font-size: 16px; font-weight: 800; color: var(--lp-ink); margin-bottom: 2px; }
+.lp2-ziglist p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--lp-ink-soft); }
+.lp2-zigbtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--lp-cta); color: #ffffff;
+  font-family: var(--lp-font); font-size: 16px; font-weight: 800;
+  border: none; border-radius: 999px; padding: 13px 26px; cursor: pointer;
+  box-shadow: 0 8px 22px rgba(22, 163, 74, 0.35);
+  transition: background 0.15s ease;
+}
+.lp2-zigbtn:hover { background: var(--lp-cta-hover); }
+@media (max-width: 860px) {
+  .lp2-zig { grid-template-columns: 1fr; gap: 24px; }
+  .lp2-zig.lp2-rev .lp2-zigimg { order: 0; } /* photo always first on mobile */
+  .lp2-zigimg picture, .lp2-zigimg img { height: 220px; }
+  .lp2-zig-sec { padding: 40px 0 !important; }
+  .lp2-zigbtn { width: 100%; justify-content: center; }
+}
+
+/* ── v2 middle: service menu + editorial why (legacy, superseded) ── */
+.lp2-menu-sec { background: #ffffff; padding: 56px 0; }
+.lp2-menu-inner h2 { text-align: center; }
+.lp2-menusub { text-align: center; font-size: 15px; color: var(--lp-ink-soft); margin: 6px 0 26px; }
+.lp2-menu { max-width: 46rem; margin: 0 auto; }
+.lp2-menurow {
+  display: grid; grid-template-columns: 76px 1fr 30px;
+  gap: 16px; align-items: center;
+  width: 100%;
+  background: transparent; border: none; cursor: pointer;
+  padding: 14px 6px;
+  border-bottom: 1px solid var(--lp-card-border);
+  text-align: left;
+  transition: background 0.15s ease;
+}
+.lp2-menurow:first-child { border-top: 1px solid var(--lp-card-border); }
+.lp2-menurow:hover { background: var(--lp-bg); }
+/* out-rank the global green CTA paint on startWizard buttons */
+html.lp-v2 #landingPage button.lp2-menurow {
+  background: transparent !important;
+  color: inherit !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-weight: inherit !important;
+  font-size: inherit !important;
+  padding: 14px 6px !important;
+}
+html.lp-v2 #landingPage button.lp2-menurow:hover { background: var(--lp-bg) !important; }
+.lp2-menuthumb {
+  width: 76px; height: 60px; border-radius: 12px; overflow: hidden; display: block;
+}
+.lp2-menuthumb picture, .lp2-menuthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lp2-menutext { display: grid; gap: 2px; min-width: 0; }
+.lp2-menutext b { font-family: var(--lp-font); font-size: 16.5px; font-weight: 800; color: var(--lp-ink); }
+.lp2-menutext i { font-style: normal; font-size: 14px; color: var(--lp-ink-soft); }
+.lp2-menugo { color: var(--lp-cta); }
+.lp2-menugo svg { width: 22px; height: 22px; }
+.lp2-tags {
+  max-width: 46rem; margin: 18px auto 0;
+  text-align: center;
+  font-size: 13px; font-weight: 600; color: var(--lp-ink-faint);
+}
+@media (max-width: 560px) {
+  .lp2-menurow { grid-template-columns: 60px 1fr 24px; gap: 12px; }
+  .lp2-menuthumb { width: 60px; height: 48px; }
+}
+
+.lp2-why-sec { background: var(--lp-bg); padding: 56px 0; }
+.lp2-why {
+  display: grid; grid-template-columns: 1fr 1.25fr;
+  gap: 48px; align-items: start;
+  max-width: 62rem;
+}
+.lp2-why-lead h2 { text-align: left !important; font-size: 28px; margin: 0 0 10px; }
+.lp2-why-lead h2::after { display: none; }
+.lp2-why-lead p { font-size: 16px; line-height: 1.6; color: var(--lp-ink-soft); max-width: 36ch; }
+.lp2-why-list { display: grid; gap: 18px; }
+.lp2-why-list > div { border-left: 3px solid var(--lp-cta); padding-left: 16px; }
+.lp2-why-list b { display: block; font-family: var(--lp-font); font-size: 16px; font-weight: 800; color: var(--lp-ink); margin-bottom: 2px; }
+.lp2-why-list p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--lp-ink-soft); }
+@media (max-width: 760px) {
+  .lp2-why { grid-template-columns: 1fr; gap: 24px; }
+}
+
+/* How it works v2: arrow-flow stepper */
+.lp-how2-flow {
+  display: flex; align-items: flex-start; justify-content: center;
+  gap: 18px;
+  max-width: 62rem; margin: 0 auto;
+}
+.lp-how2-step { flex: 1; max-width: 240px; text-align: center; }
+.lp-how2-ic {
+  width: 64px; height: 64px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lp-accent-soft); color: var(--lp-primary);
+  margin-bottom: 12px;
+}
+.lp-how2-ic svg { width: 30px; height: 30px; }
+.lp-how2-step h3 {
+  margin: 0 0 6px; font-size: 16.5px; font-weight: 800;
+  color: var(--lp-ink); font-family: var(--lp-font);
+}
+.lp-how2-step p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--lp-ink-soft); }
+.lp-how2-arrow {
+  color: var(--lp-cta);
+  margin-top: 20px; flex: none;
+}
+.lp-how2-arrow svg { width: 26px; height: 26px; }
+@media (max-width: 700px) {
+  .lp-how2-flow { flex-direction: column; align-items: center; gap: 10px; }
+  .lp-how2-step { max-width: 300px; }
+  .lp-how2-arrow { margin-top: 0; transform: rotate(90deg); }
+  .lp-how2-arrow svg { width: 22px; height: 22px; }
+}
+
+/* How it works: ghost numerals, no cards — one tight composition */
+html.lp-v2 .lp-how { background: #ffffff; padding: 56px 0 !important; }
+html.lp-v2 .lp-how h2 { margin-bottom: 4px; }
+html.lp-v2 .lp-how .lp-how-sub { margin-bottom: 30px; }
+html.lp-v2 .lp-how-grid { max-width: 58rem; margin: 0 auto; gap: 28px; }
+html.lp-v2 .lp-how-card {
+  background: transparent; border: none; box-shadow: none;
+  border-radius: 0; padding: 0 8px;
+  text-align: center;
+}
+html.lp-v2 .lp-how-num {
+  width: auto; height: auto;
+  background: transparent; box-shadow: none;
+  color: #bcdde8;
+  font-family: var(--lp-display);
+  font-size: 42px; font-weight: 800; line-height: 1;
+  margin: 0 auto 8px;
+}
+html.lp-v2 .lp-how-card h3 { font-size: 17px; margin-bottom: 4px; }
+html.lp-v2 .lp-how-card p { font-size: 14.5px; max-width: 30ch; margin-left: auto; margin-right: auto; }
+@media (max-width: 640px) {
+  html.lp-v2 .lp-how { padding: 40px 0 !important; }
+  html.lp-v2 .lp-how-grid { gap: 20px; }
+  html.lp-v2 .lp-how-num { font-size: 34px; }
+}
+
+/* What's included: caption gallery, not photo cards */
+html.lp-v2 #landingFeatures .lp-photocard {
+  background: transparent; border: none; box-shadow: none; border-radius: 0;
+}
+html.lp-v2 #landingFeatures .lp-photocard:hover { transform: none; box-shadow: none; }
+html.lp-v2 #landingFeatures .lp-photocard-img { border-radius: 20px; overflow: hidden; }
+html.lp-v2 #landingFeatures .lp-photocard-body { padding: 14px 4px 0; text-align: center; }
+html.lp-v2 #landingFeatures .lp-photocard-body h3 { font-size: 17px; }
+
+/* Why it's worth doing: plain check column, no tiles */
+html.lp-v2 .lp-adv {
+  background: transparent; border: none; box-shadow: none;
+  border-radius: 0; padding: 6px 0;
+}
+html.lp-v2 .lp-adv .lp-prop-ic {
+  background: transparent;
+  width: 28px; height: 28px; border-radius: 0;
+  color: var(--lp-cta);
+}
+html.lp-v2 .lp-adv .lp-prop-ic svg { width: 24px; height: 24px; }
+
+/* Overview: borderless photo, plain checklist */
+html.lp-v2 #landingOverviewImage {
+  border: none !important; border-radius: 26px !important;
+  box-shadow: 0 16px 40px rgba(11, 58, 74, 0.12);
+}
+
+/* CTA band: full-width tinted band, not an inset box */
+html.lp-v2 .lp-ctaband { background: var(--lp-accent-soft); padding: 4rem 20px !important; }
+html.lp-v2 .lp-ctaband-inner {
+  background: transparent; border-radius: 0; padding: 0;
+  max-width: 64rem;
+  flex-direction: column; text-align: center; gap: 18px;
+}
+html.lp-v2 #landingPage .lp-ctaband h2, html.lp-v2 .lp-ctaband h2 {
+  color: var(--lp-ink) !important; font-size: 28px;
+}
+html.lp-v2 .lp-ctaband p { color: var(--lp-ink-soft); }
+html.lp-v2 .lp-ctaband button { border-radius: 999px; }
+
+/* FAQ: hairline divider rows, no boxes */
+html.lp-v2 #landingFaqs > div {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--lp-card-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+html.lp-v2 #landingFaqs > div > button { padding-left: 4px !important; padding-right: 4px !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   v2 hero v2.1 — own concept, not the reference's wash:
+   solid warm cream, a "snapshots on the fridge" filmstrip, and a MAD-LIB
+   sentence form ("I need bathroom pros near [ZIP] →").
+   ═══════════════════════════════════════════════════════════════════════ */
+html.lp-v2 section.lp-hero { background: linear-gradient(180deg, #f7fbfd 0%, #e8f3f7 100%) !important; }
+/* panoramic banner photo with label chip (section child, above the grid) */
+.lp2-banner {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  height: 230px;
+  max-width: 62rem;
+  margin: 0 auto 4px;
+  box-shadow: 0 18px 44px rgba(11, 58, 74, 0.18);
+}
+@media (min-width: 1024px) and (max-width: 1060px) { .lp2-banner { margin-left: 20px; margin-right: 20px; } }
+.lp2-banner picture, .lp2-banner img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.lp2-banner::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(11, 58, 74, 0.45) 100%);
+  pointer-events: none;
+}
+.lp2-banner-chip {
+  display: none; /* removed per owner — the photo speaks for itself */
+  position: absolute; left: 16px; bottom: 14px; z-index: 1;
+  font-style: normal;
+  font-family: var(--lp-font);
+  font-size: 13px; font-weight: 800;
+  background: #ffffff; color: var(--lp-primary);
+  border-radius: 999px; padding: 7px 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+/* mad-lib sentence card */
+.lp2-madlib {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 10px 12px;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 16px 20px 16px 28px;
+  box-shadow: 0 26px 70px rgba(11, 58, 74, 0.14);
+  width: fit-content; max-width: 100%;
+  margin: 0 auto;
+}
+@media (max-width: 640px) { .lp2-madlib { border-radius: 22px; } }
+.lp2-madlib label {
+  font-family: var(--lp-display);
+  font-size: clamp(19px, 2.3vw, 24px);
+  font-weight: 700; color: var(--lp-ink);
+  cursor: text;
+}
+.lp2-madlib label b { color: var(--lp-primary); }
+.lp2-hint {
+  flex-basis: 100%;
+  text-align: center;
+  font-family: var(--lp-font);
+  font-size: 12.5px; font-weight: 600;
+  color: var(--lp-ink-faint);
+  margin-top: 2px;
+}
+/* desktop: the hint floats under the capsule so the pill stays one slim line */
+@media (min-width: 1024px) {
+  .lp2-madlib { position: relative; margin-bottom: 30px; }
+  .lp2-hint {
+    position: absolute; top: 100%; left: 0; right: 0;
+    margin-top: 10px;
+  }
+}
+html.lp-v2 #lp2ZipSlot #landingZipInput {
+  width: 152px;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid var(--lp-cta) !important;
+  border-radius: 0 !important;
+  text-align: center;
+  font-family: var(--lp-display);
+  font-size: clamp(19px, 2.3vw, 24px) !important;
+  font-weight: 800;
+  color: var(--lp-ink) !important;
+  padding: 2px 4px !important;
+}
+html.lp-v2 #lp2ZipSlot #landingZipInput:focus {
+  border-bottom-color: var(--lp-primary) !important;
+  box-shadow: none !important;
+}
+html.lp-v2 #lp2ZipSlot #landingZipInput::placeholder {
+  color: #a5c3cd; letter-spacing: 0.01em;
+  font-size: 16px; font-weight: 700;
+}
+.lp2-go {
+  width: 54px; height: 54px; flex: none;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: var(--lp-cta); color: var(--lp-cta-text);
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.40);
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.lp2-go:hover { background: var(--lp-cta-hover); transform: translateX(2px); }
+.lp2-go svg { width: 24px; height: 24px; }
+/* the old label + zip-bar card chrome are out of the picture */
+html.lp-v2 .lp2-form-label { display: none !important; }
+html.lp-v2 section.lp-hero .grid > div:first-child > div {
+  background: transparent; border-radius: 0; padding: 0; box-shadow: none; max-width: none;
+}
+@media (max-width: 640px) {
+  .lp2-banner { height: 150px; border-radius: 18px; margin-bottom: 20px; }
+  .lp2-madlib { padding: 16px 16px; gap: 12px 8px; border-radius: 18px; }
+  .lp2-madlib label { font-size: 17.5px; flex-basis: 100%; text-align: center; }
+  html.lp-v2 #lp2ZipSlot #landingZipInput { width: 118px; font-size: 18px !important; min-height: 44px; }
+  .lp2-go { width: 56px; height: 56px; }
+}
+/* ═══ v2 hero rhythm pass — one spacing scale, top to bottom ═══ */
+html.lp-v2 #landingHeroContent { padding-top: 2.25rem !important; padding-bottom: 3rem !important; }
+html.lp-v2 #landingHeroTitle { margin-bottom: 0.5rem !important; }
+html.lp-v2 #landingHeroSubtitle { margin-bottom: 0.9rem !important; }
+/* desktop: the words get more air between each beat */
+@media (min-width: 1024px) {
+  html.lp-v2 #landingHeroContent { padding-top: 2.75rem !important; }
+  html.lp-v2 #landingHeroTitle { margin-bottom: 0.85rem !important; }
+  html.lp-v2 #landingHeroSubtitle { margin-bottom: 1.35rem !important; }
+  html.lp-v2 .lp2-mini { margin-bottom: 22px; }
+}
+@media (min-width: 1024px) and (max-height: 880px) {
+  html.lp-v2 .lp2-banner { height: 195px; }
+}
+
+/* ✓-reassurance row under the subtitle — clear gap before the form pill */
+.lp2-mini {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 6px 18px;
+  margin-top: 2px;
+  margin-bottom: 14px !important;
+}
+#lp2Madlib { margin-top: 4px !important; }
+.lp2-mini span {
+  font-family: var(--lp-font);
+  font-size: 13px; font-weight: 700;
+  color: var(--lp-primary);
+}
+
+/* Thumb zone on phones/tablets: hero fills the first screen, the sentence
+   card drops toward the bottom where the thumb rests — capped so no
+   dead-space canyon opens on tall screens */
+@media (max-width: 1023px) {
+  html.lp-v2 section.lp-hero .grid > div:first-child {
+    display: flex; flex-direction: column;
+    min-height: calc(100vh - 480px);
+    min-height: min(calc(100svh - 480px), 330px);
+  }
+  /* full-bleed cover photo: plain full-width section child */
+  html.lp-v2 .lp2-banner {
+    width: 100%; max-width: none;
+    margin: 0 0 4px;
+    height: 210px;
+    border-radius: 0 0 26px 26px;
+    box-shadow: 0 14px 34px rgba(11, 58, 74, 0.16);
+  }
+  html.lp-v2 .lp2-banner-chip { left: 20px; }
+  html.lp-v2 #landingHeroTitle { font-size: 2rem !important; }
+  /* only the FORM column drops to the bottom — not the ✓-row div */
+  html.lp-v2 section.lp-hero .grid > div:first-child > div:last-of-type {
+    margin-top: auto !important;
+    padding-top: 16px;
+  }
+  html.lp-v2 #landingHeroContent { padding-top: 1rem !important; padding-bottom: 1.5rem !important; }
+}

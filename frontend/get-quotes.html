@@ -51,6 +51,22 @@
       var variant = pm && pm[2];
       var isMobile = window.matchMedia("(max-width: 1023px)").matches;
 
+      // v1/v2/v3 full-theme variants use real photos (lp-photo-*) as hero —
+      // preload those instead of the default illustrations.
+      if (variant && /^v[123]$/.test(variant)) {
+        var lpPhotoMap = { roof:"roof", bath:"bathroom", bathroom:"bathroom", shower:"shower", tub:"tub", windows:"windows", solar:"solar", gutter:"gutter" };
+        var lpKey = lpPhotoMap[svc] || "roof";
+        // v1/v2 use WebP as a CSS background; v3 renders a <picture> whose AVIF wins.
+        var lpExt = (variant === "v3") ? ".avif" : ".webp";
+        var lpType = (variant === "v3") ? "image/avif" : "image/webp";
+        var lp = document.createElement("link");
+        lp.rel = "preload"; lp.as = "image"; lp.fetchPriority = "high";
+        lp.href = "images/lp-photo-" + lpKey + lpExt;
+        lp.type = lpType;
+        document.head.appendChild(lp);
+        return;
+      }
+
       // Variant A: preload the bathroom-remodel hero illustration (desktop or mobile variant)
       if (variant === "a" && (svc === "bath" || svc === "bathroom")) {
         var imgBase = isMobile ? "images/landing/bath-hero-mobile" : "images/landing/bath-hero";
@@ -68,6 +84,29 @@
         l.href = heroImages[svc].replace(/\.(png|jpg|jpeg)$/i, ".avif");
         l.type = "image/avif";
         document.head.appendChild(l);
+      }
+    })();
+  </script>
+
+  <!-- Landing variants v1/v2/v3: set html class + load theme CSS before first paint -->
+  <script>
+    (function() {
+      var m = window.location.pathname.match(/^\/get-quotes\/[a-zA-Z0-9_-]+\/(v[123])\/?$/);
+      if (!m) return;
+      var v = m[1];
+      document.documentElement.classList.add("lp-" + v);
+      var l = document.createElement("link");
+      l.rel = "stylesheet"; l.href = "css/lp-variants.css";
+      document.head.appendChild(l);
+      var fonts = {
+        v1: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap",
+        v2: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bricolage+Grotesque:wght@600;700;800&display=swap",
+        v3: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@700;800;900&display=swap"
+      };
+      if (fonts[v]) {
+        var f = document.createElement("link");
+        f.rel = "stylesheet"; f.href = fonts[v];
+        document.head.appendChild(f);
       }
     })();
   </script>
@@ -308,6 +347,19 @@
     body.va-mode #wizardContainer {
       background: #fff !important;
     }
+
+    /* Back button in the wizard header (all variants) */
+    .wiz-back-btn {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      display: inline-flex; align-items: center; gap: 4px;
+      min-height: 40px; padding: 6px 12px 6px 8px; border-radius: 999px;
+      background: rgba(255,255,255,.92); border: 1px solid #d9dce3; color: #1f2937;
+      font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,.06);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wiz-back-btn:hover { background: #fff; border-color: #b8bdc8; }
+    .wiz-back-btn:active { transform: translateY(-50%) scale(.97); }
+    .wiz-back-btn:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 
     /* Subtle live shimmer + soft glow on the progress bar (variant A only) */
     body.va-mode .progress-bar-fill {
@@ -994,6 +1046,8 @@
 <script src="js/store.js" defer></script>
 <script src="js/tracking.js" defer></script>
 <script src="js/landing-data.js" defer></script>
+<script src="js/lp-icons.js" defer></script>
+<script src="js/lp-variants.js" defer></script>
 
 <!-- ═══ SERVICE LANDING PAGE (shown first before wizard) ═══ -->
 <div id="landingPage" class="text-gray-700 overflow-x-hidden min-h-screen bg-white" style="display:none;flex-direction:column;">
@@ -1126,6 +1180,10 @@
   <!-- Wizard Header -->
   <div>
     <div class="relative flex items-center justify-center px-4 sm:px-6 pt-3 sm:pt-4 pb-2">
+      <button type="button" id="backBtn" onclick="wizardBackClick()" aria-label="Go back to the previous question" class="wiz-back-btn" style="display:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Back</span>
+      </button>
       <a href="/" onclick="_allowNavigation=true;store.resetAll();" class="flex items-center cursor-pointer">
         <img src="images/landing/quickhomefix_Logo2.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" />
       </a>
@@ -1576,13 +1634,23 @@ document.addEventListener("DOMContentLoaded", function() {
     svc = "bathroom";
   }
   currentLandingService = svc;
+  // v1/v2/v3 are full standalone themes — they opt out of variant-A chrome entirely.
+  var _isLpV = /^v[123]$/.test(window._landingVariant);
   // Variant A is the default bathroom hero now; /orig opts back into the original layout.
-  if ((svc === "bathroom" && window._landingVariant !== "orig") || svc === "shower") {
+  if (!_isLpV && ((svc === "bathroom" && window._landingVariant !== "orig") || svc === "shower")) {
     document.body.classList.add("va-mode");
   }
 
   // Resume in-progress wizard if user came back via upsell/switchService
-  if (store.state.isFormStarted && store.formData.service === svc && store.currentStep > 0) {
+  if (store.state.isFormStarted && store.formData.service === svc && store.currentStep > 0 && store.currentStep <= getServiceFlow(svc).steps.length && store.getCurrentStepName() !== "complete") {
+    showWizard();
+    renderCurrentStep();
+  }
+  // v1 = Modernize model: no marketing landing — the URL IS the form.
+  // Straight into the wizard at step one.
+  else if (window._landingVariant === "v1") {
+    store.updateFormData("service", svc);
+    store.setStep(1);
     showWizard();
     renderCurrentStep();
   }
@@ -1629,11 +1697,13 @@ function showLandingPage(svc) {
   document.getElementById("landingPage").style.display = "flex";
   document.getElementById("wizardContainer").style.display = "none";
 
+  // v1/v2/v3 are full standalone themes — never variant A/B.
+  var _lpV = /^v[123]$/.test(window._landingVariant);
   // Variant A is now the default bathroom hero. /orig opts back into the original layout.
   // Walk-in shower uses the same variant-A treatment by default (its own banner art).
-  window._isHeroVariantA = ((window._landingVariant !== "orig") && (svc === "bathroom" || svc === "bath")) || (svc === "shower") || (svc === "windows");
+  window._isHeroVariantA = !_lpV && (((window._landingVariant !== "orig") && (svc === "bathroom" || svc === "bath")) || (svc === "shower") || (svc === "windows"));
   // Variant B: bathroom + /b path → keep original layout/design, only swap the copy
-  window._isHeroVariantB = (window._landingVariant === "b") && (svc === "bathroom" || svc === "bath");
+  window._isHeroVariantB = !_lpV && (window._landingVariant === "b") && (svc === "bathroom" || svc === "bath");
 
 
 
@@ -1838,6 +1908,9 @@ function showLandingPage(svc) {
     return '<div class="border border-gray-200 rounded-lg"><button type="button" onclick="toggleLandingFaq('+i+')" class="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left"><span class="text-base font-semibold text-gray-900 leading-snug">'+f.question+'</span><svg id="lfaqChevron'+i+'" class="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></button><div id="lfaqAnswer'+i+'" class="hidden px-4 sm:px-6 pb-4 animate-expand"><p class="text-[15px] text-gray-600 leading-relaxed">'+f.answer+'</p></div></div>';
   }).join("");
 
+  // v1/v2/v3 full-theme variants: copy swaps + injected sections (lp-variants.js)
+  if (window.applyLandingVariant) applyLandingVariant(svc);
+
   window.scrollTo({top:0, behavior:"instant"});
 }
 
@@ -1981,6 +2054,7 @@ function renderCurrentStep() {
     buildThumbTackContractors();
   } else if (stepName === "service-selection") {
     document.getElementById("step-service-selection").classList.add("active");
+    document.getElementById("wizardProgress").style.width = progress + "%";
     if (document.body.classList.contains("va-mode")) enhanceServiceSelectionVariantA();
   } else if (radioStepConfigs[stepName]) {
     renderRadioStep(stepName, progress);
@@ -1989,7 +2063,28 @@ function renderCurrentStep() {
   // Scroll top
   window.scrollTo({top:0,behavior:"instant"});
   document.getElementById("wizardContainer").scrollTo({top:0,behavior:"instant"});
+
+  // Keep one history entry above the page while a previous question exists,
+  // so the phone/browser Back button steps back through the form (popstate
+  // below) instead of leaving the site.
+  if (step > 1 && stepName !== "complete" && !(history.state && history.state.qhfWizard)) {
+    try { history.pushState({ qhfWizard: true }, ""); } catch (e) { /* ignore */ }
+  }
 }
+
+// On-screen Back: once the first question is reached, drop the extra history
+// entry too, so the next phone Back leaves the page in one press.
+function wizardBackClick() {
+  wizardBack();
+  if (store.currentStep <= 1 && history.state && history.state.qhfWizard) history.back();
+}
+
+window.addEventListener("popstate", function() {
+  var wiz = document.getElementById("wizardContainer");
+  if (!wiz || wiz.style.display === "none") return;
+  var name = store.getCurrentStepName();
+  if (store.currentStep > 1 && name && name !== "complete") wizardBack();
+});
 
 function renderRadioStep(stepName, progress) {
   const config = radioStepConfigs[stepName];
@@ -2046,6 +2141,9 @@ function wizardBack() {
 }
 
 function submitZipcode() {
+  // ZIP auto-advances on the 5th digit (lp-variants.js); a tap on Next in the
+  // same moment must not advance a second time and skip the next question.
+  if (store.getCurrentStepName() !== "zipcode") return;
   var zip = document.getElementById("zipInput").value;
   if (!zip || zip.length < 5) {
     document.getElementById("zipError").textContent = "Please enter a valid 5-digit zip code";
@@ -2142,6 +2240,7 @@ function submitRadioStep() {
   if (!currentRadioValue) return;
   var stepName = store.getCurrentStepName();
   var config = radioStepConfigs[stepName];
+  if (!config) return; // a late auto-advance/double tap after the step already moved on
   if (config && config.event) {
     var selected = null;
     for (var i = 0; i < config.options.length; i++) {
