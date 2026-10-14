@@ -59,7 +59,7 @@ const serviceLandingData = {
       // QHF-FIX: word change
       { question: "What is included in a bathroom remodel?", answer: "Tile, fixtures, vanity, shower, and layout changes." },
       { question: "What is a walk-in tub?", answer: "A tub with a door for easy entry without climbing." },
-      { question: "Is a walk-in shower good for seniors?", answer: "Yes, it reduces the risk of slips and falls." },
+      { question: "Who is a walk-in shower good for?", answer: "Anyone who wants an easier, step-in shower with a low or no threshold." },
       { question: "How disruptive is a bathroom remodel?", answer: "Work is typically done room by room to minimise disruption." }
     ]
   },
@@ -89,7 +89,7 @@ const serviceLandingData = {
       // QHF-FIX: word change
       { question: "What is included in a bathroom remodel?", answer: "Tile, fixtures, vanity, shower, and layout changes." },
       { question: "What is a walk-in tub?", answer: "A tub with a door for easy entry without climbing." },
-      { question: "Is a walk-in shower good for seniors?", answer: "Yes, it reduces the risk of slips and falls." },
+      { question: "Who is a walk-in shower good for?", answer: "Anyone who wants an easier, step-in shower with a low or no threshold." },
       { question: "How disruptive is a bathroom remodel?", answer: "Work is typically done room by room to minimise disruption." }
     ]
   },
@@ -118,7 +118,7 @@ const serviceLandingData = {
     faqs: [
       // QHF-FIX: word change
       { question: "What is a walk-in tub?", answer: "A tub with a door so you do not have to climb over the side." },
-      { question: "Is it safe for seniors?", answer: "Yes, it is designed for safe and easy bathing." },
+      { question: "How do you get in a walk-in tub?", answer: "Through a door in the side, so there is no high wall to climb over." },
       { question: "What are hydrotherapy jets?", answer: "Water jets that help relax muscles and joints." },
       { question: "Are safety features included?", answer: "Most models include grab bars and non-slip flooring." }
     ]
@@ -131,10 +131,10 @@ const serviceLandingData = {
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Walk-In Shower Installation & Conversion",
     overviewSubtitle: "Safe, low-maintenance walk-in showers for accessibility and style:", // QHF-FIX: word change
-    overviewBenefits: ["Available in most States","Shower remodeling options","Low-threshold barrier-free entry","Built-in seating & grab bars","Anti-slip flooring options","Modern glass & tile finishes"], // QHF-FIX: word change
+    overviewBenefits: ["Available in most States","Shower remodeling options","Low-threshold, curbless entry","Built-in seating & grab bars","Anti-slip flooring options","Modern glass & tile finishes"], // QHF-FIX: word change
     features: [
       { title: "Walk-In Shower", desc: "Shower with no step or barrier at entry." }, // QHF-FIX: word change
-      { title: "Barrier-Free Entry", desc: "Flat floor entry for full accessibility." }, // QHF-FIX: word change
+      { title: "Curbless Entry", desc: "Flat floor entry for full accessibility." }, // QHF-FIX: word change
       { title: "Custom Finishes", desc: "Tile and glass options in many styles." } // QHF-FIX: word change
     ],
     advantages: [
@@ -172,7 +172,7 @@ const serviceLandingData = {
       // QHF-FIX: word change
       { title: "Energy Savings", desc: "New windows reduce heat and cold coming in." },
       { title: "Noise Reduction", desc: "Thicker glass reduces outside noise." },
-      { title: "UV Protection", desc: "Special glass blocks harmful UV rays." },
+      { title: "UV Protection", desc: "Low-E glass blocks most UV rays." },
       { title: "Curb Appeal", desc: "New windows improve the look of your home." }
     ],
     // ANGI EXHIBIT A COMPLIANCE: removed fabricated testimonial reviews (Category 9E — no contractor name/location; render block removed)

@@ -495,11 +495,11 @@
       faqs: [["Can I use another bathroom during the work?", "Yes — work is contained to the room being remodeled."], ["Do I pick the materials?", "Yes. Pros typically walk you through options and samples."], ["Does a remodel need permits?", "Some work does — your pro handles what applies locally."]]
     },
     shower: {
-      factors: [["Shower size", "Larger enclosures need more tile and glass."], ["Entry style", "Barrier-free entries involve floor work."], ["Glass & tile choices", "Framed vs frameless, standard vs custom tile."], ["Plumbing relocation", "Moving the drain or valves adds work."], ["Demolition needs", "Removing an old tub or stall first."], ["Local labor", "Rates differ from region to region."]],
-      options: [["Walk-in shower", "Open entry with no step.", "Common choice"], ["Tub-to-shower conversion", "Replace an unused tub with a shower.", ""], ["Barrier-free", "Flat floor entry for full accessibility.", ""], ["Glass enclosure", "Framed or frameless glass panels.", ""]],
+      factors: [["Shower size", "Larger enclosures need more tile and glass."], ["Entry style", "Curbless entries involve floor work."], ["Glass & tile choices", "Framed vs frameless, standard vs custom tile."], ["Plumbing relocation", "Moving the drain or valves adds work."], ["Demolition needs", "Removing an old tub or stall first."], ["Local labor", "Rates differ from region to region."]],
+      options: [["Walk-in shower", "Open entry with no step.", "Common choice"], ["Tub-to-shower conversion", "Replace an unused tub with a shower.", ""], ["Curbless entry", "Flat floor entry for full accessibility.", ""], ["Glass enclosure", "Framed or frameless glass panels.", ""]],
       signsTitle: "Signs a walk-in shower makes sense",
-      signs: ["Stepping over the tub feels risky", "The tub rarely gets used as a tub", "Cleaning the old enclosure is a chore", "Caulk or grout keeps failing", "You want a more open, modern look", "Planning to age in place"],
-      faqs: [["How long does a conversion take?", "Many conversions finish in days, not weeks — your pro will confirm."], ["Can grab bars be added?", "Yes, and it's easiest to plan them from the start."], ["Is a curb-free entry possible in my home?", "Often yes — a pro checks your floor structure first."]]
+      signs: ["Stepping over the tub feels risky", "The tub rarely gets used as a tub", "Cleaning the old enclosure is a chore", "Caulk or grout keeps failing", "You want a more open, modern look", "You want a bathroom that is easier to use"],
+      faqs: [["How long does a conversion take?", "Many conversions finish in days, not weeks — your pro will confirm."], ["Can grab bars be added?", "Yes, and it's easiest to plan them from the start."], ["Is a curbless entry possible in my home?", "Often yes — a pro checks your floor structure first."]]
     },
     tub: {
       factors: [["Tub model & features", "Soaking, air jets, and hydrotherapy differ."], ["Door & seal type", "Inward vs outward door designs."], ["Plumbing adjustments", "Fill and drain speed may need upgrades."], ["Electrical work", "Jets and heaters need safe wiring."], ["Old tub removal", "Taking out the existing tub or shower."], ["Local labor", "Rates differ from region to region."]],
@@ -527,7 +527,7 @@
       options: [["Seamless aluminum", "Formed on-site with fewer joints.", "Common choice"], ["Steel", "Extra strength for harsh weather.", ""], ["Copper", "Premium look that patinas over time.", ""], ["With guards", "Keeps leaves and debris out.", ""]],
       signsTitle: "Signs your gutters need attention",
       signs: ["Water spilling over the edges", "Sagging or pulling away from the fascia", "Peeling paint or stains on siding", "Pooling water near the foundation", "Rust spots or visible cracks", "Plants sprouting in the gutter"],
-      faqs: [["How often should gutters be replaced?", "Decades for most materials — condition matters more than age."], ["Are guards worth it?", "They cut cleaning dramatically in leafy areas."], ["Can gutters be repaired instead?", "Sometimes — a pro will tell you if sections can be saved."]]
+      faqs: [["How often should gutters be replaced?", "Decades for most materials — condition matters more than how old they are."], ["Are guards worth it?", "They cut cleaning dramatically in leafy areas."], ["Can gutters be repaired instead?", "Sometimes — a pro will tell you if sections can be saved."]]
     }
   };
   LP_V3.bath = LP_V3.bathroom;

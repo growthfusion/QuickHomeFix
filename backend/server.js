@@ -43,7 +43,7 @@ const LP_CAMPAIGNS = {
   WALK_IN_TUBS:  { id: process.env.LP_CAMPAIGN_TUB, supplier: process.env.LP_SUPPLIER_TUB, key: process.env.LP_KEY_TUB },
   GUTTERS:       { id: process.env.LP_CAMPAIGN_GUTTERS || "", supplier: "", key: "" },
   GUTTER_COVERS: { id: process.env.LP_CAMPAIGN_GUTTERS || "", supplier: "", key: "" },
-  SOLAR:         { id: process.env.LP_CAMPAIGN_SOLAR || "", supplier: "", key: "" },
+  SOLAR:         { id: process.env.LP_CAMPAIGN_SOLAR, supplier: process.env.LP_SUPPLIER_SOLAR, key: process.env.LP_KEY_SOLAR },
 };
 const LP_ENABLED = true;
 
@@ -508,9 +508,10 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
   const isBath = normalizedService === "BATH_REMODEL" || normalizedService === "WALK_IN_SHOWERS";
   const bathOptIn = isBath ? (normalizeBathOptIn(data.bathNeeds) || "Yes") : "";
   const isTub = normalizedService === "WALK_IN_TUBS";
+  const isSolar = normalizedService === "SOLAR";
 
-  // --- DIRECT POST: Windows, Bath, Tub, Roofing use direct_post (no ping/post) ---
-  if (isWindows || isBath || isTub || isRoofing) {
+  // --- DIRECT POST: Windows, Bath, Tub, Roofing, Solar use direct_post (no ping/post) ---
+  if (isWindows || isBath || isTub || isRoofing || isSolar) {
     const tubInterestDirect = isTub ? (normalizeWalkInTubInterest(data.tubReason || data.bathNeeds) || "Safety") : "";
     const roofMaterialDirect = isRoofing
       ? (normalizeRoofingMaterial(data.material || data.roofingType) || roofingMaterialFromService(normalizedService))
@@ -521,6 +522,8 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
       ? "https://quickhomefix.pro/get-quotes/bath"
       : isTub
       ? "https://quickhomefix.pro/get-quotes/tub"
+      : isSolar
+      ? "https://quickhomefix.pro/get-quotes/solar"
       : "https://quickhomefix.pro/get-quotes/roof";
 
     const directPayload = {
@@ -552,6 +555,7 @@ async function sendLeadProsperPingThenPost(data, { clientIp, userAgent }) {
       ...(isBath ? { OptIn1: bathOptIn } : {}),
       ...(isTub ? { Interest: tubInterestDirect } : {}),
       ...(isRoofing ? { RoofingPlan: normalizeRoofingPlan(data.roofingType) } : {}),
+      ...(isSolar ? { tcpa_consent: "Yes" } : {}),
       rt_ad:     String(data.rt_ad     || ""),
       fbclid:    String(data.fbclid    || ""),
       clickid:   String(data.clickid   || ""),

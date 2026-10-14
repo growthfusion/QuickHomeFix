@@ -1144,6 +1144,8 @@
           <div class="flex items-center gap-2 mb-3"><picture><source srcset="images/landing/quickhomefix_Logo.avif" type="image/avif" /><source srcset="images/landing/quickhomefix_Logo.webp" type="image/webp" /><img src="images/landing/quickhomefix_Logo.png" alt="QuickHomeFix" class="h-12 w-auto object-contain" width="48" height="48" /></picture></div>
           <!-- ANGI EXHIBIT A COMPLIANCE: removed "top-rated" unsubstantiated claim (Category 2) -->
           <p class="text-sm leading-relaxed">Connecting homeowners with local professionals.</p>
+          <!-- ANGI EXHIBIT A ("purporting to be a local pro"): state that we refer requests to independent pros -->
+          <p id="qhfFooterDisclosure" class="text-xs leading-relaxed mt-2 text-gray-500">QuickHomeFix is a referral service. We match homeowners with independent home improvement professionals and do not perform the work.</p>
         </div>
         <div>
           <h4 class="text-white text-sm font-semibold mb-3">Services</h4>
@@ -1406,7 +1408,7 @@
               <!-- ANGI EXHIBIT A COMPLIANCE: removed "free" (Category 1 prohibited incentive framing) -->
               <div class="flex items-center justify-center gap-1.5 mt-3 text-gray-400 text-xs">
                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                <span>Encrypted form, competitive quotes</span>
+                <span>Encrypted form</span>
               </div>
               <p class="text-[10px] leading-snug text-gray-400 mt-4">
                 By submitting, you authorize QuickHomeFix and up to
@@ -1476,6 +1478,15 @@
           </div>
         </div>
 
+        <!-- ④ Angi widget — shown when LP returns cjLeadKey + redirect_url (Angi buyer accepted) -->
+        <div id="angiMatchSection" style="display:none" class="qhf-more-section">
+          <div style="max-width:640px;margin:0 auto;padding:24px 20px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center;">
+            <p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#111827;">Your Pros Are Ready</p>
+            <p style="margin:0 0 18px;font-size:13px;color:#6b7280;line-height:1.5;">Your request was matched with local pros on Angi. View them now to review and schedule.</p>
+            <a id="angiMatchLink" href="#" rel="noopener" style="display:inline-block;background:#f97316;color:#fff;font-weight:600;font-size:15px;padding:12px 28px;border-radius:10px;text-decoration:none;">View My Pros</a>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1491,7 +1502,7 @@
           <div class="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
             <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           </div>
-          <span class="text-sm font-semibold text-gray-800">Trusted Site</span>
+          <span class="text-sm font-semibold text-gray-800">Secure Site</span>
           <span id="trustDate" class="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full ml-1"></span>
         </div>
         <div class="grid grid-cols-4 divide-x divide-gray-100 bg-white">
@@ -1503,8 +1514,8 @@
           <div class="flex flex-col items-center py-4 px-1">
             <svg class="w-6 h-6 sm:w-7 sm:h-7 text-yellow-500 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
             <!-- ANGI EXHIBIT A COMPLIANCE: removed "Guaranteed" / "100% satisfaction" (Category 8 prohibited claim) -->
-            <span class="text-[10px] sm:text-xs font-semibold text-gray-800">Quality Work</span>
-            <span class="text-[8px] sm:text-[10px] text-gray-400 text-center leading-tight mt-0.5">Trusted service</span>
+            <span class="text-[10px] sm:text-xs font-semibold text-gray-800">No Obligation</span>
+            <span class="text-[8px] sm:text-[10px] text-gray-400 text-center leading-tight mt-0.5">No purchase required</span>
           </div>
           <div class="flex flex-col items-center py-4 px-1">
             <svg class="w-6 h-6 sm:w-7 sm:h-7 text-green-500 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1524,6 +1535,8 @@
 
   <!-- Footer -->
   <footer class="px-4 sm:px-6 py-4 border-t border-gray-100">
+    <!-- ANGI EXHIBIT A ("purporting to be a local pro"): v1 skips the landing page, so the wizard footer carries it too -->
+    <p class="text-[11px] leading-snug text-gray-400 text-center max-w-xl mx-auto mb-2">QuickHomeFix is a referral service. We match homeowners with independent home improvement professionals and do not perform the work.</p>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-gray-400">
       <span>&copy; <script>document.write(new Date().getFullYear())</script> QuickHomeFix. All rights reserved.</span>
       <span class="hidden sm:inline">|</span>
@@ -1784,19 +1797,9 @@ function showLandingPage(svc) {
     if (trustP) {
       trustP.innerHTML =
         '<svg class="inline-block w-3.5 h-3.5 -mt-0.5 mr-1 text-blue-200/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>' +
-        'We match you with up to 3 local pros — never 50 spammers · <span id="vaLiveCount">12,047</span> homeowners matched';
+        'Takes about 2 minutes. No obligation.';
     }
 
-    // Live-ticking counter — bumps every 3.5s by 1, scoped to variant A
-    if (!window._vaCountTimer) {
-      window._vaCountTimer = setInterval(function() {
-        var el = document.getElementById("vaLiveCount");
-        if (!el) return;
-        var n = parseInt(el.textContent.replace(/,/g, ""), 10) || 12047;
-        n += 1;
-        el.textContent = n.toLocaleString("en-US");
-      }, 3500);
-    }
 
     // Autofocus the ZIP input (skip on small touch screens so keyboard doesn't pop unexpectedly)
     var zipInput = document.getElementById("landingZipInput");
@@ -2691,7 +2694,35 @@ function formatPhoneForAiro(phone) {
   return d;
 }
 
+// Angi (via LeadProsper direct_post) returns cjLeadKey + redirect_url on ACCEPTED.
+// LP test requests return the literal string "test", so require a real angi.com https URL.
+function getAngiMatch(result) {
+  var pr = result && result.partnerDelivery && result.partnerDelivery.postResponse;
+  if (!pr || String(pr.status || "").toUpperCase() !== "ACCEPTED") return null;
+  var url = String(pr.redirect_url || pr.redirectUrl || "");
+  try {
+    var u = new URL(url);
+    if (u.protocol !== "https:" || !/(^|\.)angi\.com$/i.test(u.hostname)) return null;
+  } catch (e) { return null; }
+  return { url: url, cjLeadKey: pr.cjLeadKey || "" };
+}
+
+function showAngiMatch(match) {
+  document.getElementById("thumbtackContractorsSection").style.display = "none";
+  var section = document.getElementById("angiMatchSection");
+  var link = document.getElementById("angiMatchLink");
+  if (!section || !link) return;
+  link.href = match.url;
+  link.onclick = function() {
+    if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_click", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
+  };
+  section.style.display = "block";
+}
+
 function buildThumbTackContractors() {
+  var angiMatch = getAngiMatch(store.state.leadResponse);
+  if (angiMatch) { showAngiMatch(angiMatch); return; }
+
   var lpAccepted = store.state.leadResponse && store.state.leadResponse.contractorApptsAccepted === true;
 
   if (lpAccepted) {
@@ -2776,9 +2807,13 @@ function ttcLoadIconFont() {
   if (document.querySelector('link[href*="Material+Symbols"]')) return;
   var l = document.createElement("link");
   l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block";
+  // icon_names subset: ~7 KB instead of the 1.1 MB full font (names must stay alphabetical)
+  l.href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" +
+    "&icon_names=bathtub,home_repair_service,location_on,person,roofing,schedule,shower,solar_power,star,star_half,water_drop,window&display=block";
   document.head.appendChild(l);
 }
+
+ttcLoadIconFont(); // early, so the font is ready before the results render
 
 /* Placeholder-avatar icon for the current service */
 function ttcServiceIcon() {
@@ -3363,6 +3398,12 @@ var _allowNavigation = true;
 @keyframes qhfFadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @keyframes qhfGridIn { to { opacity:1; transform:translateY(0); } }
 
+/* Wizard: the trust badge follows the step content instead of being pushed
+   to the bottom of a 100vh column (left a big empty band on short steps).
+   v1/v2/v3 already do this in lp-variants.css. */
+#wizardMain { flex:0 0 auto; }
+#trustBadge { padding-top:24px; }
+
 /* ② Contractors grid */
 .qhf-more-section { padding:16px; }
 @media (min-width:640px)  { #thumbtackContractorsSection { padding:24px 28px; } }
@@ -3371,7 +3412,7 @@ var _allowNavigation = true;
 @media (min-width:1536px) { #thumbtackContractorsSection { padding:32px 48px 48px; } }
 
 /* ── Contractor card (Bathremodelhub results-card system) ── */
-.material-symbols-outlined { font-family:"Material Symbols Outlined"; font-weight:normal; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; display:inline-block; white-space:nowrap; direction:ltr; -webkit-font-smoothing:antialiased; font-variation-settings:"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+.material-symbols-outlined { font-family:"Material Symbols Outlined"; font-weight:normal; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; display:inline-block; white-space:nowrap; width:1em; height:1em; overflow:hidden; /* a font that fails to load must never spill the ligature name */ direction:ltr; -webkit-font-smoothing:antialiased; font-variation-settings:"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
 .material-symbols-outlined.star-filled { font-variation-settings:"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
 .ttc-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 2px rgba(15,23,42,.06); transition:box-shadow .2s ease,border-color .2s ease; }
 .ttc-card-link { cursor:pointer; }
