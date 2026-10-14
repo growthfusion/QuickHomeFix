@@ -2489,6 +2489,8 @@ function doLeadSubmit(phone, btn) {
           postCode: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.code,
           postMessage: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.message,
           reason: result.partnerDelivery && (result.partnerDelivery.reason || result.partnerDelivery.error),
+          redirectUrl: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.redirect_url,
+          cjLeadKey: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.cjLeadKey,
         }));
       }
       btn.disabled = false; btn.textContent = "Submit";
@@ -2698,11 +2700,13 @@ function formatPhoneForAiro(phone) {
   return d;
 }
 
-// Angi (via LeadProsper direct_post) returns cjLeadKey + redirect_url on ACCEPTED.
+// Angi hands back cjLeadKey + redirect_url as soon as its PING is accepted, so load the
+// widget whenever LP's response carries that link — even if the final post status is ERROR.
 // LP test requests return the literal string "test", so require a real angi.com https URL.
 function getAngiMatch(result) {
-  var pr = result && result.partnerDelivery && result.partnerDelivery.postResponse;
-  if (!pr || String(pr.status || "").toUpperCase() !== "ACCEPTED") return null;
+  var pd = result && result.partnerDelivery;
+  var pr = pd && (pd.postResponse || pd.partnerResponse);
+  if (!pr) return null;
   var url = String(pr.redirect_url || pr.redirectUrl || "");
   try {
     var u = new URL(url);
