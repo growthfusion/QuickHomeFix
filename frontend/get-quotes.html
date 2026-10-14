@@ -2718,15 +2718,25 @@ function buildThumbTackContractors() {
 
   // Skeleton grid (matches final card layout)
   var skeletonHtml = '<div class="' + TT_GRID_CLASS + '">';
-  for (var i = 0; i < 4; i++) {
-    skeletonHtml += '<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col animate-pulse">' +
-      '<div class="w-full bg-gray-200" style="height:160px"></div>' +
-      '<div class="p-4 flex-1 space-y-2">' +
-        '<div class="h-4 bg-gray-200 rounded w-3/4"></div>' +
-        '<div class="h-3 bg-gray-200 rounded w-1/2"></div>' +
-        '<div class="h-3 bg-gray-200 rounded w-2/3"></div>' +
+  for (var i = 0; i < 3; i++) {
+    skeletonHtml += '<div class="ttc-card ttc-skel" aria-hidden="true">' +
+      '<div class="ttc-body">' +
+        '<div class="ttc-head">' +
+          '<div class="ttc-avatar-wrap"><div class="ttc-sk ttc-sk-avatar"></div></div>' +
+          '<div class="ttc-head-text">' +
+            '<div class="ttc-sk" style="height:18px;width:62%;margin-bottom:8px"></div>' +
+            '<div class="ttc-sk" style="height:14px;width:48%"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ttc-sk" style="height:14px;width:100%;margin-bottom:8px"></div>' +
+        '<div class="ttc-sk" style="height:14px;width:82%;margin-bottom:14px"></div>' +
+        '<div style="display:flex;gap:16px;margin-bottom:6px">' +
+          '<div class="ttc-sk" style="height:12px;width:96px"></div>' +
+          '<div class="ttc-sk" style="height:12px;width:120px"></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="px-4 pb-4"><div class="h-10 bg-gray-200 rounded-xl"></div></div>' +
+      '<div class="ttc-sk ttc-sk-cta"></div>' +
+      '<div class="ttc-sk" style="height:10px;width:56%;margin:0 auto 16px"></div>' +
     '</div>';
   }
   skeletonHtml += '</div>';
@@ -2777,6 +2787,12 @@ function ttcServiceIcon() {
             bath:"bathtub", bathroom:"bathtub", tub:"bathtub", shower:"shower" })[svc] || "home_repair_service";
 }
 
+/* Broken/blocked photo -> service-icon avatar instead of a broken image */
+function ttcAvatarFail(img) {
+  img.onerror = null;
+  img.outerHTML = '<div class="ttc-avatar-fallback"><span class="material-symbols-outlined">' + ttcServiceIcon() + '</span></div>';
+}
+
 /* Build a single contractor card (Bathremodelhub results-card layout). */
 function buildBizCard(biz) {
   ttcLoadIconFont();
@@ -2795,7 +2811,7 @@ function buildBizCard(biz) {
 
   // Avatar (initials when there is no photo)
   var avatarHtml = safePhoto
-    ? '<img src="' + safePhoto + '" alt="' + name + '" class="ttc-avatar-img" loading="lazy" decoding="async">'
+    ? '<img src="' + safePhoto + '" alt="' + name + '" class="ttc-avatar-img" loading="lazy" decoding="async" onerror="ttcAvatarFail(this)">'
     : '<div class="ttc-avatar-fallback"><span class="material-symbols-outlined">' + ttcServiceIcon() + '</span></div>';
 
   // Stars (Material Symbols, half-star aware)
@@ -3412,8 +3428,13 @@ var _allowNavigation = true;
   .ttc-cta-note { margin:-8px 16px 12px; }
 }
 
-/* v1/v2/v3 variants: no contractor photo on result cards (default page keeps it) */
-html.lp-v1 .ttc-avatar-wrap, html.lp-v2 .ttc-avatar-wrap, html.lp-v3 .ttc-avatar-wrap { display:none; }</style>
+/* Loading skeleton: same shape as .ttc-card, shimmer sweep */
+.ttc-skel { cursor:default; }
+.ttc-sk { border-radius:6px; background:linear-gradient(90deg,#eef2f7 0%,#e2e8f0 40%,#eef2f7 80%); background-size:200% 100%; animation:ttcShimmer 1.3s ease-in-out infinite; }
+.ttc-sk-avatar { width:56px; height:56px; border-radius:50%; }
+.ttc-sk-cta { height:48px; margin:10px 18px 14px; border-radius:8px; }
+@keyframes ttcShimmer { from { background-position:100% 0; } to { background-position:-100% 0; } }
+@media (prefers-reduced-motion:reduce) { .ttc-sk { animation:none; } }</style>
 
 <script>
 (function () {
