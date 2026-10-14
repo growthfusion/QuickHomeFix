@@ -2705,7 +2705,10 @@ function getAngiMatch(result) {
     var u = new URL(url);
     if (u.protocol !== "https:" || !/(^|\.)angi\.com$/i.test(u.hostname)) return null;
   } catch (e) { return null; }
-  return { url: url, cjLeadKey: pr.cjLeadKey || "" };
+  // showWidget comes back as true/"true"; anything explicitly false means don't embed.
+  var sw = pr.showWidget;
+  var showWidget = !(sw === false || String(sw).toLowerCase() === "false");
+  return { url: url, cjLeadKey: pr.cjLeadKey || "", showWidget: showWidget };
 }
 
 function showAngiMatch(match) {
@@ -2714,8 +2717,14 @@ function showAngiMatch(match) {
   var frame = document.getElementById("angiWidgetFrame");
   var link = document.getElementById("angiMatchLink");
   if (!section || !frame || !link) return;
-  frame.src = match.url;
   link.href = match.url;
+  if (match.showWidget) {
+    frame.src = match.url;
+  } else {
+    // LP/Angi says no widget for this lead — hide the frame, keep the link as the CTA.
+    frame.parentNode.style.display = "none";
+    link.textContent = "View my matched pros";
+  }
   link.onclick = function() {
     if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_click", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
   };
