@@ -2750,6 +2750,7 @@ function buildThumbTackContractors() {
       businesses.forEach(function(biz) { wrap.appendChild(buildBizCard(biz)); });
       while (container.firstChild) container.removeChild(container.firstChild);
       container.appendChild(wrap);
+      requestAnimationFrame(revealTtcReadMore);
     })
     .catch(function() {
       container.innerHTML = "";
@@ -2760,8 +2761,25 @@ function _esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* Build a single contractor card matching screenshot layout. */
+/* Material Symbols icon font for the result cards (same icons as Bathremodelhub) */
+function ttcLoadIconFont() {
+  if (document.querySelector('link[href*="Material+Symbols"]')) return;
+  var l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block";
+  document.head.appendChild(l);
+}
+
+/* Placeholder-avatar icon for the current service */
+function ttcServiceIcon() {
+  var svc = (typeof store !== "undefined" && store.formData && store.formData.service) || "";
+  return ({ roof:"roofing", windows:"window", solar:"solar_power", gutter:"water_drop",
+            bath:"bathtub", bathroom:"bathtub", tub:"bathtub", shower:"shower" })[svc] || "home_repair_service";
+}
+
+/* Build a single contractor card (Bathremodelhub results-card layout). */
 function buildBizCard(biz) {
+  ttcLoadIconFont();
   var name     = _esc(biz.businessName || "Local Pro");
   var address  = _esc(biz.businessLocation || "");
   var rating   = parseFloat(biz.rating || 0);
@@ -2771,98 +2789,94 @@ function buildBizCard(biz) {
   var years    = parseInt(biz.yearsInBusiness || 0, 10);
   var hires    = parseInt(biz.numberOfHires || 0, 10);
   var rawIntro = String(biz.businessIntroduction || "");
-  var rawQuote    = String(biz.featuredReview || "");
-  var rawReviewer = String(biz.featuredReviewerName || "");
   var rawCta   = String((biz.widgets && biz.widgets.requestFlowURL) || (biz.widgets && biz.widgets.servicePageURL) || biz.servicePageURL || "");
   var safePhoto = /^https?:\/\//.test(rawPhoto) ? rawPhoto : "";
   var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
 
-  // Intro: 95 chars then inline Read More (expands in place)
-  var introText = rawIntro.length > 95 ? _esc(rawIntro.slice(0, 95).replace(/\s+\S*$/, "")) + "&hellip;" : _esc(rawIntro);
-  var introMore = rawIntro.length > 95
-    ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawIntro) + '">Read More +</button>'
-    : '';
-
-  // Avatar
+  // Avatar (initials when there is no photo)
   var avatarHtml = safePhoto
-    ? '<img src="' + safePhoto + '" alt="' + name + '" class="ttc-avatar-img" loading="lazy">'
-    : (function() {
-        var w = name.trim().split(/\s+/);
-        var ini = w.length >= 2 ? (w[0][0] + w[w.length-1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
-        return '<div class="ttc-avatar-fallback">' + ini + '</div>';
-      })();
+    ? '<img src="' + safePhoto + '" alt="' + name + '" class="ttc-avatar-img" loading="lazy" decoding="async">'
+    : '<div class="ttc-avatar-fallback"><span class="material-symbols-outlined">' + ttcServiceIcon() + '</span></div>';
 
-  // Stars
-  var fullStars = Math.round(rating);
+  // Stars (Material Symbols, half-star aware)
   var starsHtml = '';
-  var starPath = 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z';
+  var fullStars = Math.floor(rating);
+  var halfStar  = rating - fullStars >= 0.5;
   for (var s = 0; s < 5; s++) {
-    starsHtml += '<svg class="ttc-star ' + (s < fullStars ? 'ttc-star-on' : 'ttc-star-off') + '" viewBox="0 0 24 24"><path d="' + starPath + '"/></svg>';
+    if (s < fullStars)                    starsHtml += '<span class="material-symbols-outlined ttc-star star-filled">star</span>';
+    else if (s === fullStars && halfStar) starsHtml += '<span class="material-symbols-outlined ttc-star">star_half</span>';
+    else                                  starsHtml += '<span class="material-symbols-outlined ttc-star ttc-star-off">star</span>';
   }
 
-  // Meta rows
-  var PIN  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
-  var CLK  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2"/></svg>';
-  var PPL  = '<svg class="ttc-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>';
-
+  // Stats: one wrapping row, blue icons
+  var PIN = '<span class="material-symbols-outlined ttc-meta-icon">location_on</span>';
+  var CLK = '<span class="material-symbols-outlined ttc-meta-icon">schedule</span>';
+  var PPL = '<span class="material-symbols-outlined ttc-meta-icon">person</span>';
   var metaHtml = '';
-  if (address) metaHtml += '<div class="ttc-meta-row">' + PIN + '<span>' + address + '</span></div>';
+  if (address)   metaHtml += '<div class="ttc-meta-row">' + PIN + '<span>' + address + '</span></div>';
   if (years > 0) metaHtml += '<div class="ttc-meta-row">' + CLK + '<span>' + years + ' years in business</span></div>';
   if (hires > 0) metaHtml += '<div class="ttc-meta-row">' + PPL + '<span>Hired ' + hires + ' times</span></div>';
 
-  // Top Pro badge
   var topProHtml = isTopPro
-    ? '<span class="ttc-toppro-badge"><svg class="ttc-toppro-star" viewBox="0 0 24 24"><path d="' + starPath + '"/></svg>Top Pro</span>'
+    ? '<span class="ttc-toppro-badge"><span class="material-symbols-outlined star-filled ttc-toppro-star">star</span>Top Pro</span>'
     : '';
 
-  // Build card HTML
-  var card = document.createElement("div");
-  card.className = "ttc-card";
-  // Rating line sits under the name (header), not in a separate box
   var ratingHtml = rating > 0
     ? '<div class="ttc-stars-row">' +
         '<div class="ttc-stars">' + starsHtml + '</div>' +
         '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
-        (reviews ? '<span class="ttc-reviews">(' + reviews + (reviews === 1 ? ' review' : ' reviews') + ')</span>' : '') +
+        (reviews ? '<span class="ttc-reviews">&ndash; ' + reviews + (reviews === 1 ? ' review' : ' reviews') + '</span>' : '') +
       '</div>'
     : '';
 
-  var quoteHtml = '';
-  if (rawQuote) {
-    var quoteShort = rawQuote.length > 110 ? _esc(rawQuote.slice(0, 110).replace(/\s+\S*$/, "")) + "&hellip;" : _esc(rawQuote);
-    var quoteMore  = rawQuote.length > 110
-      ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawQuote) + '">Read More +</button>'
-      : '';
-    quoteHtml = '<div class="ttc-review-box">' +
-      '<p class="ttc-quote">&ldquo;' + quoteShort + '&rdquo;' + quoteMore + '</p>' +
-      (rawReviewer ? '<p class="ttc-reviewer">&mdash; ' + _esc(rawReviewer) + '</p>' : '') +
-    '</div>';
-  }
+  // Full intro goes in; CSS clamps it to 2 lines. "Read more" is revealed
+  // only when the text is actually clipped (see revealTtcReadMore).
+  var introHtml = rawIntro
+    ? '<div class="ttc-intro">' +
+        '<span class="ttc-text-clamp">' + _esc(rawIntro) + '</span>' +
+        '<button type="button" class="ttc-readmore" aria-expanded="false" hidden>Read more</button>' +
+      '</div>'
+    : '';
 
-  var ARROW = '<svg class="ttc-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>';
-
+  var card = document.createElement("div");
+  card.className = "ttc-card";
   card.innerHTML =
-    '<div class="ttc-head">' +
-      '<div class="ttc-avatar-wrap">' + avatarHtml + '</div>' +
-      '<div class="ttc-head-text">' +
-        '<div class="ttc-name-row">' +
-          '<h4 class="ttc-name">' + name + '</h4>' + topProHtml +
-        '</div>' +
-        ratingHtml +
-      '</div>' +
-    '</div>' +
     '<div class="ttc-body">' +
-      (rawIntro ? '<p class="ttc-intro">' + introText + introMore + '</p>' : '') +
+      '<div class="ttc-head">' +
+        '<div class="ttc-avatar-wrap">' + avatarHtml + '</div>' +
+        '<div class="ttc-head-text">' +
+          '<div class="ttc-name-row"><h4 class="ttc-name">' + name + '</h4>' + topProHtml + '</div>' +
+          ratingHtml +
+        '</div>' +
+      '</div>' +
+      introHtml +
       (metaHtml ? '<div class="ttc-meta">' + metaHtml + '</div>' : '') +
-      quoteHtml +
     '</div>' +
     (safeCta
-      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '"><span>Request Quote</span>' + ARROW + '</a>'
+      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '">Continue to project details</a>' +
+        '<p class="ttc-cta-note">A few quick questions. No obligation.</p>'
       : '');
   if (safeCta) card.classList.add("ttc-card-link");
 
   return card;
 }
+
+/* Show "Read more" only on cards whose intro is actually clamped.
+   Must run while the grid is visible (hidden elements measure 0). */
+function revealTtcReadMore() {
+  document.querySelectorAll(".ttc-intro").forEach(function(box) {
+    var text = box.querySelector(".ttc-text-clamp");
+    var btn  = box.querySelector(".ttc-readmore");
+    if (!text || !btn) return;
+    if (text.classList.contains("expanded")) { btn.hidden = false; return; }
+    btn.hidden = !(text.scrollHeight > text.clientHeight + 1);
+  });
+}
+(function() {
+  var t;
+  window.addEventListener("resize", function() { clearTimeout(t); t = setTimeout(revealTtcReadMore, 150); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(revealTtcReadMore);
+})();
 
 function _deadcode_oldBizCard() {
   // ─── old DOM-manipulation code preserved for reference ──────────────────
@@ -3340,76 +3354,62 @@ var _allowNavigation = true;
 @media (min-width:1024px) { #thumbtackContractorsSection { padding:28px 40px 40px; } }
 @media (min-width:1536px) { #thumbtackContractorsSection { padding:32px 48px 48px; } }
 
-/* ── Contractor card ── */
-.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04); transition:box-shadow .2s,transform .2s,border-color .2s; }
+/* ── Contractor card (Bathremodelhub results-card system) ── */
+.material-symbols-outlined { font-family:"Material Symbols Outlined"; font-weight:normal; font-style:normal; line-height:1; letter-spacing:normal; text-transform:none; display:inline-block; white-space:nowrap; direction:ltr; -webkit-font-smoothing:antialiased; font-variation-settings:"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+.material-symbols-outlined.star-filled { font-variation-settings:"FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
+.ttc-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 2px rgba(15,23,42,.06); transition:box-shadow .2s ease,border-color .2s ease; }
 .ttc-card-link { cursor:pointer; }
-.ttc-card-link:hover { box-shadow:0 10px 24px rgba(15,23,42,.10); border-color:#c7d2fe; transform:translateY(-2px); }
-.ttc-card-link:active { transform:translateY(0); }
+.ttc-card-link:hover { border-color:#94a3b8; box-shadow:0 4px 12px rgba(15,23,42,.10); }
+.ttc-body { padding:16px 18px 4px; flex:1; display:flex; flex-direction:column; }
 
-/* Header: avatar + name + rating */
-.ttc-head { display:flex; align-items:center; gap:14px; padding:18px 18px 0; }
+/* Header: avatar beside name + badge + rating */
+.ttc-head { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
 .ttc-avatar-wrap { flex-shrink:0; }
-.ttc-avatar-img { width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #fff; box-shadow:0 0 0 2px #dbeafe; display:block; }
-.ttc-avatar-fallback { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#2563eb,#1e40af); color:#fff; font-weight:800; font-size:21px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px #dbeafe; letter-spacing:.02em; }
+.ttc-avatar-img { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0; display:block; }
+.ttc-avatar-fallback { width:56px; height:56px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #e2e8f0; }
+.ttc-avatar-fallback .material-symbols-outlined { font-size:26px; color:#fff; }
 .ttc-head-text { min-width:0; flex:1; }
-.ttc-name-row { display:flex; align-items:center; gap:4px 8px; flex-wrap:wrap; margin-bottom:5px; }
-.ttc-name { font-weight:700; font-size:18px; color:#0f172a; line-height:1.25; letter-spacing:-.01em; }
-.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:999px; padding:2px 8px; font-size:11.5px; font-weight:700; white-space:nowrap; }
-.ttc-toppro-star { width:11px; height:11px; fill:#F59E0B; }
-.ttc-stars-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.ttc-stars { display:flex; gap:2px; }
-.ttc-star { width:16px; height:16px; }
-.ttc-star-on  { fill:#F59E0B; }
-.ttc-star-off { fill:#E5E7EB; }
-.ttc-rating { font-weight:700; font-size:14.5px; color:#0f172a; }
-.ttc-reviews { font-size:13.5px; color:#64748b; }
+.ttc-name-row { display:flex; align-items:center; gap:6px 8px; flex-wrap:wrap; min-width:0; }
+.ttc-name { font-weight:600; font-size:18px; color:#0f172a; line-height:1.3; }
+.ttc-card-link:hover .ttc-name { text-decoration:underline; color:#2563eb; }
+.ttc-toppro-badge { display:inline-flex; align-items:center; gap:3px; background:#FEF3C7; color:#B45309; border:1px solid #FDE68A; border-radius:999px; padding:2px 8px; font-size:13px; font-weight:600; white-space:nowrap; flex-shrink:0; }
+.ttc-toppro-star { font-size:10px !important; color:#D97706; }
+.ttc-stars-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:3px; }
+.ttc-stars { display:flex; align-items:center; gap:1px; }
+.ttc-star { font-size:14px !important; color:#FBBF24; }
+.ttc-star-off { color:#E5E7EB; }
+.ttc-rating { font-weight:700; font-size:15px; color:#0f172a; }
+.ttc-reviews { font-size:14px; color:#334155; white-space:nowrap; }
 
-/* Body */
-.ttc-body { padding:12px 18px 14px; flex:1; display:flex; flex-direction:column; }
-.ttc-intro { font-size:14.5px; color:#475569; line-height:1.55; margin-bottom:12px; }
-.ttc-readmore { color:#1d4ed8; font-weight:600; font-size:14.5px; text-decoration:none; white-space:nowrap; }
-.ttc-readmore:hover { text-decoration:underline; }
-.ttc-expand-btn { background:none; border:none; padding:0; cursor:pointer; }
+/* Intro: 2-line clamp + Read more */
+.ttc-intro { font-size:16px; color:#0f172a; line-height:1.5; margin-bottom:10px; }
+.ttc-text-clamp { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.ttc-text-clamp.expanded { display:block; -webkit-line-clamp:unset; }
+.ttc-readmore { background:none; border:0; padding:6px 0; color:#2563eb; font-weight:600; font-size:15px; line-height:1; cursor:pointer; display:inline-block; text-decoration:underline; text-underline-offset:3px; font-family:inherit; }
+.ttc-readmore[hidden] { display:none; }
 
-/* Meta chips */
-.ttc-meta { display:flex; flex-wrap:wrap; gap:6px; }
-.ttc-meta-row { display:inline-flex; align-items:center; gap:5px; font-size:13px; color:#334155; font-weight:500; background:#f1f5f9; border-radius:999px; padding:5px 10px; }
-.ttc-meta-icon { width:14px; height:14px; flex-shrink:0; color:#64748b; }
+/* Stats: one wrapping row */
+.ttc-meta { display:flex; flex-wrap:wrap; gap:4px 16px; margin-bottom:4px; }
+.ttc-meta-row { display:flex; align-items:center; gap:5px; font-size:14px; color:#334155; line-height:1.5; }
+.ttc-meta-icon { font-size:15px !important; flex-shrink:0; color:#2563eb; }
 
-/* Review quote */
-.ttc-review-box { background:#F8FAFC; border-left:3px solid #bfdbfe; border-radius:8px; padding:9px 12px; margin-top:12px; }
-.ttc-quote { font-size:13.5px; color:#475569; line-height:1.55; font-style:italic; }
-.ttc-reviewer { font-size:12.5px; color:#94a3b8; margin-top:3px; font-style:normal; }
-
-/* CTA */
-.ttc-cta { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; margin:0 18px 18px; padding:13px 20px; background:#1d4ed8; color:#fff; font-weight:700; font-size:16px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 4px 12px rgba(29,78,216,.30); -webkit-tap-highlight-color:transparent; }
-.ttc-cta-arrow { width:18px; height:18px; transition:transform .2s; }
-.ttc-cta:hover, .ttc-card-link:hover .ttc-cta { background:#1e40af; box-shadow:0 6px 18px rgba(29,78,216,.40); }
-.ttc-card-link:hover .ttc-cta-arrow { transform:translateX(3px); }
-.ttc-cta:active { background:#1e3a8a; }
+/* CTA: pressed-edge primary button + reassurance note */
+.ttc-cta { display:flex; align-items:center; justify-content:center; min-height:48px; margin:10px 18px 18px; padding:0 16px; background:#2563eb; color:#fff; font-weight:600; font-size:16px; border-radius:8px; text-align:center; text-decoration:none; box-shadow:0 3px 0 #0b1f4d; transition:background .15s ease,box-shadow .15s ease,transform .15s ease; -webkit-tap-highlight-color:transparent; }
+.ttc-cta:hover, .ttc-card-link:hover .ttc-cta { background:#1d4ed8; }
+.ttc-cta:active { background:#1d4ed8; box-shadow:0 0 0 #0b1f4d; transform:translateY(3px); }
 .ttc-cta:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }
+.ttc-cta-note { margin:-10px 18px 14px; text-align:center; font-size:13px; color:#334155; }
 
-/* ── Mobile compact: first card (incl. CTA) fits above the fold ── */
+/* ── Mobile: compact banner so the first card sits above the fold ── */
 @media (max-width:639px) {
   .qhf-banner-content { padding:16px 16px 14px; }
   .qhf-banner-heading { font-size:20px; margin-bottom:4px; }
   .qhf-banner-sub { font-size:14px; line-height:1.45; }
   .qhf-more-section { padding:12px; }
-
-  .ttc-card { border-radius:14px; }
-  .ttc-head { gap:12px; padding:14px 14px 0; }
-  .ttc-avatar-img, .ttc-avatar-fallback { width:52px; height:52px; font-size:17px; }
-  .ttc-name { font-size:17px; }
-  .ttc-star { width:14px; height:14px; }
-  .ttc-rating { font-size:14px; }
-  .ttc-reviews { font-size:13px; }
-  .ttc-body { padding:10px 14px 12px; }
-  .ttc-intro { font-size:13.5px; line-height:1.5; margin-bottom:10px; }
-  .ttc-readmore { font-size:13.5px; }
-  .ttc-meta-row { font-size:12.5px; padding:4px 9px; }
-  .ttc-review-box { margin-top:10px; padding:8px 10px; }
-  .ttc-quote { font-size:13px; line-height:1.5; }
-  .ttc-cta { margin:0 14px 14px; min-height:46px; padding:12px 16px; font-size:15.5px; }
+  .ttc-body { padding:14px 16px 2px; }
+  .ttc-intro { font-size:15px; }
+  .ttc-cta { margin:8px 16px 16px; }
+  .ttc-cta-note { margin:-8px 16px 12px; }
 }
 
 /* v1/v2/v3 variants: no contractor photo on result cards (default page keeps it) */
@@ -3477,27 +3477,22 @@ html.lp-v1 .ttc-avatar-wrap, html.lp-v2 .ttc-avatar-wrap, html.lp-v3 .ttc-avatar
   });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePopup(); });
 
-  // Inline "Read More" expand — replaces truncated text with full text
+  // "Read more" / "Read less" toggles the 2-line clamp on the intro
   document.addEventListener("click", function (e) {
-    var btn = e.target.closest(".ttc-expand-btn");
-    if (btn) {
-      var full = btn.dataset.full || "";
-      var parent = btn.parentNode;
-      if (parent) {
-        // Replace the last text node + the button with the full text
-        var nodes = Array.prototype.slice.call(parent.childNodes);
-        nodes.forEach(function(n) { if (n.nodeType === 3 || n === btn) parent.removeChild(n); });
-        parent.appendChild(document.createTextNode(full));
-      }
-      return;
-    }
+    var btn = e.target.closest(".ttc-readmore");
+    if (!btn) return;
+    var text = btn.parentNode && btn.parentNode.querySelector(".ttc-text-clamp");
+    if (!text) return;
+    var expanded = text.classList.toggle("expanded");
+    btn.textContent = expanded ? "Read less" : "Read more";
+    btn.setAttribute("aria-expanded", expanded ? "true" : "false");
   });
 
   // Delegated click on dynamically rendered CTA buttons
   document.addEventListener("click", function (e) {
     var link = e.target.closest(".js-tt-cta");
     // Tapping anywhere on a contractor card opens its quote request
-    if (!link && !e.target.closest(".ttc-expand-btn, a, button")) {
+    if (!link && !e.target.closest("a, button")) {
       var card = e.target.closest(".ttc-card-link");
       if (card) link = card.querySelector(".js-tt-cta");
     }
