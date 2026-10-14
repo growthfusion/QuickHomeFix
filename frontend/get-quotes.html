@@ -2486,6 +2486,9 @@ function doLeadSubmit(phone, btn) {
           postBuyerId: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.buyer_id,
           pingBids: result.partnerDelivery && result.partnerDelivery.pingResponse && result.partnerDelivery.pingResponse.bids,
           postStatus: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.status,
+          postCode: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.code,
+          postMessage: result.partnerDelivery && result.partnerDelivery.postResponse && result.partnerDelivery.postResponse.message,
+          reason: result.partnerDelivery && (result.partnerDelivery.reason || result.partnerDelivery.error),
         }));
       }
       btn.disabled = false; btn.textContent = "Submit";
