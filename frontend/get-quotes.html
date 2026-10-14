@@ -1984,7 +1984,6 @@ function renderCurrentStep() {
   // Trust badge visibility
   const trust = document.getElementById("trustBadge");
   const stepName = store.getCurrentStepName();
-
   if (step === 0 || !stepName) {
     window.location.replace("/");
     return;
@@ -2646,7 +2645,7 @@ function loadAiroWidget(formData) {
   }
 }
 
-var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5";
+var TT_GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 items-start";
 
 
 var AIRO_TRADE_MAP = {
@@ -2779,7 +2778,7 @@ function buildBizCard(biz) {
   var safeCta   = /^https?:\/\//.test(rawCta) ? rawCta : "";
 
   // Intro: 95 chars then inline Read More (expands in place)
-  var introText = rawIntro.length > 95 ? _esc(rawIntro.slice(0, 95)) : _esc(rawIntro);
+  var introText = rawIntro.length > 95 ? _esc(rawIntro.slice(0, 95).replace(/\s+\S*$/, "")) + "&hellip;" : _esc(rawIntro);
   var introMore = rawIntro.length > 95
     ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawIntro) + '">Read More +</button>'
     : '';
@@ -2819,35 +2818,48 @@ function buildBizCard(biz) {
   // Build card HTML
   var card = document.createElement("div");
   card.className = "ttc-card";
+  // Rating line sits under the name (header), not in a separate box
+  var ratingHtml = rating > 0
+    ? '<div class="ttc-stars-row">' +
+        '<div class="ttc-stars">' + starsHtml + '</div>' +
+        '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
+        (reviews ? '<span class="ttc-reviews">(' + reviews + (reviews === 1 ? ' review' : ' reviews') + ')</span>' : '') +
+      '</div>'
+    : '';
+
+  var quoteHtml = '';
+  if (rawQuote) {
+    var quoteShort = rawQuote.length > 110 ? _esc(rawQuote.slice(0, 110).replace(/\s+\S*$/, "")) + "&hellip;" : _esc(rawQuote);
+    var quoteMore  = rawQuote.length > 110
+      ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawQuote) + '">Read More +</button>'
+      : '';
+    quoteHtml = '<div class="ttc-review-box">' +
+      '<p class="ttc-quote">&ldquo;' + quoteShort + '&rdquo;' + quoteMore + '</p>' +
+      (rawReviewer ? '<p class="ttc-reviewer">&mdash; ' + _esc(rawReviewer) + '</p>' : '') +
+    '</div>';
+  }
+
+  var ARROW = '<svg class="ttc-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
   card.innerHTML =
-    '<div class="ttc-avatar-wrap">' + avatarHtml + '</div>' +
-    '<div class="ttc-body">' +
-      '<div class="ttc-name-row">' +
-        '<h4 class="ttc-name">' + name + '</h4>' + topProHtml +
+    '<div class="ttc-head">' +
+      '<div class="ttc-avatar-wrap">' + avatarHtml + '</div>' +
+      '<div class="ttc-head-text">' +
+        '<div class="ttc-name-row">' +
+          '<h4 class="ttc-name">' + name + '</h4>' + topProHtml +
+        '</div>' +
+        ratingHtml +
       '</div>' +
+    '</div>' +
+    '<div class="ttc-body">' +
       (rawIntro ? '<p class="ttc-intro">' + introText + introMore + '</p>' : '') +
       (metaHtml ? '<div class="ttc-meta">' + metaHtml + '</div>' : '') +
-      (rating > 0
-        ? (function() {
-            var quoteShort = rawQuote.length > 110 ? _esc(rawQuote.slice(0, 110)) : _esc(rawQuote);
-            var quoteMore  = rawQuote.length > 110
-              ? ' <button type="button" class="ttc-readmore ttc-expand-btn" data-full="' + _esc(rawQuote) + '">Read More +</button>'
-              : '';
-            return '<div class="ttc-review-box">' +
-              '<div class="ttc-stars-row">' +
-                '<div class="ttc-stars">' + starsHtml + '</div>' +
-                '<span class="ttc-rating">' + rating.toFixed(2) + '</span>' +
-                (reviews ? '<span class="ttc-reviews"> &ndash; ' + reviews + ' reviews</span>' : '') +
-              '</div>' +
-              (rawQuote ? '<p class="ttc-quote">&ldquo;' + quoteShort + quoteMore + '&rdquo;</p>' +
-                (rawReviewer ? '<p class="ttc-reviewer">&mdash; ' + _esc(rawReviewer) + '</p>' : '') : '') +
-            '</div>';
-          })()
-        : '') +
+      quoteHtml +
     '</div>' +
     (safeCta
-      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '">Request Quote</a>'
+      ? '<a href="' + safeCta + '" class="ttc-cta js-tt-cta" data-biz-name="' + name + '"><span>Request Quote</span>' + ARROW + '</a>'
       : '');
+  if (safeCta) card.classList.add("ttc-card-link");
 
   return card;
 }
@@ -3225,7 +3237,6 @@ var _allowNavigation = true;
 /* ── Content ── */
 .qhf-banner-content {
   position:relative; z-index:2;
-  max-width:1280px; margin:0 auto;
   padding:32px 20px;
 }
 .qhf-banner-left { max-width:520px; }
@@ -3297,50 +3308,85 @@ var _allowNavigation = true;
 
 /* ② Contractors grid */
 .qhf-more-section { padding:16px; }
+@media (min-width:640px)  { #thumbtackContractorsSection { padding:24px 28px; } }
+/* Desktop: full-width grid (no centered container), same side padding as the banner text */
+@media (min-width:1024px) { #thumbtackContractorsSection { padding:28px 40px 40px; } }
+@media (min-width:1536px) { #thumbtackContractorsSection { padding:32px 48px 48px; } }
 
 /* ── Contractor card ── */
-.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .2s; }
-.ttc-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.09); }
+.ttc-card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04); transition:box-shadow .2s,transform .2s,border-color .2s; }
+.ttc-card-link { cursor:pointer; }
+.ttc-card-link:hover { box-shadow:0 10px 24px rgba(15,23,42,.10); border-color:#c7d2fe; transform:translateY(-2px); }
+.ttc-card-link:active { transform:translateY(0); }
 
-/* Avatar */
-.ttc-avatar-wrap { display:flex; justify-content:center; padding:22px 16px 0; }
-.ttc-avatar-img { width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #e5e7eb; }
-.ttc-avatar-fallback { width:90px; height:90px; border-radius:50%; background:#1e40af; color:#fff; font-weight:800; font-size:26px; display:flex; align-items:center; justify-content:center; border:3px solid #dbeafe; letter-spacing:.02em; }
+/* Header: avatar + name + rating */
+.ttc-head { display:flex; align-items:center; gap:14px; padding:18px 18px 0; }
+.ttc-avatar-wrap { flex-shrink:0; }
+.ttc-avatar-img { width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #fff; box-shadow:0 0 0 2px #dbeafe; display:block; }
+.ttc-avatar-fallback { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#2563eb,#1e40af); color:#fff; font-weight:800; font-size:21px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px #dbeafe; letter-spacing:.02em; }
+.ttc-head-text { min-width:0; flex:1; }
+.ttc-name-row { display:flex; align-items:center; gap:4px 8px; flex-wrap:wrap; margin-bottom:5px; }
+.ttc-name { font-weight:700; font-size:18px; color:#0f172a; line-height:1.25; letter-spacing:-.01em; }
+.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:999px; padding:2px 8px; font-size:11.5px; font-weight:700; white-space:nowrap; }
+.ttc-toppro-star { width:11px; height:11px; fill:#F59E0B; }
+.ttc-stars-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ttc-stars { display:flex; gap:2px; }
+.ttc-star { width:16px; height:16px; }
+.ttc-star-on  { fill:#F59E0B; }
+.ttc-star-off { fill:#E5E7EB; }
+.ttc-rating { font-weight:700; font-size:14.5px; color:#0f172a; }
+.ttc-reviews { font-size:13.5px; color:#64748b; }
 
 /* Body */
-.ttc-body { padding:16px 18px 12px; flex:1; display:flex; flex-direction:column; }
-.ttc-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
-.ttc-name { font-weight:700; font-size:19px; color:#111827; line-height:1.2; }
-.ttc-toppro-badge { display:inline-flex; align-items:center; gap:4px; background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; border-radius:5px; padding:3px 8px; font-size:12px; font-weight:700; white-space:nowrap; }
-.ttc-toppro-star { width:11px; height:11px; fill:#F59E0B; }
-
-/* Intro */
-.ttc-intro { font-size:15px; color:#6b7280; line-height:1.65; margin-bottom:14px; }
-.ttc-readmore { color:#1e40af; font-weight:600; font-size:15px; text-decoration:none; white-space:nowrap; }
+.ttc-body { padding:12px 18px 14px; flex:1; display:flex; flex-direction:column; }
+.ttc-intro { font-size:14.5px; color:#475569; line-height:1.55; margin-bottom:12px; }
+.ttc-readmore { color:#1d4ed8; font-weight:600; font-size:14.5px; text-decoration:none; white-space:nowrap; }
 .ttc-readmore:hover { text-decoration:underline; }
 .ttc-expand-btn { background:none; border:none; padding:0; cursor:pointer; }
 
-/* Meta */
-.ttc-meta { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; }
-.ttc-meta-row { display:flex; align-items:center; gap:10px; font-size:15px; color:#374151; font-weight:500; }
-.ttc-meta-icon { width:18px; height:18px; flex-shrink:0; color:#9ca3af; }
+/* Meta chips */
+.ttc-meta { display:flex; flex-wrap:wrap; gap:6px; }
+.ttc-meta-row { display:inline-flex; align-items:center; gap:5px; font-size:13px; color:#334155; font-weight:500; background:#f1f5f9; border-radius:999px; padding:5px 10px; }
+.ttc-meta-icon { width:14px; height:14px; flex-shrink:0; color:#64748b; }
 
-/* Review box */
-.ttc-review-box { background:#F9FAFB; border:1px solid #F3F4F6; border-radius:10px; padding:12px 14px; margin-bottom:16px; }
-.ttc-stars-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.ttc-stars { display:flex; gap:3px; }
-.ttc-star { width:18px; height:18px; }
-.ttc-star-on  { fill:#F59E0B; }
-.ttc-star-off { fill:#E5E7EB; }
-.ttc-rating { font-weight:700; font-size:16px; color:#111827; }
-.ttc-reviews { font-size:14.5px; color:#9ca3af; }
-.ttc-quote { font-size:14px; color:#6b7280; line-height:1.6; margin-top:9px; font-style:italic; }
-.ttc-reviewer { font-size:13px; color:#9ca3af; margin-top:4px; font-style:normal; }
+/* Review quote */
+.ttc-review-box { background:#F8FAFC; border-left:3px solid #bfdbfe; border-radius:8px; padding:9px 12px; margin-top:12px; }
+.ttc-quote { font-size:13.5px; color:#475569; line-height:1.55; font-style:italic; }
+.ttc-reviewer { font-size:12.5px; color:#94a3b8; margin-top:3px; font-style:normal; }
 
 /* CTA */
-.ttc-cta { display:block; margin:0 16px 16px; padding:15px 20px; background:#1e40af; color:#fff; font-weight:700; font-size:16px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 3px 10px rgba(30,64,175,.3); }
-.ttc-cta:hover { background:#1d3a9f; box-shadow:0 5px 16px rgba(30,64,175,.4); }
-</style>
+.ttc-cta { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; margin:0 18px 18px; padding:13px 20px; background:#1d4ed8; color:#fff; font-weight:700; font-size:16px; border-radius:12px; text-align:center; text-decoration:none; letter-spacing:.01em; transition:background .2s,box-shadow .2s; box-shadow:0 4px 12px rgba(29,78,216,.30); -webkit-tap-highlight-color:transparent; }
+.ttc-cta-arrow { width:18px; height:18px; transition:transform .2s; }
+.ttc-cta:hover, .ttc-card-link:hover .ttc-cta { background:#1e40af; box-shadow:0 6px 18px rgba(29,78,216,.40); }
+.ttc-card-link:hover .ttc-cta-arrow { transform:translateX(3px); }
+.ttc-cta:active { background:#1e3a8a; }
+.ttc-cta:focus-visible { outline:3px solid #93c5fd; outline-offset:2px; }
+
+/* ── Mobile compact: first card (incl. CTA) fits above the fold ── */
+@media (max-width:639px) {
+  .qhf-banner-content { padding:16px 16px 14px; }
+  .qhf-banner-heading { font-size:20px; margin-bottom:4px; }
+  .qhf-banner-sub { font-size:14px; line-height:1.45; }
+  .qhf-more-section { padding:12px; }
+
+  .ttc-card { border-radius:14px; }
+  .ttc-head { gap:12px; padding:14px 14px 0; }
+  .ttc-avatar-img, .ttc-avatar-fallback { width:52px; height:52px; font-size:17px; }
+  .ttc-name { font-size:17px; }
+  .ttc-star { width:14px; height:14px; }
+  .ttc-rating { font-size:14px; }
+  .ttc-reviews { font-size:13px; }
+  .ttc-body { padding:10px 14px 12px; }
+  .ttc-intro { font-size:13.5px; line-height:1.5; margin-bottom:10px; }
+  .ttc-readmore { font-size:13.5px; }
+  .ttc-meta-row { font-size:12.5px; padding:4px 9px; }
+  .ttc-review-box { margin-top:10px; padding:8px 10px; }
+  .ttc-quote { font-size:13px; line-height:1.5; }
+  .ttc-cta { margin:0 14px 14px; min-height:46px; padding:12px 16px; font-size:15.5px; }
+}
+
+/* v1/v2/v3 variants: no contractor photo on result cards (default page keeps it) */
+html.lp-v1 .ttc-avatar-wrap, html.lp-v2 .ttc-avatar-wrap, html.lp-v3 .ttc-avatar-wrap { display:none; }</style>
 
 <script>
 (function () {
@@ -3413,6 +3459,11 @@ var _allowNavigation = true;
   // Delegated click on dynamically rendered CTA buttons
   document.addEventListener("click", function (e) {
     var link = e.target.closest(".js-tt-cta");
+    // Tapping anywhere on a contractor card opens its quote request
+    if (!link && !e.target.closest(".ttc-expand-btn, a, button")) {
+      var card = e.target.closest(".ttc-card-link");
+      if (card) link = card.querySelector(".js-tt-cta");
+    }
     if (!link) return;
     e.preventDefault();
     openPopup(link.getAttribute("href"), link.dataset.bizName || "");

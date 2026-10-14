@@ -1000,7 +1000,8 @@ async function zipToLatLng(zip) {
       return latlng;
     }
   } catch (_) { /* fall through */ }
-  ZIP_LATLNG_CACHE.set(zip, null);
+  // Not cached: a timeout here must not switch off the ZIP filter for this
+  // ZIP for the life of the process.
   return null;
 }
 
@@ -1015,18 +1016,25 @@ app.get("/api/places/autocomplete", async (req, res) => {
     }
 
     const params = { input, key: GOOGLE_API_KEY, types: "address", components: "country:us" };
-    if (zip) {
-      const latlng = await zipToLatLng(String(zip));
-      if (latlng) {
-        params.location = latlng;
-        params.radius = 50000; // 50 km soft bias; does not exclude far results
-      }
+    const latlng = zip ? await zipToLatLng(String(zip)) : null;
+    if (latlng) {
+      params.location = latlng;
+      params.radius = 50000;
+      // Only addresses within 50 km of the ZIP the visitor already gave — a
+      // plain bias still returned streets in other states for short input.
+      params.strictbounds = true;
     }
 
-    const response = await axios.get(
-      "https://maps.googleapis.com/maps/api/place/autocomplete/json",
-      { params }
-    );
+    const fetchPredictions = (p) =>
+      axios.get("https://maps.googleapis.com/maps/api/place/autocomplete/json", { params: p });
+
+    let response = await fetchPredictions(params);
+    // Nothing nearby (typo'd ZIP, address near the edge): fall back to the
+    // biased nationwide search rather than showing an empty list.
+    if (latlng && response.data.status === "ZERO_RESULTS") {
+      const { strictbounds, ...loose } = params;
+      response = await fetchPredictions(loose);
+    }
 
     const { status, error_message, predictions } = response.data;
 
