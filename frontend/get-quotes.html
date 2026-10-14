@@ -3172,10 +3172,16 @@ var _allowNavigation = true;
 
 <!-- ═══ Thumbtack Request Flow Widget — Popup ═══ -->
 <div id="tt-popup-backdrop" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;">
-  <div id="tt-popup-card" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;position:relative;">
-    <button id="tt-popup-close" aria-label="Close" onclick="document.getElementById('tt-popup-backdrop').style.display='none';document.body.style.overflow='';document.getElementById('tt-popup-iframe').src='';" style="position:absolute;top:10px;right:10px;z-index:1;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
+  <div id="tt-popup-card" role="dialog" aria-modal="true" aria-label="Request a quote" style="background:#fff;border-radius:12px;width:860px;max-width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:ttPopIn 0.2s ease;position:relative;">
+    <!-- Mobile-only top bar (popup is full screen on phones) -->
+    <div id="tt-popup-bar">
+      <span id="tt-popup-title">Request a Quote</span>
+      <button type="button" class="tt-popup-close-btn" aria-label="Close">&#x2715;</button>
+    </div>
+    <button id="tt-popup-close" type="button" class="tt-popup-close-btn" aria-label="Close" style="position:absolute;top:10px;right:10px;z-index:1;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#x2715;</button>
     <iframe id="tt-popup-iframe"
       width="860" height="760"
+      title="Request a quote from this pro"
       style="width:860px;height:760px;max-width:100%;display:block;border:none;"
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
       src=""></iframe>
@@ -3184,10 +3190,31 @@ var _allowNavigation = true;
 
 <style>
 @keyframes ttPopIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+#tt-popup-bar { display:none; }
+/* Phones: full-screen overlay (no floating card), slim top bar with close */
 @media (max-width: 660px) {
-  #tt-popup-backdrop { padding: 0; align-items: flex-end; }
-  #tt-popup-card { width: 100%; border-radius: 16px 16px 0 0; animation: ttSlideUp 0.25s ease; }
-  #tt-popup-iframe { width: 100% !important; height: 90vh !important; }
+  /* !important: the popup markup carries inline desktop styles */
+  #tt-popup-backdrop { padding:0 !important; align-items:stretch !important; background:#fff !important; }
+  #tt-popup-card {
+    width:100% !important; max-width:none !important; height:100vh; height:100dvh;
+    border-radius:0 !important; box-shadow:none !important;
+    display:flex; flex-direction:column;
+    animation: ttSlideUp 0.25s ease !important;
+  }
+  #tt-popup-bar {
+    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+    height:52px; padding:0 8px 0 16px; padding-top:env(safe-area-inset-top);
+    box-sizing:content-box; background:#fff; border-bottom:1px solid #e5e7eb;
+  }
+  #tt-popup-title { font-weight:700; font-size:16px; color:#0f172a; }
+  #tt-popup-bar .tt-popup-close-btn {
+    width:40px; height:40px; border:none; border-radius:50%; background:#f1f5f9;
+    color:#0f172a; font-size:18px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #tt-popup-close { display:none !important; }
+  /* fills the rest of the screen; ignores the iframe resize messages */
+  #tt-popup-iframe { flex:1 1 auto; width:100% !important; height:auto !important; min-height:0; padding-bottom:env(safe-area-inset-bottom); box-sizing:border-box; }
 }
 @keyframes ttSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
@@ -3394,6 +3421,13 @@ html.lp-v1 .ttc-avatar-wrap, html.lp-v2 .ttc-avatar-wrap, html.lp-v3 .ttc-avatar
   var iframeEl = document.getElementById("tt-popup-iframe");
 
   function openPopup(url, bizName) {
+    // Only ever frame https Thumbtack pages
+    try {
+      var parsed = new URL(url);
+      var host = parsed.hostname.toLowerCase().replace(/\.$/, "");
+      if (parsed.protocol !== "https:" || (host !== "thumbtack.com" && !/\.thumbtack\.com$/.test(host))) return;
+      url = parsed.href;
+    } catch (err) { return; }
     backdrop.style.display = "flex";
     document.body.style.overflow = "hidden";
     iframeEl.src = url;
@@ -3410,7 +3444,7 @@ html.lp-v1 .ttc-avatar-wrap, html.lp-v2 .ttc-avatar-wrap, html.lp-v3 .ttc-avatar
 
   // Listen for postMessage events from the Thumbtack iframe
   window.addEventListener("message", function (e) {
-    if (!e.origin || e.origin.indexOf("thumbtack.com") === -1) return;
+    if (!/^https:\/\/([a-z0-9-]+\.)*thumbtack\.com$/i.test(e.origin || "")) return;
 
     var raw  = typeof e.data === "string"
                  ? e.data.toLowerCase()
@@ -3438,6 +3472,9 @@ html.lp-v1 .ttc-avatar-wrap, html.lp-v2 .ttc-avatar-wrap, html.lp-v3 .ttc-avatar
 
   // Close on backdrop click / Escape
   backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closePopup(); });
+  Array.prototype.forEach.call(document.querySelectorAll(".tt-popup-close-btn"), function (b) {
+    b.addEventListener("click", closePopup);
+  });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePopup(); });
 
   // Inline "Read More" expand — replaces truncated text with full text
