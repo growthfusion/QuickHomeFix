@@ -1480,11 +1480,12 @@
 
         <!-- ④ Angi widget — shown when LP returns cjLeadKey + redirect_url (Angi buyer accepted) -->
         <div id="angiMatchSection" style="display:none" class="qhf-more-section">
-          <div style="max-width:640px;margin:0 auto;padding:24px 20px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center;">
-            <p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#111827;">Your Pros Are Ready</p>
-            <p style="margin:0 0 18px;font-size:13px;color:#6b7280;line-height:1.5;">Your request was matched with local pros on Angi. View them now to review and schedule.</p>
-            <a id="angiMatchLink" href="#" rel="noopener" style="display:inline-block;background:#f97316;color:#fff;font-weight:600;font-size:15px;padding:12px 28px;border-radius:10px;text-decoration:none;">View My Pros</a>
+          <div style="max-width:900px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
+            <iframe id="angiWidgetFrame" title="Your matched pros" style="display:block;width:100%;height:85vh;min-height:640px;border:0;" allow="geolocation; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           </div>
+          <p style="text-align:center;margin:12px 0 0;font-size:13px;color:#6b7280;">
+            Widget not loading? <a id="angiMatchLink" href="#" target="_blank" rel="noopener" style="color:#2563eb;font-weight:600;">Open my pros in a new tab</a>
+          </p>
         </div>
 
       </div>
@@ -2710,18 +2711,27 @@ function getAngiMatch(result) {
 function showAngiMatch(match) {
   document.getElementById("thumbtackContractorsSection").style.display = "none";
   var section = document.getElementById("angiMatchSection");
+  var frame = document.getElementById("angiWidgetFrame");
   var link = document.getElementById("angiMatchLink");
-  if (!section || !link) return;
+  if (!section || !frame || !link) return;
+  frame.src = match.url;
   link.href = match.url;
   link.onclick = function() {
     if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_click", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
   };
   section.style.display = "block";
+  if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_shown", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
 }
 
 function buildThumbTackContractors() {
   var angiMatch = getAngiMatch(store.state.leadResponse);
   if (angiMatch) { showAngiMatch(angiMatch); return; }
+
+  // Solar sells to Angi only — never show Thumbtack pros, even when Angi didn't match.
+  if (store.formData.service === "solar") {
+    document.getElementById("thumbtackContractorsSection").style.display = "none";
+    return;
+  }
 
   var lpAccepted = store.state.leadResponse && store.state.leadResponse.contractorApptsAccepted === true;
 
