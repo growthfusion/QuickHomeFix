@@ -1520,17 +1520,17 @@
           </div>
         </div>
 
-        <!-- ④ Angi widget — shown when LP returns cjLeadKey + redirect_url (Angi buyer accepted) -->
-        <div id="angiMatchSection" style="display:none" class="qhf-more-section">
-          <!-- Angi sends X-Frame-Options: SAMEORIGIN, so its widget can't be iframed — we redirect to it instead. -->
-          <div style="max-width:640px;margin:0 auto;padding:32px 20px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center;">
-            <div style="width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:angi-spin 0.8s linear infinite;margin:0 auto 16px;"></div>
-            <p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#111827;">Connecting you to your pros…</p>
-            <p style="margin:0 0 18px;font-size:13px;color:#6b7280;line-height:1.5;">You'll be taken to your matched local pros in a moment.</p>
-            <a id="angiMatchLink" href="#" rel="noopener" style="display:inline-block;background:#f97316;color:#fff;font-weight:600;font-size:15px;padding:12px 28px;border-radius:10px;text-decoration:none;">View My Pros Now</a>
-          </div>
-          <style>@keyframes angi-spin { to { transform: rotate(360deg); } }</style>
+        <!-- ④ Angi HCC drop-in widget — shown when LP returns Angi's cjLeadKey (same pattern as Housecrew-Google).
+             Angi rules: the widget must be the only content on the page, and initializeDropIn must run only
+             once the container is visible at full size (a hidden/0x0 container fails silently). -->
+        <div id="angiMatchSection" style="display:none">
+          <div id="angiDropin" class="dropin-container"></div>
         </div>
+        <style>
+          /* Angi's recommended container CSS */
+          #angiDropin { display:block; box-sizing:border-box; width:100%; min-width:375px; height:100vh; min-height:600px; max-height:750px; }
+          @media (min-width:600px) { #angiDropin { max-height:860px; } }
+        </style>
 
       </div>
     </div>
@@ -2803,41 +2803,80 @@ function formatPhoneForAiro(phone) {
   return d;
 }
 
-// Angi hands back cjLeadKey + redirect_url as soon as its PING is accepted, so load the
-// widget whenever LP's response carries that link — even if the final post status is ERROR.
-// LP test requests return the literal string "test", so require a real angi.com https URL.
+// Angi HCC drop-in. Script path carries a build hash — if it 404s, re-check
+// https://api.angi.com/srx/api-spec/setup-instructions (same URL Housecrew-Google uses).
+var ANGI_HCC_SCRIPT = "https://request.angi.com/hcc/dropin-112a615a05e36545.js";
+
+// LeadProsper relays Angi's cjLeadKey (+ redirect_url, showWidget) in its direct_post reply.
+// The drop-in only needs cjLeadKey. LP test requests return the literal "test", so require a real key.
 function getAngiMatch(result) {
   var pd = result && result.partnerDelivery;
   var pr = pd && (pd.postResponse || pd.partnerResponse);
   if (!pr) return null;
-  var url = String(pr.redirect_url || pr.redirectUrl || "");
-  try {
-    var u = new URL(url);
-    if (u.protocol !== "https:" || !/(^|\.)angi\.com$/i.test(u.hostname)) return null;
-  } catch (e) { return null; }
-  // showWidget comes back as true/"true"; anything explicitly false means don't embed.
+  var key = String(pr.cjLeadKey || "").trim();
+  if (!/^[0-9a-f-]{20,}$/i.test(key)) return null;
+  // showWidget comes back as true/"true"; anything explicitly false means Angi doesn't offer the widget.
   var sw = pr.showWidget;
-  var showWidget = !(sw === false || String(sw).toLowerCase() === "false");
-  return { url: url, cjLeadKey: pr.cjLeadKey || "", showWidget: showWidget };
+  if (sw === false || String(sw).toLowerCase() === "false") return null;
+  // Angi test leads carry isTest=true on the redirect_url; the drop-in must be initialized the same way.
+  var url = String(pr.redirect_url || pr.redirectUrl || "");
+  var isTest = /[?&]isTest=true\b/i.test(url) || pr.isTest === true;
+  return { cjLeadKey: key, isTest: isTest };
 }
 
+// Poll until el has real size, then call back (Angi's drop-in fails silently on a 0x0 container).
+function angiWhenVisible(el, cb) {
+  var waited = 0;
+  (function tick() {
+    if (el.offsetWidth > 0 && el.offsetHeight > 0) return cb();
+    waited += 100;
+    if (waited >= 10000) return console.warn("[angi] widget container never became visible; not initializing");
+    setTimeout(tick, 100);
+  })();
+}
+
+var angiMsgBound = false;
 function showAngiMatch(match) {
-  document.getElementById("thumbtackContractorsSection").style.display = "none";
+  // Widget must be the only content on the page (Angi review) — hide our banner and other sections.
+  ["thumbtackContractorsSection", "airoBookingSection"].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.style.display = "none";
+  });
+  var banner = document.querySelector("#step-complete .qhf-success-banner");
+  if (banner) banner.style.display = "none";
+
   var section = document.getElementById("angiMatchSection");
-  var link = document.getElementById("angiMatchLink");
-  if (!section || !link) return;
-  link.href = match.url;
-  link.onclick = function() {
-    if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_click", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
-  };
+  var container = document.getElementById("angiDropin");
+  if (!section || !container) return;
   section.style.display = "block";
   if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_shown", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
 
-  // Give GTM/pixels a moment to flush, then hand the visitor to Angi's widget page.
-  // showWidget=false means Angi doesn't want the auto-hand-off; leave the button as the CTA.
-  if (match.showWidget) {
-    setTimeout(function() { window.location.href = match.url; }, 1500);
+  // Angi posts { event: "pageState", payload: "WidgetLoaded" | "ThankYou" } — forward to GTM.
+  if (!angiMsgBound) {
+    angiMsgBound = true;
+    window.addEventListener("message", function(e) {
+      var host = "";
+      try { host = new URL(e.origin).hostname; } catch (err) { return; }
+      if (!/(^|\.)angi\.com$/.test(host)) return;
+      var d = e.data;
+      if (!d || d.event !== "pageState" || typeof d.payload !== "string") return;
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: "angi_hcc", angiEvent: d.payload });
+    });
   }
+
+  function init() {
+    angiWhenVisible(container, function() {
+      if (typeof window.initializeDropIn === "function") window.initializeDropIn(match.cjLeadKey, match.isTest);
+      else console.warn("[angi] initializeDropIn missing after script load");
+    });
+  }
+  if (typeof window.initializeDropIn === "function") return init();
+  var s = document.createElement("script");
+  s.src = ANGI_HCC_SCRIPT;
+  s.async = true;
+  s.onload = init;
+  s.onerror = function() { console.warn("[angi] failed to load drop-in script", ANGI_HCC_SCRIPT); };
+  document.body.appendChild(s);
 }
 
 function buildThumbTackContractors() {
