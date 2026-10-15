@@ -1442,18 +1442,9 @@
                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                 <span>Encrypted form</span>
               </div>
-              <p class="text-[10px] leading-snug text-gray-400 mt-4">
-                By submitting, you authorize QuickHomeFix and up to
-                <a href="/marketing-partners" target="_blank" class="underline text-blue-600 hover:text-blue-800">four home improvement companies</a>,
-                to make marketing calls and texts to the phone number provided to discuss your home improvement project.
-                You understand some may use auto-dialers, SMS messages, artificial and prerecorded voice messages to contact you.
-                There is no requirement to purchase services. Please see our
-                <a href="/privacy-policy" class="underline text-blue-600 hover:text-blue-800">Privacy Notice</a> and
-                <a href="/terms-of-service" class="underline text-blue-600 hover:text-blue-800">Terms of Use</a>.
-              </p>
               <!-- Angi's required TCPA language — key sentence verbatim from Angi onboarding; "Submit" is our CTA.
                    Keep in sync with ANGI_CONSENT_LANGUAGE in js/tracking.js (that string is what we send to buyers). -->
-              <p class="text-[10px] leading-snug text-gray-400 mt-3" data-tf-element-role="consent-language">
+              <p class="text-[10px] leading-snug text-gray-400 mt-4" data-tf-element-role="consent-language">
                 By clicking &ldquo;Submit&rdquo;, I agree to Angi&rsquo;s
                 <a href="https://www.angi.com/terms" target="_blank" rel="noopener noreferrer" class="underline text-blue-600 hover:text-blue-800">Terms</a> and
                 <a href="https://legal.angi.com/#privacy-policy" target="_blank" rel="noopener noreferrer" class="underline text-blue-600 hover:text-blue-800">Privacy Policy</a>,
@@ -1466,6 +1457,15 @@
                 <span>I agree to the terms and consent to be contacted as described above.</span>
               </label>
               <p id="angiConsentError" class="text-red-500 text-xs mt-1 hidden">Please agree to continue.</p>
+              <p class="text-[10px] leading-snug text-gray-400 mt-3">
+                By submitting, you authorize QuickHomeFix and up to
+                <a href="/marketing-partners" target="_blank" class="underline text-blue-600 hover:text-blue-800">four home improvement companies</a>,
+                to make marketing calls and texts to the phone number provided to discuss your home improvement project.
+                You understand some may use auto-dialers, SMS messages, artificial and prerecorded voice messages to contact you.
+                There is no requirement to purchase services. Please see our
+                <a href="/privacy-policy" class="underline text-blue-600 hover:text-blue-800">Privacy Notice</a> and
+                <a href="/terms-of-service" class="underline text-blue-600 hover:text-blue-800">Terms of Use</a>.
+              </p>
             </form>
           </div>
         </div>

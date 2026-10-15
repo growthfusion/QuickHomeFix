@@ -203,8 +203,8 @@ var QHF_CONSENT_LANGUAGE =
 // Angi's required TCPA language — must match the final-step markup in get-quotes.html word for word.
 var ANGI_CONSENT_LANGUAGE =
   "By clicking “Submit”, I agree to Angi’s Terms and Privacy Policy, and that Angi and its service professionals, or parties acting on their behalf, may use automated technology and prerecorded messages to deliver marketing calls or texts regarding my project and future projects to the number I provided. Consent is not a condition of service.";
-// Sent as tcpa_text: both paragraphs, exactly as the homeowner saw them.
-var HOME_PHONE_CONSENT_LANGUAGE = QHF_CONSENT_LANGUAGE + " " + ANGI_CONSENT_LANGUAGE;
+// Sent as tcpa_text: both paragraphs, in on-page order (Angi first, then ours).
+var HOME_PHONE_CONSENT_LANGUAGE = ANGI_CONSENT_LANGUAGE + " " + QHF_CONSENT_LANGUAGE;
 
 function getLeadpostAttribution(formData) {
   formData = formData || {};
