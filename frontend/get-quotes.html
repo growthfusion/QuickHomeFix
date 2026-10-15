@@ -323,10 +323,42 @@
       }
     }
 
+    /* Roofing + walk-in tub + bath: HouseCrew hero artwork (same variant-A layout as windows) */
+    section.va-hero-section.va-hero-roof { background-color:#daeaf8 !important; background-image:url("images/landing/hero/roof-hero.webp") !important; background-size:cover; background-position:right center; background-repeat:no-repeat; }
+    section.va-hero-section.va-hero-tub,
+    body.va-mode section.va-hero-section:not(.va-hero-shower):not(.va-hero-windows):not(.va-hero-roof) { background-image:url("images/landing/hero/bath-hero.webp") !important; background-size:cover; background-position:right center; background-repeat:no-repeat; }
+    @media (max-width: 1023px) {
+      section.va-hero-section.va-hero-roof { background-image:url("images/landing/hero/roof-hero-mb.webp") !important; background-position:center bottom !important; background-size:100% auto !important; min-height:760px; }
+      section.va-hero-section.va-hero-tub,
+      body.va-mode section.va-hero-section:not(.va-hero-shower):not(.va-hero-windows):not(.va-hero-roof) { background-image:url("images/landing/hero/bath-hero-mb.webp") !important; background-position:center bottom !important; background-size:100% auto !important; min-height:760px; }
+    }
+
+    /* Phones: centered logo (links hidden — white text was invisible on the light hero) and the
+       hero copy + ZIP box sit lower, centered on the full-bleed bath/tub photo */
+    @media (max-width: 1023px) {
+      section.va-hero-section > .relative.z-20 { justify-content: center !important; }
+      section.va-hero-section > .relative.z-20 > div:last-child { display: none !important; }
+      /* HomeBuddy layout: title at the top, artwork in the middle, subtitle + ZIP row at the bottom of the first screen */
+      section.va-hero-section #landingHeroContent.hero-variant-a {
+        min-height: calc(100svh - 64px); display: flex !important; flex-direction: column;
+        padding-top: 8px !important; padding-bottom: 22px !important;
+      }
+      section.va-hero-section #landingHeroContent.hero-variant-a > .grid { flex: 1; display: flex !important; flex-direction: column; }
+      section.va-hero-section #landingHeroContent.hero-variant-a > .grid > div:first-child { flex: 1; display: flex; flex-direction: column; }
+      section.va-hero-section #landingHeroContent.hero-variant-a #landingHeroSubtitle { margin-top: auto !important; margin-bottom: 14px !important; }
+      section.va-hero-section #landingHeroContent.hero-variant-a #landingHeroImage { display: none !important; }
+      /* artwork sits between the title and the form */
+      html body section.va-hero-section.va-hero-roof, html body section.va-hero-section.va-hero-windows, html body section.va-hero-section.va-hero-shower { background-position: center 58% !important; }
+      /* copy now sits over the photo: soft white halo keeps it readable */
+      section.va-hero-section #landingHeroContent.hero-variant-a #landingHeroTitle,
+      section.va-hero-section #landingHeroContent.hero-variant-a #landingHeroSubtitle { text-shadow: 0 0 14px rgba(255,255,255,.95), 0 0 4px rgba(255,255,255,.9); }
+      section.va-hero-section #landingHeroContent.hero-variant-a #landingHeroSubtitle { color: #1e293b !important; }
+    }
+
     /* Windows: variant-A hero with its own banner illustration (overrides bath bg) */
     section.va-hero-section.va-hero-windows {
       background-color: #eaf2fb !important;
-      background-image: url("images/ChatGPT Image May 21, 2026, 04_16_31 PM.png") !important;
+      background-image: url("images/landing/hero/windows-hero.webp") !important; /* HouseCrew hero */
       background-size: cover;
       background-position: right center;
       background-repeat: no-repeat;
@@ -334,7 +366,7 @@
     @media (max-width: 1023px) {
       /* Windows on mobile: illustration as full-bleed background, same treatment as bathroom */
       section.va-hero-section.va-hero-windows {
-        background-image: url("images/ChatGPT Image Jul 14, 2026, 04_13_06 PM (1).png") !important;
+        background-image: url("images/landing/hero/windows-hero-mb.webp") !important; /* HouseCrew mobile hero */
         background-position: center bottom !important;
         background-size: 100% auto !important;
         background-repeat: no-repeat !important;
@@ -1074,7 +1106,7 @@
             <div class="va-cta-wrap flex flex-col sm:flex-row items-stretch gap-2 p-2 rounded-xl border bg-white/10 border-white/20">
               <div class="va-zip-field relative flex-1">
                 <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <input type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" pattern="\d*" id="landingZipInput" placeholder="Enter Your ZIP Code"
+                <input type="text" inputmode="numeric" maxlength="5" autocomplete="postal-code" pattern="\d*" id="landingZipInput" placeholder="Enter ZIP Code"
                   class="w-full bg-white rounded-lg pl-10 pr-4 py-3.5 text-base font-medium text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-400" />
               </div>
               <button onclick="startWizardFromLanding()" class="bg-orange-500 text-white font-bold px-6 py-3.5 rounded-lg whitespace-nowrap text-base flex items-center justify-center gap-2">
@@ -1111,7 +1143,7 @@
   <!-- Features -->
   <section class="py-10 sm:py-12 bg-gray-50">
     <div class="max-w-6xl mx-auto px-5 sm:px-6">
-      <h2 class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">Features</h2>
+      <h2 id="landingFeaturesTitle" class="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-8">Features</h2>
       <div id="landingFeatures" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
   </section>
@@ -1480,12 +1512,14 @@
 
         <!-- ④ Angi widget — shown when LP returns cjLeadKey + redirect_url (Angi buyer accepted) -->
         <div id="angiMatchSection" style="display:none" class="qhf-more-section">
-          <div style="max-width:900px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">
-            <iframe id="angiWidgetFrame" title="Your matched pros" style="display:block;width:100%;height:85vh;min-height:640px;border:0;" allow="geolocation; clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <!-- Angi sends X-Frame-Options: SAMEORIGIN, so its widget can't be iframed — we redirect to it instead. -->
+          <div style="max-width:640px;margin:0 auto;padding:32px 20px;background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);text-align:center;">
+            <div style="width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#f97316;border-radius:50%;animation:angi-spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+            <p style="margin:0 0 6px;font-size:17px;font-weight:700;color:#111827;">Connecting you to your pros…</p>
+            <p style="margin:0 0 18px;font-size:13px;color:#6b7280;line-height:1.5;">You'll be taken to your matched local pros in a moment.</p>
+            <a id="angiMatchLink" href="#" rel="noopener" style="display:inline-block;background:#f97316;color:#fff;font-weight:600;font-size:15px;padding:12px 28px;border-radius:10px;text-decoration:none;">View My Pros Now</a>
           </div>
-          <p style="text-align:center;margin:12px 0 0;font-size:13px;color:#6b7280;">
-            Widget not loading? <a id="angiMatchLink" href="#" target="_blank" rel="noopener" style="color:#2563eb;font-weight:600;">Open my pros in a new tab</a>
-          </p>
+          <style>@keyframes angi-spin { to { transform: rotate(360deg); } }</style>
         </div>
 
       </div>
@@ -1715,7 +1749,7 @@ function showLandingPage(svc) {
   var _lpV = /^v[123]$/.test(window._landingVariant);
   // Variant A is now the default bathroom hero. /orig opts back into the original layout.
   // Walk-in shower uses the same variant-A treatment by default (its own banner art).
-  window._isHeroVariantA = !_lpV && (((window._landingVariant !== "orig") && (svc === "bathroom" || svc === "bath")) || (svc === "shower") || (svc === "windows"));
+  window._isHeroVariantA = !_lpV && (((window._landingVariant !== "orig") && (svc === "bathroom" || svc === "bath")) || (svc === "shower") || (svc === "windows") || (svc === "roof") || (svc === "tub"));
   // Variant B: bathroom + /b path → keep original layout/design, only swap the copy
   window._isHeroVariantB = !_lpV && (window._landingVariant === "b") && (svc === "bathroom" || svc === "bath");
 
@@ -1767,6 +1801,8 @@ function showLandingPage(svc) {
   // Shower and windows swap the variant-A background illustration for their own banner
   if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-shower", svc === "shower");
   if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-windows", svc === "windows");
+  if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-roof", svc === "roof");
+  if (_heroSectionEl) _heroSectionEl.classList.toggle("va-hero-tub", svc === "tub");
 
   var _contractorLinkEl = document.getElementById("heroContractorLink");
   if (_contractorLinkEl) _contractorLinkEl.style.display = window._isHeroVariantA ? "none" : "";
@@ -1774,9 +1810,9 @@ function showLandingPage(svc) {
     var _vaIsShower = (svc === "shower");
     var _vaIsWindows = (svc === "windows");
     // ANGI EXHIBIT A COMPLIANCE: removed "Free" (Category 1 prohibited incentive framing)
-    document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Walk-In Shower Quotes' : _vaIsWindows ? 'Window Replacement Quotes Near You' : 'Bathroom Remodeling Quotes Near You'; // QHF-FIX: word change
+    document.getElementById("landingHeroTitle").textContent = _vaIsShower ? 'Walk-In Shower Quotes' : _vaIsWindows ? 'Window Replacement Quotes Near You' : svc === 'roof' ? 'Roofing Quotes Near You' : svc === 'tub' ? 'Walk-In Tub Quotes Near You' : 'Bathroom Remodeling Quotes Near You'; // QHF-FIX: word change
     // ANGI EXHIBIT A COMPLIANCE: removed "licensed", "Free", absolute "Zero spam calls" claim, and "Compare 3 quotes" (unsubstantiated specific-count claim)
-    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Request walk-in shower quotes in your area. Takes 2 minutes.' : _vaIsWindows ? 'Request window quotes in your area. Takes 2 minutes.' : 'Request bathroom quotes in your area. Takes 2 minutes.'; // QHF-FIX: word change
+    document.getElementById("landingHeroSubtitle").textContent = _vaIsShower ? 'Request walk-in shower quotes in your area. Takes 2 minutes.' : _vaIsWindows ? 'Request window quotes in your area. Takes 2 minutes.' : svc === 'roof' ? 'Request roofing quotes in your area. Takes 2 minutes.' : svc === 'tub' ? 'Request walk-in tub quotes in your area. Takes 2 minutes.' : 'Request bathroom quotes in your area. Takes 2 minutes.'; // QHF-FIX: word change
 
     // Desktop: the banner illustration is the section background (image block hidden via CSS).
     // Mobile: render the illustration inside this block, below the text.
@@ -1869,10 +1905,15 @@ function showLandingPage(svc) {
   document.getElementById("landingOverviewTitle").textContent = data.overviewTitle;
   document.getElementById("landingOverviewSubtitle").textContent = data.overviewSubtitle;
   var overviewImgEl = document.getElementById("landingOverviewImage");
-  var _hideOverviewImageOnMobile = (svc === "bath" || svc === "bathroom" || svc === "windows");
+  // v1/v2/v3 restyle these sections from data.overviewImage / data.features; the
+  // photo overview + image-card grid below are for the original page only
+  var _isLpVariant = /lp-v[123]/.test(document.documentElement.className);
+  var _useSvcPhotos = !_isLpVariant && !!data.overviewPhoto;
+  var _hideOverviewImageOnMobile = !_useSvcPhotos && (svc === "bath" || svc === "bathroom" || svc === "windows");
   if (overviewImgEl) overviewImgEl.classList.toggle("hide-overview-img-mobile", _hideOverviewImageOnMobile);
-  if (data.overviewImage) {
-    var ovSrc = data.overviewImage;
+  if (overviewImgEl) overviewImgEl.classList.toggle("qhf-ov-photo", _useSvcPhotos);
+  if (data.overviewImage || _useSvcPhotos) {
+    var ovSrc = _useSvcPhotos ? data.overviewPhoto : data.overviewImage;
     var ovAvif = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".avif");
     var ovWebp = ovSrc.replace(/\.(png|jpg|jpeg)$/i, ".webp");
     // ANGI EXHIBIT A COMPLIANCE: added stock photo disclosure (Category 9D)
@@ -1891,9 +1932,25 @@ function showLandingPage(svc) {
   // Features
   var featEl = document.getElementById("landingFeatures");
   featEl.innerHTML = "";
+  var featTitleEl = document.getElementById("landingFeaturesTitle");
+  featEl.classList.toggle("qhf-svc-grid", _useSvcPhotos && !!data.serviceCards);
+  if (_useSvcPhotos && data.serviceCards) {
+    if (featTitleEl) featTitleEl.textContent = data.servicesTitle || "Services";
+    featEl.innerHTML = data.serviceCards.map(function(c) {
+      var base = c.img.replace(/.(png|jpg|jpeg)$/i, "");
+      return '<div class="qhf-svc-card"><div class="qhf-svc-img"><picture>' +
+        '<source srcset="' + base + '.avif" type="image/avif" /><source srcset="' + base + '.webp" type="image/webp" />' +
+        '<img src="' + c.img + '" alt="' + c.title + ' (stock photo)" loading="lazy" decoding="async" width="960" height="600" /></picture></div>' +
+        '<h3>' + c.title + '</h3></div>';
+    }).join("") +
+    // ANGI EXHIBIT A: photos show workers — say plainly they are stock, not our or a partner's crew
+    '<p class="qhf-svc-note">Stock photos. Not representative of any specific contractor.</p>';
+  } else {
+  if (featTitleEl) featTitleEl.textContent = "Features";
   data.features.forEach(function(f, i) {
     featEl.innerHTML += '<div class="bg-white rounded-lg border border-gray-200 p-5"><div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mb-3"><span class="text-base font-bold text-blue-600">'+String(i+1).padStart(2,"0")+'</span></div><h3 class="text-base font-bold text-gray-900 mb-1.5">'+f.title+'</h3><p class="text-[15px] text-gray-600 leading-relaxed">'+f.desc+'</p></div>';
   });
+  }
 
   // Advantages
   var advEl = document.getElementById("landingAdvantages");
@@ -1975,7 +2032,35 @@ function formatPhone(val) {
 }
 
 /* ═══ RENDER ═══ */
+/* Phones: the first screen of a form step shows only the step (HomeBuddy
+   pattern) — #wizardMain is stretched to the bottom edge of the viewport so
+   the trust badge + footer start just below the fold. Measured at runtime
+   because the chrome above the step differs per variant (banner, tracker). */
+var _fitFoldWidth = 0;
+function fitWizardFold() {
+  var main = document.getElementById("wizardMain");
+  var wiz = document.getElementById("wizardContainer");
+  if (!main || !wiz) return;
+  var isResults = store.getCurrentStepName && store.getCurrentStepName() === "complete";
+  if (window.innerWidth > 640 || isResults) { main.style.minHeight = ""; main.style.paddingBottom = ""; return; }
+  main.style.paddingBottom = "6vh"; // centred content sits a touch above true middle (optical centre)
+  var top = main.getBoundingClientRect().top + wiz.scrollTop;
+  main.style.minHeight = Math.max(0, window.innerHeight - top) + "px";
+  // anything between main and the badge (margins/padding) — push it past the fold too
+  var badge = document.getElementById("trustBadge");
+  if (badge && badge.offsetHeight > 0) { // hidden on some steps (service selection) — a 0 rect would add a whole screen
+    var short = window.innerHeight - (badge.getBoundingClientRect().top + wiz.scrollTop);
+    if (short > 0) main.style.minHeight = (parseFloat(main.style.minHeight) + short) + "px";
+  }
+  _fitFoldWidth = window.innerWidth;
+}
+// Width changes only: the phone keyboard shrinks innerHeight and must not reflow the step
+window.addEventListener("resize", function () {
+  if (window.innerWidth !== _fitFoldWidth) requestAnimationFrame(fitWizardFold);
+});
+
 function renderCurrentStep() {
+  requestAnimationFrame(fitWizardFold); // after this render has updated the DOM
   // Hide all
   document.querySelectorAll(".wizard-step").forEach(s => s.classList.remove("active"));
   const step = store.currentStep;
@@ -2721,22 +2806,20 @@ function getAngiMatch(result) {
 function showAngiMatch(match) {
   document.getElementById("thumbtackContractorsSection").style.display = "none";
   var section = document.getElementById("angiMatchSection");
-  var frame = document.getElementById("angiWidgetFrame");
   var link = document.getElementById("angiMatchLink");
-  if (!section || !frame || !link) return;
+  if (!section || !link) return;
   link.href = match.url;
-  if (match.showWidget) {
-    frame.src = match.url;
-  } else {
-    // LP/Angi says no widget for this lead — hide the frame, keep the link as the CTA.
-    frame.parentNode.style.display = "none";
-    link.textContent = "View my matched pros";
-  }
   link.onclick = function() {
     if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_click", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
   };
   section.style.display = "block";
   if (window.dataLayer) window.dataLayer.push({ event: "angi_widget_shown", service: store.formData.service || "", cjLeadKey: match.cjLeadKey });
+
+  // Give GTM/pixels a moment to flush, then hand the visitor to Angi's widget page.
+  // showWidget=false means Angi doesn't want the auto-hand-off; leave the button as the CTA.
+  if (match.showWidget) {
+    setTimeout(function() { window.location.href = match.url; }, 1500);
+  }
 }
 
 function buildThumbTackContractors() {
@@ -3429,6 +3512,51 @@ var _allowNavigation = true;
    v1/v2/v3 already do this in lp-variants.css. */
 #wizardMain { flex:0 0 auto; }
 #trustBadge { padding-top:24px; }
+
+/* Phones: landing ZIP field + CTA on ONE row, both 56px (HomeBuddy pattern).
+   v2 replaces this block with its own one-line mad-lib form, so it is excluded. */
+@media (max-width:639px) {
+  html:not(.lp-v2) .va-cta-wrap { flex-direction:row !important; align-items:stretch; }
+  html:not(.lp-v2) .va-cta-wrap .va-zip-field { flex:1 1 auto; min-width:0; }
+  html:not(.lp-v2) .va-cta-wrap #landingZipInput { height:56px; padding-top:0 !important; padding-bottom:0 !important; }
+  html:not(.lp-v2) .va-cta-wrap > button { flex:0 0 auto; height:56px; padding:0 16px !important; }
+}
+@media (max-width:360px) {
+  html:not(.lp-v2) .va-cta-wrap > button { padding:0 12px !important; font-size:14px !important; }
+  html:not(.lp-v2) .va-cta-wrap .va-zip-field svg,
+  html:not(.lp-v2) .va-cta-wrap > button svg { display:none; }
+  html:not(.lp-v2) .va-cta-wrap #landingZipInput { padding-left:12px !important; font-size:15px !important; }
+}
+
+/* Phones: #wizardMain is stretched to the fold by fitWizardFold(); center the
+   active step vertically inside it so short steps (email, name, phone) sit in
+   the middle of the screen like HomeBuddy's card, not stuck to the top.
+   Long steps fill the area, so centering does nothing to them. */
+@media (max-width:640px) {
+  #wizardMain { display:flex; flex-direction:column; justify-content:center; }
+}
+
+/* Phones: wizard action buttons are inline, centered under the content, 56px tall (HomeBuddy pattern) */
+@media (max-width:640px) {
+  #zipNextBtn, #svcNextBtn, #radioNextBtn, #emailNextBtn, #detailsNextBtn, #nameNextBtn, #finalSubmitBtn { min-height:56px; min-width:120px; }
+}
+
+/* ── Original landing: HouseCrew-style overview photo + service image cards ── */
+/* phones/tablets: the hero already has an image — skip the overview photo right below it */
+@media (max-width:1023px) { #landingOverviewImage.qhf-ov-photo { display:none; } }
+#landingOverviewImage.qhf-ov-photo { border:0; border-radius:16px; box-shadow:0 14px 34px rgba(15,23,42,.14); }
+#landingOverviewImage.qhf-ov-photo img { height:220px; }
+@media (min-width:640px)  { #landingOverviewImage.qhf-ov-photo img { height:300px; } }
+@media (min-width:1024px) { #landingOverviewImage.qhf-ov-photo img { height:340px; } }
+#landingFeatures.qhf-svc-grid { display:grid; grid-template-columns:1fr; gap:22px; }
+@media (min-width:640px)  { #landingFeatures.qhf-svc-grid { grid-template-columns:repeat(2,1fr); gap:24px 20px; } }
+@media (min-width:1024px) { #landingFeatures.qhf-svc-grid { grid-template-columns:repeat(3,1fr); gap:28px 22px; } }
+.qhf-svc-img { border-radius:14px; overflow:hidden; aspect-ratio:16/10; background:#e2e8f0; }
+.qhf-svc-img img { display:block; width:100%; height:100%; object-fit:cover; transition:transform .45s ease; }
+.qhf-svc-card:hover .qhf-svc-img img { transform:scale(1.03); }
+.qhf-svc-card h3 { margin-top:12px; font-size:18px; font-weight:700; line-height:1.3; color:#1e293b; letter-spacing:-.01em; }
+@media (max-width:639px) { .qhf-svc-card h3 { font-size:17px; margin-top:10px; } }
+.qhf-svc-note { grid-column:1 / -1; text-align:center; font-size:12px; color:#94a3b8; margin-top:4px; }
 
 /* ② Contractors grid */
 .qhf-more-section { padding:16px; }
