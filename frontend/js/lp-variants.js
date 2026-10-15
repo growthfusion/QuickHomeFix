@@ -248,7 +248,8 @@
     // CTA button text (keep the arrow icon)
     var ctaBtn = heroContent && heroContent.querySelector('button[onclick^="startWizardFromLanding"]');
     if (ctaBtn) {
-      ctaBtn.innerHTML = copy.cta +
+      // "Match Me With Pros": the tail hides on phones so the ZIP field keeps room
+      ctaBtn.innerHTML = copy.cta.replace(" With Pros", '<span class="lp-cta-tail"> With Pros</span>') +
         ' <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
     }
 

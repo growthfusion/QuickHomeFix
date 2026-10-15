@@ -4,8 +4,19 @@ const serviceLandingData = {
     heroTitle: "Roofing Quotes Near You", // QHF-FIX: word change
     heroSubtitle: "Enter your ZIP Code to request roofing quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_09_02_AM-removebg-preview.png",
-    overviewImage: "images/landing/roof-1.jpg",
-    gallery: ["images/landing/roof-1.jpg","images/landing/roof-2.jpg","images/landing/roof-3.jpg"],
+    overviewImage: "images/landing/roof-1.jpg",
+    // Original (non-variant) page only: HouseCrew-style photo overview + image-card grid
+    overviewPhoto: "images/landing/services/roof-ov2.jpg",
+    servicesTitle: "Roofing Services",
+    serviceCards: [
+      { img: "images/landing/services/roof-house.jpg", title: "Roof Replacement" },
+      { img: "images/landing/services/roof-ov2.jpg", title: "Roof Repair & Inspection" },
+      { img: "images/landing/services/roof-materials.jpg", title: "Asphalt, Metal & Tile" },
+      { img: "images/landing/services/roof-tile.jpg", title: "Tile Roofing" },
+      { img: "images/landing/services/roof-shake.jpg", title: "Shingle & Shake Roofing" },
+      { img: "images/landing/services/roof-ventilation.jpg", title: "Ventilation & Insulation" }
+    ],
+   gallery: ["images/landing/roof-1.jpg","images/landing/roof-2.jpg","images/landing/roof-3.jpg"],
     overviewTitle: "Roof Repair & Replacement", // QHF-FIX: word change
     overviewSubtitle: "Roofing services available in your area:", // QHF-FIX: word change
     // ANGI EXHIBIT A COMPLIANCE: removed "Licensed & insured", "Free", "Warranty-backed", "Financing", "All roofing materials available" (Categories 1/2/8)
@@ -36,7 +47,18 @@ const serviceLandingData = {
     heroTitle: "Bathroom Remodeling Quotes Near You", // QHF-FIX: word change
     heroSubtitle: "Enter your ZIP Code to request bathroom quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
-    overviewImage: "images/landing/bath-1.jpg",
+    overviewImage: "images/landing/bath-1.jpg",
+    // Original (non-variant) page only: HouseCrew-style photo overview + image-card grid
+    overviewPhoto: "images/landing/services/hcb-overview.jpg",
+    servicesTitle: "Bathroom Remodeling Services",
+    serviceCards: [
+      { img: "images/landing/services/hcb-replacement.jpg", title: "Shower & Bathtub Replacement" },
+      { img: "images/landing/services/hcb-vanity.jpg", title: "Vanity & Sink Installation" },
+      { img: "images/landing/services/hcb-shower.jpg", title: "Walk-In Shower Conversions" },
+      { img: "images/landing/services/hcb-remodel.jpg", title: "Full Bathroom Remodel" },
+      { img: "images/landing/services/hcb-tile.jpg", title: "Bathroom Flooring & Tile Installation" },
+      { img: "images/landing/services/hcb-fixture.jpg", title: "Lighting & Fixture Upgrades" }
+    ],
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Bathroom Remodeling & Renovation",
     overviewSubtitle: "Bathroom options available in your area:", // QHF-FIX: word change
@@ -67,7 +89,18 @@ const serviceLandingData = {
     heroTitle: "Bathroom Remodeling Quotes Near You", // QHF-FIX: word change
     heroSubtitle: "Enter your ZIP Code to request bathroom quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_37_31_AM-removebg-preview.png",
-    overviewImage: "images/landing/bath-1.jpg",
+    overviewImage: "images/landing/bath-1.jpg",
+    // Original (non-variant) page only: HouseCrew-style photo overview + image-card grid
+    overviewPhoto: "images/landing/services/hcb-overview.jpg",
+    servicesTitle: "Bathroom Remodeling Services",
+    serviceCards: [
+      { img: "images/landing/services/hcb-replacement.jpg", title: "Shower & Bathtub Replacement" },
+      { img: "images/landing/services/hcb-vanity.jpg", title: "Vanity & Sink Installation" },
+      { img: "images/landing/services/hcb-shower.jpg", title: "Walk-In Shower Conversions" },
+      { img: "images/landing/services/hcb-remodel.jpg", title: "Full Bathroom Remodel" },
+      { img: "images/landing/services/hcb-tile.jpg", title: "Bathroom Flooring & Tile Installation" },
+      { img: "images/landing/services/hcb-fixture.jpg", title: "Lighting & Fixture Upgrades" }
+    ],
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Bathroom Remodeling, Walk-In Tubs & Walk-In Showers",
     overviewSubtitle: "Bathroom options available in your area:", // QHF-FIX: word change
@@ -97,7 +130,15 @@ const serviceLandingData = {
     heroTitle: "Walk-In Tub Quotes Near You", // QHF-FIX: word change
     heroSubtitle: "Enter your ZIP Code to request walk-in tub quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_52_16_AM-removebg-preview.png",
-    overviewImage: "images/landing/tub-1.jpg",
+    overviewImage: "images/landing/tub-1.jpg",
+    // Original (non-variant) page only: HouseCrew-style photo overview + image-card grid
+    overviewPhoto: "images/landing/services/hcb-remodel.jpg",
+    servicesTitle: "Walk-In Tub Services",
+    serviceCards: [
+      { img: "images/landing/services/hcb-replacement.jpg", title: "Tub Replacement & Installation" },
+      { img: "images/landing/services/hcb-fixture.jpg", title: "Fixtures & Grab Bars" },
+      { img: "images/landing/services/hcb-tile.jpg", title: "Tile & Tub Surround" }
+    ],
     gallery: ["images/landing/tub-1.jpg","images/landing/tub-2.jpg","images/landing/tub-3.jpg"],
     overviewTitle: "Walk-In Tub Installation & Conversion",
     overviewSubtitle: "Safe, comfortable bathing solutions for your home:",
@@ -127,7 +168,15 @@ const serviceLandingData = {
     heroTitle: "Walk-In Shower Quotes Near You", // QHF-FIX: word change
     heroSubtitle: "Enter your ZIP Code to request walk-in shower quotes in your area.", // QHF-FIX: word change
     heroImage: "images/walk-in-shower.png",
-    overviewImage: "images/landing/bath-1.jpg",
+    overviewImage: "images/landing/bath-1.jpg",
+    // Original (non-variant) page only: HouseCrew-style photo overview + image-card grid
+    overviewPhoto: "images/landing/services/hcb-shower.jpg",
+    servicesTitle: "Walk-In Shower Services",
+    serviceCards: [
+      { img: "images/landing/services/hcb-replacement.jpg", title: "Tub-to-Shower Conversions" },
+      { img: "images/landing/services/hcb-tile.jpg", title: "Shower Tile & Glass" },
+      { img: "images/landing/services/hcb-fixture.jpg", title: "Showerheads & Fixtures" }
+    ],
     gallery: ["images/landing/bath-1.jpg","images/landing/bath-2.jpg","images/landing/bath-3.jpg"],
     overviewTitle: "Walk-In Shower Installation & Conversion",
     overviewSubtitle: "Safe, low-maintenance walk-in showers for accessibility and style:", // QHF-FIX: word change
@@ -157,8 +206,19 @@ const serviceLandingData = {
     heroTitle: "Window Replacement Quotes Near You", // QHF-FIX: word change
     heroSubtitle: "Enter your ZIP Code to request window quotes in your area.", // QHF-FIX: word change
     heroImage: "images/ChatGPT_Image_Feb_12__2026__11_24_36_AM-removebg-preview.png",
-    overviewImage: "images/landing/window-1.jpg",
-    gallery: ["images/landing/window-1.jpg","images/landing/window-2.jpg","images/landing/window-3.jpg"],
+    overviewImage: "images/landing/window-1.jpg",
+    // Original (non-variant) page only: HouseCrew-style photo overview + image-card grid
+    overviewPhoto: "images/landing/services/win-modern.jpg",
+    servicesTitle: "Window Services",
+    serviceCards: [
+      { img: "images/landing/services/win-house.jpg", title: "Window Replacement" },
+      { img: "images/landing/services/win-white.jpg", title: "Double-Hung Windows" },
+      { img: "images/landing/services/win-living.jpg", title: "Picture & Bay Windows" },
+      { img: "images/landing/services/win-bright.jpg", title: "Casement & Sliding Windows" },
+      { img: "images/landing/services/win-sill.jpg", title: "Energy-Efficient Glass" },
+      { img: "images/landing/services/win-frame2.jpg", title: "Wood & Vinyl Frames" }
+    ],
+   gallery: ["images/landing/window-1.jpg","images/landing/window-2.jpg","images/landing/window-3.jpg"],
     overviewTitle: "Window Replacement & Installation",
     overviewSubtitle: "Window options available in your area:", // QHF-FIX: word change
     overviewBenefits: ["Energy-efficient options","Noise reduction technology","UV protection coatings","Custom window sizes & styles","Window installation available"], // QHF-FIX: word change
@@ -189,6 +249,16 @@ const serviceLandingData = {
     heroSubtitle: "Enter your ZIP Code to request solar quotes in your area.", // QHF-FIX: word change
     heroImage: null,
     overviewImage: "images/landing/solar-1.jpg",
+    overviewPhoto: "images/landing/services/solar-ov.jpg",
+    servicesTitle: "Solar Services",
+    serviceCards: [
+      { img: "images/landing/services/solar-roof.jpg", title: "Rooftop Solar Installation" },
+      { img: "images/landing/services/solar-panels.jpg", title: "Solar Panel Systems" },
+      { img: "images/landing/services/solar-house2.jpg", title: "Home Solar Upgrades" },
+      { img: "images/landing/services/solar-tile.jpg", title: "Solar on Tile Roofs" },
+      { img: "images/landing/services/solar-tile2.jpg", title: "Solar Panel Replacement" },
+      { img: "images/landing/services/solar-home.jpg", title: "Solar for Every Home Style" }
+    ],
     gallery: ["images/landing/solar-1.jpg","images/landing/solar-2.jpg","images/landing/solar-3.jpg"],
     overviewTitle: "Solar Panel Installation & Energy Solutions",
     overviewSubtitle: "Solar options available in your area:", // QHF-FIX: word change
@@ -220,6 +290,16 @@ const serviceLandingData = {
     heroSubtitle: "Enter your ZIP Code to request gutter quotes in your area.", // QHF-FIX: word change
     heroImage: null,
     overviewImage: "images/landing/gutter-1.jpg",
+    overviewPhoto: "images/landing/services/gut-ov.jpg",
+    servicesTitle: "Gutter Services",
+    serviceCards: [
+      { img: "images/landing/services/gut-corner.jpg", title: "Gutter Installation" },
+      { img: "images/landing/services/gut-seamless.jpg", title: "Seamless Gutters" },
+      { img: "images/landing/services/gut-close.jpg", title: "Gutter Repair & Cleaning" },
+      { img: "images/landing/services/gut-rain.jpg", title: "Downspouts & Drainage" },
+      { img: "images/landing/services/gut-replace.jpg", title: "Gutter Replacement" },
+      { img: "images/landing/services/gut-home.jpg", title: "Whole-Home Gutter Systems" }
+    ],
     gallery: ["images/landing/gutter-1.jpg","images/landing/gutter-2.jpg","images/landing/gutter-3.jpg"],
     overviewTitle: "Gutter Installation, Repair & Guards",
     overviewSubtitle: "Protect your home from water damage:",

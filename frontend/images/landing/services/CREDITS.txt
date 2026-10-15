@@ -1,0 +1,21 @@
+Public-domain (CC0 / PDM) images via Openverse — no attribution required; recorded for provenance.
+roof-ov2: null | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9zdGF0aWMvaW1hZ2Uvd2Vic2l0ZS8yMDIyLTA0L2xyL3B4MTEwNzE1NC1pbWFnZS1rd3lyOHB1bS5qcGc.jpg
+roof-house: House Home | cc0 | stocksnap | https://cdn.stocksnap.io/img-thumbs/960w/LJ515CPAKI.jpg
+roof-tile: Clay roof tiles | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvZnJmcmFuY2VfcHJvdmVuY2VfdGlsZV9tZWRpdGVycmFuZWFuLWltYWdlLWt5YmRuZjQyLmpwZw.jpg
+roof-shake: Clay roof tiles | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvZnJyb29mX3NoaW5nbGVzX3NoaW5nbGVfd29vZC1pbWFnZS1reWJjdTVheC5qcGc.jpg
+win-house: House Home | cc0 | stocksnap | https://cdn.stocksnap.io/img-thumbs/960w/L9VZ6SOGBB.jpg
+win-white: House Home | cc0 | stocksnap | https://cdn.stocksnap.io/img-thumbs/960w/ADCFZ4QLNO.jpg
+win-bright: White Window | cc0 | stocksnap | https://cdn.stocksnap.io/img-thumbs/960w/LMUGL3LQ7X.jpg
+win-living: Interior Design | cc0 | stocksnap | https://cdn.stocksnap.io/img-thumbs/960w/478BZDEA2Y.jpg
+win-sill: Book Interior | cc0 | stocksnap | https://cdn.stocksnap.io/img-thumbs/960w/KLXLJSBKJI.jpg
+solar-ov: SUNation Solar Systems Residential Installation | cc0 | rawpixel | https://images.rawpixel.com/image_1300/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvZmwzNjc3NjQzMzMzNi1pbWFnZS1rcDR3MDM2eS5qcGc.jpg
+solar-roof: Solar panels roof | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvd2szMTA0NDkwLWltYWdlLWtwNml5b2g0LmpwZw.jpg
+solar-house2: Solar panels generate green energy | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvZmwzNzE0ODc1OTcwMi1pbWFnZS1reWJlajAxMC5qcGc.jpg
+solar-tile: Solar panels generate clean energy | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9zdGF0aWMvaW1hZ2Uvd2Vic2l0ZS8yMDIyLTA0L2xyL2Zyc29sYXJfcGFuZWxzX2hvdXNlX2F1dHVtbi1pbWFnZS1reWJjbjUyaC5qcGc.jpg
+solar-tile2: Free solar energy home image | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvcHg3NTg5NTMtaW1hZ2Uta3d2djNqaXUuanBn.jpg
+solar-panels: Solar panels generate renewable energy | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9zdGF0aWMvaW1hZ2Uvd2Vic2l0ZS8yMDIyLTA0L2xyL2Zyc29sYXJfcGFuZWxfZGVzaWduX2Vudmlyb25tZW50LWltYWdlLWt5YmFtajBpLmpwZw.jpg
+solar-home: null | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvZnJpbWdfMjkxM18xNi1pbWFnZS1reWNnbzEybS5qcGc.jpg
+gut-ov: Patriot Farmers of America (PFA) | cc0 | rawpixel | https://images.rawpixel.com/image_1300/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvZmwxOTIyNjM0ODIzNC1wdWJsaWMtaW1hZ2Uta29udmk5NTYuanBn.jpg
+gut-close: A sparrow perched on a rain gutter of a roof with moss-covered tiles, with soft focus greenery in the background. | cc0 | wordpress | https://pd.w.org/2024/04/334662f95fd9fbfe3.02679275-2048x1365.jpeg
+gut-rain: null | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvcHgxMDk0ODcwLWltYWdlLWt3eXJhaWF3LmpwZw.jpg
+gut-corner: Wooden decorative roof | cc0 | rawpixel | https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9zdGF0aWMvaW1hZ2Uvd2Vic2l0ZS8yMDIyLTA0L2xyL2ZyaG91c2Vfb25fY29ybmVyX2Nvcm5lci1pbWFnZS1reWJkZ2tzMi5qcGc.jpg
