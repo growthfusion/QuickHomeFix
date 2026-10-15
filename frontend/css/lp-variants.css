@@ -2748,3 +2748,26 @@ html.lp-v3 .wizard-step .bg-white > .p-4 { padding: 0 !important; }
 
 /* v3 injects its own longer independent-contractor disclosure (#lp3Disclosure) into this footer */
 html.lp-v3 #qhfFooterDisclosure { display: none; }
+
+/* ── Phones: action buttons sit INLINE, centered right under the last
+   field/option (HomeBuddy pattern) instead of pinned to the bottom edge.
+   Overrides the thumb-zone `position: fixed` blocks above (v1/v2/v3). ── */
+@media (max-width: 640px) {
+  html.lp-v1 #zipNextBtn, html.lp-v1 #emailNextBtn, html.lp-v1 #detailsNextBtn, html.lp-v1 #nameNextBtn, html.lp-v1 #finalSubmitBtn,
+  html.lp-v2 #zipNextBtn, html.lp-v2 #emailNextBtn, html.lp-v2 #detailsNextBtn, html.lp-v2 #nameNextBtn, html.lp-v2 #finalSubmitBtn,
+  html.lp-v3 #zipNextBtn, html.lp-v3 #emailNextBtn, html.lp-v3 #detailsNextBtn, html.lp-v3 #nameNextBtn, html.lp-v3 #finalSubmitBtn,
+  html.lp-v3 #radioNextBtn, html.lp-v3 #svcNextBtn {
+    position: static !important;
+    left: auto; right: auto; bottom: auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: auto !important; min-width: 120px;
+    height: 56px; padding: 0 28px !important;
+    margin: 0 auto !important; /* wrapper already gives 24px above */
+    box-shadow: none !important;
+  }
+  /* no 120px clearance for a pinned bar any more */
+  html.lp-v1 .wizard-column, html.lp-v2 .wizard-column, html.lp-v3 .wizard-column { padding-bottom: 0 !important; }
+}
+
+/* Phones: one-row ZIP + CTA — short CTA label so the ZIP field keeps its width */
+@media (max-width: 480px) { .lp-cta-tail { display: none; } }
