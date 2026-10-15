@@ -1177,7 +1177,6 @@
           <!-- ANGI EXHIBIT A COMPLIANCE: removed "top-rated" unsubstantiated claim (Category 2) -->
           <p class="text-sm leading-relaxed">Connecting homeowners with local professionals.</p>
           <!-- ANGI EXHIBIT A ("purporting to be a local pro"): state that we refer requests to independent pros -->
-          <p id="qhfFooterDisclosure" class="text-xs leading-relaxed mt-2 text-gray-500">QuickHomeFix is a referral service. We match homeowners with independent home improvement professionals and do not perform the work.</p>
         </div>
         <div>
           <h4 class="text-white text-sm font-semibold mb-3">Services</h4>
@@ -1434,14 +1433,6 @@
                 </div>
                 <p id="phoneError" class="text-red-500 text-xs mt-1 hidden"></p>
               </div>
-              <div class="flex justify-center mt-6">
-                <button type="submit" id="finalSubmitBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg">Submit</button>
-              </div>
-              <!-- ANGI EXHIBIT A COMPLIANCE: removed "free" (Category 1 prohibited incentive framing) -->
-              <div class="flex items-center justify-center gap-1.5 mt-3 text-gray-400 text-xs">
-                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                <span>Encrypted form</span>
-              </div>
               <!-- Combined TCPA consent (HomeBlue / Remodelwell pattern): our terms + Angi's required sentence verbatim
                    ("Submit" is our CTA) + our other buyers. Keep in sync with HOME_PHONE_CONSENT_LANGUAGE in js/tracking.js. -->
               <p class="text-[10px] leading-snug text-gray-400 mt-4" data-tf-element-role="consent-language">
@@ -1462,6 +1453,14 @@
                 <span>I agree to the terms and consent to be contacted as described above.</span>
               </label>
               <p id="angiConsentError" class="text-red-500 text-xs mt-1 hidden">Please agree to continue.</p>
+              <div class="flex justify-center mt-6">
+                <button type="submit" id="finalSubmitBtn" class="bg-orange-400 text-white font-semibold px-10 py-3 text-base rounded-lg">Submit</button>
+              </div>
+              <!-- ANGI EXHIBIT A COMPLIANCE: removed "free" (Category 1 prohibited incentive framing) -->
+              <div class="flex items-center justify-center gap-1.5 mt-3 text-gray-400 text-xs">
+                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Encrypted form</span>
+              </div>
             </form>
           </div>
         </div>
@@ -1582,7 +1581,6 @@
   <!-- Footer -->
   <footer class="px-4 sm:px-6 py-4 border-t border-gray-100">
     <!-- ANGI EXHIBIT A ("purporting to be a local pro"): v1 skips the landing page, so the wizard footer carries it too -->
-    <p class="text-[11px] leading-snug text-gray-400 text-center max-w-xl mx-auto mb-2">QuickHomeFix is a referral service. We match homeowners with independent home improvement professionals and do not perform the work.</p>
     <div class="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 text-[11px] text-gray-400">
       <span>&copy; <script>document.write(new Date().getFullYear())</script> QuickHomeFix. All rights reserved.</span>
       <span class="hidden sm:inline">|</span>

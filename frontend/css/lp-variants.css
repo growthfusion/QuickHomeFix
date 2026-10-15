@@ -2747,7 +2747,6 @@ html.lp-v3 .wizard-step .bg-white > .p-6,
 html.lp-v3 .wizard-step .bg-white > .p-4 { padding: 0 !important; }
 
 /* v3 injects its own longer independent-contractor disclosure (#lp3Disclosure) into this footer */
-html.lp-v3 #qhfFooterDisclosure { display: none; }
 
 /* ── Phones: action buttons sit INLINE, centered right under the last
    field/option (HomeBuddy pattern) instead of pinned to the bottom edge.
