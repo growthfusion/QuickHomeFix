@@ -198,13 +198,11 @@ var LEADPOST_PARTNER_SOURCE_ID =
 var LEADPOST_PUBLISHER_SUB_ID =
   (typeof QHF_CONFIG !== "undefined" && QHF_CONFIG.LEADPOST_PUBLISHER_SUB_ID) ||
   "123456";
-var QHF_CONSENT_LANGUAGE =
-  "By submitting, you authorize QuickHomeFix and up to four home improvement companies, to make marketing calls and texts to the phone number provided to discuss your home improvement project. You understand some may use auto-dialers, SMS messages, artificial and prerecorded voice messages to contact you. There is no requirement to purchase services. Please see our Privacy Notice and Terms of Use.";
-// Angi's required TCPA language — must match the final-step markup in get-quotes.html word for word.
-var ANGI_CONSENT_LANGUAGE =
-  "By clicking “Submit”, I agree to Angi’s Terms and Privacy Policy, and that Angi and its service professionals, or parties acting on their behalf, may use automated technology and prerecorded messages to deliver marketing calls or texts regarding my project and future projects to the number I provided. Consent is not a condition of service.";
-// Sent as tcpa_text: both paragraphs, in on-page order (Angi first, then ours).
-var HOME_PHONE_CONSENT_LANGUAGE = ANGI_CONSENT_LANGUAGE + " " + QHF_CONSENT_LANGUAGE;
+// Single combined TCPA consent (HomeBlue / Remodelwell pattern): our terms + Angi's required
+// sentence verbatim (CTA = "Submit") + our other buyers. Sent as tcpa_text, so it must match
+// the final-step markup in get-quotes.html word for word.
+var HOME_PHONE_CONSENT_LANGUAGE =
+  "By clicking “Submit”, I agree to QuickHomeFix’s Terms of Use and Privacy Policy and Angi’s Terms and Privacy Policy, and that Angi and its service professionals, or parties acting on their behalf, may use automated technology and prerecorded messages to deliver marketing calls or texts regarding my project and future projects to the number I provided. I also authorize QuickHomeFix and up to four home improvement companies to contact me in the same way about my home improvement project. Consent is not a condition of service.";
 
 function getLeadpostAttribution(formData) {
   formData = formData || {};
