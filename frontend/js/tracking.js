@@ -198,11 +198,10 @@ var LEADPOST_PARTNER_SOURCE_ID =
 var LEADPOST_PUBLISHER_SUB_ID =
   (typeof QHF_CONFIG !== "undefined" && QHF_CONFIG.LEADPOST_PUBLISHER_SUB_ID) ||
   "123456";
-// Single combined TCPA consent (HomeBlue / Remodelwell pattern): our terms + Angi's required
-// sentence verbatim (CTA = "Submit") + our other buyers. Sent as tcpa_text, so it must match
-// the final-step markup in get-quotes.html word for word.
+// TCPA consent: Angi's required sentence verbatim (CTA = "Submit"), same as Housecrew-Google. Sent as
+// tcpa_text, so it must match the final-step markup in get-quotes.html word for word.
 var HOME_PHONE_CONSENT_LANGUAGE =
-  "By clicking “Submit”, I agree to QuickHomeFix’s Terms of Use and Privacy Policy and Angi’s Terms and Privacy Policy, and that Angi and its service professionals, or parties acting on their behalf, may use automated technology and prerecorded messages to deliver marketing calls or texts regarding my project and future projects to the number I provided. I also authorize QuickHomeFix and up to four home improvement companies to contact me in the same way about my home improvement project. Consent is not a condition of service.";
+  "By clicking “Submit”, I agree to Angi’s Terms and Privacy Policy, and that Angi and its service professionals, or parties acting on their behalf, may use automated technology and prerecorded messages to deliver marketing calls or texts regarding my project and future projects to the number I provided. Consent is not a condition of service.";
 
 function getLeadpostAttribution(formData) {
   formData = formData || {};

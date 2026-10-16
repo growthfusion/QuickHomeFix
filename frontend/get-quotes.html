@@ -1428,22 +1428,16 @@
                 </div>
                 <p id="phoneError" class="text-red-500 text-xs mt-1 hidden"></p>
               </div>
-              <!-- Combined TCPA consent (HomeBlue / Remodelwell pattern): our terms + Angi's required sentence verbatim
-                   ("Submit" is our CTA) + our other buyers. Keep in sync with HOME_PHONE_CONSENT_LANGUAGE in js/tracking.js. -->
-              <p class="text-[10px] leading-snug text-gray-400 mt-4" data-tf-element-role="consent-language">
-                By clicking &ldquo;Submit&rdquo;, I agree to QuickHomeFix&rsquo;s
-                <a href="/terms-of-service" target="_blank" class="underline text-blue-600 hover:text-blue-800">Terms of Use</a> and
-                <a href="/privacy-policy" target="_blank" class="underline text-blue-600 hover:text-blue-800">Privacy Policy</a> and Angi&rsquo;s
-                <a href="https://www.angi.com/terms" target="_blank" rel="noopener noreferrer" class="underline text-blue-600 hover:text-blue-800">Terms</a> and
-                <a href="https://legal.angi.com/#privacy-policy" target="_blank" rel="noopener noreferrer" class="underline text-blue-600 hover:text-blue-800">Privacy Policy</a>,
+              <!-- TCPA consent: Angi's required sentence verbatim ("Submit" is our CTA), same layout as Housecrew-Google. Keep in sync with HOME_PHONE_CONSENT_LANGUAGE in js/tracking.js. -->
+              <p class="text-xs leading-relaxed text-gray-600 mt-4" data-tf-element-role="consent-language">
+                By clicking &ldquo;Submit&rdquo;, I agree to Angi&rsquo;s
+                <a href="https://www.angi.com/terms" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Terms</a> and
+                <a href="https://legal.angi.com/#privacy-policy" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Privacy Policy</a>,
                 and that Angi and its service professionals, or parties acting on their behalf, may use automated technology and
                 prerecorded messages to deliver marketing calls or texts regarding my project and future projects to the number I provided.
-                I also authorize QuickHomeFix and up to
-                <a href="/marketing-partners" target="_blank" class="underline text-blue-600 hover:text-blue-800">four home improvement companies</a>
-                to contact me in the same way about my home improvement project.
                 Consent is not a condition of service.
               </p>
-              <label class="flex items-start gap-2 mt-3 text-xs leading-snug text-gray-600 cursor-pointer">
+              <label class="flex items-start gap-2 mt-3 text-sm leading-snug text-gray-700 cursor-pointer">
                 <input type="checkbox" id="angiConsentCheckbox" data-tf-element-role="consent-opt-in" class="mt-0.5 h-4 w-4 shrink-0" onchange="if(this.checked)document.getElementById('angiConsentError').classList.add('hidden')" />
                 <span>I agree to the terms and consent to be contacted as described above.</span>
               </label>
