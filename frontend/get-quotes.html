@@ -31,11 +31,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
   <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
-  <!-- Thumbtack iframe warm-up -->
-  <link rel="dns-prefetch" href="//www.thumbtack.com" />
-  <link rel="dns-prefetch" href="//assets-pro.thumbtackstatic.com" />
-  <link rel="preconnect" href="https://www.thumbtack.com" crossorigin />
-  <link rel="preconnect" href="https://assets-pro.thumbtackstatic.com" crossorigin />
 
   <!-- Preload LCP hero image based on URL slug — makes it discoverable before JS runs -->
   <script>
@@ -3703,6 +3698,7 @@ var _allowNavigation = true;
   var iframeEl = document.getElementById("tt-popup-iframe");
 
   function openPopup(url, bizName) {
+    if (!THUMBTACK_ENABLED) return;
     // Only ever frame https Thumbtack pages
     try {
       var parsed = new URL(url);
