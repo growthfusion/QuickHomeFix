@@ -1497,7 +1497,7 @@
         </div>
 
         <!-- ② Thumbtack contractors grid -->
-        <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal">
+        <div id="thumbtackContractorsSection" class="qhf-more-section qhf-grid-reveal" style="display:none">
           <div id="thumbtackContractors"></div>
         </div>
 
@@ -2879,6 +2879,8 @@ function showAngiMatch(match) {
   document.body.appendChild(s);
 }
 
+var THUMBTACK_ENABLED = false;
+
 function buildThumbTackContractors() {
   var angiMatch = getAngiMatch(store.state.leadResponse);
   if (angiMatch) { showAngiMatch(angiMatch); return; }
@@ -2896,6 +2898,13 @@ function buildThumbTackContractors() {
     var fd = store.formData;
     var fdForAiro = Object.assign({}, fd, { phone: formatPhoneForAiro(fd.phone) });
     loadAiroWidget(fdForAiro);
+    return;
+  }
+
+  // Thumbtack is switched off on every vertical while we sell to Angi — Angi must not see
+  // Thumbtack pros after submit. Flip THUMBTACK_ENABLED to bring the grid back.
+  if (!THUMBTACK_ENABLED) {
+    document.getElementById("thumbtackContractorsSection").style.display = "none";
     return;
   }
 
